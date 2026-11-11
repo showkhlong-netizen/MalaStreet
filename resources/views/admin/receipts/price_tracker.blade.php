@@ -2,6 +2,20 @@
 
 @section('content')
 @php
+    // Helper to format latest purchase price: If whole number (no fraction / .00), cut .00 off.
+    // If it has decimals (e.g. .02, .030, .80), display the decimals.
+    $formatLatestPrice = function ($price) {
+        $num = (float) $price;
+        if (fmod($num, 1.0) == 0.0) {
+            return number_format($num, 0);
+        }
+        $str = (string) $price;
+        $parts = explode('.', $str);
+        $dec = isset($parts[1]) ? strlen($parts[1]) : 2;
+        $dec = min(max(2, $dec), 4);
+        return number_format($num, $dec);
+    };
+
     // Helper to resolve accurate 1:1 ingredient photo + category slug for every RawMaterial
     // Prioritizes custom database fields ($mat->image_url and $mat->category_slug) first!
     $resolveMaterialMeta = function (\App\Models\RawMaterial $mat) {
@@ -728,7 +742,7 @@
                             <div class="min-w-0">
                                 <span class="text-[10.5px] text-[#687082] font-medium block leading-tight">ราคาซื้อล่าสุด:</span>
                                 <div class="truncate mt-0.5">
-                                    <span class="mat-price-val text-[14.5px] font-bold text-[#14171F]" data-role="latest-price">฿{{ number_format($mat->latest_cost_price, 2) }}</span>
+                                    <span class="mat-price-val text-[14.5px] font-bold text-[#14171F]" data-role="latest-price">฿{{ $formatLatestPrice($mat->latest_cost_price) }}</span>
                                     <span class="text-[10.5px] text-[#687082] font-normal" data-role="latest-unit-suffix">/{{ $mat->purchase_unit }}</span>
                                 </div>
                             </div>
@@ -1903,6 +1917,19 @@
         }, 3200);
     }
 
+    // Helper format ราคาซื้อล่าสุด: ถ้าไม่มีเศษ (.00) ให้ตัด .00 ออก ถ้ามีเศษ (.02, .030, .80) ให้แสดงตามจริง
+    function formatLatestPrice(price) {
+        const num = Number(price || 0);
+        if (num % 1 === 0) {
+            return num.toLocaleString('en-US');
+        }
+        const str = String(price);
+        const parts = str.split('.');
+        const dec = parts.length > 1 ? parts[1].length : 2;
+        const decimals = Math.min(Math.max(2, dec), 4);
+        return num.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+
     // 1. Sticky bar shadow when scrolling
     window.addEventListener('scroll', () => {
         const bar = document.getElementById('price-sticky-bar');
@@ -2595,7 +2622,7 @@
         document.getElementById('modal-mat-img').alt = data.name;
         document.getElementById('modal-mat-name').textContent = data.name;
         document.getElementById('modal-mat-unit').textContent = `หน่วยซื้อ: ${data.purchase_unit}`;
-        document.getElementById('modal-mat-price').textContent = `฿${Number(data.latest_cost_price).toFixed(2)} /${data.purchase_unit}`;
+        document.getElementById('modal-mat-price').textContent = `฿${formatLatestPrice(data.latest_cost_price)} /${data.purchase_unit}`;
         document.getElementById('modal-mat-stick').textContent = `฿${Number(data.cost_per_stick).toFixed(2)} /ไม้`;
         document.getElementById('modal-mat-yield').textContent = `${Number(data.yield_sticks_per_unit).toFixed(2)} ไม้/หน่วย`;
         document.getElementById('modal-mat-vendor').textContent = data.vendor_name || 'ไม่ระบุ';
@@ -3164,7 +3191,7 @@
                 if (unitEl) unitEl.textContent = `หน่วยซื้อ: ${item.purchase_unit}`;
 
                 const priceEl = card.querySelector('[data-role="latest-price"]');
-                if (priceEl) priceEl.textContent = `฿${Number(item.latest_cost_price).toFixed(2)}`;
+                if (priceEl) priceEl.textContent = `฿${formatLatestPrice(item.latest_cost_price)}`;
 
                 const unitSuffixEl = card.querySelector('[data-role="latest-unit-suffix"]');
                 if (unitSuffixEl) unitSuffixEl.textContent = `/${item.purchase_unit}`;
@@ -3402,7 +3429,7 @@
                 card.dataset.stock = String(item.today_stock_sticks || 0);
 
                 const priceEl = card.querySelector('[data-role="latest-price"]');
-                if (priceEl) priceEl.textContent = `฿${Number(item.latest_cost_price).toFixed(2)}`;
+                if (priceEl) priceEl.textContent = `฿${formatLatestPrice(item.latest_cost_price)}`;
 
                 const stickEl = card.querySelector('[data-role="stick-cost"]');
                 if (stickEl) stickEl.textContent = `฿${Number(item.cost_per_stick).toFixed(2)}`;
