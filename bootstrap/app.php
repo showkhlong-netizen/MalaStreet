@@ -18,6 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin/employees/clock-in',
             'admin/employees/store-location',
             'admin/access/*',
+            'admin/price-tracker/*',
+            'admin/receipts/*',
             'pos/order',
             'pos/orders/*',
             'order/submit',

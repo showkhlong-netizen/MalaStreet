@@ -479,15 +479,19 @@
         (function() {
             if (typeof window.fetch !== 'function') return;
             const originalFetch = window.fetch;
-            window.fetch = async function(...args) {
+            window.fetch = async function(resource, init) {
+                init = init || {};
+                if (!init.credentials) {
+                    init.credentials = 'same-origin';
+                }
                 try {
-                    const response = await originalFetch.apply(this, args);
+                    const response = await originalFetch.call(this, resource, init);
                     if (response && response.status === 401) {
                         const path = window.location.pathname;
                         if (!path.startsWith('/order') && !path.startsWith('/login')) {
                             console.warn('Session expired or unauthenticated. Redirecting to login...');
                             alert('เซสชันการเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
-                            window.location.href = "{{ route('login') }}";
+                            window.location.href = "{{ route('login') }}?redirect=" + encodeURIComponent(window.location.pathname + window.location.search);
                         }
                     }
                     return response;

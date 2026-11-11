@@ -3086,6 +3086,7 @@
         try {
             const res = await fetch(targetUrl, {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json',
@@ -3096,7 +3097,7 @@
 
             if (res.status === 401) {
                 alert('เซสชันการเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
-                window.location.href = "{{ route('login') }}";
+                window.location.href = "{{ route('login') }}?redirect=" + encodeURIComponent(window.location.pathname);
                 return;
             }
 

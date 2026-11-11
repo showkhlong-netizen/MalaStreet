@@ -67,7 +67,8 @@ class AuthController extends Controller
                 $request->session()->put('auth_user_profile', $matched);
             }
 
-            return redirect()->intended(route('pos.index'))
+            $redirectUrl = $request->input('redirect') ?: route('pos.index');
+            return redirect()->intended($redirectUrl)
                 ->with('success', 'เข้าสู่ระบบสำเร็จ ยินดีต้อนรับ ' . Auth::user()->name);
         }
 
@@ -91,7 +92,8 @@ class AuthController extends Controller
                 $request->session()->put('auth_user_profile', $matched);
             }
 
-            return redirect()->intended(route('pos.index'))
+            $redirectUrl = $request->input('redirect') ?: route('pos.index');
+            return redirect()->intended($redirectUrl)
                 ->with('success', 'เข้าสู่ระบบสำเร็จ ยินดีต้อนรับ ' . $userModel->name);
         }
 

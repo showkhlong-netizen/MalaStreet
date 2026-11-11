@@ -18,7 +18,9 @@ services:
       - key: DB_URL
         value: postgresql://neondb_owner:npg_ydpEaT1XOq6s@ep-dawn-pond-azu0undh.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
       - key: SESSION_DRIVER
-        value: cookie
+        value: database
+      - key: SESSION_LIFETIME
+        value: "43200"
       - key: CACHE_STORE
         value: array
 

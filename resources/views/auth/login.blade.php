@@ -110,6 +110,7 @@
             <!-- Form -->
             <form action="{{ route('login.submit') }}" method="POST" class="space-y-4">
                 @csrf
+                <input type="hidden" name="redirect" value="{{ request('redirect', old('redirect')) }}">
 
                 <!-- Field 1: อีเมลผู้ใช้งาน (Matches Image 3) -->
                 <div class="space-y-1.5 text-left">
