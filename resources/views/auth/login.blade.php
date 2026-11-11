@@ -181,11 +181,12 @@
                         พนักงานใหม่ที่ยังไม่มีบัญชีเข้าใช้งาน?
                     </p>
                     
-                    <a href="{{ route('admin.access.index', ['tab' => 'register']) }}" 
-                       class="w-full py-3 sm:py-3.5 px-4 rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 active:scale-[0.98] text-slate-800 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs hover:border-slate-300">
+                    <button type="button"
+                            onclick="openRegisterModal()" 
+                            class="w-full py-3 sm:py-3.5 px-4 rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 active:scale-[0.98] text-slate-800 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs hover:border-slate-300">
                         <span class="text-amber-600 font-black text-sm">👤+</span>
                         <span>กดลงทะเบียน เพื่อสร้างอีเมลพนักงานบัญชีใหม่</span>
-                    </a>
+                    </button>
                 </div>
 
             </form>
@@ -231,6 +232,185 @@
 
     </div>
 
+    <!-- ===================================================================== -->
+    <!-- ป๊อปอัปขอลงทะเบียนสร้างอีเมลพนักงานบัญชีใหม่ (บีบอัดภาพและรอแอดมินอนุมัติ) -->
+    <!-- ===================================================================== -->
+    <div id="modal-register-request" class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm hidden items-center justify-center p-3.5 sm:p-4 overflow-y-auto">
+        <div class="relative bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-100 space-y-4 my-auto transition-all animate-in fade-in zoom-in-95 duration-200">
+            
+            <!-- Header -->
+            <div class="flex items-start justify-between pb-3 border-b border-slate-100 gap-3">
+                <div class="flex items-center gap-3">
+                    <span class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-500/25 shrink-0 text-xl font-bold">
+                        👤+
+                    </span>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-black text-slate-900 leading-tight">
+                            ลงทะเบียนขอสร้างบัญชีใหม่
+                        </h3>
+                        <p class="text-[11px] text-slate-500 font-medium pt-0.5">
+                            กรอกข้อมูลเพื่อสร้างอีเมลพนักงานบัญชี (รอแอดมินอนุมัติ)
+                        </p>
+                    </div>
+                </div>
+                <button type="button"
+                        onclick="closeRegisterModal()"
+                        class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center text-sm font-bold transition-all cursor-pointer">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Form -->
+            <form id="form-popup-register" onsubmit="submitPopupRegister(event)" class="space-y-3.5">
+                @csrf
+
+                <!-- 1. ภาพถ่ายโปรไฟล์ (บีบอัดและแปลงเป็น URL อัตโนมัติ) -->
+                <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                    <label class="block text-xs font-bold text-slate-800 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5">
+                            <span>📷</span>
+                            <span>ภาพถ่ายโปรไฟล์พนักงาน</span>
+                        </span>
+                        <span class="text-[10px] text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                            บีบอัดเป็น URL อัตโนมัติ
+                        </span>
+                    </label>
+
+                    <div class="flex items-center gap-3">
+                        <div class="relative shrink-0">
+                            <img id="popup-avatar-preview"
+                                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23CBD5E1'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E"
+                                 alt="Avatar Preview"
+                                 class="w-14 h-14 rounded-2xl object-cover bg-white border-2 border-dashed border-slate-300 p-0.5 shadow-xs">
+                            <div id="popup-avatar-badge" class="hidden absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold shadow-xs">
+                                ✓
+                            </div>
+                        </div>
+
+                        <div class="flex-1 space-y-1">
+                            <label for="popup-avatar-input"
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-bold text-xs cursor-pointer shadow-2xs transition-all active:scale-95">
+                                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                </svg>
+                                <span>เลือกรูปภาพ...</span>
+                            </label>
+                            <input type="file"
+                                   id="popup-avatar-input"
+                                   accept="image/*"
+                                   onchange="compressAndPreviewAvatar(this)"
+                                   class="hidden">
+                            <input type="hidden" id="popup-avatar-base64" name="avatar_base64">
+                            <p class="text-[10px] text-slate-400 leading-tight">
+                                ระบบจะบีบอัดภาพให้อัตโนมัติเป็น URL ไม่กินเนื้อที่ และโหลดรวดเร็ว
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. ชื่อ-สกุล -->
+                <div class="space-y-1">
+                    <label class="block text-xs font-bold text-slate-700">
+                        ชื่อ-สกุล หรือชื่อเรียก <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text"
+                           id="popup-reg-name"
+                           name="name"
+                           required
+                           placeholder="เช่น วาสนา บัญชีหน้าร้าน หรือ สมชาย"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-900 focus:outline-blue-500 bg-slate-50/60 focus:bg-white transition-all">
+                </div>
+
+                <!-- 3. อีเมลผู้ใช้งาน -->
+                <div class="space-y-1">
+                    <label class="block text-xs font-bold text-slate-700">
+                        อีเมลผู้ใช้งาน (Email) <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="email"
+                           id="popup-reg-email"
+                           name="email"
+                           required
+                           placeholder="เช่น wasana.account@malastreet.com"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-900 focus:outline-blue-500 bg-slate-50/60 focus:bg-white transition-all">
+                </div>
+
+                <!-- 4. รหัสผ่านที่จะตั้ง -->
+                <div class="space-y-1">
+                    <label class="block text-xs font-bold text-slate-700">
+                        พาสเวิร์ดที่จะตั้ง (Password) <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input type="password"
+                               id="popup-reg-password"
+                               name="password"
+                               required
+                               placeholder="กำหนดรหัสผ่าน (เช่น password123)"
+                               class="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-900 focus:outline-blue-500 bg-slate-50/60 focus:bg-white transition-all">
+                        <button type="button"
+                                onclick="togglePopupPasswordVisibility()"
+                                class="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition cursor-pointer">
+                            <span id="popup-eye-icon">👁️</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 5. เบอร์โทรศัพท์ & ตำแหน่งงาน -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-slate-700">
+                            เบอร์โทรศัพท์
+                        </label>
+                        <input type="tel"
+                               id="popup-reg-phone"
+                               name="phone"
+                               placeholder="เช่น 081-234-5678"
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-900 focus:outline-blue-500 bg-slate-50/60 focus:bg-white transition-all">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-slate-700">
+                            ตำแหน่งงาน / แผนก
+                        </label>
+                        <select id="popup-reg-position"
+                                name="position"
+                                class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 focus:outline-blue-500 bg-slate-50/60 focus:bg-white transition-all cursor-pointer">
+                            <option value="พนักงานบัญชี" selected>พนักงานบัญชี (Accountant)</option>
+                            <option value="ผู้ดูแลระบบ (Admin)">ผู้ดูแลระบบ / ผู้ช่วยแอดมิน (Admin)</option>
+                            <option value="พนักงานบริการหน้าร้าน">พนักงานบริการหน้าร้าน (Service)</option>
+                            <option value="พนักงานครัว">พนักงานครัว (Kitchen)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- กล่องข้อความแจ้งเตือนเงื่อนไข: แอดมินข้างในต้องกดอนุญาตก่อน -->
+                <div class="p-3 rounded-2xl bg-amber-50/90 border border-amber-200/90 text-[11px] text-amber-900 flex items-start gap-2.5">
+                    <span class="text-base shrink-0 mt-0.5">🛡️</span>
+                    <div class="leading-relaxed">
+                        <strong>เงื่อนไขความปลอดภัย:</strong> เมื่อกดลงทะเบียนแล้ว <strong>ผู้ดูแลระบบ (Admin) ข้างในระบบต้องกดอนุญาตก่อน</strong> จึงจะสามารถใช้อีเมลนี้ล็อกอินเข้าสู่ระบบได้จริง
+                    </div>
+                </div>
+
+                <!-- Response Alert Area -->
+                <div id="popup-register-alert" class="hidden p-3 rounded-2xl text-xs font-bold"></div>
+
+                <!-- Action Buttons -->
+                <div class="pt-2 flex items-center justify-end gap-2">
+                    <button type="button"
+                            onclick="closeRegisterModal()"
+                            class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-xs transition-all cursor-pointer">
+                        ยกเลิก
+                    </button>
+                    <button type="submit"
+                            id="btn-popup-submit-register"
+                            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 hover:from-red-700 hover:to-amber-700 active:scale-95 text-white font-bold text-xs shadow-md shadow-rose-500/25 transition-all flex items-center gap-1.5 cursor-pointer">
+                        <span>✓</span>
+                        <span>กดลงทะเบียน เพื่อสร้างอีเมลพนักงานบัญชีใหม่</span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
     <!-- Interactive Script -->
     <script>
         function togglePasswordVisibility() {
@@ -245,11 +425,140 @@
             }
         }
 
+        function togglePopupPasswordVisibility() {
+            const pwd = document.getElementById('popup-reg-password');
+            const icon = document.getElementById('popup-eye-icon');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                icon.textContent = '🙈';
+            } else {
+                pwd.type = 'password';
+                icon.textContent = '👁️';
+            }
+        }
+
         function fillQuickUser(email) {
             const emailInput = document.getElementById('login-email');
             const pwdInput = document.getElementById('login-password');
             if (emailInput) emailInput.value = email;
             if (pwdInput) pwdInput.value = 'password123';
+        }
+
+        // Popup Registration Modal Functions
+        function openRegisterModal() {
+            const modal = document.getElementById('modal-register-request');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function closeRegisterModal() {
+            const modal = document.getElementById('modal-register-request');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        // Client-side HTML5 Canvas Image Compression (บีบอัดและแปลงเป็น URL อัตโนมัติ)
+        function compressAndPreviewAvatar(input) {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const maxDimension = 360; // Max 360px
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > height) {
+                        if (width > maxDimension) {
+                            height = Math.round((height * maxDimension) / width);
+                            width = maxDimension;
+                        }
+                    } else {
+                        if (height > maxDimension) {
+                            width = Math.round((width * maxDimension) / height);
+                            height = maxDimension;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Compress to lightweight JPEG Data URL (~25-35KB)
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                    document.getElementById('popup-avatar-preview').src = compressedDataUrl;
+                    document.getElementById('popup-avatar-base64').value = compressedDataUrl;
+                    document.getElementById('popup-avatar-badge').classList.remove('hidden');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Submit Registration Request via AJAX
+        async function submitPopupRegister(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-popup-submit-register');
+            const alertBox = document.getElementById('popup-register-alert');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<span class="animate-spin text-sm">⏳</span><span>กำลังส่งคำขอลงทะเบียน...</span>`;
+            if (alertBox) alertBox.classList.add('hidden');
+
+            const form = document.getElementById('form-popup-register');
+            const formData = new FormData(form);
+
+            try {
+                const res = await fetch("{{ route('register.request') }}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value || '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const json = await res.json();
+                if (json.success) {
+                    if (alertBox) {
+                        alertBox.className = 'p-3 rounded-2xl text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200';
+                        alertBox.innerHTML = `✅ ${json.message}`;
+                        alertBox.classList.remove('hidden');
+                    }
+                    btn.innerHTML = `<span>✓ ส่งคำขอสำเร็จแล้ว!</span>`;
+                    form.reset();
+                    document.getElementById('popup-avatar-preview').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23CBD5E1'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
+                    document.getElementById('popup-avatar-badge').classList.add('hidden');
+
+                    setTimeout(() => {
+                        closeRegisterModal();
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                        if (alertBox) alertBox.classList.add('hidden');
+                    }, 3500);
+                } else {
+                    if (alertBox) {
+                        alertBox.className = 'p-3 rounded-2xl text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200';
+                        alertBox.innerHTML = `⚠️ ${json.message || 'เกิดข้อผิดพลาดในการลงทะเบียน'}`;
+                        alertBox.classList.remove('hidden');
+                    }
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            } catch (err) {
+                if (alertBox) {
+                    alertBox.className = 'p-3 rounded-2xl text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200';
+                    alertBox.innerHTML = `⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง`;
+                    alertBox.classList.remove('hidden');
+                }
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
         }
     </script>
 </body>

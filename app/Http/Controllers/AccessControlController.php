@@ -674,6 +674,8 @@ class AccessControlController extends Controller
             $auditLogs = collect();
         }
 
+        $pendingRegistrations = json_decode(Setting::get('pending_register_requests', '[]'), true) ?: [];
+
         return view('admin.access.index', compact(
             'currentTab',
             'users',
@@ -684,7 +686,8 @@ class AccessControlController extends Controller
             'isTestCleared',
             'activeEmployeeData',
             'autoLogoutSettings',
-            'auditLogs'
+            'auditLogs',
+            'pendingRegistrations'
         ));
     }
 
@@ -1178,6 +1181,242 @@ class AccessControlController extends Controller
         return [
             'online_orders' => ['view' => true, 'add' => true],
         ];
+    }
+
+    /**
+     * Submit a registration request from Login Popup.
+     * Public endpoint: saves to pending queue waiting for admin approval.
+     */
+    public function submitRegistrationRequest(Request $request): JsonResponse
+    {
+        $request->validate([
+            'name' => 'required|string|max:100',
+            'email' => 'required|email|max:150',
+            'password' => 'required|string|min:4|max:100',
+            'phone' => 'nullable|string|max:50',
+            'position' => 'nullable|string|max:100',
+            'role' => 'nullable|string|in:Admin,Employee,Customer',
+            'avatar_base64' => 'nullable|string',
+        ]);
+
+        $name = trim($request->input('name'));
+        $email = strtolower(trim($request->input('email')));
+        $phone = trim($request->input('phone') ?? '-');
+        $password = $request->input('password');
+        $position = trim($request->input('position') ?: 'พนักงานบัญชี');
+        $role = $request->input('role') ?: (str_contains($position, 'Admin') || str_contains($position, 'แอดมิน') ? 'Admin' : 'Employee');
+        $avatarBase64 = $request->input('avatar_base64');
+
+        // Check if email already registered in real users
+        if (User::where('email', $email)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => "อีเมล '{$email}' มีอยู่ในระบบแล้ว กรุณาเข้าสู่ระบบ หรือใช้อีเมลอื่น"
+            ], 422);
+        }
+
+        $pending = json_decode(Setting::get('pending_register_requests', '[]'), true) ?: [];
+        if (collect($pending)->firstWhere('email', $email)) {
+            return response()->json([
+                'success' => false,
+                'message' => "อีเมล '{$email}' ได้ส่งคำขอลงทะเบียนไว้แล้ว อยู่ระหว่างรอผู้ดูแลระบบ (Admin) กดอนุมัติ"
+            ], 422);
+        }
+
+        // Process compressed image and save to permanent file URL
+        $avatarUrl = null;
+        if (!empty($avatarBase64) && str_starts_with($avatarBase64, 'data:image')) {
+            try {
+                $destinationPath = public_path('uploads/users');
+                if (!file_exists($destinationPath)) {
+                    mkdir($destinationPath, 0755, true);
+                }
+                $parts = explode(',', $avatarBase64);
+                $imageData = base64_decode($parts[1] ?? '');
+                if ($imageData) {
+                    $filename = 'user_req_' . time() . '_' . Str::random(6) . '.jpg';
+                    file_put_contents($destinationPath . '/' . $filename, $imageData);
+                    $avatarUrl = asset('uploads/users/' . $filename);
+                }
+            } catch (\Throwable $e) {
+                $avatarUrl = $avatarBase64;
+            }
+        } elseif ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
+            try {
+                $file = $request->file('avatar');
+                $ext = $file->getClientOriginalExtension() ?: 'jpg';
+                $filename = 'user_req_' . time() . '_' . Str::random(6) . '.' . $ext;
+                $destinationPath = public_path('uploads/users');
+                if (!file_exists($destinationPath)) {
+                    mkdir($destinationPath, 0755, true);
+                }
+                $file->move($destinationPath, $filename);
+                $avatarUrl = asset('uploads/users/' . $filename);
+            } catch (\Throwable $e) {}
+        }
+
+        $reqId = 'req_' . time() . '_' . Str::lower(Str::random(4));
+        $newReq = [
+            'id' => $reqId,
+            'name' => $name,
+            'email' => $email,
+            'phone' => $phone,
+            'password' => $password,
+            'role' => $role,
+            'position' => $position,
+            'avatar' => $avatarUrl,
+            'status' => 'pending',
+            'status_label' => 'รอแอดมินอนุมัติ',
+            'created_at' => now()->format('d/m/Y H:i'),
+            'timestamp' => time(),
+        ];
+
+        array_unshift($pending, $newReq);
+        Setting::set('pending_register_requests', json_encode($pending), 'access');
+
+        AuditLog::record(
+            'access',
+            'register_request',
+            "ส่งคำขอลงทะเบียนบัญชีใหม่: {$name} ({$position})",
+            $name,
+            'pending_registration',
+            $reqId
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "ส่งคำขอลงทะเบียนสร้างบัญชี '{$name}' เรียบร้อยแล้ว! กรุณาแจ้งผู้ดูแลระบบ (Admin) เพื่อกดอนุมัติการใช้งาน",
+            'request' => $newReq,
+        ]);
+    }
+
+    /**
+     * Approve a pending registration request.
+     * Creates real User and Employee profile, grants default role permissions.
+     */
+    public function approveRegistrationRequest(Request $request, string $id): JsonResponse
+    {
+        $pending = json_decode(Setting::get('pending_register_requests', '[]'), true) ?: [];
+        $targetIndex = null;
+        $target = null;
+        foreach ($pending as $idx => $r) {
+            if (($r['id'] ?? '') === $id) {
+                $targetIndex = $idx;
+                $target = $r;
+                break;
+            }
+        }
+
+        if (!$target) {
+            return response()->json(['success' => false, 'message' => 'ไม่พบคำขอลงทะเบียนนี้ในระบบ'], 404);
+        }
+
+        $email = strtolower(trim($target['email']));
+        $name = trim($target['name']);
+        $password = $target['password'] ?: 'password123';
+        $role = $target['role'] ?? 'Employee';
+        $position = $target['position'] ?? 'พนักงานบัญชี';
+        $avatarUrl = $target['avatar'] ?? null;
+        $phone = $target['phone'] ?? '-';
+
+        $roleLabels = [
+            'Admin' => 'ผู้ดูแลระบบ (Admin)',
+            'Employee' => 'พนักงานร้าน (Employee)',
+            'Customer' => 'ลูกค้า (Customer)',
+        ];
+        $roleColors = [
+            'Admin' => 'bg-rose-600',
+            'Employee' => 'bg-blue-600',
+            'Customer' => 'bg-emerald-600',
+        ];
+
+        // 1. Create or update real User record in Laravel users table
+        try {
+            User::updateOrCreate(
+                ['email' => $email],
+                [
+                    'name' => $name,
+                    'password' => Hash::make($password),
+                ]
+            );
+        } catch (\Throwable $e) {}
+
+        // 2. Add to active users list
+        $userId = 'usr_' . time() . '_' . Str::lower(Str::random(4));
+        $newUser = [
+            'id' => $userId,
+            'name' => $name,
+            'full_name' => $name,
+            'email' => $email,
+            'phone' => $phone,
+            'role' => $role,
+            'role_label' => $roleLabels[$role] ?? $role,
+            'position' => $position,
+            'initials' => mb_substr($name, 0, 2),
+            'color' => $roleColors[$role] ?? 'bg-blue-600',
+            'avatar' => $avatarUrl,
+            'status' => 'offline',
+            'status_label' => 'ออฟไลน์',
+            'branch' => 'ทุกสาขา',
+            'is_test' => false,
+            'created_at' => now()->toDateTimeString(),
+        ];
+
+        $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true) ?: [];
+        array_unshift($savedUsers, $newUser);
+        Setting::set('access_users_list', json_encode($savedUsers), 'access');
+
+        // 3. Grant default role permissions
+        $permissions = $this->getDefaultPermissionsForRole($role);
+        Setting::set('permissions_user_' . $userId, json_encode($permissions), 'access');
+
+        // 4. Remove from pending list
+        array_splice($pending, $targetIndex, 1);
+        Setting::set('pending_register_requests', json_encode($pending), 'access');
+
+        AuditLog::record(
+            'access',
+            'approve_registration',
+            "อนุมัติคำขอสร้างบัญชี: {$name} ({$position})",
+            $name,
+            'user',
+            (string) $userId
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "อนุมัติสร้างบัญชี '{$name}' ({$position}) เรียบร้อยแล้ว! พนักงานสามารถเข้าสู่ระบบได้ทันที",
+            'user' => $newUser,
+            'remaining_count' => count($pending)
+        ]);
+    }
+
+    /**
+     * Reject and delete a pending registration request.
+     */
+    public function rejectRegistrationRequest(Request $request, string $id): JsonResponse
+    {
+        $pending = json_decode(Setting::get('pending_register_requests', '[]'), true) ?: [];
+        $target = collect($pending)->firstWhere('id', $id);
+        $name = $target['name'] ?? $id;
+
+        $filtered = array_values(array_filter($pending, fn($r) => ($r['id'] ?? '') !== $id));
+        Setting::set('pending_register_requests', json_encode($filtered), 'access');
+
+        AuditLog::record(
+            'access',
+            'reject_registration',
+            "ปฏิเสธคำขอลงทะเบียน: {$name}",
+            $name,
+            'pending_registration',
+            $id
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "ปฏิเสธและลบคำขอลงทะเบียนของ '{$name}' เรียบร้อยแล้ว",
+            'remaining_count' => count($filtered)
+        ]);
     }
 }
 

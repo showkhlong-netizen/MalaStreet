@@ -109,6 +109,11 @@
                 </svg>
                 <span>ลงทะเบียนขอสิทธิ์</span>
                 <span class="px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 text-[10px] font-bold">สร้างบัญชีจริง</span>
+                @if(!empty($pendingRegistrations) && count($pendingRegistrations) > 0)
+                    <span id="subtab-pending-badge" class="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-bold animate-pulse shadow-xs">
+                        {{ count($pendingRegistrations) }} รออนุมัติ
+                    </span>
+                @endif
             </button>
 
             <!-- 5. ประวัติการทำงาน (Audit Log) -->
@@ -755,6 +760,89 @@
                         </button>
                     </div>
                 </form>
+
+                <!-- ===================================================================== -->
+                <!-- การ์ดใหม่ด้านล่างของการ์ดตามภาพที่ 2: รองรับพนักงานบัญชีใหม่ (คำขอรอแอดมินอนุมัติ) -->
+                <!-- ===================================================================== -->
+                <div id="card-pending-registrations" class="mt-4 pt-4 border-t border-slate-200/80 space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-2">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-9 h-9 rounded-2xl bg-amber-500/10 text-amber-600 border border-amber-200/80 flex items-center justify-center shrink-0 shadow-2xs font-bold text-base">
+                                🔔
+                            </span>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="text-sm sm:text-base font-black text-slate-900 leading-tight">
+                                        คำขอลงทะเบียนพนักงานบัญชีและผู้ใช้ใหม่
+                                    </h3>
+                                    <span id="badge-pending-count" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10.5px] font-bold border border-amber-200 shadow-2xs">
+                                        {{ count($pendingRegistrations ?? []) }} คำขอรออนุมัติ
+                                    </span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 font-medium">
+                                    รายการที่ส่งคำขอมาจากหน้า Login — ผู้ดูแลระบบต้องกด "อนุญาต" เพื่อสร้างบัญชีและเปิดใช้งาน
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- รายการคำขอรออนุมัติ -->
+                    <div id="pending-registrations-list" class="space-y-2.5">
+                        @forelse(($pendingRegistrations ?? []) as $req)
+                            <div id="pending-card-{{ $req['id'] }}" class="p-3 sm:p-3.5 rounded-2xl border border-slate-200/90 bg-slate-50/70 hover:bg-white hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    @if(!empty($req['avatar']))
+                                        <img src="{{ $req['avatar'] }}" alt="{{ $req['name'] }}" class="w-12 h-12 rounded-2xl object-cover border border-slate-200 shadow-xs shrink-0">
+                                    @else
+                                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-600 text-white font-black text-base flex items-center justify-center shrink-0 shadow-xs">
+                                            {{ mb_substr($req['name'], 0, 2) }}
+                                        </div>
+                                    @endif
+                                    <div class="min-w-0 space-y-0.5">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <h4 class="text-sm font-black text-slate-900 truncate">{{ $req['name'] }}</h4>
+                                            <span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 border border-blue-200 text-[10px] font-bold">
+                                                {{ $req['position'] ?? 'พนักงานบัญชี' }}
+                                            </span>
+                                            <span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-bold">
+                                                ⏳ รอแอดมินอนุมัติ
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
+                                            <span class="font-mono text-slate-700">✉ {{ $req['email'] }}</span>
+                                            @if(!empty($req['phone']) && $req['phone'] !== '-')
+                                                <span>• 📞 {{ $req['phone'] }}</span>
+                                            @endif
+                                            <span class="text-[10.5px] text-slate-400">• {{ $req['created_at'] ?? 'เมื่อสักครู่' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                    <button type="button"
+                                            onclick="approveRegistrationRequest('{{ $req['id'] }}', '{{ addslashes($req['name']) }}')"
+                                            class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                        </svg>
+                                        <span>กดอนุญาต / อนุมัติใช้งาน</span>
+                                    </button>
+                                    <button type="button"
+                                            onclick="rejectRegistrationRequest('{{ $req['id'] }}', '{{ addslashes($req['name']) }}')"
+                                            class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold text-xs transition-all cursor-pointer">
+                                        ✕ ปฏิเสธ
+                                    </button>
+                                </div>
+                            </div>
+                        @empty
+                            <div id="pending-empty-state" class="py-7 text-center space-y-1.5 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                                <span class="text-2xl block">📭</span>
+                                <p class="text-xs font-bold text-slate-700">ไม่มีคำขอลงทะเบียนใหม่ที่รอดำเนินการ</p>
+                                <p class="text-[10.5px] text-slate-400">เมื่อพนักงานบัญชีกดลงทะเบียนจากหน้าเข้าสู่ระบบ รายการจะมาปรากฏที่การ์ดนี้เพื่อให้แอดมินกดอนุญาต</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
             </div>
             <!-- END PANEL 2 -->
 
@@ -3157,6 +3245,153 @@
             text.innerText = msg;
             toast.classList.remove('hidden');
             setTimeout(() => toast.classList.add('hidden'), 3500);
+        }
+    }
+
+    // 21.1 Handle Approve Registration Request
+    async function approveRegistrationRequest(id, name) {
+        if (!confirm(`ยืนยันการอนุมัติสิทธิ์ให้ "${name}" เป็นพนักงานบัญชีใหม่หรือไม่?\n\nเมื่ออนุมัติแล้ว ระบบจะสร้างบัญชีผู้ใช้งานจริงและสามารถล็อกอินเข้าสู่ระบบได้ทันที`)) {
+            return;
+        }
+
+        const card = document.getElementById(`pending-card-${id}`);
+        if (card) {
+            card.style.opacity = '0.6';
+            card.style.pointerEvents = 'none';
+        }
+
+        try {
+            const res = await fetch(`/admin/access/register-requests/${encodeURIComponent(id)}/approve`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                showToast(`✓ อนุมัติ "${name}" เป็นพนักงานบัญชีเรียบร้อยแล้ว`);
+                updatePendingCount(-1);
+
+                if (card) {
+                    card.style.opacity = '1';
+                    card.style.pointerEvents = 'auto';
+                    card.className = "p-3 sm:p-3.5 rounded-2xl border border-emerald-300 bg-emerald-50/90 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs";
+                    card.innerHTML = `
+                        <div class="flex items-center gap-2.5 text-emerald-900 min-w-0">
+                            <span class="w-8 h-8 rounded-xl bg-emerald-600 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-2xs">✓</span>
+                            <div class="min-w-0">
+                                <div class="text-xs sm:text-sm font-bold truncate">อนุมัติ "${name}" เข้าสู่ระบบเรียบร้อยแล้ว!</div>
+                                <div class="text-[11px] text-emerald-700">บัญชีพนักงานบัญชีพร้อมใช้งาน สามารถเข้าสู่ระบบได้ทันที</div>
+                            </div>
+                        </div>
+                        <a href="{{ route('admin.access.index') }}?tab=users" class="px-3.5 py-1.5 rounded-xl bg-white border border-emerald-300 hover:bg-emerald-100 text-emerald-800 font-bold text-xs transition-all shrink-0 text-center">
+                            ดูในรายชื่อผู้ใช้ทั้งหมด →
+                        </a>
+                    `;
+                }
+            } else {
+                alert(data.message || 'เกิดข้อผิดพลาดในการอนุมัติคำขอ');
+                if (card) {
+                    card.style.opacity = '1';
+                    card.style.pointerEvents = 'auto';
+                }
+            }
+        } catch (err) {
+            console.error(err);
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
+            if (card) {
+                card.style.opacity = '1';
+                card.style.pointerEvents = 'auto';
+            }
+        }
+    }
+
+    // 21.2 Handle Reject Registration Request
+    async function rejectRegistrationRequest(id, name) {
+        if (!confirm(`ต้องการปฏิเสธคำขอลงทะเบียนของ "${name}" ใช่หรือไม่?`)) {
+            return;
+        }
+
+        const card = document.getElementById(`pending-card-${id}`);
+        if (card) {
+            card.style.opacity = '0.5';
+            card.style.pointerEvents = 'none';
+        }
+
+        try {
+            const res = await fetch(`/admin/access/register-requests/${encodeURIComponent(id)}/reject`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                showToast(`ปฏิเสธคำขอของ "${name}" เรียบร้อย`);
+                updatePendingCount(-1);
+                if (card) {
+                    card.remove();
+                    checkPendingEmptyState();
+                }
+            } else {
+                alert(data.message || 'เกิดข้อผิดพลาดในการปฏิเสธคำขอ');
+                if (card) {
+                    card.style.opacity = '1';
+                    card.style.pointerEvents = 'auto';
+                }
+            }
+        } catch (err) {
+            console.error(err);
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
+            if (card) {
+                card.style.opacity = '1';
+                card.style.pointerEvents = 'auto';
+            }
+        }
+    }
+
+    function updatePendingCount(delta) {
+        const badge = document.getElementById('badge-pending-count');
+        const subtabBadge = document.getElementById('subtab-pending-badge');
+        
+        let currentCount = 0;
+        if (badge) {
+            const match = badge.innerText.match(/\d+/);
+            if (match) currentCount = parseInt(match[0], 10);
+        }
+        const newCount = Math.max(0, currentCount + delta);
+
+        if (badge) {
+            badge.innerText = `${newCount} คำขอรออนุมัติ`;
+            if (newCount === 0) badge.classList.add('hidden');
+            else badge.classList.remove('hidden');
+        }
+        if (subtabBadge) {
+            subtabBadge.innerText = `${newCount} รออนุมัติ`;
+            if (newCount === 0) subtabBadge.classList.add('hidden');
+            else subtabBadge.classList.remove('hidden');
+        }
+        checkPendingEmptyState();
+    }
+
+    function checkPendingEmptyState() {
+        const list = document.getElementById('pending-registrations-list');
+        if (!list) return;
+        const remainingCards = list.querySelectorAll('[id^="pending-card-"]');
+        if (remainingCards.length === 0) {
+            list.innerHTML = `
+                <div id="pending-empty-state" class="py-7 text-center space-y-1.5 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                    <span class="text-2xl block">📭</span>
+                    <p class="text-xs font-bold text-slate-700">ไม่มีคำขอลงทะเบียนใหม่ที่รอดำเนินการ</p>
+                    <p class="text-[10.5px] text-slate-400">เมื่อพนักงานบัญชีกดลงทะเบียนจากหน้าเข้าสู่ระบบ รายการจะมาปรากฏที่การ์ดนี้เพื่อให้แอดมินกดอนุญาต</p>
+                </div>
+            `;
         }
     }
 

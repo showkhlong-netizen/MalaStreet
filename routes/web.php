@@ -31,6 +31,7 @@ Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
 Route::match(['get', 'post'], '/switch-user/{userId}', [AuthController::class, 'switchUser'])->name('switch_user')->middleware('auth');
+Route::post('/register-request', [AccessControlController::class, 'submitRegistrationRequest'])->name('register.request');
 
 // 1. บริการหน้าร้าน (In-Store POS & Kitchen Display) - ต้องเข้าสู่ระบบ (Requires Auth)
 Route::prefix('pos')->name('pos.')->middleware('auth')->group(function () {
@@ -110,6 +111,8 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::post('/access/users/{id}/toggle-status', [AccessControlController::class, 'toggleStatus'])->name('access.users.toggle_status');
     Route::post('/access/users/clear-test', [AccessControlController::class, 'clearTestUsers'])->name('access.clear_test_users');
     Route::post('/access/settings', [AccessControlController::class, 'updateSettings'])->name('access.update_settings');
+    Route::post('/access/register-requests/{id}/approve', [AccessControlController::class, 'approveRegistrationRequest'])->name('access.register_requests.approve');
+    Route::post('/access/register-requests/{id}/reject', [AccessControlController::class, 'rejectRegistrationRequest'])->name('access.register_requests.reject');
 });
 
 // Shortcut alias for employees & access - ต้องเข้าสู่ระบบ (Requires Auth)
