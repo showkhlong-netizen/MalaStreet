@@ -1383,6 +1383,12 @@
             <!-- PANEL 4: ระบบเช็คเอาท์อัตโนมัติ (Auto-Logout & Security Policies Card)   -->
             <!-- ===================================================================== -->
             <div id="panel-autologout" class="w-full max-w-full bg-white rounded-3xl p-3.5 sm:p-5 border border-slate-200/90 shadow-sm space-y-4 {{ $currentTab === 'autologout' ? '' : 'hidden' }} max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin">
+                @php
+                    $curTimeout = (int)($autoLogoutSettings['timeout_minutes'] ?? 15);
+                    $curAction = $autoLogoutSettings['timeout_action'] ?? 'lock_screen';
+                    $curLabel = ($curTimeout === 0) ? 'ปิดใช้งาน' : (($curTimeout >= 60) ? ($curTimeout / 60) . ' ชม.' : $curTimeout . ' นาที');
+                    $actHeaderLabel = ($curAction === 'lock_screen') ? 'ล็อกหน้าจอ (PIN)' : (($curAction === 'full_logout') ? 'ล็อกเอาท์' : 'สลับพนักงาน');
+                @endphp
                 
                 <!-- 1. Header Bar: Icon Clock SVG + Title + Subtitle + ชุดปุ่มบันทึกและคืนค่าเริ่มต้นอยู่บรรทัดเดียวกันฝั่งขวาสุด -->
                 <div class="flex flex-col xl:flex-row xl:items-center justify-between pb-3.5 border-b border-slate-100 gap-3.5">
@@ -1399,7 +1405,7 @@
                                         ระบบเช็คเอาท์อัตโนมัติ (Auto-Logout &amp; Security Policies)
                                     </h2>
                                     <span id="panel-autologout-status-text" class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10.5px] font-bold">
-                                        ● สถานะ: <strong>{{ $curLabel }}</strong> • {{ ($curAction === 'lock_screen') ? 'ล็อกหน้าจอ (PIN)' : (($curAction === 'full_logout') ? 'ล็อกเอาท์' : 'สลับพนักงาน') }}
+                                        ● สถานะ: <strong>{{ $curLabel }}</strong> • {{ $actHeaderLabel }}
                                     </span>
                                 </div>
                                 <p class="text-[11px] text-slate-500 font-medium pt-0.5">
