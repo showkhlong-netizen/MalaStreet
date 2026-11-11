@@ -136,9 +136,10 @@
 
             <!-- --------------------------------------------------------------------- -->
             <!-- LEFT COLUMN: ผู้ใช้งาน (Users / Staff List) (Col-span-4 / Col-span-3)   -->
+            <!-- การ์ดผู้ใช้งานลอยตามเมื่อเลื่อนหน้าต่างสิทธิ์การเข้าถึง (Sticky Floating Card) -->
             <!-- --------------------------------------------------------------------- -->
             <div id="col-users-list" 
-                 class="{{ in_array($currentTab, ['autologout', 'audit', 'register']) ? 'hidden ' : '' }}lg:col-span-4 xl:col-span-3 bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-sm space-y-3.5"
+                 class="{{ in_array($currentTab, ['autologout', 'audit', 'register']) ? 'hidden ' : '' }}lg:col-span-4 xl:col-span-3 lg:sticky lg:top-[88px] self-start bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-sm space-y-3.5 z-20 transition-all"
                  style="{{ in_array($currentTab, ['autologout', 'audit', 'register']) ? 'display: none;' : '' }}">
                 <!-- Header with count badge and quick actions -->
                 <div class="flex items-center justify-between">
@@ -188,8 +189,8 @@
                     </svg>
                 </div>
 
-                <!-- Users Scrollable List -->
-                <div id="users-list-container" class="space-y-2 max-h-[640px] overflow-y-auto pr-1">
+                <!-- Users Scrollable List (ภายในกล่องลอยตัว เลื่อนดูรายชื่อได้สะดวกไม่ล้นจอ) -->
+                <div id="users-list-container" class="space-y-2 max-h-[calc(100vh-280px)] min-h-[300px] overflow-y-auto pr-1 scrollbar-thin">
                     @foreach($users as $u)
                         @php
                             $isSelected = ($u['id'] === ($selectedUser['id'] ?? ''));
