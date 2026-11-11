@@ -300,55 +300,56 @@
                             </div>
                         </div>
 
-                        <div class="flex flex-col items-center sm:items-end gap-2.5 pt-0.5">
-                            <div class="flex flex-wrap items-center justify-center gap-2.5">
+                        <div class="flex flex-col gap-2.5 pt-0.5 w-full">
+                            <!-- แถวที่ 1: แสกนใบเสร็จเพิ่ม, สต็อกไม้คงเหลือ, ตารางประวัติทั้งหมด (อยู่บรรทัดเดียวกัน ตารางประวัติทั้งหมดอยู่แถบขวาสุด) -->
+                            <div class="grid grid-cols-3 gap-2 w-full">
                                 <!-- 1. แสกนใบเสร็จเพิ่ม -->
                                 <a
                                     href="{{ route('admin.receipts.index') }}"
-                                    class="py-2 px-5 rounded-xl bg-[#E50914] hover:bg-[#C8102E] text-white text-[13px] font-semibold shadow-md shadow-[#E50914]/25 inline-flex items-center gap-2 transition-all active:scale-[0.99]"
+                                    class="py-2 sm:py-2.5 px-2 rounded-xl bg-[#E50914] hover:bg-[#C8102E] text-white text-[12px] sm:text-[12.5px] font-semibold shadow-md shadow-[#E50914]/25 flex items-center justify-center gap-1.5 transition-all active:scale-[0.99] text-center"
                                 >
                                     <svg class="w-4 h-4 shrink-0 stroke-current" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                                     </svg>
-                                    <span>แสกนใบเสร็จเพิ่ม</span>
+                                    <span class="truncate">แสกนใบเสร็จเพิ่ม</span>
                                 </a>
 
-                                <!-- 2. สต็อกไม้คงเหลือ (แถบที่ 2 จาก 3 ปุ่ม ต่อฝั่งขวาของปุ่ม แสกนใบเสร็จเพิ่ม) -->
+                                <!-- 2. สต็อกไม้คงเหลือ -->
                                 <a
                                     href="{{ route('admin.inventory.index') }}"
-                                    class="py-2 px-5 rounded-xl bg-[#E50914] hover:bg-[#C8102E] text-white text-[13px] font-semibold shadow-md shadow-[#E50914]/25 inline-flex items-center gap-2 transition-all active:scale-[0.99]"
+                                    class="py-2 sm:py-2.5 px-2 rounded-xl bg-[#E50914] hover:bg-[#C8102E] text-white text-[12px] sm:text-[12.5px] font-semibold shadow-md shadow-[#E50914]/25 flex items-center justify-center gap-1.5 transition-all active:scale-[0.99] text-center"
                                 >
                                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                     </svg>
-                                    <span>สต็อกไม้คงเหลือ</span>
+                                    <span class="truncate">สต็อกไม้คงเหลือ</span>
                                 </a>
-                            </div>
 
-                            <div class="flex flex-wrap items-center justify-center gap-2">
-                                <!-- แถบใหม่: เพิ่มรายการ (ตั้งฝั่งซ้ายของแถบตารางประวัติทั้งหมด ตามภาพที่ 1) -->
-                                <button
-                                    type="button"
-                                    onclick="openCreateMaterialModal()"
-                                    class="py-2 px-4 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-[#2E3440] text-[12.5px] font-medium inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:border hover:border-slate-300"
-                                    title="เพิ่มรายการวัตถุดิบและข้อมูลสต็อกใหม่"
-                                >
-                                    <svg class="w-3.5 h-3.5 text-[#E50914]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M12 5v14M5 12h14"/>
-                                    </svg>
-                                    <span>เพิ่มรายการ</span>
-                                </button>
-
-                                <!-- 3. ตารางประวัติทั้งหมด -->
+                                <!-- 3. ตารางประวัติทั้งหมด (อยู่แถบขวาสุด) -->
                                 <a
                                     href="#price-ledger-section"
-                                    class="py-2 px-4 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-[#2E3440] text-[12.5px] font-medium inline-flex items-center gap-1.5 transition-all"
+                                    class="py-2 sm:py-2.5 px-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-[#2E3440] text-[12px] sm:text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-2xs hover:border hover:border-slate-300 text-center"
                                 >
-                                    <span>ตารางประวัติทั้งหมด</span>
-                                    <span class="px-1.5 py-0.2 rounded-full bg-white text-[#E50914] font-semibold text-[11px] shadow-2xs">{{ $priceHistories->total() }}</span>
+                                    <span class="truncate">ตารางประวัติทั้งหมด</span>
+                                    <span class="px-1.5 py-0.2 rounded-full bg-white text-[#E50914] font-semibold text-[11px] shadow-2xs shrink-0">{{ $priceHistories->total() }}</span>
                                 </a>
                             </div>
+
+                            <!-- แถวที่ 2: เพิ่มรายการ (อยู่เดี่ยวๆ ปรับให้ใหญ่และเด่นทั้งแถบ ความยาวแถบเสมอกับสามแถบด้านบน) -->
+                            <button
+                                type="button"
+                                onclick="openCreateMaterialModal()"
+                                class="w-full py-2.5 sm:py-3 px-4 rounded-xl bg-gradient-to-r from-[#8B0912] via-[#E50914] to-[#8B0912] hover:from-[#73070E] hover:via-[#C8102E] hover:to-[#73070E] text-white text-[13.5px] sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md shadow-[#E50914]/25 hover:shadow-lg transition-all cursor-pointer active:scale-[0.99] border border-white/20"
+                                title="เพิ่มรายการวัตถุดิบและข้อมูลสต็อกใหม่"
+                            >
+                                <span class="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                                    <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 5v14M5 12h14"/>
+                                    </svg>
+                                </span>
+                                <span class="tracking-wide">เพิ่มรายการ</span>
+                            </button>
                         </div>
                     </div>
                 </div>
