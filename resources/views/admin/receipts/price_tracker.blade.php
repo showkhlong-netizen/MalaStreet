@@ -3093,6 +3093,13 @@
                 },
                 body: formData,
             });
+
+            if (res.status === 401) {
+                alert('เซสชันการเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+                window.location.href = "{{ route('login') }}";
+                return;
+            }
+
             const result = await res.json();
             if (!res.ok || !result.success) {
                 alert(result.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');

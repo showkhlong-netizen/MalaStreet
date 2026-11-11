@@ -474,6 +474,28 @@
                 }
             }, 1000);
         })();
+
+        // Global Fetch Interceptor for 401 Unauthenticated / Session Expiry
+        (function() {
+            if (typeof window.fetch !== 'function') return;
+            const originalFetch = window.fetch;
+            window.fetch = async function(...args) {
+                try {
+                    const response = await originalFetch.apply(this, args);
+                    if (response && response.status === 401) {
+                        const path = window.location.pathname;
+                        if (!path.startsWith('/order') && !path.startsWith('/login')) {
+                            console.warn('Session expired or unauthenticated. Redirecting to login...');
+                            alert('เซสชันการเข้าสู่ระบบหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+                            window.location.href = "{{ route('login') }}";
+                        }
+                    }
+                    return response;
+                } catch (err) {
+                    throw err;
+                }
+            };
+        })();
     </script>
 
     @stack('scripts')
