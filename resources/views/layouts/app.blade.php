@@ -108,13 +108,13 @@
                         <span class="text-[10.5px] font-medium mt-1 leading-none tracking-tight whitespace-nowrap">ภาพรวมร้าน</span>
                     </a>
 
-                    <!-- 5. ตรวจจับราคา (มีปุ่ม แสกนใบเสร็จเพิ่ม & สต็อกไม้คงเหลือ ด้านใน) -->
+                    <!-- 5. สต๊อกสินค้า (มีปุ่ม แสกนใบเสร็จเพิ่ม & สต็อกไม้คงเหลือ ด้านใน) -->
                     <a href="{{ route('admin.receipts.price_tracker') }}" 
                        class="group flex flex-col items-center justify-center px-3.5 py-1.5 rounded-2xl transition-all duration-150 {{ request()->routeIs('admin.receipts.*') || request()->routeIs('admin.inventory.*') ? 'bg-slate-900 text-amber-400 border border-amber-500/40 shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-900/90' }}">
                         <svg class="w-6 h-6 transition-transform group-hover:scale-110 {{ request()->routeIs('admin.receipts.*') || request()->routeIs('admin.inventory.*') ? 'text-amber-400' : 'text-slate-300 group-hover:text-white' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         </svg>
-                        <span class="text-[10.5px] font-medium mt-1 leading-none tracking-tight whitespace-nowrap">ตรวจจับราคา</span>
+                        <span class="text-[10.5px] font-medium mt-1 leading-none tracking-tight whitespace-nowrap">สต๊อกสินค้า</span>
                     </a>
 
                     <!-- 9. พนักงาน (สแกนหน้าเข้างาน & สรุปเงินเดือน) -->
@@ -294,7 +294,7 @@
             <a href="{{ route('pos.kitchen') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('pos.kitchen') ? 'bg-rose-600 text-white font-bold' : 'text-slate-400' }}">จอครัว</a>
             <a href="{{ route('online.index') }}" class="shrink-0 px-3 py-1.5 rounded-xl text-amber-400 border border-amber-500/30">สั่งออนไลน์</a>
             <a href="{{ route('admin.dashboard') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('admin.dashboard') ? 'bg-slate-800 text-white font-bold' : 'text-slate-400' }}">ภาพรวม</a>
-            <a href="{{ route('admin.receipts.price_tracker') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('admin.receipts.*') ? 'bg-slate-800 text-white font-bold' : 'text-slate-400' }}">ตรวจจับราคา</a>
+            <a href="{{ route('admin.receipts.price_tracker') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('admin.receipts.*') ? 'bg-slate-800 text-white font-bold' : 'text-slate-400' }}">สต๊อกสินค้า</a>
             <a href="{{ route('admin.inventory.index') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('admin.inventory.*') ? 'bg-slate-800 text-white font-bold' : 'text-slate-400' }}">สต็อกไม้</a>
             <a href="{{ route('admin.employees.index') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('admin.employees.*') ? 'bg-slate-800 text-white font-bold' : 'text-slate-400' }}">พนักงาน</a>
             <a href="{{ route('admin.access.index') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('admin.access.*') ? 'bg-blue-600 text-white font-bold' : 'text-slate-400' }}">การเข้าถึง</a>
