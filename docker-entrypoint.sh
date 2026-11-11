@@ -31,3 +31,4 @@ php artisan storage:link || true
 
 echo "Starting Apache Web Server..."
 exec apache2-foreground
+
