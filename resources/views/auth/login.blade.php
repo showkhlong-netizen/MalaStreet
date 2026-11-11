@@ -208,8 +208,14 @@
                         <button type="button" 
                                 onclick="fillQuickUser('{{ $qu['email'] }}')" 
                                 class="flex items-center gap-2 p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700/60 text-left transition-all cursor-pointer group">
-                            @if(!empty($qu['avatar']))
-                                <img src="{{ $qu['avatar'] }}" alt="{{ $qu['name'] }}" class="w-6 h-6 rounded-full object-cover shrink-0">
+                            @php
+                                $quAvatar = !empty($qu['avatar']) ? preg_replace('#^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?/#', '/', $qu['avatar']) : null;
+                            @endphp
+                            @if(!empty($quAvatar))
+                                <img src="{{ $quAvatar }}" alt="{{ $qu['name'] }}" class="w-6 h-6 rounded-full object-cover shrink-0" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+                                <div class="hidden w-6 h-6 rounded-full {{ $qu['color'] ?? 'bg-rose-600' }} text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                                    {{ $qu['initials'] ?? 'US' }}
+                                </div>
                             @else
                                 <div class="w-6 h-6 rounded-full {{ $qu['color'] ?? 'bg-rose-600' }} text-white text-[10px] font-bold flex items-center justify-center shrink-0">
                                     {{ $qu['initials'] ?? 'US' }}

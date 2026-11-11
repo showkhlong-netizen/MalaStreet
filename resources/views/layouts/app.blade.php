@@ -1000,10 +1000,32 @@
                 };
             }
 
-            // Initial sync check + periodic 3.5s real-time polling
+            // Smart Adaptive Real-Time Polling:
+            // - Active visible tab: polls smoothly every 4.5s
+            // - Background/minimized tab: throttles to 30s (reduces background load by 85%)
+            // - Instantly wakes up and syncs the moment the user switches back to the tab
+            let pollTimer = null;
+            function scheduleNextPoll() {
+                if (pollTimer) clearTimeout(pollTimer);
+                const delay = document.hidden ? 30000 : 4500;
+                pollTimer = setTimeout(async () => {
+                    await pollSyncState(false);
+                    scheduleNextPoll();
+                }, delay);
+            }
+
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    pollSyncState(false);
+                    scheduleNextPoll();
+                }
+            });
+
             document.addEventListener('DOMContentLoaded', () => {
-                setTimeout(() => pollSyncState(false), 500);
-                setInterval(() => pollSyncState(false), 3500);
+                setTimeout(() => {
+                    pollSyncState(false);
+                    scheduleNextPoll();
+                }, 500);
             });
         })();
     </script>

@@ -3316,7 +3316,11 @@
             const savedCols = parseInt(localStorage.getItem('mala_receipts_grid_cols')) || 4;
             setReceiptGridColumns(savedCols);
         } catch (e) {}
-        setInterval(refreshReceiptsLiveState, 20000);
+        setInterval(() => {
+            if (!document.hidden) {
+                refreshReceiptsLiveState();
+            }
+        }, 25000);
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 refreshReceiptsLiveState();

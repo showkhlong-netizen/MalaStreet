@@ -1,5 +1,5 @@
-/* Mala Street — 4 weight font kit. Official Prompt from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap');
+/* Mala Street — 4 weight font kit. Prompt loaded via <link> in HTML head */
+/* @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap'); */
 
 :root {
   --mala-font-family: 'Prompt', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;

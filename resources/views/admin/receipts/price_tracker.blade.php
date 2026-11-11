@@ -64,35 +64,35 @@
         }
 
         if (!empty($mat->image_url)) {
-            $path = preg_replace('#^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?/#', '', $mat->image_url);
-            $img = str_starts_with($path, 'http') ? $path : asset(ltrim($path, '/'));
+            $path = preg_replace('#^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?/#', '/', $mat->image_url);
+            $img = str_starts_with($path, 'http') ? $path : '/' . ltrim($path, '/');
         } elseif (str_contains($name, 'เอ็นไก่') || str_contains($name, 'ไก่ห่อ') || str_contains($name, 'ไก่ย่าง') || str_contains($name, 'เทอร์โบ')) {
-            $img = asset('assets/ingredients/chicken-tendon.png');
+            $img = '/assets/ingredients/chicken-tendon.png';
         } elseif (str_contains($name, 'ไส้กรอก') || str_contains($name, 'โบโลน่า') || str_contains($name, 'ค็อกเทล') || str_contains($name, 'ไก่ยอ')) {
-            $img = asset('assets/ingredients/sausage-smoked.png');
+            $img = '/assets/ingredients/sausage-smoked.png';
         } elseif (str_contains($name, 'ลูกชิ้น') || str_contains($name, 'ปูอัด') || str_contains($name, 'ปูไลน์') || str_contains($name, 'ทูนิมิ') || str_contains($name, 'เกี๊ยว')) {
-            $img = asset('assets/ingredients/fishball-phuket.png');
+            $img = '/assets/ingredients/fishball-phuket.png';
         } elseif (str_contains($name, 'หมู') || str_contains($name, 'สามชั้น') || str_contains($name, 'สันใน') || str_contains($name, 'เบาว์ราช')) {
-            $img = asset('assets/ingredients/pork-belly-sliced.png');
+            $img = '/assets/ingredients/pork-belly-sliced.png';
         } elseif (str_contains($name, 'เนื้อ') || str_contains($name, 'โคขุน')) {
-            $img = asset('assets/ingredients/beef-ribeye-sliced.png');
+            $img = '/assets/ingredients/beef-ribeye-sliced.png';
         } elseif (str_contains($name, 'เต้าหู้') || str_contains($name, 'ฟองเต้าหู้') || str_contains($name, 'ไข่')) {
-            $img = asset('assets/ingredients/tofu-fried-roll.png');
+            $img = '/assets/ingredients/tofu-fried-roll.png';
         } elseif (str_contains($name, 'เห็ด')) {
-            $img = asset('assets/ingredients/mushroom-fresh.png');
+            $img = '/assets/ingredients/mushroom-fresh.png';
         } elseif (str_contains($name, 'ผัก')) {
-            $img = asset('assets/ingredients/vegetable-greens.png');
+            $img = '/assets/ingredients/vegetable-greens.png';
         } else {
             $catImgMap = [
-                'beef' => asset('assets/ingredients/beef-ribeye-sliced.png'),
-                'pork-chicken' => asset('assets/ingredients/pork-belly-sliced.png'),
-                'meatball-sausage' => asset('assets/ingredients/fishball-phuket.png'),
-                'vegetables' => asset('assets/ingredients/vegetable-greens.png'),
-                'tofu-noodles' => asset('assets/ingredients/tofu-fried-roll.png'),
-                'snacks' => asset('assets/categories/snacks.png'),
-                'beverages' => asset('assets/categories/drinks.png'),
+                'beef' => '/assets/ingredients/beef-ribeye-sliced.png',
+                'pork-chicken' => '/assets/ingredients/pork-belly-sliced.png',
+                'meatball-sausage' => '/assets/ingredients/fishball-phuket.png',
+                'vegetables' => '/assets/ingredients/vegetable-greens.png',
+                'tofu-noodles' => '/assets/ingredients/tofu-fried-roll.png',
+                'snacks' => '/assets/categories/snacks.png',
+                'beverages' => '/assets/categories/drinks.png',
             ];
-            $img = $catImgMap[$catSlug] ?? asset('assets/ingredients/fishball-phuket.png');
+            $img = $catImgMap[$catSlug] ?? '/assets/ingredients/fishball-phuket.png';
         }
 
         return [
@@ -103,27 +103,32 @@
     };
 
     $categoryIconMap = [
-        'beef' => asset('assets/categories/beef.png'),
-        'pork-chicken' => asset('assets/categories/pork-chicken.png'),
-        'meatball-sausage' => asset('assets/categories/meatballs.png'),
-        'vegetables' => asset('assets/categories/vegetables.png'),
-        'tofu-noodles' => asset('assets/categories/tofu.png'),
-        'snacks' => asset('assets/categories/snacks.png'),
-        'beverages' => asset('assets/categories/drinks.png'),
+        'beef' => '/assets/categories/beef.png',
+        'pork-chicken' => '/assets/categories/pork-chicken.png',
+        'meatball-sausage' => '/assets/categories/meatballs.png',
+        'vegetables' => '/assets/categories/vegetables.png',
+        'tofu-noodles' => '/assets/categories/tofu.png',
+        'snacks' => '/assets/categories/snacks.png',
+        'beverages' => '/assets/categories/drinks.png',
     ];
 
     $presetIngredientImages = [
-        ['label' => 'เอ็นไก่ / หมูพันเห็ด', 'url' => asset('assets/ingredients/chicken-tendon.png')],
-        ['label' => 'ไส้กรอก / ลูกชิ้นย่าง', 'url' => asset('assets/ingredients/sausage-smoked.png')],
-        ['label' => 'ลูกชิ้นปลาภูเก็ต', 'url' => asset('assets/ingredients/fishball-phuket.png')],
-        ['label' => 'หมูสามชั้นสไลซ์', 'url' => asset('assets/ingredients/pork-belly-sliced.png')],
-        ['label' => 'เนื้อใบพายโคขุน', 'url' => asset('assets/ingredients/beef-ribeye-sliced.png')],
-        ['label' => 'ฟองเต้าหู้ / เต้าหู้', 'url' => asset('assets/ingredients/tofu-fried-roll.png')],
-        ['label' => 'เห็ดสด', 'url' => asset('assets/ingredients/mushroom-fresh.png')],
-        ['label' => 'ผักกาด / ผักสด', 'url' => asset('assets/ingredients/vegetable-greens.png')],
+        ['label' => 'เอ็นไก่ / หมูพันเห็ด', 'url' => '/assets/ingredients/chicken-tendon.png'],
+        ['label' => 'ไส้กรอก / ลูกชิ้นย่าง', 'url' => '/assets/ingredients/sausage-smoked.png'],
+        ['label' => 'ลูกชิ้นปลาภูเก็ต', 'url' => '/assets/ingredients/fishball-phuket.png'],
+        ['label' => 'หมูสามชั้นสไลซ์', 'url' => '/assets/ingredients/pork-belly-sliced.png'],
+        ['label' => 'เนื้อใบพายโคขุน', 'url' => '/assets/ingredients/beef-ribeye-sliced.png'],
+        ['label' => 'ฟองเต้าหู้ / เต้าหู้', 'url' => '/assets/ingredients/tofu-fried-roll.png'],
+        ['label' => 'เห็ดสด', 'url' => '/assets/ingredients/mushroom-fresh.png'],
+        ['label' => 'ผักกาด / ผักสด', 'url' => '/assets/ingredients/vegetable-greens.png'],
     ];
 
-    $heroImage = $heroSettings['hero_image'] ?? asset('assets/ingredients/hero-price-art-left.png');
+    $heroImage = !empty($heroSettings['hero_image'])
+        ? (preg_replace('#^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?/#', '/', $heroSettings['hero_image']))
+        : '/assets/ingredients/hero-price-art-left.png';
+    if (!str_starts_with($heroImage, 'http') && !str_starts_with($heroImage, '/')) {
+        $heroImage = '/' . $heroImage;
+    }
     $heroTitle = $heroSettings['hero_title'] ?? 'ระบบตรวจจับราคาขึ้น-ลง & ร้านค้าอ้างอิง';
     $heroSubtitle = $heroSettings['hero_subtitle'] ?? 'ติดตามความผันผวนของราคาวัตถุดิบสำคัญได้ ไม่ว่าจะขึ้นหรือลง เช่น เอ็นไก่, เนื้อวัว, ผักสด ฯลฯ เพื่อเลือกซื้อร้านที่ถูกที่สุด';
 @endphp
@@ -3620,7 +3625,11 @@
             } catch (e) {}
         }
 
-        setInterval(refreshPriceTrackerData, 20000);
+        setInterval(() => {
+            if (!document.hidden) {
+                refreshPriceTrackerData();
+            }
+        }, 25000);
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 refreshPriceTrackerData();

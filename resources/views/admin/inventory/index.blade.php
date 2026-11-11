@@ -1158,7 +1158,11 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        setInterval(refreshInventoryLiveState, 15000);
+        setInterval(() => {
+            if (!document.hidden) {
+                refreshInventoryLiveState();
+            }
+        }, 20000);
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 refreshInventoryLiveState();

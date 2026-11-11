@@ -977,8 +977,12 @@
             } catch (e) {}
         }
 
-        // Live polling every 20 seconds to keep stocks, names & photos synchronized
-        setInterval(refreshPosMenuLive, 20000);
+        // Live polling to keep stocks, names & photos synchronized (paused when tab hidden)
+        setInterval(function() {
+            if (!document.hidden) {
+                refreshPosMenuLive();
+            }
+        }, 20000);
         document.addEventListener('visibilitychange', function() {
             if (document.visibilityState === 'visible') {
                 refreshPosMenuLive();

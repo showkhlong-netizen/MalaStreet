@@ -1216,7 +1216,7 @@ class ReceiptController extends Controller
             ? (float) $validated['cost_per_stick']
             : round($newPrice / $yieldSticks, 2);
 
-        $imageUrl = $validated['image_url'] ?? asset('assets/ingredients/chicken-tendon.png');
+        $imageUrl = self::sanitizeImageUrl($validated['image_url'] ?? '/assets/ingredients/chicken-tendon.png');
         if ($request->hasFile('image_file')) {
             $file = $request->file('image_file');
             if ($file && $file->isValid()) {
@@ -1226,7 +1226,7 @@ class ReceiptController extends Controller
                 }
                 $filename = 'mat_new_' . time() . '_' . Str::random(5) . '.' . $file->getClientOriginalExtension();
                 $file->move($destDir, $filename);
-                $imageUrl = asset('assets/ingredients/custom/' . $filename);
+                $imageUrl = '/assets/ingredients/custom/' . $filename;
             }
         }
 
@@ -1415,7 +1415,7 @@ class ReceiptController extends Controller
             ? (float) $validated['cost_per_stick']
             : round($newPrice / $yieldSticks, 2);
 
-        $imageUrl = $validated['image_url'] ?? $rawMaterial->image_url;
+        $imageUrl = self::sanitizeImageUrl($validated['image_url'] ?? $rawMaterial->image_url);
 
         if ($request->hasFile('image_file')) {
             $file = $request->file('image_file');
@@ -1426,7 +1426,7 @@ class ReceiptController extends Controller
                 }
                 $filename = 'mat_' . $rawMaterial->id . '_' . time() . '.' . $file->getClientOriginalExtension();
                 $file->move($destDir, $filename);
-                $imageUrl = asset('assets/ingredients/custom/' . $filename);
+                $imageUrl = '/assets/ingredients/custom/' . $filename;
             }
         }
 
@@ -1645,7 +1645,7 @@ class ReceiptController extends Controller
             'hero_image_file' => 'nullable|image|max:8192',
         ]);
 
-        $heroImage = $validated['hero_image_url'] ?? null;
+        $heroImage = self::sanitizeImageUrl($validated['hero_image_url'] ?? null);
 
         if ($request->hasFile('hero_image_file')) {
             $file = $request->file('hero_image_file');
@@ -1655,7 +1655,7 @@ class ReceiptController extends Controller
             }
             $filename = 'hero_price_' . time() . '.' . $file->getClientOriginalExtension();
             $file->move($destDir, $filename);
-            $heroImage = asset('assets/ingredients/custom/' . $filename);
+            $heroImage = '/assets/ingredients/custom/' . $filename;
         }
 
         $updates = [];
@@ -2031,5 +2031,25 @@ class ReceiptController extends Controller
         }
 
         return redirect()->back()->with('success', 'สร้างหมวดหมู่ "' . $category->name . '" สำเร็จแล้ว');
+    }
+
+    /**
+     * Sanitize image URLs to ensure safe root-relative paths across all hosts.
+     */
+    public static function sanitizeImageUrl(?string $url): ?string
+    {
+        if (empty($url)) {
+            return null;
+        }
+        if (preg_match('#^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?(/.*)$#i', $url, $m)) {
+            return $m[1];
+        }
+        if (str_starts_with($url, '/assets/') || str_starts_with($url, '/uploads/')) {
+            return $url;
+        }
+        if (str_starts_with($url, 'assets/') || str_starts_with($url, 'uploads/')) {
+            return '/' . $url;
+        }
+        return $url;
     }
 }

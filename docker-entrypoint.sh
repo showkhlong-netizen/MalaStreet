@@ -17,6 +17,7 @@ mkdir -p /var/www/html/database
 if [ ! -f /var/www/html/database/database.sqlite ]; then
     touch /var/www/html/database/database.sqlite
 fi
+sqlite3 /var/www/html/database/database.sqlite "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;" 2>/dev/null || true
 
 # Fix permissions
 chown -R www-data:www-data /var/www/html/database /var/www/html/storage /var/www/html/bootstrap/cache
