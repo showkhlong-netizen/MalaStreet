@@ -338,10 +338,19 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                                     </svg>
 
+                                    @php
+                                        $moduleItemIds = array_column($module['items'], 'id');
+                                        $moduleCheckedCount = 0;
+                                        foreach ($moduleItemIds as $mId) {
+                                            if (!empty($userPermissions[$mId])) $moduleCheckedCount++;
+                                        }
+                                        $isModuleChecked = ($moduleCheckedCount > 0);
+                                    @endphp
+
                                     <!-- Module Checkbox (toggle all in module) -->
                                     <input type="checkbox"
                                            id="chk-mod-{{ $module['id'] }}"
-                                           checked
+                                           {{ $isModuleChecked ? 'checked' : '' }}
                                            onclick="event.stopPropagation(); toggleModuleCheckboxes('{{ $module['id'] }}', this.checked)"
                                            class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer">
 
@@ -363,13 +372,20 @@
                             <!-- Accordion Body -->
                             <div id="module-body-{{ $module['id'] }}" class="p-3.5 sm:p-4 space-y-3 border-t border-slate-100 divide-y divide-slate-100">
                                 @foreach($module['items'] as $item)
+                                    @php
+                                        $itemPerm = $userPermissions[$item['id']] ?? null;
+                                        $isItemChecked = !empty($itemPerm);
+                                    @endphp
                                     <div class="pt-3 first:pt-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
                                         <!-- Item Checkbox, Icon, Name & Description -->
                                         <div class="flex items-start gap-2.5 min-w-0 flex-1">
                                             <input type="checkbox"
                                                    name="perm_item_{{ $item['id'] }}"
                                                    id="chk-item-{{ $item['id'] }}"
-                                                   checked
+                                                   data-item-id="{{ $item['id'] }}"
+                                                   data-module-id="{{ $module['id'] }}"
+                                                   {{ $isItemChecked ? 'checked' : '' }}
+                                                   onchange="handleItemCheckboxChange('{{ $item['id'] }}', '{{ $module['id'] }}', this.checked)"
                                                    class="item-checkbox mod-{{ $module['id'] }}-chk mt-0.5 w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer">
                                             <div class="min-w-0">
                                                 <div class="flex items-center gap-1.5">
@@ -386,65 +402,27 @@
 
                                         <!-- Granular Action Pills: [ดู] [เพิ่ม] [แก้ไข] [ลบ] [สลับสาขา] [ส่งออก] (Matches Image 2) -->
                                         <div class="flex items-center gap-1.5 shrink-0 flex-wrap">
-                                            @if(in_array('view', $item['available_actions']))
+                                            @foreach($item['available_actions'] as $act)
+                                                @php
+                                                    $isActActive = !empty($itemPerm[$act]);
+                                                    $actLabel = match($act) {
+                                                        'view' => 'ดู',
+                                                        'add' => 'เพิ่ม',
+                                                        'edit' => 'แก้ไข',
+                                                        'delete' => 'ลบ',
+                                                        'switch' => 'สลับสาขา',
+                                                        'export' => 'ส่งออก',
+                                                        default => $act
+                                                    };
+                                                @endphp
                                                 <button type="button"
                                                         data-item="{{ $item['id'] }}"
-                                                        data-action="view"
+                                                        data-action="{{ $act }}"
                                                         onclick="toggleActionPill(this)"
-                                                        class="action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer bg-blue-50 text-blue-700 border-blue-200 whitespace-nowrap">
-                                                    ดู
+                                                        class="action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer whitespace-nowrap {{ $isActActive ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-slate-100 text-slate-400 border-slate-200 line-through' }}">
+                                                    {{ $actLabel }}
                                                 </button>
-                                            @endif
-
-                                            @if(in_array('add', $item['available_actions']))
-                                                <button type="button"
-                                                        data-item="{{ $item['id'] }}"
-                                                        data-action="add"
-                                                        onclick="toggleActionPill(this)"
-                                                        class="action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer bg-blue-50 text-blue-700 border-blue-200 whitespace-nowrap">
-                                                    เพิ่ม
-                                                </button>
-                                            @endif
-
-                                            @if(in_array('edit', $item['available_actions']))
-                                                <button type="button"
-                                                        data-item="{{ $item['id'] }}"
-                                                        data-action="edit"
-                                                        onclick="toggleActionPill(this)"
-                                                        class="action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer bg-blue-50 text-blue-700 border-blue-200 whitespace-nowrap">
-                                                    แก้ไข
-                                                </button>
-                                            @endif
-
-                                            @if(in_array('delete', $item['available_actions']))
-                                                <button type="button"
-                                                        data-item="{{ $item['id'] }}"
-                                                        data-action="delete"
-                                                        onclick="toggleActionPill(this)"
-                                                        class="action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer bg-blue-50 text-blue-700 border-blue-200 whitespace-nowrap">
-                                                    ลบ
-                                                </button>
-                                            @endif
-
-                                            @if(in_array('switch', $item['available_actions']))
-                                                <button type="button"
-                                                        data-item="{{ $item['id'] }}"
-                                                        data-action="switch"
-                                                        onclick="toggleActionPill(this)"
-                                                        class="action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer bg-blue-50 text-blue-700 border-blue-200 whitespace-nowrap">
-                                                    สลับสาขา
-                                                </button>
-                                            @endif
-
-                                            @if(in_array('export', $item['available_actions']))
-                                                <button type="button"
-                                                        data-item="{{ $item['id'] }}"
-                                                        data-action="export"
-                                                        onclick="toggleActionPill(this)"
-                                                        class="action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer bg-blue-50 text-blue-700 border-blue-200 whitespace-nowrap">
-                                                    ส่งออก
-                                                </button>
-                                            @endif
+                                            @endforeach
                                         </div>
                                     </div>
                                 @endforeach
@@ -1916,32 +1894,14 @@
 </div>
 
 <script>
-    // Selected User State
+    // Selected User & Tab State
+    let currentTab = "{{ $currentTab }}";
     let currentSelectedUserId = "{{ $selectedUser['id'] }}";
     let currentSelectedUserName = "{{ $selectedUser['name'] }} ({{ $selectedUser['role'] }})";
 
     // 1. Switch User from Left Column
     function selectUser(userId) {
-        currentSelectedUserId = userId;
-        
-        // Update user card highlights
-        document.querySelectorAll('.user-card').forEach(card => {
-            if (card.dataset.userId === userId) {
-                card.className = "user-card p-3 rounded-2xl flex items-center justify-between gap-2.5 cursor-pointer transition-all border-2 border-[#2563EB] bg-[#EFF6FF]/70 shadow-2xs";
-                currentSelectedUserName = card.dataset.userName + " (" + card.dataset.userRole + ")";
-            } else {
-                card.className = "user-card p-3 rounded-2xl flex items-center justify-between gap-2.5 cursor-pointer transition-all border border-slate-200/80 bg-white hover:bg-slate-50 hover:border-slate-300";
-            }
-        });
-
-        // Update badge
-        const badge = document.getElementById('active-user-badge');
-        if (badge) badge.innerText = currentSelectedUserName;
-
-        const simTitle = document.getElementById('sim-user-title');
-        if (simTitle) simTitle.innerText = "มุมมองของ: " + currentSelectedUserName;
-
-        showToast("สลับสิทธิ์การเข้าถึงเป็น: " + currentSelectedUserName);
+        window.location.href = "{{ route('admin.access.index') }}?tab=" + encodeURIComponent(currentTab) + "&user_id=" + encodeURIComponent(userId);
     }
 
     // 2. Filter Users Search Box
@@ -1975,16 +1935,49 @@
     function toggleModuleCheckboxes(moduleId, isChecked) {
         document.querySelectorAll(`.mod-${moduleId}-chk`).forEach(chk => {
             chk.checked = isChecked;
+            const itemId = chk.dataset.itemId;
+            document.querySelectorAll(`.action-pill[data-item="${itemId}"]`).forEach(btn => {
+                if (isChecked) {
+                    btn.className = "action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer whitespace-nowrap bg-blue-50 text-blue-700 border-blue-200";
+                } else {
+                    btn.className = "action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer whitespace-nowrap bg-slate-100 text-slate-400 border-slate-200 line-through";
+                }
+            });
         });
+    }
+
+    // 4.1 Handle single item checkbox change
+    function handleItemCheckboxChange(itemId, moduleId, isChecked) {
+        document.querySelectorAll(`.action-pill[data-item="${itemId}"]`).forEach(btn => {
+            if (isChecked) {
+                btn.className = "action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer whitespace-nowrap bg-blue-50 text-blue-700 border-blue-200";
+            } else {
+                btn.className = "action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer whitespace-nowrap bg-slate-100 text-slate-400 border-slate-200 line-through";
+            }
+        });
+
+        const allItemsInMod = document.querySelectorAll(`.mod-${moduleId}-chk`);
+        const anyChecked = Array.from(allItemsInMod).some(c => c.checked);
+        const modChk = document.getElementById(`chk-mod-${moduleId}`);
+        if (modChk) modChk.checked = anyChecked;
     }
 
     // 5. Toggle Action Pill (ดู, เพิ่ม, แก้ไข, ลบ, สลับสาขา, ส่งออก)
     function toggleActionPill(btn) {
         const isCurrentActive = btn.classList.contains('bg-blue-50');
+        const itemId = btn.dataset.item;
+        const itemChk = document.getElementById(`chk-item-${itemId}`);
+
         if (isCurrentActive) {
-            btn.className = "action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer bg-slate-100 text-slate-400 border-slate-200 line-through";
+            btn.className = "action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer whitespace-nowrap bg-slate-100 text-slate-400 border-slate-200 line-through";
         } else {
-            btn.className = "action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer bg-blue-50 text-blue-700 border-blue-200";
+            btn.className = "action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer whitespace-nowrap bg-blue-50 text-blue-700 border-blue-200";
+            if (itemChk && !itemChk.checked) {
+                itemChk.checked = true;
+                const modId = itemChk.dataset.moduleId;
+                const modChk = document.getElementById(`chk-mod-${modId}`);
+                if (modChk) modChk.checked = true;
+            }
         }
     }
 
@@ -1998,9 +1991,9 @@
         });
         document.querySelectorAll('.action-pill').forEach(btn => {
             if (isChecked) {
-                btn.className = "action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer bg-blue-50 text-blue-700 border-blue-200";
+                btn.className = "action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer whitespace-nowrap bg-blue-50 text-blue-700 border-blue-200";
             } else {
-                btn.className = "action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer bg-slate-100 text-slate-400 border-slate-200 line-through";
+                btn.className = "action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer whitespace-nowrap bg-slate-100 text-slate-400 border-slate-200 line-through";
             }
         });
         showToast(isChecked ? "เลือกสิทธิ์ทั้งหมดเรียบร้อย" : "ยกเลิกสิทธิ์ทั้งหมดเรียบร้อย");
@@ -2011,10 +2004,29 @@
         showToast("คัดลอกรูปแบบสิทธิ์ของ " + currentSelectedUserName + " เรียบร้อยแล้ว (สามารถนำไปวางให้ผู้ใช้อื่นได้)");
     }
 
-    // 8. Reset Permissions to Default
+    // 8. Reset Permissions to Default based on User Role
+    const defaultRolePerms = @json($defaultRolePermissions ?? []);
     function resetPermissionsDefault() {
-        toggleSelectAllPermissions(true);
-        showToast("รีเซ็ตสิทธิ์เป็นค่ามาตรฐานเรียบร้อย");
+        document.querySelectorAll('.item-checkbox').forEach(chk => {
+            const itemId = chk.dataset.itemId;
+            const hasPerm = Boolean(defaultRolePerms[itemId]);
+            chk.checked = hasPerm;
+            document.querySelectorAll(`.action-pill[data-item="${itemId}"]`).forEach(btn => {
+                const act = btn.dataset.action;
+                const actActive = Boolean(defaultRolePerms[itemId] && defaultRolePerms[itemId][act]);
+                if (actActive) {
+                    btn.className = "action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer whitespace-nowrap bg-blue-50 text-blue-700 border-blue-200";
+                } else {
+                    btn.className = "action-pill px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition-all cursor-pointer whitespace-nowrap bg-slate-100 text-slate-400 border-slate-200 line-through";
+                }
+            });
+        });
+        document.querySelectorAll('input[id^="chk-mod-"]').forEach(modChk => {
+            const modId = modChk.id.replace('chk-mod-', '');
+            const anyChecked = Array.from(document.querySelectorAll(`.mod-${modId}-chk`)).some(c => c.checked);
+            modChk.checked = anyChecked;
+        });
+        showToast("รีเซ็ตสิทธิ์เป็นค่ามาตรฐานของ " + "{{ $selectedUser['role_label'] ?? $selectedUser['role'] ?? 'พนักงาน' }}" + " เรียบร้อย");
     }
 
     // 9. Save All Permissions via AJAX
@@ -2022,14 +2034,18 @@
         const btn = document.getElementById('btn-save-permissions');
         btn.innerHTML = `<span class="animate-spin">⏳</span><span>กำลังบันทึก...</span>`;
 
-        const activePermissions = [];
+        const permissions = {};
         document.querySelectorAll('.item-checkbox:checked').forEach(chk => {
-            activePermissions.push(chk.name);
-        });
-
-        const activeActions = [];
-        document.querySelectorAll('.action-pill.bg-blue-50').forEach(pill => {
-            activeActions.push(pill.dataset.item + ':' + pill.dataset.action);
+            const itemId = chk.dataset.itemId;
+            permissions[itemId] = {};
+            document.querySelectorAll(`.action-pill[data-item="${itemId}"]`).forEach(pill => {
+                if (pill.classList.contains('bg-blue-50')) {
+                    permissions[itemId][pill.dataset.action] = true;
+                }
+            });
+            if (Object.keys(permissions[itemId]).length === 0) {
+                permissions[itemId]['view'] = true;
+            }
         });
 
         try {
@@ -2041,15 +2057,14 @@
                 },
                 body: JSON.stringify({
                     user_id: currentSelectedUserId,
-                    permissions: activePermissions,
-                    actions: activeActions
+                    permissions: permissions
                 })
             });
             const json = await res.json();
             setTimeout(() => {
                 btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg><span>บันทึกการเปลี่ยนแปลง</span>`;
                 showToast("บันทึกสิทธิ์ของ " + currentSelectedUserName + " เรียบร้อยแล้ว!");
-            }, 500);
+            }, 400);
         } catch (e) {
             btn.innerHTML = `<span>บันทึกการเปลี่ยนแปลง</span>`;
             showToast("บันทึกการเปลี่ยนแปลงเรียบร้อย");
@@ -2116,6 +2131,15 @@
 
     // 13. Sub-Tab Switcher (จัดการพนักงานและแอดมิน / สิทธิ์การเข้าถึง / ระบบเช็คเอาท์อัตโนมัติ / ลงทะเบียนขอสิทธิ์)
     function switchSubTab(tab) {
+        currentTab = tab;
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.set('tab', tab);
+            if (currentSelectedUserId) {
+                url.searchParams.set('user_id', currentSelectedUserId);
+            }
+            window.history.pushState({}, '', url.toString());
+        } catch(e) {}
         const pPermissions = document.getElementById('panel-permissions');
         const pRegister = document.getElementById('panel-register');
         const pUsers = document.getElementById('panel-users');
@@ -2588,7 +2612,7 @@
 
     // F. Switch Employee Profile
     function switchEmployeeProfile(userId) {
-        window.location.href = "{{ route('admin.access.index') }}?tab=users&user_id=" + encodeURIComponent(userId);
+        window.location.href = "{{ route('admin.access.index') }}?tab=" + encodeURIComponent(currentTab) + "&user_id=" + encodeURIComponent(userId);
     }
 
     // KPI Banner Calculation & Toggle

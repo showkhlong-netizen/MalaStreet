@@ -520,6 +520,9 @@ class AccessControlController extends Controller
         // Retrieve saved user permissions
         $savedPermissionsKey = "permissions_user_" . ($selectedUser['id'] ?? 'default');
         $userPermissions = json_decode(Setting::get($savedPermissionsKey, '{}'), true);
+        if (empty($userPermissions) && !empty($selectedUser['role'])) {
+            $userPermissions = $this->getDefaultPermissionsForRole($selectedUser['role']);
+        }
 
         // Retrieve Employee Extended Data (Schedule, Profile, Payroll, Leaves - Matching Image 2)
         $selectedUserId = $selectedUser['id'] ?? null;
@@ -599,12 +602,15 @@ class AccessControlController extends Controller
             'audit_log' => true,
         ], $savedSettings);
 
+        $defaultRolePermissions = $this->getDefaultPermissionsForRole($selectedUser['role'] ?? 'Employee');
+
         return view('admin.access.index', compact(
             'currentTab',
             'users',
             'selectedUser',
             'permissionModules',
             'userPermissions',
+            'defaultRolePermissions',
             'isTestCleared',
             'activeEmployeeData',
             'autoLogoutSettings'
