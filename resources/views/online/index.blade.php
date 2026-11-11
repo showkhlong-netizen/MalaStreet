@@ -453,14 +453,18 @@
                 <!-- Items 2–8: Category Pills with Circular Icon + Name -->
                 @foreach($categories as $category)
                     @php
-                        $catImg = $categoryImageMap[$category->slug] ?? 'assets/categories/beef.png';
-                        $shortName = $CategoryShortNames[$category->slug] ?? $category->name;
+                        // ใช้ชื่อและไอคอนจากฐานข้อมูล (ซิงค์กับหน้าสต๊อกสินค้า) ถ้าไม่มีค่อยใช้ค่าเริ่มต้น
+                        $catImg = !empty($category->icon) && !in_array($category->icon, ['🥩', '🍗', '🍢', '🥬', '🍥', '🥤', '🍟'])
+                            ? (str_starts_with($category->icon, 'http') ? $category->icon : asset($category->icon))
+                            : asset($categoryImageMap[$category->slug] ?? 'assets/categories/beef.png');
+                        $shortName = $category->name ?: ($CategoryShortNames[$category->slug] ?? '');
                     @endphp
                     <button type="button"
+                            data-cat="{{ $category->slug }}"
                             onclick="filterOnlineCategory('{{ $category->slug }}', this)"
                             class="online-cat-pill shrink-0 h-[38px] px-3 rounded-full border border-slate-200/90 bg-white text-[#101114] flex items-center gap-2 cursor-pointer transition-all shadow-2xs hover:border-[#E60018]">
                         <div class="cat-circle w-6 h-6 rounded-full overflow-hidden shrink-0 border border-slate-100">
-                            <img src="{{ asset($catImg) }}"
+                            <img src="{{ $catImg }}"
                                  alt="{{ $shortName }}"
                                  class="w-full h-full object-cover">
                         </div>
@@ -1522,6 +1526,86 @@
             container.appendChild(el);
             setTimeout(() => el.remove(), 2200);
         }
+
+        // 🔄 Real-time category sync with Stock / Price Tracker page (ชื่อหมวดหมู่, ไอคอน, การอนุมัติแสดงผล)
+        function syncOnlineCategoryPills(categories) {
+            if (!Array.isArray(categories)) return;
+            const activeSlugs = new Set(categories.map(c => c.slug));
+            categories.forEach(c => {
+                const pill = document.querySelector(`.online-cat-pill[data-cat="${c.slug}"]`);
+                if (!pill) return;
+                const label = pill.querySelector('.cat-label');
+                if (label && c.name && label.textContent.trim() !== c.name) {
+                    label.textContent = c.name;
+                }
+                const img = pill.querySelector('img');
+                if (img && c.icon && img.getAttribute('src') !== c.icon) {
+                    img.src = c.icon;
+                }
+                if (img && c.name) {
+                    img.alt = c.name;
+                }
+                pill.style.display = '';
+            });
+            if (activeSlugs.size > 0) {
+                document.querySelectorAll('.online-cat-pill[data-cat]').forEach(pill => {
+                    const slug = pill.getAttribute('data-cat');
+                    if (slug && slug !== 'all' && !activeSlugs.has(slug)) {
+                        pill.style.display = 'none';
+                    }
+                });
+            }
+        }
+
+        async function refreshOnlineCategoriesLive() {
+            try {
+                const res = await fetch('/order?categories_json=1', {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+                if (data && data.success && Array.isArray(data.categories)) {
+                    syncOnlineCategoryPills(data.categories);
+                }
+            } catch (e) {}
+        }
+
+        function applyOnlineCategorySyncMessage(data) {
+            if (!data || !data.action) return;
+            const oldSlug = data.old_slug || data.slug;
+            const pill = document.querySelector(`.online-cat-pill[data-cat="${oldSlug}"]`);
+            if (data.action === 'category_deleted' || (data.action === 'category_updated' && data.is_active === false)) {
+                if (pill) pill.style.display = 'none';
+                return;
+            }
+            if (data.action === 'category_updated' && pill) {
+                if (data.slug && data.slug !== oldSlug) {
+                    pill.setAttribute('data-cat', data.slug);
+                    pill.setAttribute('onclick', `filterOnlineCategory('${data.slug}', this)`);
+                    document.querySelectorAll(`[data-category="${oldSlug}"]`).forEach(item => item.setAttribute('data-category', data.slug));
+                }
+                const label = pill.querySelector('.cat-label');
+                if (label && data.name) label.textContent = data.name;
+                const img = pill.querySelector('img');
+                if (img && data.icon) img.src = data.icon;
+                pill.style.display = '';
+            }
+            refreshOnlineCategoriesLive();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if ('BroadcastChannel' in window) {
+                try {
+                    const catChannel = new BroadcastChannel('mala_category_sync_channel');
+                    catChannel.onmessage = (ev) => applyOnlineCategorySyncMessage(ev.data);
+                } catch (e) {}
+            }
+            setInterval(() => {
+                if (!document.hidden) refreshOnlineCategoriesLive();
+            }, 20000);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') refreshOnlineCategoriesLive();
+            });
+        });
     </script>
 </body>
 </html>

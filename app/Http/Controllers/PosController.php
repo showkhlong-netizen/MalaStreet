@@ -40,6 +40,13 @@ class PosController extends Controller
                     'raw_material_id' => $p->raw_material_id,
                     'category_slug' => $p->category->slug ?? 'all',
                 ])->values(),
+                // Active categories (name/icon) so the cashier pills stay in sync with the stock page
+                'categories' => $categories->map(fn ($c) => [
+                    'id' => $c->id,
+                    'slug' => $c->slug,
+                    'name' => $c->name,
+                    'icon' => (empty($c->icon) || in_array($c->icon, ['🥩', '🍗', '🍢', '🥬', '🍥', '🥤', '🍟'])) ? null : (str_starts_with($c->icon, 'http') ? $c->icon : asset($c->icon)),
+                ])->values(),
             ]);
         }
 

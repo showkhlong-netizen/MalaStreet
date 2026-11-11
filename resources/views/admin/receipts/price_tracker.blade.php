@@ -2792,6 +2792,12 @@
                     catBtn.setAttribute('data-active', resData.is_active ? '1' : '0');
                 }
                 updateCategoryApprovalButtonUI(resData.is_active);
+                broadcastCategorySync({
+                    action: 'category_updated',
+                    slug: currentMatCategory,
+                    old_slug: currentMatCategory,
+                    is_active: !!resData.is_active
+                });
                 showPriceToast(resData.message);
 
                 // Update all cards belonging to this category in memory
@@ -4345,6 +4351,17 @@
         }
     }
 
+    // Broadcast category change to Online Order (/order) and Cashier (/pos) tabs
+    function broadcastCategorySync(payload) {
+        if ('BroadcastChannel' in window) {
+            try {
+                const ch = new BroadcastChannel('mala_category_sync_channel');
+                ch.postMessage(payload);
+                ch.close();
+            } catch (e) {}
+        }
+    }
+
     async function submitEditCategoryForm(e) {
         e.preventDefault();
         const form = document.getElementById('category-edit-form');
@@ -4421,6 +4438,16 @@
                     }
                     updateCategoryApprovalButtonUI(cat.is_active);
                 }
+
+                // 5. Broadcast live update to Online Order & POS Cashier tabs
+                broadcastCategorySync({
+                    action: 'category_updated',
+                    slug: newSlug,
+                    old_slug: oldSlug,
+                    name: cat.name,
+                    icon: cat.icon,
+                    is_active: !!cat.is_active
+                });
 
                 closeEditCategoryModal();
                 showPriceToast(data.message || 'บันทึกการแก้ไขหมวดหมู่สำเร็จแล้ว');
@@ -4513,6 +4540,13 @@
                 if (currentMatCategory === slug) {
                     filterMaterialsByCategory('all');
                 }
+
+                // 5. Broadcast deletion to Online Order & POS Cashier tabs
+                broadcastCategorySync({
+                    action: 'category_deleted',
+                    slug: slug,
+                    old_slug: slug
+                });
 
                 closeEditCategoryModal();
                 showPriceToast(data.message || `ลบหมวดหมู่ "${catName}" เรียบร้อยแล้ว`);

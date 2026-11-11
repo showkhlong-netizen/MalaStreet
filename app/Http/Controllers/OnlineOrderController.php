@@ -24,8 +24,22 @@ class OnlineOrderController extends Controller
     /**
      * Grab Food 100% Style Online Storefront for Takeaway Pickup.
      */
-    public function index(): View
+    public function index(Request $request): View|JsonResponse
     {
+        // Lightweight live-sync endpoint: active category names/icons (synced with the stock page)
+        if ($request->boolean('categories_json')) {
+            $emojiIcons = ['🥩', '🍗', '🍢', '🥬', '🍥', '🥤', '🍟'];
+            return response()->json([
+                'success' => true,
+                'categories' => Category::where('is_active', true)->orderBy('sort_order')->get()
+                    ->map(fn ($c) => [
+                        'slug' => $c->slug,
+                        'name' => $c->name,
+                        'icon' => (empty($c->icon) || in_array($c->icon, $emojiIcons)) ? null : (str_starts_with($c->icon, 'http') ? $c->icon : asset($c->icon)),
+                    ])->values(),
+            ]);
+        }
+
         $categories = Category::where('is_active', true)
             ->with(['products' => function ($query) {
                 $query->with('rawMaterial')

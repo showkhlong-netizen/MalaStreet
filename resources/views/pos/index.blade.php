@@ -974,6 +974,11 @@
                 receiptSyncChannel.onmessage = function() {
                     refreshPosMenuLive();
                 };
+
+                const categorySyncChannel = new BroadcastChannel('mala_category_sync_channel');
+                categorySyncChannel.onmessage = function(ev) {
+                    applyCategorySyncMessage(ev.data);
+                };
             } catch (e) {}
         }
 
@@ -1629,7 +1634,55 @@
                     }
                 });
             }
+            if (data && data.success && Array.isArray(data.categories)) {
+                syncPosCategoryPills(data.categories);
+            }
         } catch (e) {}
+    }
+
+    // 🔄 Keep category pills (name / icon / visibility) in sync with the stock page (สต๊อกสินค้า)
+    function syncPosCategoryPills(categories) {
+        const activeSlugs = new Set(categories.map(c => c.slug));
+        categories.forEach(c => {
+            const pill = document.querySelector(`.cat-pill[data-cat="${c.slug}"]`);
+            if (!pill) return;
+            const label = pill.querySelector('.cat-label');
+            if (label && c.name && label.textContent !== c.name) label.textContent = c.name;
+            const img = pill.querySelector('img');
+            if (img && c.icon && img.getAttribute('src') !== c.icon) img.src = c.icon;
+            if (img && c.name) img.alt = c.name;
+            pill.style.display = '';
+        });
+        if (activeSlugs.size > 0) {
+            document.querySelectorAll('.cat-pill[data-cat]').forEach(pill => {
+                const slug = pill.getAttribute('data-cat');
+                if (slug && slug !== 'all' && !activeSlugs.has(slug)) pill.style.display = 'none';
+            });
+        }
+    }
+
+    function applyCategorySyncMessage(data) {
+        if (!data || !data.action) return;
+        const oldSlug = data.old_slug || data.slug;
+        const pill = document.querySelector(`.cat-pill[data-cat="${oldSlug}"]`);
+        if (data.action === 'category_deleted' || (data.action === 'category_updated' && data.is_active === false)) {
+            if (pill) pill.style.display = 'none';
+            return;
+        }
+        if (data.action === 'category_updated' && pill) {
+            if (data.slug && data.slug !== oldSlug) {
+                pill.setAttribute('data-cat', data.slug);
+                pill.setAttribute('onclick', `filterCategory('${data.slug}', this)`);
+                document.querySelectorAll(`.product-card[data-category="${oldSlug}"]`).forEach(card => card.setAttribute('data-category', data.slug));
+            }
+            const label = pill.querySelector('.cat-label');
+            if (label && data.name) label.textContent = data.name;
+            const img = pill.querySelector('img');
+            if (img && data.icon) img.src = data.icon;
+            pill.style.display = '';
+            showPosSyncToast(`ซิงค์หมวดหมู่ "${data.name || ''}" จากหน้าสต๊อกสินค้าแล้ว`);
+        }
+        refreshPosMenuLive();
     }
 
     function showPosSyncToast(msg) {
