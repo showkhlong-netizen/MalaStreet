@@ -210,8 +210,6 @@
                                         <span>{{ $u['name'] }}</span>
                                         @if(!empty($u['is_test']))
                                             <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200">เทส</span>
-                                        @else
-                                            <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">จริง</span>
                                         @endif
                                     </div>
                                     <div class="text-[11px] text-slate-400 font-medium truncate">
@@ -226,16 +224,32 @@
                             </div>
 
                             <div class="flex items-center gap-1.5 shrink-0">
-                                @if(($u['status'] ?? 'offline') === 'online')
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10.5px] font-bold border border-emerald-200/60 whitespace-nowrap">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                @if(!empty($u['is_current']))
+                                    <!-- บัญชีปัจจุบันที่กำลังเข้าสู่ระบบและใช้งานอยู่จริงบนเครื่องนี้ -->
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10.5px] font-bold border border-emerald-300 shadow-2xs whitespace-nowrap" title="บัญชีปัจจุบันที่กำลังเข้าสู่ระบบ">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                                         ใช้งานอยู่
                                     </span>
+                                @elseif(($u['status'] ?? 'offline') === 'online')
+                                    <!-- บัญชีอื่นๆ ที่ออนไลน์อยู่บนระบบ -->
+                                    <button type="button"
+                                            onclick="event.stopPropagation(); quickSwitchUser('{{ $u['id'] }}', '{{ addslashes($u['name']) }}')"
+                                            title="คลิกเพื่อสลับเข้าใช้งานบัญชีนี้ทันที"
+                                            class="group/btn inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50/70 hover:bg-blue-600 text-emerald-700 hover:text-white text-[10.5px] font-bold border border-emerald-200 hover:border-blue-600 transition-all cursor-pointer whitespace-nowrap shadow-2xs">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 group-hover/btn:bg-white"></span>
+                                        <span class="group-hover/btn:hidden">ออนไลน์</span>
+                                        <span class="hidden group-hover/btn:inline font-bold">สลับเข้าใช้</span>
+                                    </button>
                                 @else
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10.5px] font-medium whitespace-nowrap">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                                        ออฟไลน์
-                                    </span>
+                                    <!-- บัญชีที่ออฟไลน์ สามารถคลิกสลับเข้าใช้งานได้ทันที -->
+                                    <button type="button"
+                                            onclick="event.stopPropagation(); quickSwitchUser('{{ $u['id'] }}', '{{ addslashes($u['name']) }}')"
+                                            title="คลิกเพื่อสลับเข้าใช้งานบัญชีนี้ทันที"
+                                            class="group/btn inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-600 text-slate-500 hover:text-white text-[10.5px] font-medium hover:font-bold border border-slate-200 hover:border-blue-600 transition-all cursor-pointer whitespace-nowrap shadow-2xs">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-400 group-hover/btn:bg-white"></span>
+                                        <span class="group-hover/btn:hidden">ออฟไลน์</span>
+                                        <span class="hidden group-hover/btn:inline font-bold">สลับเข้าใช้</span>
+                                    </button>
                                 @endif
 
                                 <!-- Delete button per user -->
@@ -2676,6 +2690,27 @@
             showToast("ลบบัญชีเรียบร้อยแล้ว");
             setTimeout(() => window.location.reload(), 700);
         }
+    }
+
+    // 18.1 Quick Switch User (สลับเข้าใช้งานบัญชีทันทีในคลิกเดียว)
+    function quickSwitchUser(userId, userName) {
+        if (!confirm(`คุณต้องการสลับเข้าสู่ระบบเป็น "${userName}" ทันทีใช่หรือไม่?`)) {
+            return;
+        }
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/switch-user/${encodeURIComponent(userId)}`;
+        
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (csrfToken) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = '_token';
+            input.value = csrfToken;
+            form.appendChild(input);
+        }
+        document.body.appendChild(form);
+        form.submit();
     }
 
     // 19. Clear all test dummy accounts (ตามภาพที่ 2)

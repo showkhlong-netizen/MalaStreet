@@ -30,7 +30,7 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
-Route::post('/switch-user/{userId}', [AuthController::class, 'switchUser'])->name('switch_user')->middleware('auth');
+Route::match(['get', 'post'], '/switch-user/{userId}', [AuthController::class, 'switchUser'])->name('switch_user')->middleware('auth');
 
 // 1. บริการหน้าร้าน (In-Store POS & Kitchen Display) - ต้องเข้าสู่ระบบ (Requires Auth)
 Route::prefix('pos')->name('pos.')->middleware('auth')->group(function () {
@@ -107,6 +107,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::post('/access/employee/save', [AccessControlController::class, 'saveEmployeeData'])->name('access.save_employee');
     Route::post('/access/users/store', [AccessControlController::class, 'storeUser'])->name('access.store_user');
     Route::post('/access/users/delete/{id}', [AccessControlController::class, 'deleteUser'])->name('access.delete_user');
+    Route::post('/access/users/{id}/toggle-status', [AccessControlController::class, 'toggleStatus'])->name('access.users.toggle_status');
     Route::post('/access/users/clear-test', [AccessControlController::class, 'clearTestUsers'])->name('access.clear_test_users');
     Route::post('/access/settings', [AccessControlController::class, 'updateSettings'])->name('access.update_settings');
 });

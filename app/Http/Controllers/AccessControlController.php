@@ -210,11 +210,57 @@ class AccessControlController extends Controller
             }
         }
 
+        // Resolve current active user and real online sessions
+        $currentActor = AuditLog::resolveCurrentUserActor();
+        $currentAuthId = \Illuminate\Support\Facades\Auth::id();
+        $currentEmail = strtolower($currentActor['email'] ?? \Illuminate\Support\Facades\Auth::user()?->email ?? '');
+        $currentName = strtolower($currentActor['name'] ?? \Illuminate\Support\Facades\Auth::user()?->name ?? '');
+        $currentUserId = (string) ($currentActor['id'] ?? ($currentAuthId ? 'usr_' . $currentAuthId : ''));
+
+        $activeEmails = [];
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('sessions')) {
+                $recentSessionUserIds = \Illuminate\Support\Facades\DB::table('sessions')
+                    ->where('last_activity', '>=', now()->subMinutes(30)->timestamp)
+                    ->whereNotNull('user_id')
+                    ->pluck('user_id')
+                    ->toArray();
+                if (!empty($recentSessionUserIds)) {
+                    $activeEmails = User::whereIn('id', $recentSessionUserIds)
+                        ->pluck('email')
+                        ->map(fn($e) => strtolower($e))
+                        ->toArray();
+                }
+            }
+        } catch (\Throwable $e) {}
+
+        if ($currentEmail) {
+            $activeEmails[] = $currentEmail;
+        }
+
+        // Dynamically compute real status for each user
+        foreach ($users as &$u) {
+            $uEmail = strtolower($u['email'] ?? '');
+            $uName = strtolower($u['name'] ?? '');
+            $uId = (string) ($u['id'] ?? '');
+
+            $isCurrent = ($currentUserId && $uId === $currentUserId)
+                || ($currentEmail && $uEmail === $currentEmail)
+                || ($currentName && $uName === $currentName);
+
+            $isOnline = $isCurrent || in_array($uEmail, $activeEmails);
+
+            $u['is_current'] = $isCurrent;
+            $u['status'] = $isOnline ? 'online' : 'offline';
+            $u['status_label'] = $isCurrent ? 'ใช้งานอยู่ (คุณ)' : ($isOnline ? 'ออนไลน์' : 'ออฟไลน์');
+        }
+        unset($u);
+
         // Active selected user (sync with logged-in user if user_id not explicitly requested)
         if ($selectedUserId) {
             $selectedUser = collect($users)->firstWhere('id', $selectedUserId) ?? ($users[0] ?? null);
         } else {
-            $actor = AuditLog::resolveCurrentUserActor();
+            $actor = $currentActor;
             $selectedUser = collect($users)->first(function ($u) use ($actor) {
                 return ($u['id'] ?? '') === ($actor['id'] ?? '')
                     || strtolower($u['email'] ?? '') === strtolower($actor['email'] ?? '')
@@ -830,8 +876,8 @@ class AccessControlController extends Controller
             'initials' => $initials,
             'color' => $roleColors[$role] ?? 'bg-indigo-600',
             'avatar' => $avatarUrl,
-            'status' => 'online',
-            'status_label' => 'ใช้งานอยู่',
+            'status' => 'offline',
+            'status_label' => 'ออฟไลน์',
             'branch' => $branch,
             'is_test' => false,
             'created_at' => now()->toDateTimeString(),
@@ -966,6 +1012,48 @@ class AccessControlController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'ลบบัญชีผู้ใช้งานเรียบร้อยแล้ว!',
+        ]);
+    }
+
+    /**
+     * Toggle active/inactive status for a user.
+     */
+    public function toggleStatus(Request $request, string $id): JsonResponse
+    {
+        $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true) ?: [];
+        $updated = false;
+        $newStatus = 'offline';
+        $targetName = $id;
+
+        foreach ($savedUsers as &$u) {
+            if ($u['id'] === $id) {
+                $currentStatus = $u['status'] ?? 'offline';
+                $newStatus = ($currentStatus === 'online') ? 'offline' : 'online';
+                $u['status'] = $newStatus;
+                $u['status_label'] = ($newStatus === 'online') ? 'ใช้งานอยู่' : 'ออฟไลน์';
+                $targetName = $u['name'] ?? $id;
+                $updated = true;
+                break;
+            }
+        }
+        unset($u);
+
+        if ($updated) {
+            Setting::set('access_users_list', json_encode($savedUsers), 'access');
+
+            AuditLog::record(
+                'access',
+                'status',
+                "เปลี่ยนสถานะผู้ใช้งาน {$targetName} เป็น " . ($newStatus === 'online' ? 'ใช้งานอยู่' : 'ออฟไลน์'),
+                $targetName,
+                ['user_id' => $id, 'status' => $newStatus]
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'status' => $newStatus,
+            'message' => "เปลี่ยนสถานะของ {$targetName} เป็น " . ($newStatus === 'online' ? 'ใช้งานอยู่' : 'ออฟไลน์') . ' เรียบร้อยแล้ว',
         ]);
     }
 
