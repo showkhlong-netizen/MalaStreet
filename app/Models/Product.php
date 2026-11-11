@@ -56,7 +56,7 @@ class Product extends Model
     public function getDisplayImageAttribute(): string
     {
         $rawImg = $this->rawMaterial?->image_url;
-        if (!empty($rawImg)) {
+        if (!empty($rawImg) && !str_contains($rawImg, 'beef-premium.png')) {
             $path = preg_replace('#^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?/#', '', $rawImg);
             return str_starts_with($path, 'http') ? $path : asset(ltrim($path, '/'));
         }
@@ -64,7 +64,7 @@ class Product extends Model
         $itemName = $this->rawMaterial?->name ?: $this->name;
         if (!empty($itemName)) {
             if (str_contains($itemName, 'เนื้อ') || str_contains($itemName, 'โคขุน')) {
-                return asset('assets/menu/beef-premium.png');
+                return asset('assets/ingredients/beef-ribeye-sliced.png');
             } elseif (str_contains($itemName, 'สันใน')) {
                 return asset('assets/ingredients/beef-ribeye-sliced.png');
             } elseif (str_contains($itemName, 'หมู') || str_contains($itemName, 'สามชั้น') || str_contains($itemName, 'เบาว์ราช')) {
@@ -84,7 +84,7 @@ class Product extends Model
             }
         }
 
-        if (!empty($this->image_url)) {
+        if (!empty($this->image_url) && !str_contains($this->image_url, 'beef-premium.png')) {
             $path = preg_replace('#^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?/#', '', $this->image_url);
             return str_starts_with($path, 'http') ? $path : asset(ltrim($path, '/'));
         }

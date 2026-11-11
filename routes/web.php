@@ -82,6 +82,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::delete('/price-tracker/materials/{rawMaterial}', [ReceiptController::class, 'destroyPriceTrackerMaterial'])->name('receipts.price_tracker.destroy_material');
     Route::post('/price-tracker/materials/{rawMaterial}', [ReceiptController::class, 'updatePriceTrackerMaterial'])->name('receipts.price_tracker.update_material');
     Route::post('/price-tracker/materials/{rawMaterial}/toggle-approval', [ReceiptController::class, 'toggleMaterialApproval'])->name('receipts.price_tracker.toggle_material_approval');
+    Route::post('/price-tracker/materials/{rawMaterial}/toggle-recommended', [ReceiptController::class, 'toggleMaterialRecommended'])->name('receipts.price_tracker.toggle_material_recommended');
     Route::post('/price-tracker/upload-image', [ReceiptController::class, 'uploadMaterialImage'])->name('receipts.price_tracker.upload_image');
     Route::post('/price-tracker/hero-banner', [ReceiptController::class, 'updatePriceTrackerHero'])->name('receipts.price_tracker.update_hero');
     Route::post('/price-tracker/sync-today', [ReceiptController::class, 'syncTodayReceipts'])->name('receipts.price_tracker.sync_today');

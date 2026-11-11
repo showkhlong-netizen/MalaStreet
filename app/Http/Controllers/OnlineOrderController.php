@@ -26,7 +26,24 @@ class OnlineOrderController extends Controller
      */
     public function index(Request $request): View|JsonResponse
     {
-        // Lightweight live-sync endpoint: active category names/icons (synced with the stock page)
+        $recommendedMaterialIds = array_values(array_unique(array_map(
+            'intval',
+            json_decode(Setting::get('recommended_material_ids', '[]'), true) ?: []
+        )));
+
+        $recommendedProducts = collect();
+        if (!empty($recommendedMaterialIds)) {
+            $orderMap = array_flip($recommendedMaterialIds);
+            $recommendedProducts = Product::with(['rawMaterial', 'category'])
+                ->whereIn('raw_material_id', $recommendedMaterialIds)
+                ->where('is_available', true)
+                ->get()
+                ->unique('raw_material_id')
+                ->sortBy(fn ($p) => $orderMap[(int) $p->raw_material_id] ?? 9999)
+                ->values();
+        }
+
+        // Lightweight live-sync endpoint: active category names/icons & recommended products (synced with the stock page)
         if ($request->boolean('categories_json')) {
             $emojiIcons = ['🥩', '🍗', '🍢', '🥬', '🍥', '🥤', '🍟'];
             return response()->json([
@@ -37,6 +54,18 @@ class OnlineOrderController extends Controller
                         'name' => $c->name,
                         'icon' => (empty($c->icon) || in_array($c->icon, $emojiIcons)) ? null : (str_starts_with($c->icon, 'http') ? $c->icon : asset($c->icon)),
                     ])->values(),
+                'recommended_products' => $recommendedProducts->map(fn ($p) => [
+                    'id' => $p->id,
+                    'raw_material_id' => $p->raw_material_id,
+                    'name' => $p->display_name ?: $p->name,
+                    'price_per_stick' => (float) $p->price_per_stick,
+                    'stock_sticks' => (int) $p->stock_sticks,
+                    'image_url' => $p->display_image,
+                    'category_slug' => $p->category?->slug ?? 'all',
+                    'description' => $p->description,
+                    'supports_grill' => (bool) $p->supports_grill,
+                    'supports_soup' => (bool) $p->supports_soup,
+                ])->values(),
             ]);
         }
 
@@ -55,7 +84,7 @@ class OnlineOrderController extends Controller
             ->take(6)
             ->get();
 
-        return view('online.index', compact('categories', 'featuredProducts'));
+        return view('online.index', compact('categories', 'featuredProducts', 'recommendedProducts'));
     }
 
     /**

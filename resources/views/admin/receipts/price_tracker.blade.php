@@ -709,6 +709,7 @@
                         'today_stock_sticks' => (int) $mat->today_stock_sticks,
                         'selling_price' => $mat->products->first() ? (float) $mat->products->first()->price_per_stick : null,
                         'is_approved_for_sale' => $mat->products->isNotEmpty() ? (bool) $mat->products->every(fn ($p) => $p->is_available) : false,
+                        'is_recommended' => in_array((int) $mat->id, $recommendedMaterialIds ?? [], true),
                     ];
                 @endphp
 
@@ -1032,7 +1033,6 @@
                     <div class="flex items-center gap-1.5 flex-wrap mb-1">
                         <span id="modal-mat-badge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/20 text-white"></span>
                         <span id="modal-mat-avail-badge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold"></span>
-                        <span id="modal-mat-sale-badge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold"></span>
                     </div>
                     <h3 id="modal-mat-name" class="text-[18px] font-bold leading-snug truncate"></h3>
                     <p id="modal-mat-unit" class="text-[12px] text-rose-100/90 font-normal"></p>
@@ -1106,53 +1106,72 @@
         </div>
 
         <!-- Modal Footer -->
-        <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
-            <div class="flex items-center gap-2 flex-wrap">
-                <!-- Approval Checkmark Button (ปุ่มติ๊กถูกอนุมัติแสดงผล: สั่งออนไลน์ & แคชเชียร์) -->
+        <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 space-y-2.5">
+            <!-- Row 1: อนุมัติขาย (ออนไลน์ & แคชเชียร์) + ติ๊กเมนูแนะนำ 🔥 (ไอคอนนำหน้าและข้อความต่อท้าย) -->
+            <div class="flex items-center gap-2 flex-wrap pb-2.5 border-b border-slate-200/70">
                 <button
                     type="button"
                     id="btn-toggle-mat-approval"
                     onclick="toggleCurrentMaterialApproval()"
-                    class="w-9 h-9 rounded-xl transition-all shadow-xs cursor-pointer select-none inline-flex items-center justify-center shrink-0"
-                    title="อนุมัติแสดงผล (สั่งออนไลน์ & แคชเชียร์)"
+                    class="py-2 px-3 rounded-xl transition-all shadow-xs cursor-pointer select-none inline-flex items-center gap-1.5 text-xs font-semibold shrink-0"
+                    title="อนุมัติขาย (ออนไลน์ & แคชเชียร์)"
                 >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
                     </svg>
+                    <span id="btn-toggle-mat-approval-label">อนุมัติขาย (ออนไลน์ & แคชเชียร์)</span>
                 </button>
 
                 <button
                     type="button"
-                    onclick="switchFromDetailToEditModal()"
-                    class="py-2 px-3.5 rounded-xl bg-[#E50914] hover:bg-[#C8102E] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                    id="btn-toggle-mat-recommended"
+                    onclick="toggleCurrentMaterialRecommended()"
+                    class="py-2 px-3 rounded-xl transition-all shadow-xs cursor-pointer select-none inline-flex items-center gap-1.5 text-xs font-semibold shrink-0"
+                    title="ติ๊กเมนูแนะนำ (ซิงค์แสดงในส่วน เมนูแนะนำ 🔥 หน้าสั่งออนไลน์)"
                 >
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
-                        <line x1="4" y1="6" x2="20" y2="6"></line>
-                        <line x1="4" y1="12" x2="20" y2="12"></line>
-                        <line x1="4" y1="18" x2="20" y2="18"></line>
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
                     </svg>
-                    <span>แก้ไขข้อมูล / รูปภาพ</span>
-                </button>
-                <button
-                    type="button"
-                    onclick="openDeleteSingleMaterialConfirmFromDetail()"
-                    class="py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer border border-rose-200/60"
-                    title="ลบรายการวัตถุดิบนี้"
-                >
-                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                    <span>ลบรายการ</span>
+                    <span id="btn-toggle-mat-recommended-label">เมนูแนะนำ 🔥</span>
                 </button>
             </div>
-            <button
-                type="button"
-                onclick="closeMaterialDetailModal()"
-                class="py-2 px-4 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold cursor-pointer shrink-0"
-            >
-                ปิดหน้าต่าง
-            </button>
+
+            <!-- Row 2: แก้ไขข้อมูล / ลบรายการ / ปิดหน้าต่าง -->
+            <div class="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button
+                        type="button"
+                        onclick="switchFromDetailToEditModal()"
+                        class="py-2 px-3.5 rounded-xl bg-[#E50914] hover:bg-[#C8102E] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                    >
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+                            <line x1="4" y1="6" x2="20" y2="6"></line>
+                            <line x1="4" y1="12" x2="20" y2="12"></line>
+                            <line x1="4" y1="18" x2="20" y2="18"></line>
+                        </svg>
+                        <span>แก้ไขข้อมูล / รูปภาพ</span>
+                    </button>
+                    <button
+                        type="button"
+                        onclick="openDeleteSingleMaterialConfirmFromDetail()"
+                        class="py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer border border-rose-200/60"
+                        title="ลบรายการวัตถุดิบนี้"
+                    >
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        <span>ลบรายการ</span>
+                    </button>
+                </div>
+                <button
+                    type="button"
+                    onclick="closeMaterialDetailModal()"
+                    class="py-2 px-4 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold cursor-pointer shrink-0"
+                >
+                    ปิดหน้าต่าง
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -3136,6 +3155,7 @@
         }
 
         updateMaterialApprovalModalUI(Boolean(data.is_approved_for_sale));
+        updateMaterialRecommendedModalUI(Boolean(data.is_recommended));
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -3156,26 +3176,92 @@
     }
 
     function updateMaterialApprovalModalUI(isApproved) {
-        const saleBadge = document.getElementById('modal-mat-sale-badge');
         const btn = document.getElementById('btn-toggle-mat-approval');
-
-        if (saleBadge) {
-            if (isApproved) {
-                saleBadge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/25 text-emerald-100 border border-emerald-400/40 gap-1';
-                saleBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span><span>✓ อนุมัติขาย (ออนไลน์ & แคชเชียร์)</span>`;
-            } else {
-                saleBadge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/20 text-amber-100 border border-amber-300/30 gap-1';
-                saleBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-300"></span><span>✗ ยังไม่อนุมัติ (ซ่อนจากออนไลน์ & แคชเชียร์)</span>`;
-            }
-        }
-
         if (btn) {
             if (isApproved) {
-                btn.className = 'w-9 h-9 rounded-xl transition-all shadow-xs cursor-pointer select-none inline-flex items-center justify-center shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white';
-                btn.title = 'อนุมัติแล้ว (คลิกเพื่อปิดการแสดงผลในหน้าสั่งออนไลน์และแคชเชียร์)';
+                btn.className = 'py-2 px-3 rounded-xl transition-all shadow-xs cursor-pointer select-none inline-flex items-center gap-1.5 text-xs font-semibold shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600';
+                btn.title = 'อนุมัติขายแล้ว (คลิกเพื่อปิดการแสดงผลในหน้าสั่งออนไลน์และแคชเชียร์)';
             } else {
-                btn.className = 'w-9 h-9 rounded-xl transition-all shadow-xs cursor-pointer select-none inline-flex items-center justify-center shrink-0 bg-white hover:bg-emerald-50 text-emerald-600 border border-emerald-400 hover:border-emerald-600';
-                btn.title = 'คลิกเพื่ออนุมัติให้แสดงในหน้าสั่งออนไลน์และแคชเชียร์ทันที';
+                btn.className = 'py-2 px-3 rounded-xl transition-all shadow-xs cursor-pointer select-none inline-flex items-center gap-1.5 text-xs font-semibold shrink-0 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-400 hover:border-emerald-600';
+                btn.title = 'คลิกเพื่ออนุมัติขายให้แสดงในหน้าสั่งออนไลน์และแคชเชียร์ทันที';
+            }
+        }
+    }
+
+    function updateMaterialRecommendedModalUI(isRecommended) {
+        const btn = document.getElementById('btn-toggle-mat-recommended');
+        if (btn) {
+            if (isRecommended) {
+                btn.className = 'py-2 px-3 rounded-xl transition-all shadow-xs cursor-pointer select-none inline-flex items-center gap-1.5 text-xs font-semibold shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600';
+                btn.title = 'ติดเมนูแนะนำแล้ว (คลิกเพื่อนำออกจากเมนูแนะนำ 🔥 หน้าสั่งออนไลน์)';
+            } else {
+                btn.className = 'py-2 px-3 rounded-xl transition-all shadow-xs cursor-pointer select-none inline-flex items-center gap-1.5 text-xs font-semibold shrink-0 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-400 hover:border-emerald-600';
+                btn.title = 'คลิกเพื่อติ๊กเป็นเมนูแนะนำ 🔥 ในหน้าสั่งออนไลน์';
+            }
+        }
+    }
+
+    async function toggleCurrentMaterialRecommended() {
+        if (!activeDetailCardEl) return;
+        const rawJson = activeDetailCardEl.getAttribute('data-modal');
+        if (!rawJson) return;
+        let data;
+        try {
+            data = JSON.parse(rawJson);
+        } catch (e) {
+            return;
+        }
+
+        const btn = document.getElementById('btn-toggle-mat-recommended');
+        if (btn) {
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+        }
+
+        try {
+            const url = `/admin/price-tracker/materials/${data.id}/toggle-recommended`;
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    is_recommended: !data.is_recommended
+                })
+            });
+
+            const resData = await res.json();
+            if (res.ok && resData.success) {
+                data.is_recommended = Boolean(resData.is_recommended);
+                if (resData.is_available !== undefined) {
+                    data.is_approved_for_sale = Boolean(resData.is_available);
+                    updateMaterialApprovalModalUI(data.is_approved_for_sale);
+                }
+                activeDetailCardEl.setAttribute('data-modal', JSON.stringify(data));
+                updateMaterialRecommendedModalUI(data.is_recommended);
+                showPriceToast(resData.message);
+
+                if ('BroadcastChannel' in window) {
+                    try {
+                        const invChannel = new BroadcastChannel('mala_inventory_sync_channel');
+                        invChannel.postMessage({ type: 'product_recommended_toggled', id: data.id, is_recommended: data.is_recommended });
+                        const catChannel = new BroadcastChannel('mala_category_sync_channel');
+                        catChannel.postMessage({ action: 'recommended_updated', id: data.id, is_recommended: data.is_recommended });
+                    } catch (e) {}
+                }
+            } else {
+                alert(resData.message || 'เกิดข้อผิดพลาดในการบันทึกเมนูแนะนำ');
+            }
+        } catch (err) {
+            console.error('Toggle material recommended error:', err);
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75');
             }
         }
     }

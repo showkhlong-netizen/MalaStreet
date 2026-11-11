@@ -101,32 +101,7 @@
 
     $allProducts = $categories->flatMap(fn($c) => $c->products)->sortBy('sort_order')->values();
     $totalCount = $allProducts->count();
-
-    // Match database products to the 3 recommended slots
-    $recBeef = $allProducts->first(fn($p) => str_contains($p->display_name, 'เนื้อ')) ?? $allProducts->get(0);
-    $recPork = $allProducts->first(fn($p) => str_contains($p->display_name, 'หมูสามชั้น') || str_contains($p->display_name, 'หมู')) ?? $allProducts->get(1);
-    $recBall = $allProducts->first(fn($p) => str_contains($p->display_name, 'ลูกชิ้น')) ?? $allProducts->get(2);
-
-    $recommendedCards = [
-        [
-            'product' => $recBeef,
-            'display_name' => $recBeef ? $recBeef->display_name : 'เนื้อโคขุนพรีเมียม',
-            'display_price' => $recBeef ? (float) $recBeef->price_per_stick : 25,
-            'image' => $recBeef ? $recBeef->display_image : asset('assets/menu/beef-premium.png'),
-        ],
-        [
-            'product' => $recPork,
-            'display_name' => $recPork ? $recPork->display_name : 'หมูสามชั้นสไลซ์',
-            'display_price' => $recPork ? (float) $recPork->price_per_stick : 15,
-            'image' => $recPork ? $recPork->display_image : asset('assets/ingredients/pork-belly-sliced.png'),
-        ],
-        [
-            'product' => $recBall,
-            'display_name' => $recBall ? $recBall->display_name : 'ลูกชิ้นรวม',
-            'display_price' => $recBall ? (float) $recBall->price_per_stick : 15,
-            'image' => $recBall ? $recBall->display_image : asset('assets/ingredients/fishball-phuket.png'),
-        ],
-    ];
+    $recommendedList = $recommendedProducts ?? collect();
 @endphp
 
     <!-- ========================================================================= -->
@@ -477,34 +452,36 @@
         </section>
 
         <!-- ===================================================================== -->
-        <!-- 7. RECOMMENDED PRODUCTS SECTION (เมนูแนะนำ 🔥 3 Cards in a Row)        -->
+        <!-- 7. RECOMMENDED PRODUCTS SECTION (เมนูแนะนำ 🔥 ซิงค์จากหน้าสต๊อกสินค้า)     -->
         <!-- ===================================================================== -->
-        <section class="px-3.5 pt-3" id="recommended-section">
+        <section class="px-3.5 pt-3 {{ $recommendedList->isEmpty() ? 'hidden' : '' }}" id="recommended-section">
             <div class="flex items-center gap-1.5 mb-2">
                 <span class="w-1 h-4 rounded-full bg-[#D90012] block"></span>
                 <h2 class="text-[14.5px] font-extrabold text-[#101114] tracking-tight">เมนูแนะนำ 🔥</h2>
             </div>
 
-            <div class="grid grid-cols-3 gap-2">
-                @foreach($recommendedCards as $rc)
+            <div class="grid grid-cols-3 gap-2" id="recommended-grid">
+                @foreach($recommendedList as $prod)
                     @php
-                        $prod = $rc['product'];
-                        $prodId = $prod ? $prod->id : 0;
+                        $prodId = $prod->id;
+                        $displayName = $prod->display_name ?: $prod->name;
+                        $displayPrice = (float) $prod->price_per_stick;
+                        $displayImg = $prod->display_image;
                     @endphp
-                    <div class="bg-white rounded-[14px] p-1.5 border border-[#ECEEF2] shadow-[0_2px_6px_rgba(0,0,0,0.04)] flex flex-col justify-between">
+                    <div class="bg-white rounded-[14px] p-1.5 border border-[#ECEEF2] shadow-[0_2px_6px_rgba(0,0,0,0.04)] flex flex-col justify-between" data-rec-product-id="{{ $prodId }}">
                         <div onclick="openCustomizationModal({{ $prodId }})" class="relative w-full aspect-[16/10] rounded-[10px] overflow-hidden bg-slate-900 cursor-pointer">
-                            <img src="{{ $rc['image'] }}"
-                                 alt="{{ $rc['display_name'] }}"
+                            <img src="{{ $displayImg }}"
+                                 alt="{{ $displayName }}"
                                  class="w-full h-full object-cover">
                         </div>
 
                         <div class="pt-1.5 px-0.5">
                             <h3 onclick="openCustomizationModal({{ $prodId }})" class="text-[11px] font-bold text-[#101114] leading-tight truncate cursor-pointer">
-                                {{ $rc['display_name'] }}
+                                {{ $displayName }}
                             </h3>
                             <div class="flex items-center justify-between mt-1">
                                 <div class="text-[12px] font-extrabold text-[#D90012] leading-none">
-                                    ฿{{ number_format($rc['display_price'], 0) }}
+                                    ฿{{ number_format($displayPrice, 0) }}
                                     <span class="text-[9px] text-[#596272] font-normal">/ไม้</span>
                                 </div>
                                 <button type="button"
@@ -1557,14 +1534,72 @@
             }
         }
 
+        function syncOnlineRecommendedProducts(recommendedProducts) {
+            if (!Array.isArray(recommendedProducts)) return;
+            const section = document.getElementById('recommended-section');
+            const grid = document.getElementById('recommended-grid');
+            if (!section || !grid) return;
+
+            if (recommendedProducts.length === 0) {
+                section.classList.add('hidden');
+                grid.innerHTML = '';
+                return;
+            }
+
+            recommendedProducts.forEach(p => {
+                if (p && p.id) {
+                    productMap[p.id] = p;
+                }
+            });
+
+            grid.innerHTML = recommendedProducts.map(p => {
+                const safeName = String(p.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                const priceFormatted = Math.round(Number(p.price_per_stick || 0)).toLocaleString('en-US');
+                return `
+                    <div class="bg-white rounded-[14px] p-1.5 border border-[#ECEEF2] shadow-[0_2px_6px_rgba(0,0,0,0.04)] flex flex-col justify-between" data-rec-product-id="${p.id}">
+                        <div onclick="openCustomizationModal(${p.id})" class="relative w-full aspect-[16/10] rounded-[10px] overflow-hidden bg-slate-900 cursor-pointer">
+                            <img src="${p.image_url}"
+                                 alt="${safeName}"
+                                 class="w-full h-full object-cover">
+                        </div>
+
+                        <div class="pt-1.5 px-0.5">
+                            <h3 onclick="openCustomizationModal(${p.id})" class="text-[11px] font-bold text-[#101114] leading-tight truncate cursor-pointer">
+                                ${safeName}
+                            </h3>
+                            <div class="flex items-center justify-between mt-1">
+                                <div class="text-[12px] font-extrabold text-[#D90012] leading-none">
+                                    ฿${priceFormatted}
+                                    <span class="text-[9px] text-[#596272] font-normal">/ไม้</span>
+                                </div>
+                                <button type="button"
+                                        onclick="quickAddStick(${p.id})"
+                                        class="w-[22px] h-[22px] rounded-full bg-[#D90012] hover:bg-[#B8000F] text-white flex items-center justify-center text-sm font-bold leading-none shadow-2xs active:scale-90 transition-transform cursor-pointer"
+                                        title="เพิ่มลงตะกร้า">
+                                    +
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            section.classList.remove('hidden');
+        }
+
         async function refreshOnlineCategoriesLive() {
             try {
                 const res = await fetch('/order?categories_json=1', {
                     headers: { 'Accept': 'application/json' }
                 });
                 const data = await res.json();
-                if (data && data.success && Array.isArray(data.categories)) {
-                    syncOnlineCategoryPills(data.categories);
+                if (data && data.success) {
+                    if (Array.isArray(data.categories)) {
+                        syncOnlineCategoryPills(data.categories);
+                    }
+                    if (Array.isArray(data.recommended_products)) {
+                        syncOnlineRecommendedProducts(data.recommended_products);
+                    }
                 }
             } catch (e) {}
         }
@@ -1597,6 +1632,8 @@
                 try {
                     const catChannel = new BroadcastChannel('mala_category_sync_channel');
                     catChannel.onmessage = (ev) => applyOnlineCategorySyncMessage(ev.data);
+                    const invChannel = new BroadcastChannel('mala_inventory_sync_channel');
+                    invChannel.onmessage = () => refreshOnlineCategoriesLive();
                 } catch (e) {}
             }
             setInterval(() => {

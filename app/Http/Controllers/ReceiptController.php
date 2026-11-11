@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\RawMaterial;
 use App\Models\Receipt;
 use App\Models\ReceiptItem;
+use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -1150,8 +1151,13 @@ class ReceiptController extends Controller
         $priceHistories = PriceHistory::with('rawMaterial', 'receipt')->orderByDesc('recorded_at')->orderByDesc('id')->paginate(15);
 
         $settingsRows = DB::table('settings')
-            ->whereIn('key', ['price_tracker_hero_image', 'price_tracker_hero_title', 'price_tracker_hero_subtitle'])
+            ->whereIn('key', ['price_tracker_hero_image', 'price_tracker_hero_title', 'price_tracker_hero_subtitle', 'recommended_material_ids'])
             ->pluck('value', 'key');
+
+        $recommendedMaterialIds = array_values(array_unique(array_map(
+            'intval',
+            json_decode($settingsRows['recommended_material_ids'] ?? '[]', true) ?: []
+        )));
 
         $heroSettings = [
             'hero_image' => !empty($settingsRows['price_tracker_hero_image'])
@@ -1165,7 +1171,7 @@ class ReceiptController extends Controller
                 : 'ติดตามความผันผวนของราคาวัตถุดิบสำคัญได้ ไม่ว่าจะขึ้นหรือลง เช่น เอ็นไก่, เนื้อวัว, ผักสด ฯลฯ เพื่อเลือกซื้อร้านที่ถูกที่สุด',
         ];
 
-        return view('admin.receipts.price_tracker', compact('rawMaterials', 'priceHistories', 'categories', 'heroSettings', 'todayAvailableCount', 'todayBoughtCount'));
+        return view('admin.receipts.price_tracker', compact('rawMaterials', 'priceHistories', 'categories', 'heroSettings', 'todayAvailableCount', 'todayBoughtCount', 'recommendedMaterialIds'));
     }
 
     /**
@@ -1597,6 +1603,13 @@ class ReceiptController extends Controller
             // 4. Delete the material itself
             $mat->delete();
             $deletedCount++;
+        }
+
+        // Remove deleted material IDs from recommended_material_ids
+        $recIds = json_decode(Setting::get('recommended_material_ids', '[]'), true) ?: [];
+        if (!empty($recIds)) {
+            $recIds = array_values(array_diff(array_map('intval', $recIds), $ids));
+            Setting::set('recommended_material_ids', json_encode($recIds), 'storefront');
         }
 
         $actor = AuditLog::resolveCurrentUserActor();
@@ -2212,6 +2225,84 @@ class ReceiptController extends Controller
             'success' => true,
             'is_available' => $isAvailable,
             'raw_material_id' => $rawMaterial->id,
+            'message' => $msg,
+        ]);
+    }
+
+    /**
+     * Toggle whether a RawMaterial is featured in "เมนูแนะนำ 🔥" on the Online Order page.
+     */
+    public function toggleMaterialRecommended(Request $request, RawMaterial $rawMaterial): JsonResponse
+    {
+        $recIds = array_values(array_unique(array_map(
+            'intval',
+            json_decode(Setting::get('recommended_material_ids', '[]'), true) ?: []
+        )));
+
+        $matId = (int) $rawMaterial->id;
+        $currentlyRecommended = in_array($matId, $recIds, true);
+        $isRecommended = $request->has('is_recommended')
+            ? $request->boolean('is_recommended')
+            : !$currentlyRecommended;
+
+        $isAvailable = $rawMaterial->products->isNotEmpty()
+            ? $rawMaterial->products->every(fn ($p) => $p->is_available)
+            : false;
+
+        if ($isRecommended) {
+            if (!in_array($matId, $recIds, true)) {
+                $recIds[] = $matId;
+            }
+            // Ensure corresponding Product exists and is approved for sale on Online Order
+            $products = $rawMaterial->products;
+            if ($products->isEmpty()) {
+                $categorySlug = $rawMaterial->category_slug ?: 'pork-chicken';
+                $category = Category::where('slug', $categorySlug)->first() ?: Category::first();
+                if ($category && !$category->is_active) {
+                    $category->update(['is_active' => true]);
+                }
+                $costPerStick = (float) $rawMaterial->cost_per_stick ?: 10;
+                Product::create([
+                    'category_id' => $category?->id ?: 1,
+                    'raw_material_id' => $rawMaterial->id,
+                    'name' => $rawMaterial->name,
+                    'description' => 'วัตถุดิบคัดพิเศษ ย่างหอมเครื่องเทศหม่าล่า หรือต้มซุปเข้มข้น',
+                    'price_per_stick' => max(10, round($costPerStick * 1.5, 0)),
+                    'image_url' => self::sanitizeImageUrl($rawMaterial->image_url),
+                    'stock_sticks' => max(25, (int) $rawMaterial->current_stock_sticks),
+                    'is_available' => true,
+                    'supports_grill' => true,
+                    'supports_soup' => true,
+                    'sort_order' => 10 + $rawMaterial->id,
+                ]);
+                $isAvailable = true;
+            } else {
+                foreach ($products as $p) {
+                    if (!$p->is_available) {
+                        $p->update(['is_available' => true]);
+                    }
+                    if ($p->category && !$p->category->is_active) {
+                        $p->category->update(['is_active' => true]);
+                    }
+                }
+                $isAvailable = true;
+            }
+        } else {
+            $recIds = array_values(array_filter($recIds, fn ($id) => (int) $id !== $matId));
+        }
+
+        Setting::set('recommended_material_ids', json_encode(array_values($recIds)), 'storefront');
+
+        $msg = $isRecommended
+            ? 'ตั้ง "' . $rawMaterial->name . '" เป็นเมนูแนะนำ 🔥 ในหน้าสั่งออนไลน์แล้ว'
+            : 'นำ "' . $rawMaterial->name . '" ออกจากเมนูแนะนำแล้ว';
+
+        return response()->json([
+            'success' => true,
+            'is_recommended' => $isRecommended,
+            'is_available' => $isAvailable,
+            'raw_material_id' => $matId,
+            'recommended_ids' => array_values($recIds),
             'message' => $msg,
         ]);
     }
