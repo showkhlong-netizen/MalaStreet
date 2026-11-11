@@ -82,6 +82,9 @@ class EmployeeController extends Controller
         $empId = $activeEmployee['id'] ?? 'EMP-001';
         $todayAttendanceKey = 'attendance_today_' . $empId . '_' . date('Ymd');
         $savedToday = json_decode(Setting::get($todayAttendanceKey, 'null'), true);
+        if (!$savedToday) {
+            $savedToday = json_decode(Setting::get('attendance_today_' . $empId . '_20261108', 'null'), true);
+        }
 
         // Fallbacks checking saved setting, session, or default
         $todayCheckIn = $savedToday['check_in'] ?? session('employee_check_in');
@@ -100,8 +103,8 @@ class EmployeeController extends Controller
             $todayWorkHours = $this->calculateWorkHours($todayCheckIn, $todayCheckOut, $todayStatus);
         }
 
-        $checkInPhoto = $savedToday['check_in_photo'] ?? session('employee_check_in_photo', asset('uploads/attendance/attendance_check_in_20261109_042948_75fb.jpg'));
-        $checkOutPhoto = $savedToday['check_out_photo'] ?? session('employee_check_out_photo', asset('uploads/attendance/attendance_check_out_20261109_054738_a218.jpg'));
+        $checkInPhoto = $savedToday['check_in_photo'] ?? session('employee_check_in_photo', '/uploads/attendance/sample_check_in.jpg');
+        $checkOutPhoto = $savedToday['check_out_photo'] ?? session('employee_check_out_photo', '/uploads/attendance/sample_check_out.jpg');
 
         $todayAttendance = [
             'date_formatted' => $this->getThaiDateFormatted(),
@@ -370,7 +373,7 @@ class EmployeeController extends Controller
         $attendanceLogs = array_values(array_filter($allAttendanceLogs, fn($log) => $log['date'] === '2026-11-08'));
 
         // Dynamic Overview Stats matching Image 2
-        $workingCount = count(array_filter($attendanceLogs, fn($log) => !$log['is_offday']));
+        $workingCount = count(array_filter($attendanceLogs, fn($log) => !$log['is_offday'] && ($log['status'] ?? '') !== 'pending'));
         $overviewStats = [
             'total_working' => $workingCount,
             'late_count' => count(array_filter($attendanceLogs, fn($log) => ($log['status'] ?? '') === 'late')),
@@ -482,7 +485,7 @@ class EmployeeController extends Controller
             $this->generateAttendanceGDPhoto($fullPath, $actionType, $formattedTime, $distance);
         }
 
-        $photoUrl = asset('uploads/attendance/' . $filename);
+        $photoUrl = '/uploads/attendance/' . $filename;
         $locationText = "พิกัดร้าน: 13.7563, 100.5018 (ระยะห่าง {$distance} ม. - ในเขตร้าน)";
 
         $loggedActor = AuditLog::resolveCurrentUserActor();
@@ -521,9 +524,11 @@ class EmployeeController extends Controller
                 'employee_work_hours' => $workHours,
                 'employee_in_geofence' => true,
                 'employee_geofence_status' => 'อยู่ในเขตร้าน (ยืนยันแล้ว)',
+                'employee_active_emp_id' => $empId,
                 $todayKey => 1,
             ]);
             Setting::set($attendanceSettingKey, json_encode($savedAttendance));
+            Setting::set('attendance_today_' . $empId . '_20261108', json_encode($savedAttendance));
 
             $message = "สแกนใบหน้าสำเร็จ! เช็คอินเข้างานเวลา {$formattedTime} (บันทึกภาพและพิกัดร้านแล้ว)";
         } else {
@@ -545,15 +550,18 @@ class EmployeeController extends Controller
             session([
                 'employee_check_in' => $checkInTime,
                 'employee_check_out' => $checkOutTime,
-                'employee_check_out_photo' => $photoUrl,
+                'employee_check_in_photo' => $this->normalizeAvatarUrl($savedAttendance['check_in_photo'] ?? $photoUrl),
+                'employee_check_out_photo' => $this->normalizeAvatarUrl($photoUrl),
                 'employee_check_out_location' => $locationText,
                 'employee_status' => $newStatus,
                 'employee_work_hours' => $workHours,
                 'employee_in_geofence' => true,
                 'employee_geofence_status' => 'อยู่ในเขตร้าน (ยืนยันแล้ว)',
+                'employee_active_emp_id' => $empId,
                 $todayKey => 2,
             ]);
             Setting::set($attendanceSettingKey, json_encode($savedAttendance));
+            Setting::set('attendance_today_' . $empId . '_20261108', json_encode($savedAttendance));
 
             $message = "สแกนใบหน้าสำเร็จ! เช็คเอาท์ออกงานเวลา {$formattedTime} (บันทึกภาพและพิกัดร้านแล้ว)";
         }
@@ -578,8 +586,8 @@ class EmployeeController extends Controller
             'employee_id' => $empId,
             'check_in' => $checkInTime,
             'check_out' => $checkOutTime,
-            'check_in_photo' => $savedAttendance['check_in_photo'] ?? session('employee_check_in_photo', $photoUrl),
-            'check_out_photo' => $savedAttendance['check_out_photo'] ?? session('employee_check_out_photo', $photoUrl),
+            'check_in_photo' => $this->normalizeAvatarUrl($savedAttendance['check_in_photo'] ?? session('employee_check_in_photo', $photoUrl)),
+            'check_out_photo' => $this->normalizeAvatarUrl($savedAttendance['check_out_photo'] ?? session('employee_check_out_photo', $photoUrl)),
             'work_hours' => $workHours,
             'date_formatted' => $this->getThaiDateFormatted(),
             'distance' => $distance,
@@ -855,23 +863,18 @@ class EmployeeController extends Controller
      */
     protected function buildRealAttendanceLogs(array $realEmployees): array
     {
+        $loggedActor = AuditLog::resolveCurrentUserActor();
+        $sessionEmpId = session('employee_active_emp_id');
+
         $dates = [
             '2026-11-08' => [
                 'formatted' => '08/11/2569',
-                'in' => session('employee_check_in', '07:47 น.'),
-                'out' => session('employee_check_out', '05:47 น.'),
-                'hours' => session('employee_work_hours', '8 ชม. 34 นาที'),
-                'ot' => '1 ชม. 15 นาที',
-                'ot_start' => '20:00',
-                'ot_end' => '21:15',
-                'status' => 'present',
-                'label' => 'เช็คอินตรงเวลา',
-                'photo_in' => session('employee_check_in_photo', asset('uploads/attendance/attendance_check_in_20261109_042948_75fb.jpg')),
-                'photo_out' => session('employee_check_out_photo', asset('uploads/attendance/attendance_check_out_20261109_054738_a218.jpg')),
+                'is_today' => true,
                 'off' => false
             ],
             '2026-11-07' => [
                 'formatted' => '07/11/2569',
+                'is_today' => false,
                 'in' => '08:42 น.',
                 'out' => '17:35 น.',
                 'hours' => '8 ชม. 53 นาที',
@@ -880,12 +883,14 @@ class EmployeeController extends Controller
                 'ot_end' => '19:05',
                 'status' => 'present',
                 'label' => 'เช็คอินตรงเวลา',
-                'photo_in' => asset('uploads/attendance/attendance_check_in_20261109_042948_75fb.jpg'),
-                'photo_out' => asset('uploads/attendance/attendance_check_out_20261109_054738_a218.jpg'),
+                'badge' => 'ปกติ 🟢',
+                'photo_in' => '/uploads/attendance/sample_check_in.jpg',
+                'photo_out' => '/uploads/attendance/sample_check_out.jpg',
                 'off' => false
             ],
             '2026-11-06' => [
                 'formatted' => '06/11/2569',
+                'is_today' => false,
                 'in' => '08:50 น.',
                 'out' => '17:30 น.',
                 'hours' => '8 ชม. 40 นาที',
@@ -894,12 +899,14 @@ class EmployeeController extends Controller
                 'ot_end' => '18:15',
                 'status' => 'present',
                 'label' => 'เช็คอินตรงเวลา',
-                'photo_in' => asset('uploads/attendance/attendance_check_in_20261109_042948_75fb.jpg'),
-                'photo_out' => asset('uploads/attendance/attendance_check_out_20261109_054738_a218.jpg'),
+                'badge' => 'ปกติ 🟢',
+                'photo_in' => '/uploads/attendance/sample_check_in.jpg',
+                'photo_out' => '/uploads/attendance/sample_check_out.jpg',
                 'off' => false
             ],
             '2026-11-05' => [
                 'formatted' => '05/11/2569',
+                'is_today' => false,
                 'in' => '08:45 น.',
                 'out' => '18:00 น.',
                 'hours' => '9 ชม. 15 นาที',
@@ -908,12 +915,14 @@ class EmployeeController extends Controller
                 'ot_end' => '19:30',
                 'status' => 'present',
                 'label' => 'เช็คอินตรงเวลา',
-                'photo_in' => asset('uploads/attendance/attendance_check_in_20261109_042948_75fb.jpg'),
-                'photo_out' => asset('uploads/attendance/attendance_check_out_20261109_054738_a218.jpg'),
+                'badge' => 'ปกติ 🟢',
+                'photo_in' => '/uploads/attendance/sample_check_in.jpg',
+                'photo_out' => '/uploads/attendance/sample_check_out.jpg',
                 'off' => false
             ],
             '2026-11-04' => [
                 'formatted' => '04/11/2569',
+                'is_today' => false,
                 'in' => '08:55 น.',
                 'out' => '17:30 น.',
                 'hours' => '8 ชม. 35 นาที',
@@ -922,12 +931,14 @@ class EmployeeController extends Controller
                 'ot_end' => '—',
                 'status' => 'present',
                 'label' => 'เช็คอินตรงเวลา',
-                'photo_in' => asset('uploads/attendance/attendance_check_in_20261109_042948_75fb.jpg'),
-                'photo_out' => asset('uploads/attendance/attendance_check_out_20261109_054738_a218.jpg'),
+                'badge' => 'ปกติ 🟢',
+                'photo_in' => '/uploads/attendance/sample_check_in.jpg',
+                'photo_out' => '/uploads/attendance/sample_check_out.jpg',
                 'off' => false
             ],
             '2026-11-03' => [
                 'formatted' => '03/11/2569',
+                'is_today' => false,
                 'in' => '08:40 น.',
                 'out' => '17:30 น.',
                 'hours' => '8 ชม. 50 นาที',
@@ -936,12 +947,14 @@ class EmployeeController extends Controller
                 'ot_end' => '18:30',
                 'status' => 'present',
                 'label' => 'เช็คอินตรงเวลา',
-                'photo_in' => asset('uploads/attendance/attendance_check_in_20261109_042948_75fb.jpg'),
-                'photo_out' => asset('uploads/attendance/attendance_check_out_20261109_054738_a218.jpg'),
+                'badge' => 'ปกติ 🟢',
+                'photo_in' => '/uploads/attendance/sample_check_in.jpg',
+                'photo_out' => '/uploads/attendance/sample_check_out.jpg',
                 'off' => false
             ],
             '2026-11-02' => [
                 'formatted' => '02/11/2569',
+                'is_today' => false,
                 'in' => '09:05 น.',
                 'out' => '17:35 น.',
                 'hours' => '8 ชม. 30 นาที',
@@ -950,12 +963,14 @@ class EmployeeController extends Controller
                 'ot_end' => '—',
                 'status' => 'late',
                 'label' => 'มาสาย 5 นาที',
-                'photo_in' => asset('uploads/attendance/attendance_check_in_20261109_042948_75fb.jpg'),
-                'photo_out' => asset('uploads/attendance/attendance_check_out_20261109_054738_a218.jpg'),
+                'badge' => 'สาย 🟡',
+                'photo_in' => '/uploads/attendance/sample_check_in.jpg',
+                'photo_out' => '/uploads/attendance/sample_check_out.jpg',
                 'off' => false
             ],
             '2026-11-01' => [
                 'formatted' => '01/11/2569',
+                'is_today' => false,
                 'in' => null,
                 'out' => null,
                 'hours' => null,
@@ -964,6 +979,7 @@ class EmployeeController extends Controller
                 'ot_end' => '—',
                 'status' => 'offday',
                 'label' => 'วันหยุดประจำสัปดาห์ ☕',
+                'badge' => 'วันหยุด',
                 'photo_in' => null,
                 'photo_out' => null,
                 'off' => true
@@ -972,41 +988,143 @@ class EmployeeController extends Controller
 
         $logs = [];
         foreach ($dates as $dateKey => $cfg) {
+            $isToday = !empty($cfg['is_today']);
+
             foreach ($realEmployees as $idx => $emp) {
-                $userPhotoIn = $cfg['photo_in'];
-                $userPhotoOut = $cfg['photo_out'];
+                $empId = $emp['id'] ?? (string)$idx;
                 $roleLabel = $emp['role_label'] ?? $emp['role'] ?? 'พนักงานร้าน (Employee)';
                 $isAdmin = (str_contains(strtolower($roleLabel), 'admin') || str_contains(strtolower($emp['role'] ?? ''), 'admin'));
-                
-                $logs[] = [
-                    'id' => 'att_' . str_replace('-', '', $dateKey) . '_' . ($emp['id'] ?? $idx),
-                    'date' => $dateKey,
-                    'date_formatted' => $cfg['formatted'],
-                    'name' => $emp['name'] ?? 'พนักงาน',
-                    'roles' => [
-                        [
-                            'label' => $roleLabel,
-                            'color' => $isAdmin ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-blue-50 text-blue-700 border-blue-200',
-                            'icon' => $isAdmin ? '🛡️' : '💼'
-                        ]
-                    ],
-                    'branch' => $emp['branch'] ?? 'ทุกสาขา',
-                    'is_offday' => $cfg['off'],
-                    'status_label' => $cfg['label'],
-                    'check_in_time' => $cfg['in'],
-                    'check_in_photo' => $cfg['off'] ? null : $userPhotoIn,
-                    'check_in_distance' => $cfg['off'] ? null : '0ม.',
-                    'check_in_location' => $cfg['off'] ? null : 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)',
-                    'check_out_time' => $cfg['out'],
-                    'check_out_photo' => $cfg['off'] ? null : $userPhotoOut,
-                    'check_out_distance' => $cfg['off'] ? null : '0ม.',
-                    'check_out_location' => $cfg['off'] ? null : 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)',
-                    'total_hours' => $cfg['hours'],
-                    'status' => $cfg['status'],
-                    'ot_start' => $cfg['ot_start'],
-                    'ot_end' => $cfg['ot_end'],
-                    'ot_hours' => $cfg['ot'],
-                ];
+
+                if ($isToday) {
+                    // Check if this specific employee has attendance recorded
+                    $savedToday = json_decode(Setting::get('attendance_today_' . $empId . '_' . date('Ymd'), 'null'), true);
+                    if (!$savedToday) {
+                        $savedToday = json_decode(Setting::get('attendance_today_' . $empId . '_20261108', 'null'), true);
+                    }
+
+                    // Check if this employee matches the active actor who scanned
+                    $isSessionActor = false;
+                    if (!empty($sessionEmpId) && $sessionEmpId === $empId) {
+                        $isSessionActor = true;
+                    } elseif (!empty($loggedActor['id']) && $empId === $loggedActor['id']) {
+                        $isSessionActor = true;
+                    } elseif (!empty($loggedActor['email']) && strtolower($emp['email'] ?? '') === strtolower($loggedActor['email'])) {
+                        $isSessionActor = true;
+                    } elseif (!empty($loggedActor['name']) && strtolower($emp['name'] ?? '') === strtolower($loggedActor['name'])) {
+                        $isSessionActor = true;
+                    }
+
+                    $checkInTime = null;
+                    $checkOutTime = null;
+                    $workHours = null;
+                    $photoIn = null;
+                    $photoOut = null;
+                    $statusCode = 'pending';
+                    $statusLabel = 'ยังไม่เข้างาน';
+                    $statusBadge = 'ยังไม่เข้างาน ⚪';
+                    $distIn = null;
+                    $distOut = null;
+                    $locIn = null;
+                    $locOut = null;
+
+                    if ($savedToday && (!empty($savedToday['check_in']) || !empty($savedToday['status']))) {
+                        $checkInTime = $savedToday['check_in'] ?? '—';
+                        $checkOutTime = $savedToday['check_out'] ?? '—';
+                        $st = $savedToday['status'] ?? 'เข้างานแล้ว';
+                        $workHours = $savedToday['work_hours'] ?? $this->calculateWorkHours($checkInTime, $checkOutTime, $st);
+                        $photoIn = $this->normalizeAvatarUrl($savedToday['check_in_photo'] ?? null);
+                        $photoOut = $this->normalizeAvatarUrl($savedToday['check_out_photo'] ?? null);
+                        $statusCode = ($st === 'ออกงานแล้ว' || $st === 'เข้างานแล้ว') ? 'present' : 'pending';
+                        $statusLabel = ($st === 'ออกงานแล้ว') ? 'ออกงานแล้ว' : ($st === 'เข้างานแล้ว' ? 'เช็คอินตรงเวลา' : 'ยังไม่เข้างาน');
+                        $statusBadge = ($st === 'ออกงานแล้ว') ? 'ออกงานแล้ว 🟢' : ($st === 'เข้างานแล้ว' ? 'ปกติ 🟢' : 'ยังไม่เข้างาน ⚪');
+                        $distIn = '0ม.';
+                        $distOut = ($checkOutTime !== '—') ? '0ม.' : null;
+                        $locIn = $savedToday['check_in_location'] ?? 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)';
+                        $locOut = $savedToday['check_out_location'] ?? 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)';
+                    } elseif ($isSessionActor && session()->has('employee_check_in')) {
+                        $checkInTime = session('employee_check_in') ?: '—';
+                        $checkOutTime = session('employee_check_out') ?: '—';
+                        $st = session('employee_status', 'ออกงานแล้ว');
+                        $workHours = session('employee_work_hours');
+                        if (empty($workHours) || $workHours === '8 ชม. 34 นาที') {
+                            $workHours = $this->calculateWorkHours($checkInTime, $checkOutTime, $st);
+                        }
+                        $photoIn = $this->normalizeAvatarUrl(session('employee_check_in_photo'));
+                        $photoOut = $this->normalizeAvatarUrl(session('employee_check_out_photo'));
+                        $statusCode = ($st === 'ออกงานแล้ว' || $st === 'เข้างานแล้ว') ? 'present' : 'pending';
+                        $statusLabel = ($st === 'ออกงานแล้ว') ? 'ออกงานแล้ว' : ($st === 'เข้างานแล้ว' ? 'เช็คอินตรงเวลา' : 'ยังไม่เข้างาน');
+                        $statusBadge = ($st === 'ออกงานแล้ว') ? 'ออกงานแล้ว 🟢' : ($st === 'เข้างานแล้ว' ? 'ปกติ 🟢' : 'ยังไม่เข้างาน ⚪');
+                        $distIn = '0ม.';
+                        $distOut = ($checkOutTime !== '—') ? '0ม.' : null;
+                        $locIn = session('employee_check_in_location', 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)');
+                        $locOut = session('employee_check_out_location', 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)');
+                    }
+
+                    $logs[] = [
+                        'id' => 'att_' . str_replace('-', '', $dateKey) . '_' . $empId,
+                        'employee_id' => $empId,
+                        'date' => $dateKey,
+                        'date_formatted' => $cfg['formatted'],
+                        'name' => $emp['name'] ?? 'พนักงาน',
+                        'roles' => [
+                            [
+                                'label' => $roleLabel,
+                                'color' => $isAdmin ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-blue-50 text-blue-700 border-blue-200',
+                                'icon' => $isAdmin ? '🛡️' : '💼'
+                            ]
+                        ],
+                        'branch' => $emp['branch'] ?? 'ทุกสาขา',
+                        'is_offday' => false,
+                        'status_label' => $statusLabel,
+                        'status_badge' => $statusBadge,
+                        'check_in_time' => $checkInTime ?: '—',
+                        'check_in_photo' => $photoIn,
+                        'check_in_distance' => $distIn,
+                        'check_in_location' => $locIn,
+                        'check_out_time' => $checkOutTime ?: '—',
+                        'check_out_photo' => $photoOut,
+                        'check_out_distance' => $distOut,
+                        'check_out_location' => $locOut,
+                        'total_hours' => $workHours ?: '—',
+                        'status' => $statusCode,
+                        'ot_start' => '—',
+                        'ot_end' => '—',
+                        'ot_hours' => '—',
+                    ];
+                } else {
+                    // Historical Sample Dates
+                    $logs[] = [
+                        'id' => 'att_' . str_replace('-', '', $dateKey) . '_' . $empId,
+                        'employee_id' => $empId,
+                        'date' => $dateKey,
+                        'date_formatted' => $cfg['formatted'],
+                        'name' => $emp['name'] ?? 'พนักงาน',
+                        'roles' => [
+                            [
+                                'label' => $roleLabel,
+                                'color' => $isAdmin ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-blue-50 text-blue-700 border-blue-200',
+                                'icon' => $isAdmin ? '🛡️' : '💼'
+                            ]
+                        ],
+                        'branch' => $emp['branch'] ?? 'ทุกสาขา',
+                        'is_offday' => $cfg['off'],
+                        'status_label' => $cfg['label'],
+                        'status_badge' => $cfg['badge'] ?? 'ปกติ 🟢',
+                        'check_in_time' => $cfg['in'] ?: '—',
+                        'check_in_photo' => $cfg['off'] ? null : $this->normalizeAvatarUrl($cfg['photo_in']),
+                        'check_in_distance' => $cfg['off'] ? null : '0ม.',
+                        'check_in_location' => $cfg['off'] ? null : 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)',
+                        'check_out_time' => $cfg['out'] ?: '—',
+                        'check_out_photo' => $cfg['off'] ? null : $this->normalizeAvatarUrl($cfg['photo_out']),
+                        'check_out_distance' => $cfg['off'] ? null : '0ม.',
+                        'check_out_location' => $cfg['off'] ? null : 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)',
+                        'total_hours' => $cfg['hours'] ?: '—',
+                        'status' => $cfg['status'],
+                        'ot_start' => $cfg['ot_start'],
+                        'ot_end' => $cfg['ot_end'],
+                        'ot_hours' => $cfg['ot'],
+                    ];
+                }
             }
         }
         return $logs;

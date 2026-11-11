@@ -1245,6 +1245,7 @@
                                                      title="คลิกเพื่อดูภาพเต็ม">
                                                     <img src="{{ $log['check_in_photo'] }}"
                                                          alt="เช็คอิน"
+                                                         onerror="this.onerror=null; this.src='/uploads/attendance/sample_check_in.jpg';"
                                                          class="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-2xs group-hover:scale-105 transition-all">
                                                     <div class="absolute inset-0 bg-black/20 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] transition-all">
                                                         🔍
@@ -1257,19 +1258,23 @@
 
                                         <!-- เช็คอิน -->
                                         <td class="py-3.5 px-3 font-bold font-mono text-emerald-600 text-xs sm:text-sm">
-                                            {{ $log['check_in_time'] }}
+                                            {{ $log['check_in_time'] ?? '—' }}
                                         </td>
 
                                         <!-- พิกัดเช็คอิน -->
                                         <td class="py-3.5 px-3">
-                                            <button type="button"
-                                                    onclick="openAttendanceMapModal('{{ $log['name'] }}', '{{ $log['branch'] }}', '{{ $log['check_in_distance'] ?? '6ม.' }}', 'เช็คอินเข้างาน')"
-                                                    class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap">
-                                                <span>📍 แผนที่</span>
-                                                @if(!empty($log['check_in_distance']))
-                                                    <span class="text-[10px]">({{ $log['check_in_distance'] }})</span>
-                                                @endif
-                                            </button>
+                                            @if(!empty($log['check_in_time']) && $log['check_in_time'] !== '—')
+                                                <button type="button"
+                                                        onclick="openAttendanceMapModal('{{ $log['name'] }}', '{{ $log['branch'] }}', '{{ $log['check_in_distance'] ?? '0ม.' }}', 'เช็คอินเข้างาน')"
+                                                        class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap">
+                                                    <span>📍 แผนที่</span>
+                                                    @if(!empty($log['check_in_distance']))
+                                                        <span class="text-[10px]">({{ $log['check_in_distance'] }})</span>
+                                                    @endif
+                                                </button>
+                                            @else
+                                                <span class="text-slate-300">—</span>
+                                            @endif
                                         </td>
 
                                         <!-- รูปออก -->
@@ -1280,6 +1285,7 @@
                                                      title="คลิกเพื่อดูภาพเต็ม">
                                                     <img src="{{ $log['check_out_photo'] }}"
                                                          alt="เช็คเอาต์"
+                                                         onerror="this.onerror=null; this.src='/uploads/attendance/sample_check_out.jpg';"
                                                          class="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-2xs group-hover:scale-105 transition-all">
                                                     <div class="absolute inset-0 bg-black/20 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] transition-all">
                                                         🔍
@@ -1297,9 +1303,9 @@
 
                                         <!-- พิกัดเช็คเอาต์ -->
                                         <td class="py-3.5 px-3">
-                                            @if(!empty($log['check_out_time']))
+                                            @if(!empty($log['check_out_time']) && $log['check_out_time'] !== '—')
                                                 <button type="button"
-                                                        onclick="openAttendanceMapModal('{{ $log['name'] }}', '{{ $log['branch'] }}', '{{ $log['check_out_distance'] ?? '8ม.' }}', 'เช็คเอาต์ออกงาน')"
+                                                        onclick="openAttendanceMapModal('{{ $log['name'] }}', '{{ $log['branch'] }}', '{{ $log['check_out_distance'] ?? '0ม.' }}', 'เช็คเอาต์ออกงาน')"
                                                         class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap">
                                                     <span>📍 แผนที่</span>
                                                 </button>
@@ -1315,9 +1321,19 @@
 
                                         <!-- สถานะการลงเวลา -->
                                         <td class="py-3.5 px-3">
-                                            <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold inline-flex items-center gap-1 whitespace-nowrap">
-                                                {{ $log['status_badge'] ?? 'ปกติ 🟢' }}
-                                            </span>
+                                            @if(($log['status'] ?? '') === 'pending')
+                                                <span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 text-xs font-bold inline-flex items-center gap-1 whitespace-nowrap">
+                                                    ยังไม่เข้างาน ⚪
+                                                </span>
+                                            @elseif(($log['status'] ?? '') === 'late')
+                                                <span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold inline-flex items-center gap-1 whitespace-nowrap">
+                                                    สาย 🟡
+                                                </span>
+                                            @else
+                                                <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold inline-flex items-center gap-1 whitespace-nowrap">
+                                                    {{ $log['status_badge'] ?? 'ปกติ 🟢' }}
+                                                </span>
+                                            @endif
                                         </td>
 
                                         <!-- ⚡ เริ่ม OT -->
@@ -2665,6 +2681,28 @@
                         if (outUrl) outUrl.href = json.check_out_photo;
                         if (outTime) outTime.innerText = json.check_out;
                     }
+
+                    // Dynamically update overview logs for this employee
+                    if (typeof allAttendanceLogs !== 'undefined' && Array.isArray(allAttendanceLogs)) {
+                        allAttendanceLogs.forEach(item => {
+                            if ((item.date === '2026-11-08' || item.date === '{{ date("Y-m-d") }}') && (item.name === json.employee_name || item.employee_id === json.employee_id)) {
+                                item.check_in_time = json.check_in || '—';
+                                item.check_out_time = json.check_out || '—';
+                                item.total_hours = json.work_hours || '—';
+                                item.check_in_photo = json.check_in_photo || null;
+                                item.check_out_photo = json.check_out_photo || null;
+                                item.status = (json.status === 'ออกงานแล้ว' || json.status === 'เข้างานแล้ว') ? 'present' : 'pending';
+                                item.status_label = json.status;
+                                item.status_badge = json.status + ' 🟢';
+                                item.check_in_distance = '0ม.';
+                                item.check_out_distance = (json.check_out && json.check_out !== '—') ? '0ม.' : null;
+                            }
+                        });
+                        const currentFiltered = allAttendanceLogs.filter(log => log.date === overviewSelectedDate);
+                        if (currentFiltered.length > 0) {
+                            renderOverviewAttendanceRows(currentFiltered);
+                        }
+                    }
                 } else {
                     alert(json.message || 'เกิดข้อผิดพลาดในการบันทึกเวลา');
                 }
@@ -3021,7 +3059,7 @@
         if (!tbody) return;
 
         // Recalculate 4 metrics (Unique employees count matching Image 2 overview)
-        const totalWorking = new Set(logs.filter(l => !l.is_offday).map(l => l.name)).size;
+        const totalWorking = new Set(logs.filter(l => !l.is_offday && l.status !== 'pending').map(l => l.name)).size;
         const totalLate = new Set(logs.filter(l => l.status === 'late').map(l => l.name)).size;
         const totalPending = new Set(logs.filter(l => l.status === 'pending').map(l => l.name)).size;
         const totalOt = new Set(logs.filter(l => l.ot_hours && l.ot_hours !== '—').map(l => l.name)).size;
@@ -3084,7 +3122,7 @@
                         <td class="py-3.5 px-3">
                             ${log.check_in_photo ? `
                                 <div class="relative group cursor-pointer inline-block" onclick="openPhotoLightbox('${log.check_in_photo}', 'ภาพเช็คอิน: ${log.name} (${log.check_in_time})')">
-                                    <img src="${log.check_in_photo}" alt="เช็คอิน" class="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-2xs group-hover:scale-105 transition-all">
+                                    <img src="${log.check_in_photo}" alt="เช็คอิน" onerror="this.onerror=null; this.src='/uploads/attendance/sample_check_in.jpg';" class="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-2xs group-hover:scale-105 transition-all">
                                 </div>
                             ` : '<span class="text-slate-300">—</span>'}
                         </td>
@@ -3092,15 +3130,17 @@
                             ${log.check_in_time || '—'}
                         </td>
                         <td class="py-3.5 px-3">
-                            <button type="button" onclick="openAttendanceMapModal('${log.name}', '${log.branch}', '${log.check_in_distance || '6ม.'}', 'เช็คอินเข้างาน')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap">
-                                <span>📍 แผนที่</span>
-                                ${log.check_in_distance ? `<span class="text-[10px]">(${log.check_in_distance})</span>` : ''}
-                            </button>
+                            ${log.check_in_time && log.check_in_time !== '—' ? `
+                                <button type="button" onclick="openAttendanceMapModal('${log.name}', '${log.branch}', '${log.check_in_distance || '0ม.'}', 'เช็คอินเข้างาน')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap">
+                                    <span>📍 แผนที่</span>
+                                    ${log.check_in_distance ? `<span class="text-[10px]">(${log.check_in_distance})</span>` : ''}
+                                </button>
+                            ` : '<span class="text-slate-300">—</span>'}
                         </td>
                         <td class="py-3.5 px-3">
                             ${log.check_out_photo ? `
                                 <div class="relative group cursor-pointer inline-block" onclick="openPhotoLightbox('${log.check_out_photo}', 'ภาพเช็คเอาต์: ${log.name} (${log.check_out_time})')">
-                                    <img src="${log.check_out_photo}" alt="เช็คเอาต์" class="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-2xs group-hover:scale-105 transition-all">
+                                    <img src="${log.check_out_photo}" alt="เช็คเอาต์" onerror="this.onerror=null; this.src='/uploads/attendance/sample_check_out.jpg';" class="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-2xs group-hover:scale-105 transition-all">
                                 </div>
                             ` : '<span class="text-slate-300">—</span>'}
                         </td>
@@ -3108,17 +3148,21 @@
                             ${log.check_out_time || '—'}
                         </td>
                         <td class="py-3.5 px-3">
-                            ${log.check_out_time ? `
-                                <button type="button" onclick="openAttendanceMapModal('${log.name}', '${log.branch}', '${log.check_out_distance || '8ม.'}', 'เช็คเอาต์ออกงาน')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap">
+                            ${log.check_out_time && log.check_out_time !== '—' ? `
+                                <button type="button" onclick="openAttendanceMapModal('${log.name}', '${log.branch}', '${log.check_out_distance || '0ม.'}', 'เช็คเอาต์ออกงาน')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap">
                                     <span>📍 แผนที่</span>
                                 </button>
                             ` : '<span class="text-slate-300">—</span>'}
                         </td>
                         <td class="py-3.5 px-3 font-bold text-slate-800">${log.total_hours || '—'}</td>
                         <td class="py-3.5 px-3">
-                            <span class="px-2.5 py-0.5 rounded-full ${log.status === 'late' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'} text-xs font-bold inline-flex items-center gap-1 whitespace-nowrap">
-                                ${log.status_badge || (log.status === 'late' ? 'สาย 🟡' : 'ปกติ 🟢')}
-                            </span>
+                            ${log.status === 'pending'
+                                ? '<span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 text-xs font-bold inline-flex items-center gap-1 whitespace-nowrap">ยังไม่เข้างาน ⚪</span>'
+                                : (log.status === 'late'
+                                    ? '<span class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold inline-flex items-center gap-1 whitespace-nowrap">สาย 🟡</span>'
+                                    : `<span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold inline-flex items-center gap-1 whitespace-nowrap">${log.status_badge || 'ปกติ 🟢'}</span>`
+                                )
+                            }
                         </td>
                         <td class="py-3.5 px-3 text-slate-400 text-center font-mono">${log.ot_start || '—'}</td>
                         <td class="py-3.5 px-3 text-slate-400 text-center font-mono">${log.ot_end || '—'}</td>
