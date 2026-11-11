@@ -86,6 +86,9 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::post('/price-tracker/hero-banner', [ReceiptController::class, 'updatePriceTrackerHero'])->name('receipts.price_tracker.update_hero');
     Route::post('/price-tracker/sync-today', [ReceiptController::class, 'syncTodayReceipts'])->name('receipts.price_tracker.sync_today');
     Route::post('/categories', [ReceiptController::class, 'storeCategory'])->name('categories.store');
+    Route::post('/categories/{category}/update', [ReceiptController::class, 'updateCategory'])->name('categories.update');
+    Route::delete('/categories/{category}', [ReceiptController::class, 'destroyCategory'])->name('categories.destroy');
+    Route::post('/categories/{category}/delete', [ReceiptController::class, 'destroyCategory'])->name('categories.destroy.post');
     Route::post('/categories/{category}/toggle-approval', [ReceiptController::class, 'toggleCategoryApproval'])->name('categories.toggle_approval');
 
     // 3.2 ระบบบันทึกฟิกคอส รายรับรายจ่ายทั่วไป

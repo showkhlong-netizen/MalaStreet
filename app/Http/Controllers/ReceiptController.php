@@ -2038,6 +2038,117 @@ class ReceiptController extends Controller
     }
 
     /**
+     * Update an existing Category (name, slug, icon, is_active).
+     */
+    public function updateCategory(Request $request, string $identifier): JsonResponse|RedirectResponse
+    {
+        $category = Category::where('slug', $identifier)->orWhere('id', $identifier)->firstOrFail();
+
+        $request->validate([
+            'name' => 'required|string|max:100',
+            'slug' => 'nullable|string|max:100',
+            'category_image' => 'nullable|image|max:10240',
+            'category_image_url' => 'nullable|string|max:500',
+        ]);
+
+        $name = trim($request->input('name'));
+        $rawSlug = trim($request->input('slug') ?: '');
+        $oldSlug = $category->slug;
+
+        $slug = Str::slug($rawSlug ?: $name);
+        if (empty($slug)) {
+            $slug = $oldSlug;
+        }
+
+        // If slug changed, ensure uniqueness
+        if ($slug !== $oldSlug) {
+            $originalSlug = $slug;
+            $counter = 1;
+            while (Category::where('slug', $slug)->where('id', '!=', $category->id)->exists()) {
+                $slug = $originalSlug . '-' . $counter;
+                $counter++;
+            }
+        }
+
+        $iconPath = $category->icon;
+        if ($request->hasFile('category_image')) {
+            $file = $request->file('category_image');
+            $filename = 'cat_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+            $destDir = public_path('uploads/categories');
+            if (!file_exists($destDir)) {
+                mkdir($destDir, 0755, true);
+            }
+            $file->move($destDir, $filename);
+            $iconPath = 'uploads/categories/' . $filename;
+        } elseif ($request->filled('category_image_url')) {
+            $iconPath = trim($request->input('category_image_url'));
+        }
+
+        $isActive = $request->has('is_active') ? $request->boolean('is_active') : $category->is_active;
+
+        $category->update([
+            'name' => $name,
+            'slug' => $slug,
+            'icon' => $iconPath,
+            'is_active' => $isActive,
+        ]);
+
+        // If slug changed, update all raw materials linked to the old slug
+        if ($slug !== $oldSlug) {
+            RawMaterial::where('category_slug', $oldSlug)->update(['category_slug' => $slug]);
+        }
+
+        $resolvedIcon = str_starts_with($category->icon, 'http') ? $category->icon : asset($category->icon);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'บันทึกการแก้ไขหมวดหมู่ "' . $category->name . '" สำเร็จแล้ว',
+                'category' => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'slug' => $category->slug,
+                    'old_slug' => $oldSlug,
+                    'icon' => $resolvedIcon,
+                    'is_active' => (bool) $category->is_active,
+                ],
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'บันทึกการแก้ไขหมวดหมู่ "' . $category->name . '" สำเร็จแล้ว');
+    }
+
+    /**
+     * Delete a category safely reassigning materials and products to fallback category.
+     */
+    public function destroyCategory(Request $request, string $identifier): JsonResponse|RedirectResponse
+    {
+        $category = Category::where('slug', $identifier)->orWhere('id', $identifier)->firstOrFail();
+        $catName = $category->name;
+        $catSlug = $category->slug;
+
+        // Reassign products & raw materials to another category to prevent accidental data loss
+        $fallback = Category::where('id', '!=', $category->id)->orderBy('id')->first();
+        if ($fallback) {
+            Product::where('category_id', $category->id)->update(['category_id' => $fallback->id]);
+            RawMaterial::where('category_slug', $catSlug)->update(['category_slug' => $fallback->slug]);
+        }
+
+        $category->delete();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'ลบหมวดหมู่ "' . $catName . '" เรียบร้อยแล้ว',
+                'deleted_slug' => $catSlug,
+                'fallback_slug' => $fallback?->slug,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'ลบหมวดหมู่ "' . $catName . '" เรียบร้อยแล้ว');
+    }
+
+    /**
      * Toggle product sale approval for Online Order storefront and POS Cashier.
      */
     public function toggleMaterialApproval(Request $request, RawMaterial $rawMaterial): JsonResponse

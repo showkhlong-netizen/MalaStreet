@@ -445,6 +445,70 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
                         </svg>
                     </button>
+
+                    <!-- Active Category 3-Lines Settings Button (☰) -->
+                    <div class="relative inline-flex items-center">
+                        <button
+                            type="button"
+                            id="btn-cat-main-settings-trigger"
+                            onclick="toggleMainCategorySettingsDropdown(event)"
+                            class="hidden shrink-0 w-8 h-8 rounded-full border-2 border-slate-900 hover:border-[#E50914] bg-white hover:bg-rose-50 text-[#E50914] items-center justify-center cursor-pointer ml-1 shadow-2xs select-none transition-all"
+                            title="ตัวเลือกจัดการหมวดหมู่นี้ (☰)"
+                        >
+                            <svg class="w-3.5 h-3.5 text-[#E50914]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
+                                <line x1="4" y1="7" x2="20" y2="7"></line>
+                                <line x1="4" y1="12" x2="20" y2="12"></line>
+                                <line x1="4" y1="17" x2="20" y2="17"></line>
+                            </svg>
+                        </button>
+
+                        <!-- Main Category Settings Dropdown (☰) styled exactly like Image 2 -->
+                        <div
+                            id="main-category-settings-dropdown"
+                            class="hidden fixed w-64 bg-white rounded-2xl shadow-2xl border border-slate-200/90 py-1.5 animate-in fade-in zoom-in-95 duration-100 divide-y divide-slate-100"
+                            style="z-index: 99999;"
+                        >
+                            <div class="px-3.5 py-1.5 text-[11px] font-bold text-slate-400 truncate">
+                                ตัวเลือกจัดการรายการ (☰)
+                            </div>
+
+                            <button
+                                type="button"
+                                onclick="openEditMainCategoryFromDropdown()"
+                                class="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-slate-700 hover:bg-rose-50 hover:text-[#E50914] flex items-center gap-2.5 transition cursor-pointer"
+                            >
+                                <span class="w-7 h-7 rounded-lg bg-rose-50 text-[#E50914] flex items-center justify-center shrink-0">
+                                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                </span>
+                                <div>
+                                    <span class="block font-bold">แก้ไขรายการ</span>
+                                    <span class="block text-[10.5px] font-normal text-slate-400">แก้ไขข้อความและภาพปกหมวดหมู่นี้</span>
+                                </div>
+                            </button>
+
+                            <button
+                                type="button"
+                                onclick="confirmDeleteMainCategoryFromDropdown()"
+                                class="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 hover:text-rose-700 flex items-center gap-2.5 transition cursor-pointer"
+                            >
+                                <span class="w-7 h-7 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                                    </svg>
+                                </span>
+                                <div>
+                                    <span class="block font-bold">ลบรายการ</span>
+                                    <span class="block text-[10.5px] font-normal text-slate-400">ลบหมวดหมู่นี้ออกจากระบบ</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
                     <span id="live-sync-indicator" class="hidden 2xl:inline-flex items-center gap-1.5 ml-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70 text-[11px] font-medium whitespace-nowrap">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                         <span>ซิงก์ราคาอัตโนมัติ</span>
@@ -1715,6 +1779,180 @@
     </div>
 </div>
 
+<!-- 9. POPUP 4: EDIT CATEGORY MODAL (ป๊อปอัปแก้ไขแถบหมวดหมู่: แก้ไขข้อความ รูปภาพ และอนุมัติแสดงผล) -->
+<div
+    id="category-edit-modal"
+    class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/65 backdrop-blur-xs p-4 overflow-y-auto"
+    onclick="if(event.target === this) closeEditCategoryModal()"
+>
+    <div class="bg-white rounded-[24px] max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150">
+        <!-- Header -->
+        <div class="px-6 py-4 bg-gradient-to-r from-[#8B0912] via-[#B91C1C] to-[#E50914] text-white flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+                <span class="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </span>
+                <div>
+                    <h3 class="text-[17px] font-bold leading-snug">แก้ไขแถบหมวดหมู่</h3>
+                    <p class="text-[11.5px] text-rose-100/90 font-normal">แก้ไขข้อความชื่อหมวดหมู่ รหัส รูปภาพไอคอน และการแสดงผล</p>
+                </div>
+            </div>
+            <button
+                type="button"
+                onclick="closeEditCategoryModal()"
+                class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center shrink-0 cursor-pointer transition"
+            >
+                ✕
+            </button>
+        </div>
+
+        <!-- Form -->
+        <form id="category-edit-form" onsubmit="submitEditCategoryForm(event)" class="p-6 space-y-4">
+            @csrf
+            <input type="hidden" id="edit-cat-target-slug" name="target_slug">
+
+            <!-- Category Image Preview & Upload -->
+            <div class="p-4 rounded-2xl bg-[#F8F9FB] border border-slate-200/80 space-y-3">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-16 h-16 rounded-full overflow-hidden bg-white border-2 border-slate-200 shadow-xs shrink-0 relative flex items-center justify-center">
+                        <img
+                            id="edit-cat-preview-img"
+                            src="{{ asset('assets/categories/all.png') }}"
+                            alt="Category Preview"
+                            class="w-full h-full object-cover"
+                        >
+                    </div>
+                    <div class="flex-1 min-w-0 space-y-1.5">
+                        <label class="text-xs font-bold text-slate-700 block">รูปภาพไอคอนหมวดหมู่ (1:1)</label>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <label class="px-3 py-1.5 rounded-xl bg-[#E50914] hover:bg-[#C8102E] text-white text-xs font-semibold cursor-pointer inline-flex items-center gap-1.5 shadow-2xs transition-all">
+                                <span>📷 เลือกภาพจากเครื่อง</span>
+                                <input
+                                    type="file"
+                                    id="edit-cat-file-input"
+                                    name="category_image"
+                                    accept="image/*"
+                                    onchange="previewEditCategoryUploadFile(this)"
+                                    class="hidden"
+                                >
+                            </label>
+                            <input
+                                type="text"
+                                id="edit-cat-image-url"
+                                name="category_image_url"
+                                oninput="updateEditCategoryPreviewFromUrl(this.value)"
+                                placeholder="หรือวางลิงก์รูปภาพ (URL)..."
+                                class="flex-1 min-w-[150px] px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-[#E50914]"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preset Category Icons Quick Picker -->
+                <div>
+                    <span class="text-[11px] text-slate-400 block mb-1.5">หรือเลือกรูปหมวดหมู่ตัวอย่าง:</span>
+                    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+                        @foreach($catPresets as $preset)
+                            <button
+                                type="button"
+                                onclick="selectEditPresetCategoryImage('{{ $preset['url'] }}')"
+                                title="{{ $preset['label'] }}"
+                                class="w-10 h-10 rounded-full overflow-hidden border-2 border-slate-200 hover:border-[#E50914] shrink-0 transition-all cursor-pointer hover:scale-105 shadow-2xs"
+                            >
+                                <img src="{{ $preset['url'] }}" alt="{{ $preset['label'] }}" class="w-full h-full object-cover">
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Name -->
+            <div>
+                <label class="text-xs font-bold text-slate-700 block mb-1">ชื่อแถบหมวดหมู่ <span class="text-[#E50914]">*</span></label>
+                <input
+                    type="text"
+                    id="edit-cat-name"
+                    name="name"
+                    required
+                    placeholder="เช่น ซีฟู้ด & อาหารทะเล, น้ำซุป, เส้นและวุ้นเส้น..."
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-sm font-semibold text-slate-800 focus:outline-none focus:border-[#E50914] shadow-2xs"
+                >
+            </div>
+
+            <!-- Category Slug (English identifier) -->
+            <div>
+                <label class="text-xs font-bold text-slate-700 block mb-1">รหัสหมวดหมู่ (Slug / ภาษาอังกฤษ)</label>
+                <input
+                    type="text"
+                    id="edit-cat-slug"
+                    name="slug"
+                    placeholder="เช่น seafood, soup, noodles..."
+                    class="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono text-slate-600 focus:outline-none focus:border-[#E50914]"
+                >
+                <p class="text-[11px] text-slate-400 mt-0.5">ใช้สำหรับอ้างอิงรหัสหมวดหมู่</p>
+            </div>
+
+            <!-- Approval Checkbox Toggle (ปุ่มติ๊กถูกอนุมัติแสดงผล: สั่งออนไลน์ & แคชเชียร์) -->
+            <div class="p-3.5 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 flex items-center justify-between gap-3 shadow-2xs">
+                <div class="flex items-center gap-3 min-w-0">
+                    <span class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                        </svg>
+                    </span>
+                    <div>
+                        <div class="text-[13px] font-bold text-emerald-950 flex items-center gap-1.5">
+                            <span>อนุมัติแสดงผล (สั่งออนไลน์ & แคชเชียร์)</span>
+                        </div>
+                        <div class="text-[11.5px] text-emerald-800 leading-tight mt-0.5">
+                            เมื่อติ๊กถูก ทุกรายการในแถบหมวดหมู่นี้จะแสดงในหน้าสั่งออนไลน์และหน้าแคชเชียร์
+                        </div>
+                    </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                    <input type="checkbox" id="edit-cat-is-active" name="is_active" value="1" class="sr-only peer">
+                    <div class="w-12 h-6.5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2.5px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5.5 after:w-5.5 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
+                </label>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-between gap-2.5 pt-3 border-t border-slate-100">
+                <button
+                    type="button"
+                    onclick="confirmDeleteCurrentEditCategory()"
+                    class="px-3.5 py-2.5 rounded-xl border border-rose-200 hover:bg-rose-50 text-rose-600 text-xs font-semibold cursor-pointer transition flex items-center gap-1.5"
+                >
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>ลบหมวดหมู่นี้</span>
+                </button>
+
+                <div class="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onclick="closeEditCategoryModal()"
+                        class="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold cursor-pointer transition"
+                    >
+                        ยกเลิก
+                    </button>
+                    <button
+                        type="submit"
+                        id="btn-update-category"
+                        class="px-5 py-2.5 rounded-xl bg-[#E50914] hover:bg-[#C8102E] text-white text-xs font-bold cursor-pointer transition shadow-xs flex items-center gap-1.5"
+                    >
+                        <span>💾 บันทึกการแก้ไข</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Master Options Dropdown Menu for Sticky Bar ☰ Button (Fixed positioned, avoids overflow clipping) -->
 <div
     id="master-options-dropdown"
@@ -2223,6 +2461,22 @@
                 cardDropdown.classList.add('hidden');
             }
         }
+
+        const catDropdown = document.getElementById('category-settings-dropdown');
+        const catBtn = document.getElementById('btn-cat-settings-trigger');
+        if (catDropdown && !catDropdown.classList.contains('hidden')) {
+            if (!catDropdown.contains(e.target) && catBtn && !catBtn.contains(e.target)) {
+                catDropdown.classList.add('hidden');
+            }
+        }
+
+        const mainCatDropdown = document.getElementById('main-category-settings-dropdown');
+        const mainCatBtn = document.getElementById('btn-cat-main-settings-trigger');
+        if (mainCatDropdown && !mainCatDropdown.classList.contains('hidden')) {
+            if (!mainCatDropdown.contains(e.target) && mainCatBtn && !mainCatBtn.contains(e.target)) {
+                mainCatDropdown.classList.add('hidden');
+            }
+        }
     });
 
     // Open confirmation modal for a single item
@@ -2465,6 +2719,7 @@
         if (headingEl) headingEl.textContent = activeLabel;
 
         const catApproveBtn = document.getElementById('btn-cat-approval-toggle');
+        const catSettingsBtn = document.getElementById('btn-cat-main-settings-trigger');
         if (catApproveBtn) {
             if (currentMatCategory === 'all') {
                 catApproveBtn.classList.add('hidden');
@@ -2475,6 +2730,15 @@
                 const activeBtn = document.querySelector(`.cat-pill-btn[data-cat="${currentMatCategory}"]`);
                 const isActive = activeBtn ? activeBtn.getAttribute('data-active') === '1' : true;
                 updateCategoryApprovalButtonUI(isActive);
+            }
+        }
+        if (catSettingsBtn) {
+            if (currentMatCategory === 'all') {
+                catSettingsBtn.classList.add('hidden');
+                catSettingsBtn.classList.remove('inline-flex');
+            } else {
+                catSettingsBtn.classList.remove('hidden');
+                catSettingsBtn.classList.add('inline-flex');
             }
         }
 
@@ -3859,6 +4123,393 @@
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalBtnHtml;
+        }
+    }
+
+    // 10.1 Category 3-Lines (☰) Settings Dropdowns & Edit/Delete
+    let categoriesData = @json($categories->keyBy('slug'));
+
+    function toggleCategorySettingsDropdown(event) {
+        if (event) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
+        const dropdown = document.getElementById('category-settings-dropdown');
+        const btn = document.getElementById('btn-cat-settings-trigger');
+        if (!dropdown || !btn) return;
+
+        if (!dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+            return;
+        }
+
+        // Close other dropdowns if open
+        const mainCatDropdown = document.getElementById('main-category-settings-dropdown');
+        if (mainCatDropdown) mainCatDropdown.classList.add('hidden');
+        const masterDropdown = document.getElementById('master-options-dropdown');
+        if (masterDropdown) masterDropdown.classList.add('hidden');
+
+        const rect = btn.getBoundingClientRect();
+        dropdown.style.position = 'fixed';
+        dropdown.style.top = `${rect.bottom + 6}px`;
+        dropdown.style.left = `${Math.max(12, Math.min(window.innerWidth - 270, rect.right - 240))}px`;
+        dropdown.style.zIndex = '999999';
+        dropdown.classList.remove('hidden');
+    }
+
+    function toggleMainCategorySettingsDropdown(event) {
+        if (event) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
+        const dropdown = document.getElementById('main-category-settings-dropdown');
+        const btn = document.getElementById('btn-cat-main-settings-trigger');
+        if (!dropdown || !btn) return;
+
+        if (!dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+            return;
+        }
+
+        // Close other dropdowns if open
+        const catDropdown = document.getElementById('category-settings-dropdown');
+        if (catDropdown) catDropdown.classList.add('hidden');
+        const masterDropdown = document.getElementById('master-options-dropdown');
+        if (masterDropdown) masterDropdown.classList.add('hidden');
+
+        const rect = btn.getBoundingClientRect();
+        dropdown.style.position = 'fixed';
+        dropdown.style.top = `${rect.bottom + 6}px`;
+        dropdown.style.left = `${Math.max(12, Math.min(window.innerWidth - 270, rect.right - 240))}px`;
+        dropdown.style.zIndex = '999999';
+        dropdown.classList.remove('hidden');
+    }
+
+    function openEditCategoryFromDropdown() {
+        const dropdown = document.getElementById('category-settings-dropdown');
+        if (dropdown) dropdown.classList.add('hidden');
+
+        const catSelect = document.getElementById('edit-mat-category');
+        const slug = catSelect ? catSelect.value : '';
+        if (slug) {
+            openEditCategoryModal(slug);
+        } else {
+            alert('กรุณาเลือกหมวดหมู่ที่ต้องการแก้ไขก่อน');
+        }
+    }
+
+    function openEditMainCategoryFromDropdown() {
+        const dropdown = document.getElementById('main-category-settings-dropdown');
+        if (dropdown) dropdown.classList.add('hidden');
+
+        if (currentMatCategory && currentMatCategory !== 'all') {
+            openEditCategoryModal(currentMatCategory);
+        } else {
+            alert('กรุณาเลือกหมวดหมู่ที่ต้องการแก้ไขก่อน');
+        }
+    }
+
+    function openEditCategoryModal(slug) {
+        const modal = document.getElementById('category-edit-modal');
+        if (!modal) return;
+
+        let cat = categoriesData[slug];
+        if (!cat) {
+            // Find from select options
+            const opt = document.querySelector(`#edit-mat-category option[value="${slug}"]`);
+            if (opt) {
+                cat = {
+                    name: opt.getAttribute('data-name') || opt.textContent.trim(),
+                    slug: slug,
+                    icon: opt.getAttribute('data-icon') || '',
+                    is_active: opt.getAttribute('data-active') === '1'
+                };
+            }
+        }
+
+        if (!cat) {
+            alert('ไม่พบข้อมูลหมวดหมู่นี้');
+            return;
+        }
+
+        document.getElementById('edit-cat-target-slug').value = slug;
+        document.getElementById('edit-cat-name').value = cat.name || '';
+        document.getElementById('edit-cat-slug').value = cat.slug || slug;
+
+        const resolvedIcon = cat.icon
+            ? (cat.icon.startsWith('http') ? cat.icon : `/${cat.icon}`)
+            : "{{ asset('assets/categories/all.png') }}";
+
+        document.getElementById('edit-cat-preview-img').src = resolvedIcon;
+        document.getElementById('edit-cat-image-url').value = cat.icon || '';
+        document.getElementById('edit-cat-file-input').value = '';
+
+        const checkEl = document.getElementById('edit-cat-is-active');
+        if (checkEl) checkEl.checked = !!cat.is_active;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => document.getElementById('edit-cat-name')?.focus(), 60);
+    }
+
+    function closeEditCategoryModal() {
+        const modal = document.getElementById('category-edit-modal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    function selectEditPresetCategoryImage(url) {
+        document.getElementById('edit-cat-preview-img').src = url;
+        document.getElementById('edit-cat-image-url').value = url;
+        document.getElementById('edit-cat-file-input').value = '';
+    }
+
+    function updateEditCategoryPreviewFromUrl(url) {
+        if (!url) return;
+        document.getElementById('edit-cat-preview-img').src = url;
+    }
+
+    async function previewEditCategoryUploadFile(input) {
+        if (!input.files || !input.files[0]) return;
+        const originalFile = input.files[0];
+
+        const urlInput = document.getElementById('edit-cat-image-url');
+        const prevUrl = urlInput ? urlInput.value : '';
+        if (urlInput) {
+            urlInput.value = 'กำลังแปลงรูปเป็น URL...';
+            urlInput.classList.add('animate-pulse');
+        }
+
+        const compressed = await compressImageFile(originalFile, 800, 0.88);
+        const fileToSend = compressed.file || originalFile;
+        const base64ToSend = compressed.base64;
+
+        const previewImg = document.getElementById('edit-cat-preview-img');
+        if (previewImg && base64ToSend) {
+            previewImg.src = base64ToSend;
+        }
+
+        const formData = new FormData();
+        if (base64ToSend) {
+            formData.append('image_base64', base64ToSend);
+        }
+        if (fileToSend && fileToSend.size < 1900000) {
+            formData.append('image_file', fileToSend);
+        }
+        formData.append('_token', csrfToken);
+
+        try {
+            const res = await fetch("{{ route('admin.receipts.price_tracker.upload_image') }}", {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success && data.url) {
+                if (urlInput) {
+                    urlInput.value = data.url;
+                    urlInput.classList.remove('animate-pulse');
+                }
+                if (previewImg) previewImg.src = data.url;
+                input.value = '';
+                showPriceToast('แปลงรูปไอคอนเป็น URL เรียบร้อยแล้ว');
+            } else {
+                if (urlInput) {
+                    urlInput.value = prevUrl;
+                    urlInput.classList.remove('animate-pulse');
+                }
+            }
+        } catch (err) {
+            console.error('Category upload failed:', err);
+            if (urlInput) {
+                urlInput.value = prevUrl;
+                urlInput.classList.remove('animate-pulse');
+            }
+        }
+    }
+
+    async function submitEditCategoryForm(e) {
+        e.preventDefault();
+        const form = document.getElementById('category-edit-form');
+        const submitBtn = document.getElementById('btn-update-category');
+        const targetSlug = document.getElementById('edit-cat-target-slug').value;
+        if (!targetSlug) return;
+
+        const originalBtnHtml = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>⏳ กำลังบันทึก...</span>';
+
+        const formData = new FormData(form);
+        const isActiveCheck = document.getElementById('edit-cat-is-active');
+        if (isActiveCheck) {
+            formData.set('is_active', isActiveCheck.checked ? '1' : '0');
+        }
+
+        const updateUrl = `{{ url('/admin/categories') }}/${encodeURIComponent(targetSlug)}/update`;
+
+        try {
+            const res = await fetch(updateUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success && data.category) {
+                const cat = data.category;
+                const oldSlug = data.category.old_slug || targetSlug;
+                const newSlug = cat.slug;
+
+                // 1. Update categoriesData
+                delete categoriesData[oldSlug];
+                categoriesData[newSlug] = cat;
+
+                // 2. Update select options in #edit-mat-category
+                const opt = document.querySelector(`#edit-mat-category option[value="${oldSlug}"]`);
+                if (opt) {
+                    opt.value = newSlug;
+                    opt.textContent = cat.name;
+                    opt.setAttribute('data-name', cat.name);
+                    opt.setAttribute('data-icon', cat.icon);
+                    opt.setAttribute('data-active', cat.is_active ? '1' : '0');
+                }
+
+                // 3. Update category pill button
+                const pillBtn = document.querySelector(`.cat-pill-btn[data-cat="${oldSlug}"]`);
+                if (pillBtn) {
+                    pillBtn.setAttribute('data-cat', newSlug);
+                    pillBtn.setAttribute('data-cat-name', cat.name);
+                    pillBtn.setAttribute('data-active', cat.is_active ? '1' : '0');
+                    pillBtn.setAttribute('onclick', `filterMaterialsByCategory('${newSlug}')`);
+
+                    const img = pillBtn.querySelector('img');
+                    if (img && cat.icon) img.src = cat.icon;
+
+                    const labelSpan = pillBtn.querySelector('span.tracking-tight');
+                    if (labelSpan) labelSpan.textContent = cat.name;
+                }
+
+                // 4. If this category was currently active in view, update active slug & title
+                if (currentMatCategory === oldSlug) {
+                    currentMatCategory = newSlug;
+                    const headingEl = document.getElementById('section-heading-text');
+                    if (headingEl) {
+                        headingEl.textContent = currentItemsFilter === 'today'
+                            ? `วัตถุดิบวันนี้: ${cat.name}`
+                            : `หมวดหมู่: ${cat.name}`;
+                    }
+                    updateCategoryApprovalButtonUI(cat.is_active);
+                }
+
+                closeEditCategoryModal();
+                showPriceToast(data.message || 'บันทึกการแก้ไขหมวดหมู่สำเร็จแล้ว');
+            } else {
+                alert('เกิดข้อผิดพลาด: ' + (data.message || 'ไม่สามารถบันทึกการแก้ไขหมวดหมู่ได้'));
+            }
+        } catch (err) {
+            console.error('Update category error:', err);
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHtml;
+        }
+    }
+
+    function confirmDeleteCategoryFromDropdown() {
+        const dropdown = document.getElementById('category-settings-dropdown');
+        if (dropdown) dropdown.classList.add('hidden');
+
+        const catSelect = document.getElementById('edit-mat-category');
+        const slug = catSelect ? catSelect.value : '';
+        if (slug) {
+            executeDeleteCategory(slug);
+        } else {
+            alert('กรุณาเลือกหมวดหมู่ที่ต้องการลบก่อน');
+        }
+    }
+
+    function confirmDeleteMainCategoryFromDropdown() {
+        const dropdown = document.getElementById('main-category-settings-dropdown');
+        if (dropdown) dropdown.classList.add('hidden');
+
+        if (currentMatCategory && currentMatCategory !== 'all') {
+            executeDeleteCategory(currentMatCategory);
+        } else {
+            alert('กรุณาเลือกหมวดหมู่ที่ต้องการลบก่อน');
+        }
+    }
+
+    function confirmDeleteCurrentEditCategory() {
+        const targetSlug = document.getElementById('edit-cat-target-slug')?.value;
+        if (targetSlug) {
+            executeDeleteCategory(targetSlug);
+        }
+    }
+
+    async function executeDeleteCategory(slug) {
+        if (!slug || slug === 'all') {
+            alert('ไม่สามารถลบหมวดหมู่หลักนี้ได้');
+            return;
+        }
+
+        let catName = slug;
+        if (categoriesData[slug] && categoriesData[slug].name) {
+            catName = categoriesData[slug].name;
+        } else {
+            const opt = document.querySelector(`#edit-mat-category option[value="${slug}"]`);
+            if (opt) catName = opt.textContent.trim();
+        }
+
+        const confirmMsg = `คุณแน่ใจหรือไม่ว่าต้องการลบหมวดหมู่ "${catName}" ออกจากระบบ?\n(วัตถุดิบและสินค้าในหมวดนี้จะถูกย้ายไปยังหมวดอื่นโดยอัตโนมัติ เพื่อป้องกันข้อมูลสูญหาย)`;
+        if (!confirm(confirmMsg)) return;
+
+        const deleteUrl = `{{ url('/admin/categories') }}/${encodeURIComponent(slug)}/delete`;
+
+        try {
+            const res = await fetch(deleteUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+                // 1. Remove from categoriesData
+                delete categoriesData[slug];
+
+                // 2. Remove option from #edit-mat-category
+                const opt = document.querySelector(`#edit-mat-category option[value="${slug}"]`);
+                if (opt) opt.remove();
+
+                // 3. Remove pill from category bar
+                const pillBtn = document.querySelector(`.cat-pill-btn[data-cat="${slug}"]`);
+                if (pillBtn) pillBtn.remove();
+
+                // 4. If current view was this category, switch back to 'all'
+                if (currentMatCategory === slug) {
+                    filterMaterialsByCategory('all');
+                }
+
+                closeEditCategoryModal();
+                showPriceToast(data.message || `ลบหมวดหมู่ "${catName}" เรียบร้อยแล้ว`);
+            } else {
+                alert('เกิดข้อผิดพลาด: ' + (data.message || 'ไม่สามารถลบหมวดหมู่ได้'));
+            }
+        } catch (err) {
+            console.error('Delete category error:', err);
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
         }
     }
 
