@@ -4130,6 +4130,27 @@
     // 10.1 Category 3-Lines (☰) Settings Dropdowns & Edit/Delete
     let categoriesData = @json($categories->keyBy('slug'));
 
+    // Move dropdown to <body> before positioning: parents with backdrop-filter (sticky bar / modal overlay)
+    // become the containing block for position:fixed, which made the menu float away from the ☰ button.
+    function positionCategoryDropdown(dropdown, btn) {
+        if (dropdown.parentElement !== document.body) {
+            document.body.appendChild(dropdown);
+        }
+        const rect = btn.getBoundingClientRect();
+        dropdown.style.position = 'fixed';
+        dropdown.style.top = `${rect.bottom + 6}px`;
+        dropdown.style.left = `${Math.max(12, Math.min(window.innerWidth - 270, rect.right - 256))}px`;
+        dropdown.style.zIndex = '999999';
+        dropdown.classList.remove('hidden');
+    }
+
+    // Close category dropdowns on scroll/resize so they never drift away from the button
+    ['scroll', 'resize'].forEach(evt => window.addEventListener(evt, () => {
+        ['category-settings-dropdown', 'main-category-settings-dropdown'].forEach(id => {
+            document.getElementById(id)?.classList.add('hidden');
+        });
+    }, { passive: true }));
+
     function toggleCategorySettingsDropdown(event) {
         if (event) {
             event.stopPropagation();
@@ -4150,12 +4171,7 @@
         const masterDropdown = document.getElementById('master-options-dropdown');
         if (masterDropdown) masterDropdown.classList.add('hidden');
 
-        const rect = btn.getBoundingClientRect();
-        dropdown.style.position = 'fixed';
-        dropdown.style.top = `${rect.bottom + 6}px`;
-        dropdown.style.left = `${Math.max(12, Math.min(window.innerWidth - 270, rect.right - 240))}px`;
-        dropdown.style.zIndex = '999999';
-        dropdown.classList.remove('hidden');
+        positionCategoryDropdown(dropdown, btn);
     }
 
     function toggleMainCategorySettingsDropdown(event) {
@@ -4178,12 +4194,7 @@
         const masterDropdown = document.getElementById('master-options-dropdown');
         if (masterDropdown) masterDropdown.classList.add('hidden');
 
-        const rect = btn.getBoundingClientRect();
-        dropdown.style.position = 'fixed';
-        dropdown.style.top = `${rect.bottom + 6}px`;
-        dropdown.style.left = `${Math.max(12, Math.min(window.innerWidth - 270, rect.right - 240))}px`;
-        dropdown.style.zIndex = '999999';
-        dropdown.classList.remove('hidden');
+        positionCategoryDropdown(dropdown, btn);
     }
 
     function openEditCategoryFromDropdown() {
