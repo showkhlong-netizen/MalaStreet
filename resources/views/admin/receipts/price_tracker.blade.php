@@ -388,6 +388,8 @@
                     <button
                         type="button"
                         data-cat="{{ $cat->slug }}"
+                        data-active="{{ $cat->is_active ? '1' : '0' }}"
+                        data-cat-name="{{ $cat->name }}"
                         onclick="filterMaterialsByCategory('{{ $cat->slug }}')"
                         class="cat-pill-btn shrink-0 h-[44px] px-4 rounded-[14px] bg-white hover:bg-rose-50/50 text-[#1F2430] border border-slate-200/90 shadow-2xs flex items-center gap-2.5 transition-all cursor-pointer"
                     >
@@ -398,6 +400,9 @@
                             onerror="this.onerror=null;this.src='{{ asset('assets/menu/food-fallback.svg') }}';"
                         >
                         <span class="text-[13.5px] font-semibold tracking-tight">{{ $cat->name }}</span>
+                        @if(!$cat->is_active)
+                            <span class="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="ยังไม่อนุมัติแสดงผล"></span>
+                        @endif
                     </button>
                 @endforeach
 
@@ -428,6 +433,18 @@
                     <span class="text-[13px] text-[#687082] font-normal whitespace-nowrap">
                         (<span id="visible-mat-count">{{ $rawMaterials->count() }}</span> รายการ)
                     </span>
+                    <!-- Category Approval Button when viewing a specific category tab -->
+                    <button
+                        type="button"
+                        id="btn-cat-approval-toggle"
+                        onclick="toggleActiveCategoryApproval()"
+                        class="hidden shrink-0 h-[32px] px-3 rounded-xl text-xs font-bold transition-all shadow-2xs items-center gap-1.5 cursor-pointer ml-1 select-none"
+                    >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                        </svg>
+                        <span id="btn-cat-approval-text">อนุมัติทุกรายการในแถบนี้ (สั่งออนไลน์ & แคชเชียร์)</span>
+                    </button>
                     <span id="live-sync-indicator" class="hidden 2xl:inline-flex items-center gap-1.5 ml-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70 text-[11px] font-medium whitespace-nowrap">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                         <span>ซิงก์ราคาอัตโนมัติ</span>
@@ -626,6 +643,7 @@
                         'today_opening_sticks' => (int) $mat->today_opening_sticks,
                         'today_stock_sticks' => (int) $mat->today_stock_sticks,
                         'selling_price' => $mat->products->first() ? (float) $mat->products->first()->price_per_stick : null,
+                        'is_approved_for_sale' => $mat->products->isNotEmpty() ? (bool) $mat->products->every(fn ($p) => $p->is_available) : false,
                     ];
                 @endphp
 
@@ -949,6 +967,7 @@
                     <div class="flex items-center gap-1.5 flex-wrap mb-1">
                         <span id="modal-mat-badge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/20 text-white"></span>
                         <span id="modal-mat-avail-badge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold"></span>
+                        <span id="modal-mat-sale-badge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold"></span>
                     </div>
                     <h3 id="modal-mat-name" class="text-[18px] font-bold leading-snug truncate"></h3>
                     <p id="modal-mat-unit" class="text-[12px] text-rose-100/90 font-normal"></p>
@@ -1022,12 +1041,27 @@
         </div>
 
         <!-- Modal Footer -->
-        <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2">
+        <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+            <div class="flex items-center gap-2 flex-wrap">
+                <!-- Approval Checkmark Button (ปุ่มติ๊กถูกอนุมัติแสดงผล: สั่งออนไลน์ & แคชเชียร์) -->
+                <button
+                    type="button"
+                    id="btn-toggle-mat-approval"
+                    onclick="toggleCurrentMaterialApproval()"
+                    class="py-2 px-3.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer select-none"
+                >
+                    <span id="btn-toggle-mat-approval-icon">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                        </svg>
+                    </span>
+                    <span id="btn-toggle-mat-approval-text">อนุมัติแสดงผล (สั่งออนไลน์ & แคชเชียร์)</span>
+                </button>
+
                 <button
                     type="button"
                     onclick="switchFromDetailToEditModal()"
-                    class="py-2 px-4 rounded-xl bg-[#E50914] hover:bg-[#C8102E] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                    class="py-2 px-3.5 rounded-xl bg-[#E50914] hover:bg-[#C8102E] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
                 >
                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
                         <line x1="4" y1="6" x2="20" y2="6"></line>
@@ -1039,7 +1073,7 @@
                 <button
                     type="button"
                     onclick="openDeleteSingleMaterialConfirmFromDetail()"
-                    class="py-2 px-3.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer border border-rose-200/60"
+                    class="py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer border border-rose-200/60"
                     title="ลบรายการวัตถุดิบนี้"
                 >
                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1052,7 +1086,7 @@
             <button
                 type="button"
                 onclick="closeMaterialDetailModal()"
-                class="py-2 px-4 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold cursor-pointer"
+                class="py-2 px-4 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold cursor-pointer shrink-0"
             >
                 ปิดหน้าต่าง
             </button>
@@ -1636,6 +1670,30 @@
                     class="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono text-slate-600 focus:outline-none focus:border-[#E50914]"
                 >
                 <p class="text-[11px] text-slate-400 mt-0.5">ใช้สำหรับอ้างอิงรหัสหมวดหมู่ (ระบบจะสร้างให้อัตโนมัติหากเว้นว่าง)</p>
+            </div>
+
+            <!-- Approval Checkbox Toggle (ปุ่มติ๊กถูกอนุมัติแสดงผล: สั่งออนไลน์ & แคชเชียร์) -->
+            <div class="p-3.5 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 flex items-center justify-between gap-3 shadow-2xs">
+                <div class="flex items-center gap-3 min-w-0">
+                    <span class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                        </svg>
+                    </span>
+                    <div>
+                        <div class="text-[13px] font-bold text-emerald-950 flex items-center gap-1.5">
+                            <span>อนุมัติแสดงผล (สั่งออนไลน์ & แคชเชียร์)</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-200/70 text-emerald-900">แนะนำ</span>
+                        </div>
+                        <div class="text-[11.5px] text-emerald-800 leading-tight mt-0.5">
+                            เมื่อติ๊กถูก ทุกรายการในแถบหมวดหมู่นี้จะแสดงในหน้าสั่งออนไลน์และหน้าแคชเชียร์ทันที
+                        </div>
+                    </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                    <input type="checkbox" id="create-cat-is-active" name="is_active" value="1" checked class="sr-only peer">
+                    <div class="w-12 h-6.5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2.5px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5.5 after:w-5.5 after:transition-all peer-checked:bg-emerald-600 shadow-inner"></div>
+                </label>
             </div>
 
             <!-- Action Buttons -->
@@ -2408,7 +2466,108 @@
         const headingEl = document.getElementById('section-heading-text');
         if (headingEl) headingEl.textContent = activeLabel;
 
+        const catApproveBtn = document.getElementById('btn-cat-approval-toggle');
+        if (catApproveBtn) {
+            if (currentMatCategory === 'all') {
+                catApproveBtn.classList.add('hidden');
+                catApproveBtn.classList.remove('inline-flex');
+            } else {
+                catApproveBtn.classList.remove('hidden');
+                catApproveBtn.classList.add('inline-flex');
+                const activeBtn = document.querySelector(`.cat-pill-btn[data-cat="${currentMatCategory}"]`);
+                const isActive = activeBtn ? activeBtn.getAttribute('data-active') === '1' : true;
+                updateCategoryApprovalButtonUI(isActive);
+            }
+        }
+
         applyMaterialFilters();
+    }
+
+    function updateCategoryApprovalButtonUI(isActive) {
+        const btn = document.getElementById('btn-cat-approval-toggle');
+        const text = document.getElementById('btn-cat-approval-text');
+        if (!btn || !text) return;
+        if (isActive) {
+            btn.className = 'shrink-0 h-[32px] px-3 rounded-xl text-xs font-bold transition-all shadow-2xs inline-flex items-center gap-1.5 cursor-pointer ml-1 select-none bg-emerald-600 hover:bg-emerald-700 text-white';
+            btn.title = 'คลิกเพื่อปิดการแสดงผลทั้งแถบนี้ในหน้าสั่งออนไลน์และแคชเชียร์';
+            text.textContent = '✓ อนุมัติทั้งแถบนี้แล้ว (สั่งออนไลน์ & แคชเชียร์)';
+        } else {
+            btn.className = 'shrink-0 h-[32px] px-3 rounded-xl text-xs font-bold transition-all shadow-2xs inline-flex items-center gap-1.5 cursor-pointer ml-1 select-none bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-400 hover:border-emerald-600';
+            btn.title = 'คลิกเพื่ออนุมัติให้ทุกรายการในแถบนี้แสดงในหน้าสั่งออนไลน์และแคชเชียร์ทันที';
+            text.textContent = '✓ ติ๊กถูกอนุมัติทั้งแถบนี้ (สั่งออนไลน์ & แคชเชียร์)';
+        }
+    }
+
+    async function toggleActiveCategoryApproval() {
+        if (!currentMatCategory || currentMatCategory === 'all') return;
+
+        const btn = document.getElementById('btn-cat-approval-toggle');
+        if (btn) {
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+        }
+
+        const catBtn = document.querySelector(`.cat-pill-btn[data-cat="${currentMatCategory}"]`);
+        const currentActive = catBtn ? catBtn.getAttribute('data-active') === '1' : true;
+        const targetActive = !currentActive;
+
+        try {
+            const url = `/admin/categories/${encodeURIComponent(currentMatCategory)}/toggle-approval`;
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    is_active: targetActive
+                })
+            });
+
+            const resData = await res.json();
+            if (res.ok && resData.success) {
+                if (catBtn) {
+                    catBtn.setAttribute('data-active', resData.is_active ? '1' : '0');
+                }
+                updateCategoryApprovalButtonUI(resData.is_active);
+                showPriceToast(resData.message);
+
+                // Update all cards belonging to this category in memory
+                document.querySelectorAll('.mat-card').forEach(card => {
+                    const catsAttr = card.getAttribute('data-cats') || '';
+                    const cats = catsAttr.split(',').map(s => s.trim());
+                    if (cats.includes(currentMatCategory)) {
+                        const rawJson = card.getAttribute('data-modal');
+                        if (rawJson) {
+                            try {
+                                const d = JSON.parse(rawJson);
+                                d.is_approved_for_sale = resData.is_active;
+                                card.setAttribute('data-modal', JSON.stringify(d));
+                            } catch (e) {}
+                        }
+                    }
+                });
+
+                if ('BroadcastChannel' in window) {
+                    try {
+                        const channel = new BroadcastChannel('mala_inventory_sync_channel');
+                        channel.postMessage({ type: 'category_approval_toggled', slug: currentMatCategory, is_active: resData.is_active });
+                    } catch (e) {}
+                }
+            } else {
+                alert(resData.message || 'เกิดข้อผิดพลาดในการเปลี่ยนสถานะหมวดหมู่');
+            }
+        } catch (err) {
+            console.error('Toggle category approval error:', err);
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75');
+            }
+        }
     }
 
     // 4.5 Today vs All Items Filter Mode (รายการที่สั่งซื้อในวันนี้ vs รายการทั้งหมด)
@@ -2710,6 +2869,8 @@
             }
         }
 
+        updateMaterialApprovalModalUI(Boolean(data.is_approved_for_sale));
+
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
@@ -2725,6 +2886,93 @@
         closeMaterialDetailModal();
         if (activeDetailCardEl) {
             openMaterialEditModalByCard(null, activeDetailCardEl);
+        }
+    }
+
+    function updateMaterialApprovalModalUI(isApproved) {
+        const saleBadge = document.getElementById('modal-mat-sale-badge');
+        const btn = document.getElementById('btn-toggle-mat-approval');
+        const btnText = document.getElementById('btn-toggle-mat-approval-text');
+
+        if (saleBadge) {
+            if (isApproved) {
+                saleBadge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/25 text-emerald-100 border border-emerald-400/40 gap-1';
+                saleBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span><span>✓ อนุมัติขาย (ออนไลน์ & แคชเชียร์)</span>`;
+            } else {
+                saleBadge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/20 text-amber-100 border border-amber-300/30 gap-1';
+                saleBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-300"></span><span>✗ ยังไม่อนุมัติ (ซ่อนจากออนไลน์ & แคชเชียร์)</span>`;
+            }
+        }
+
+        if (btn && btnText) {
+            if (isApproved) {
+                btn.className = 'py-2 px-3.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer select-none bg-emerald-600 hover:bg-emerald-700 text-white';
+                btn.title = 'คลิกเพื่อปิดการแสดงผลในหน้าสั่งออนไลน์และแคชเชียร์';
+                btnText.textContent = '✓ อนุมัติแล้ว (สั่งออนไลน์ & แคชเชียร์)';
+            } else {
+                btn.className = 'py-2 px-3.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer select-none bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 hover:border-emerald-500';
+                btn.title = 'คลิกเพื่ออนุมัติให้แสดงในหน้าสั่งออนไลน์และแคชเชียร์ทันที';
+                btnText.textContent = '✓ ติ๊กถูกอนุมัติ (สั่งออนไลน์ & แคชเชียร์)';
+            }
+        }
+    }
+
+    async function toggleCurrentMaterialApproval() {
+        if (!activeDetailCardEl) return;
+        const rawJson = activeDetailCardEl.getAttribute('data-modal');
+        if (!rawJson) return;
+        let data;
+        try {
+            data = JSON.parse(rawJson);
+        } catch (e) {
+            return;
+        }
+
+        const btn = document.getElementById('btn-toggle-mat-approval');
+        if (btn) {
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+        }
+
+        try {
+            const url = `/admin/price-tracker/materials/${data.id}/toggle-approval`;
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    is_available: !data.is_approved_for_sale
+                })
+            });
+
+            const resData = await res.json();
+            if (res.ok && resData.success) {
+                data.is_approved_for_sale = resData.is_available;
+                activeDetailCardEl.setAttribute('data-modal', JSON.stringify(data));
+                updateMaterialApprovalModalUI(Boolean(resData.is_available));
+                showPriceToast(resData.message);
+
+                if ('BroadcastChannel' in window) {
+                    try {
+                        const channel = new BroadcastChannel('mala_inventory_sync_channel');
+                        channel.postMessage({ type: 'product_approval_toggled', id: data.id, is_available: resData.is_available });
+                    } catch (e) {}
+                }
+            } else {
+                alert(resData.message || 'เกิดข้อผิดพลาดในการบันทึกสถานะอนุมัติ');
+            }
+        } catch (err) {
+            console.error('Toggle material approval error:', err);
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75');
+            }
         }
     }
 
@@ -3459,6 +3707,17 @@
                         availBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span><span>ไม่พบรายการ</span>';
                     }
                 }
+
+                if (typeof item.is_approved_for_sale !== 'undefined') {
+                    const rawJson = card.getAttribute('data-modal');
+                    if (rawJson) {
+                        try {
+                            const d = JSON.parse(rawJson);
+                            d.is_approved_for_sale = item.is_approved_for_sale;
+                            card.setAttribute('data-modal', JSON.stringify(d));
+                        } catch (e) {}
+                    }
+                }
             });
 
             applyMaterialFilters();
@@ -3473,6 +3732,8 @@
         if (!modal) return;
         document.getElementById('category-create-form').reset();
         document.getElementById('create-cat-preview-img').src = "{{ asset('assets/categories/all.png') }}";
+        const checkEl = document.getElementById('create-cat-is-active');
+        if (checkEl) checkEl.checked = true;
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         setTimeout(() => document.getElementById('create-cat-name')?.focus(), 50);
@@ -3578,6 +3839,10 @@
         submitBtn.innerHTML = '<span>⏳ กำลังบันทึก...</span>';
 
         const formData = new FormData(form);
+        const isActiveCheck = document.getElementById('create-cat-is-active');
+        if (isActiveCheck) {
+            formData.set('is_active', isActiveCheck.checked ? '1' : '0');
+        }
 
         try {
             const res = await fetch("{{ route('admin.categories.store') }}", {

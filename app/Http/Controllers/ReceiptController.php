@@ -1099,7 +1099,7 @@ class ReceiptController extends Controller
             $mat->today_stock_sticks = max($stockSticks, (int) $mat->current_stock_sticks);
         }
 
-        $categories = Category::where('is_active', true)->orderBy('sort_order')->get();
+        $categories = Category::orderBy('sort_order')->get();
 
         if ($request->wantsJson() || $request->boolean('json')) {
             return response()->json([
@@ -1129,6 +1129,8 @@ class ReceiptController extends Controller
                         'is_bought_today' => (bool) $mat->is_bought_today,
                         'today_opening_sticks' => (int) $mat->today_opening_sticks,
                         'today_stock_sticks' => (int) $mat->today_stock_sticks,
+                        'is_approved_for_sale' => $mat->products->isNotEmpty() ? (bool) $mat->products->every(fn ($p) => $p->is_available) : false,
+                        'selling_price' => $mat->products->first() ? (float) $mat->products->first()->price_per_stick : null,
                         'histories' => $mat->priceHistories->map(fn ($h) => [
                             'date' => $h->recorded_at->format('d/m/Y'),
                             'short_date' => $h->recorded_at->format('d/m'),
@@ -2008,13 +2010,14 @@ class ReceiptController extends Controller
         }
 
         $nextSort = (Category::max('sort_order') ?? 0) + 1;
+        $isActive = $request->has('is_active') ? $request->boolean('is_active') : true;
 
         $category = Category::create([
             'name' => $name,
             'slug' => $slug,
             'icon' => $iconPath,
             'sort_order' => $nextSort,
-            'is_active' => true,
+            'is_active' => $isActive,
         ]);
 
         if ($request->wantsJson() || $request->ajax()) {
@@ -2026,11 +2029,127 @@ class ReceiptController extends Controller
                     'name' => $category->name,
                     'slug' => $category->slug,
                     'icon' => str_starts_with($category->icon, 'http') ? $category->icon : asset($category->icon),
+                    'is_active' => (bool) $category->is_active,
                 ],
             ]);
         }
 
         return redirect()->back()->with('success', 'สร้างหมวดหมู่ "' . $category->name . '" สำเร็จแล้ว');
+    }
+
+    /**
+     * Toggle product sale approval for Online Order storefront and POS Cashier.
+     */
+    public function toggleMaterialApproval(Request $request, RawMaterial $rawMaterial): JsonResponse
+    {
+        $desiredStatus = $request->has('is_available')
+            ? $request->boolean('is_available')
+            : null;
+
+        $products = $rawMaterial->products;
+
+        if ($products->isEmpty()) {
+            $categorySlug = $rawMaterial->category_slug ?: 'pork-chicken';
+            $category = Category::where('slug', $categorySlug)->first() ?: Category::first();
+            if ($category && !$category->is_active) {
+                $category->update(['is_active' => true]);
+            }
+            $newStatus = $desiredStatus !== null ? $desiredStatus : true;
+            $costPerStick = (float) $rawMaterial->cost_per_stick ?: 10;
+            $product = Product::create([
+                'category_id' => $category?->id ?: 1,
+                'raw_material_id' => $rawMaterial->id,
+                'name' => $rawMaterial->name,
+                'description' => 'วัตถุดิบคัดพิเศษ ย่างหอมเครื่องเทศหม่าล่า หรือต้มซุปเข้มข้น',
+                'price_per_stick' => max(10, round($costPerStick * 1.5, 0)),
+                'image_url' => self::sanitizeImageUrl($rawMaterial->image_url),
+                'stock_sticks' => max(25, (int) $rawMaterial->current_stock_sticks),
+                'is_available' => $newStatus,
+                'supports_grill' => true,
+                'supports_soup' => true,
+                'sort_order' => 10 + $rawMaterial->id,
+            ]);
+            $isAvailable = $newStatus;
+        } else {
+            $current = $products->every(fn ($p) => $p->is_available);
+            $isAvailable = $desiredStatus !== null ? $desiredStatus : !$current;
+            foreach ($products as $p) {
+                $p->update(['is_available' => $isAvailable]);
+                if ($isAvailable && $p->category && !$p->category->is_active) {
+                    $p->category->update(['is_active' => true]);
+                }
+            }
+        }
+
+        $msg = $isAvailable
+            ? 'อนุมัติ "' . $rawMaterial->name . '" ให้แสดงในหน้าสั่งออนไลน์และหน้าแคชเชียร์แล้ว'
+            : 'ปิดการแสดงผล "' . $rawMaterial->name . '" ในหน้าสั่งออนไลน์และหน้าแคชเชียร์แล้ว';
+
+        return response()->json([
+            'success' => true,
+            'is_available' => $isAvailable,
+            'raw_material_id' => $rawMaterial->id,
+            'message' => $msg,
+        ]);
+    }
+
+    /**
+     * Toggle category approval and approve all items in that category for Online Order & POS Cashier.
+     */
+    public function toggleCategoryApproval(Request $request, string $identifier): JsonResponse
+    {
+        $category = Category::where('slug', $identifier)->orWhere('id', $identifier)->first();
+        if (!$category) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่พบหมวดหมู่ที่ระบุ',
+            ], 404);
+        }
+
+        $desiredStatus = $request->has('is_active')
+            ? $request->boolean('is_active')
+            : null;
+
+        $newStatus = $desiredStatus !== null ? $desiredStatus : !$category->is_active;
+        $category->update(['is_active' => $newStatus]);
+
+        // Update all existing products under this category
+        Product::where('category_id', $category->id)->update(['is_available' => $newStatus]);
+
+        // Ensure all raw materials belonging to this category have products and match the status
+        $rawMaterials = RawMaterial::where('category_slug', $category->slug)->get();
+        foreach ($rawMaterials as $rm) {
+            if ($rm->products()->exists()) {
+                $rm->products()->update(['is_available' => $newStatus]);
+            } elseif ($newStatus) {
+                $costPerStick = (float) $rm->cost_per_stick ?: 10;
+                Product::create([
+                    'category_id' => $category->id,
+                    'raw_material_id' => $rm->id,
+                    'name' => $rm->name,
+                    'description' => 'วัตถุดิบคัดพิเศษ ย่างหอมเครื่องเทศหม่าล่า หรือต้มซุปเข้มข้น',
+                    'price_per_stick' => max(10, round($costPerStick * 1.5, 0)),
+                    'image_url' => self::sanitizeImageUrl($rm->image_url),
+                    'stock_sticks' => max(25, (int) $rm->current_stock_sticks),
+                    'is_available' => true,
+                    'supports_grill' => true,
+                    'supports_soup' => true,
+                    'sort_order' => 10 + $rm->id,
+                ]);
+            }
+        }
+
+        $msg = $newStatus
+            ? 'อนุมัติแถบหมวดหมู่ "' . $category->name . '" และทุกรายการในแถบนี้ ให้แสดงในหน้าสั่งออนไลน์และหน้าแคชเชียร์แล้ว'
+            : 'ปิดการแสดงผลแถบหมวดหมู่ "' . $category->name . '" ในหน้าสั่งออนไลน์และหน้าแคชเชียร์แล้ว';
+
+        return response()->json([
+            'success' => true,
+            'is_active' => $newStatus,
+            'category_id' => $category->id,
+            'category_slug' => $category->slug,
+            'message' => $msg,
+        ]);
     }
 
     /**
