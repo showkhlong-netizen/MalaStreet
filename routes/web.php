@@ -65,6 +65,12 @@ Route::prefix('order')->name('online.')->group(function () {
     Route::post('/hero-banner', [OnlineOrderController::class, 'updateHeroBanner'])->name('hero_banner.update');
     Route::post('/hero-banner/upload', [OnlineOrderController::class, 'uploadHeroBannerImage'])->name('hero_banner.upload');
     Route::delete('/hero-banner/history', [OnlineOrderController::class, 'deleteHeroBannerHistory'])->name('hero_banner.delete_history');
+
+    // 2.4 ตั้งค่ารูปโปรไฟล์/โลโก้ร้าน & แถบโปรโมชั่น (Profile Logo & Promo Banner Settings)
+    Route::post('/profile-logo', [OnlineOrderController::class, 'updateProfileLogo'])->name('profile_logo.update');
+    Route::post('/profile-logo/upload', [OnlineOrderController::class, 'uploadProfileLogoImage'])->name('profile_logo.upload');
+    Route::delete('/profile-logo/history', [OnlineOrderController::class, 'deleteProfileLogoHistory'])->name('profile_logo.delete_history');
+    Route::post('/toggle-promo-banner', [OnlineOrderController::class, 'togglePromoBanner'])->name('toggle_promo_banner');
 });
 
 // 3. ระบบหลังบ้าน (Backend Admin & Financial / Inventory Systems) - ต้องเข้าสู่ระบบ (Requires Auth)

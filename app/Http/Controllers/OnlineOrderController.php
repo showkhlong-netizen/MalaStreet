@@ -52,6 +52,17 @@ class OnlineOrderController extends Controller
             $heroBannerHistory = [$defaultHeroImage];
         }
 
+        $defaultLogoImage = asset('assets/brand/logo-card.png');
+        $profileLogoImage = Setting::get('online_profile_logo_image') ?: $defaultLogoImage;
+        $rawLogoPos = Setting::get('online_profile_logo_position', '{"x":50,"y":50,"scale":1}');
+        $profileLogoPosition = is_array($rawLogoPos) ? $rawLogoPos : (json_decode($rawLogoPos, true) ?: ['x' => 50, 'y' => 50, 'scale' => 1]);
+        $profileLogoHistory = json_decode(Setting::get('online_profile_logo_history', '[]'), true) ?: [];
+        if (empty($profileLogoHistory)) {
+            $profileLogoHistory = [$defaultLogoImage];
+        }
+
+        $showPromoBanner = Setting::get('online_show_promo_banner', '1') !== '0';
+
         // Lightweight live-sync endpoint: active category names/icons & recommended products (synced with the stock page)
         if ($request->boolean('categories_json')) {
             $emojiIcons = ['🥩', '🍗', '🍢', '🥬', '🍥', '🥤', '🍟'];
@@ -80,6 +91,12 @@ class OnlineOrderController extends Controller
                     'position' => $heroBannerPosition,
                     'history' => $heroBannerHistory,
                 ],
+                'profile_logo' => [
+                    'image' => $profileLogoImage,
+                    'position' => $profileLogoPosition,
+                    'history' => $profileLogoHistory,
+                ],
+                'show_promo_banner' => $showPromoBanner,
             ]);
         }
 
@@ -98,7 +115,7 @@ class OnlineOrderController extends Controller
             ->take(6)
             ->get();
 
-        return view('online.index', compact('categories', 'featuredProducts', 'recommendedProducts', 'heroBannerImage', 'heroBannerPosition', 'heroBannerHistory'));
+        return view('online.index', compact('categories', 'featuredProducts', 'recommendedProducts', 'heroBannerImage', 'heroBannerPosition', 'heroBannerHistory', 'profileLogoImage', 'profileLogoPosition', 'profileLogoHistory', 'showPromoBanner'));
     }
 
     /**
@@ -878,6 +895,175 @@ class OnlineOrderController extends Controller
             'message' => 'ลบภาพปกออกจากประวัติเรียบร้อยแล้ว',
             'active_image' => $newActive,
             'history' => $history,
+        ]);
+    }
+
+    /**
+     * Update storefront Profile / Logo image and focal position.
+     */
+    public function updateProfileLogo(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'image_url' => 'required|string|max:1000',
+            'pos_x' => 'nullable|numeric|min:0|max:100',
+            'pos_y' => 'nullable|numeric|min:0|max:100',
+            'scale' => 'nullable|numeric|min:0.5|max:3',
+        ]);
+
+        $imageUrl = trim($validated['image_url']);
+        $position = [
+            'x' => isset($validated['pos_x']) ? round((float) $validated['pos_x'], 1) : 50,
+            'y' => isset($validated['pos_y']) ? round((float) $validated['pos_y'], 1) : 50,
+            'scale' => isset($validated['scale']) ? round((float) $validated['scale'], 2) : 1.0,
+        ];
+
+        Setting::set('online_profile_logo_image', $imageUrl, 'storefront');
+        Setting::set('online_profile_logo_position', json_encode($position), 'storefront');
+
+        // Update history
+        $history = json_decode(Setting::get('online_profile_logo_history', '[]'), true) ?: [];
+        $defaultLogo = asset('assets/brand/logo-card.png');
+        if (!in_array($defaultLogo, $history)) {
+            $history[] = $defaultLogo;
+        }
+        if (!in_array($imageUrl, $history)) {
+            array_unshift($history, $imageUrl);
+        } else {
+            $history = array_values(array_diff($history, [$imageUrl]));
+            array_unshift($history, $imageUrl);
+        }
+        $history = array_slice($history, 0, 24);
+        Setting::set('online_profile_logo_history', json_encode($history), 'storefront');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'บันทึกรูปโปรไฟล์และตำแหน่งแสดงผลเรียบร้อยแล้ว 🔥',
+            'image_url' => $imageUrl,
+            'position' => $position,
+            'history' => $history,
+        ]);
+    }
+
+    /**
+     * Upload and canvas-compress a new Online Profile / Logo image, converting to URL immediately.
+     */
+    public function uploadProfileLogoImage(Request $request): JsonResponse
+    {
+        $destDir = public_path('uploads/logo');
+        if (!file_exists($destDir)) {
+            mkdir($destDir, 0755, true);
+        }
+
+        $imageUrl = null;
+
+        if ($request->filled('image_base64')) {
+            $base64 = $request->input('image_base64');
+            $ext = 'png';
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64, $matches)) {
+                $ext = strtolower($matches[1]);
+                if ($ext === 'jpeg') $ext = 'jpg';
+                $base64 = substr($base64, strpos($base64, ',') + 1);
+            }
+            $decoded = base64_decode($base64);
+            if ($decoded !== false && strlen($decoded) > 50) {
+                $filename = 'logo_' . time() . '_' . Str::random(6) . '.' . $ext;
+                file_put_contents($destDir . '/' . $filename, $decoded);
+                $imageUrl = asset('uploads/logo/' . $filename);
+            }
+        } elseif ($request->hasFile('image_file')) {
+            $file = $request->file('image_file');
+            if ($file->isValid()) {
+                $ext = strtolower($file->getClientOriginalExtension()) ?: 'png';
+                if ($ext === 'jpeg') $ext = 'jpg';
+                $filename = 'logo_' . time() . '_' . Str::random(6) . '.' . $ext;
+                $file->move($destDir, $filename);
+                $imageUrl = asset('uploads/logo/' . $filename);
+            }
+        }
+
+        if (!$imageUrl) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่พบไฟล์ภาพหรือการประมวลผลล้มเหลว กรุณาลองใหม่อีกครั้ง',
+            ], 422);
+        }
+
+        $history = json_decode(Setting::get('online_profile_logo_history', '[]'), true) ?: [];
+        $defaultLogo = asset('assets/brand/logo-card.png');
+        if (!in_array($defaultLogo, $history)) {
+            $history[] = $defaultLogo;
+        }
+        if (!in_array($imageUrl, $history)) {
+            array_unshift($history, $imageUrl);
+        }
+        $history = array_slice($history, 0, 24);
+        Setting::set('online_profile_logo_history', json_encode($history), 'storefront');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'อัปโหลดและแปลงรูปโปรไฟล์เป็น URL สำเร็จแล้ว',
+            'url' => $imageUrl,
+            'history' => $history,
+        ]);
+    }
+
+    /**
+     * Delete an image from profile logo history.
+     */
+    public function deleteProfileLogoHistory(Request $request): JsonResponse
+    {
+        $imageUrl = trim((string) $request->input('image_url'));
+        if (empty($imageUrl)) {
+            return response()->json(['success' => false, 'message' => 'กรุณาระบุ URL ภาพ'], 422);
+        }
+
+        $defaultLogo = asset('assets/brand/logo-card.png');
+        if (str_contains($imageUrl, 'logo-card.png')) {
+            return response()->json(['success' => false, 'message' => 'รูปโปรไฟล์เริ่มต้นของระบบไม่สามารถลบได้'], 422);
+        }
+
+        $history = json_decode(Setting::get('online_profile_logo_history', '[]'), true) ?: [];
+        $history = array_values(array_filter($history, fn ($url) => trim($url) !== $imageUrl));
+        if (empty($history)) {
+            $history = [$defaultLogo];
+        }
+        Setting::set('online_profile_logo_history', json_encode($history), 'storefront');
+
+        $currentActive = Setting::get('online_profile_logo_image');
+        $newActive = $currentActive;
+        if ($currentActive === $imageUrl) {
+            $newActive = $history[0] ?? $defaultLogo;
+            Setting::set('online_profile_logo_image', $newActive, 'storefront');
+        }
+
+        if (str_contains($imageUrl, '/uploads/logo/')) {
+            $filename = basename(parse_url($imageUrl, PHP_URL_PATH));
+            $path = public_path('uploads/logo/' . $filename);
+            if (file_exists($path)) {
+                @unlink($path);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'ลบรูปโปรไฟล์ออกจากประวัติเรียบร้อยแล้ว',
+            'active_image' => $newActive,
+            'history' => $history,
+        ]);
+    }
+
+    /**
+     * Toggle storefront promotion voucher banner visibility.
+     */
+    public function togglePromoBanner(Request $request): JsonResponse
+    {
+        $show = $request->has('show') ? $request->boolean('show') : (Setting::get('online_show_promo_banner', '1') === '0');
+        Setting::set('online_show_promo_banner', $show ? '1' : '0', 'storefront');
+
+        return response()->json([
+            'success' => true,
+            'message' => $show ? 'เปิดการแสดงแถบโปรโมชั่นแล้ว' : 'ปิดการแสดงแถบโปรโมชั่นแล้ว',
+            'show' => $show,
         ]);
     }
 }

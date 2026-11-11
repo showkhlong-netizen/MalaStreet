@@ -170,17 +170,85 @@
 
                     <!-- Settings Button: 3 Vertical Dots (ขวาสุดถัดจากปุ่มแชร์ - แอดมินเท่านั้น) -->
                     @if(auth()->check() || request()->has('admin'))
-                    <button type="button"
-                            onclick="openHeroBannerModal()"
-                            class="w-9 h-9 rounded-full bg-white/90 hover:bg-white active:scale-95 text-slate-800 shadow-md backdrop-blur-xs flex items-center justify-center transition-all cursor-pointer border border-white/60 shrink-0"
-                            title="ตั้งค่าภาพปกหน้าร้าน (แอดมิน)"
-                            aria-label="ตั้งค่าภาพปกหน้าร้าน">
-                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                            <circle cx="12" cy="5" r="1.8" />
-                            <circle cx="12" cy="12" r="1.8" />
-                            <circle cx="12" cy="19" r="1.8" />
-                        </svg>
-                    </button>
+                    <div class="relative shrink-0">
+                        <button type="button"
+                                id="btn-master-settings"
+                                onclick="toggleMasterSettingsMenu(event)"
+                                class="w-9 h-9 rounded-full bg-white/90 hover:bg-white active:scale-95 text-slate-800 shadow-md backdrop-blur-xs flex items-center justify-center transition-all cursor-pointer border border-white/60 shrink-0"
+                                title="ตั้งค่าระบบหน้าร้าน (แอดมิน)"
+                                aria-label="ตั้งค่าระบบหน้าร้าน">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="12" cy="5" r="1.8" />
+                                <circle cx="12" cy="12" r="1.8" />
+                                <circle cx="12" cy="19" r="1.8" />
+                            </svg>
+                        </button>
+
+                        <!-- Master Settings Dropdown Menu (แผงเลือกตั้งค่าหน้าร้าน: ปก, โปรไฟล์, แถบโปรโมชั่น) -->
+                        <div id="master-settings-menu"
+                             class="hidden absolute right-0 top-full mt-2 w-72 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 p-2 z-50 text-slate-800 select-none">
+                            <div class="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-[#E50914] animate-pulse"></span>
+                                    <span>ตั้งค่าหน้าร้าน (แอดมิน)</span>
+                                </span>
+                                <span class="text-[10px] text-slate-400 font-mono">ADMIN</span>
+                            </div>
+
+                            <div class="py-1 space-y-1">
+                                <!-- Option 1: แก้ไขภาพปกหน้าร้าน -->
+                                <button type="button"
+                                        onclick="closeMasterSettingsMenu(); openHeroBannerModal();"
+                                        class="w-full px-3 py-2.5 rounded-xl hover:bg-rose-50/80 active:bg-rose-100/80 flex items-center gap-3 text-left transition cursor-pointer group">
+                                    <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-rose-600 text-white flex items-center justify-center text-sm shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+                                        🖼️
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-xs font-bold text-slate-800 group-hover:text-[#E50914]">แก้ไขภาพปกหน้าร้าน</div>
+                                        <div class="text-[10.5px] text-slate-500 truncate">ปรับตำแหน่ง ซูม และจัดการภาพปก</div>
+                                    </div>
+                                    <span class="text-slate-400 text-xs">›</span>
+                                </button>
+
+                                <!-- Option 2: แก้ไขรูปโปรไฟล์ / โลโก้ร้าน -->
+                                <button type="button"
+                                        onclick="closeMasterSettingsMenu(); openProfileLogoModal();"
+                                        class="w-full px-3 py-2.5 rounded-xl hover:bg-rose-50/80 active:bg-rose-100/80 flex items-center gap-3 text-left transition cursor-pointer group">
+                                    <div class="w-8 h-8 rounded-xl bg-[#900000] text-white flex items-center justify-center text-sm shadow-xs shrink-0 group-hover:scale-105 transition-transform border border-rose-300">
+                                        🔴
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-xs font-bold text-slate-800 group-hover:text-[#E50914]">แก้ไขรูปโปรไฟล์ / โลโก้ร้าน</div>
+                                        <div class="text-[10.5px] text-slate-500 truncate">เปลี่ยนโลโก้ร้าน จัดตำแหน่ง และประวัติภาพ</div>
+                                    </div>
+                                    <span class="text-slate-400 text-xs">›</span>
+                                </button>
+
+                                <!-- Option 3: แถบโปรโมชั่น (เปิด / ปิด) -->
+                                <div class="px-3 py-2 rounded-xl bg-slate-50/90 border border-slate-200/60 flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="w-7 h-7 rounded-lg bg-rose-500 text-white flex items-center justify-center text-xs shadow-2xs shrink-0">
+                                            🎟️
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="text-xs font-bold text-slate-800">แสดงแถบโปรโมชั่น</div>
+                                            <div class="text-[10px] text-slate-500" id="promo-switch-status-text">{{ ($showPromoBanner ?? true) ? 'กำลังแสดงแถบคูปอง' : 'ซ่อนแถบคูปองอยู่' }}</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Switch Toggle -->
+                                    <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                        <input type="checkbox"
+                                               id="promo-banner-switch"
+                                               class="sr-only peer"
+                                               {{ ($showPromoBanner ?? true) ? 'checked' : '' }}
+                                               onchange="togglePromoBannerVisibility(this.checked)">
+                                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     @endif
                 </div>
             </div>
@@ -193,9 +261,11 @@
             <div class="flex items-start gap-3">
                 <!-- Left: Rounded Red Logo Card with White Border -->
                 <div class="w-[78px] h-[78px] rounded-[18px] border-[3px] border-white shadow-md overflow-hidden shrink-0 -mt-5 bg-[#900000]">
-                    <img src="{{ asset('assets/brand/logo-card.png') }}"
+                    <img id="online-profile-logo-img"
+                         src="{{ $profileLogoImage ?? asset('assets/brand/logo-card.png') }}"
                          alt="โลโก้ ร้านหม่าล่าสตรีท"
-                         class="w-full h-full object-cover">
+                         class="w-full h-full object-cover transition-all duration-150"
+                         style="object-position: {{ $profileLogoPosition['x'] ?? 50 }}% {{ $profileLogoPosition['y'] ?? 50 }}%; transform: scale({{ $profileLogoPosition['scale'] ?? 1 }});">
                 </div>
 
                 <!-- Right: Crown Badge, Title, Subtitle, Ratings & Metrics -->
@@ -272,7 +342,7 @@
             <!-- ================================================================= -->
             <!-- 3. VOUCHER & DISCOUNT BOX (Clean 2 Columns with Fixed Layout)     -->
             <!-- ================================================================= -->
-            <div class="mt-2.5 bg-[#FFF0F1] border border-[#FAD4D8] rounded-[14px] p-2 flex items-center justify-between gap-2">
+            <div id="online-promo-banner" class="mt-2.5 bg-[#FFF0F1] border border-[#FAD4D8] rounded-[14px] p-2 flex items-center justify-between gap-2 {{ ($showPromoBanner ?? true) ? '' : 'hidden' }}">
                 <!-- Left Voucher: ส่วนลด ฿10 เมื่อสั่งขั้นต่ำ ฿150 -->
                 <div class="flex-1 flex items-center justify-between gap-1.5 pr-2 border-r border-[#F5C2C7]">
                     <div class="flex items-center gap-1.5 min-w-0">
@@ -1166,6 +1236,169 @@
         </div>
     </div>
 
+    <!-- ========================================================================= -->
+    <!-- PROFILE LOGO SETTINGS MODAL (MOBILE LOGO BADGE & ADJUSTMENTS)             -->
+    <!-- ========================================================================= -->
+    <div id="profile-logo-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/75 backdrop-blur-xs p-3 overflow-y-auto" onclick="if(event.target === this) closeProfileLogoModal()">
+        <div class="bg-white rounded-[26px] max-w-[420px] w-full shadow-2xl border border-slate-100 overflow-hidden flex flex-col my-auto max-h-[92vh]">
+            <!-- Modal Header -->
+            <div class="p-4 bg-gradient-to-r from-[#500000] via-[#900000] to-[#500000] text-white flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-base">
+                        🔴
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold leading-tight">ตั้งค่ารูปโปรไฟล์ / โลโก้ร้าน</h3>
+                        <p class="text-[11px] text-rose-200/90 font-normal">ปรับตำแหน่ง ซูม และจัดการรูปโปรไฟล์ร้าน</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeProfileLogoModal()" class="w-7 h-7 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white cursor-pointer transition">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-4 space-y-4 overflow-y-auto">
+                <!-- 1. Live Preview Frame (Square-Rounded badge matching mobile) -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <span class="w-1.5 h-3.5 rounded-full bg-[#900000]"></span>
+                            <span>ตัวอย่างรูปโปรไฟล์ / โลโก้ร้าน</span>
+                        </span>
+                        <span class="text-[10.5px] text-slate-500 font-medium">กดปุ่มปรับตำแหน่งสดได้ทันที</span>
+                    </div>
+
+                    <div class="p-4 bg-slate-100/80 rounded-2xl border border-slate-200/80 flex flex-col items-center justify-center">
+                        <div class="relative w-32 h-32 rounded-[24px] border-[4px] border-white shadow-xl overflow-hidden bg-[#900000] select-none">
+                            <img id="modal-logo-preview-img"
+                                 src="{{ $profileLogoImage ?? asset('assets/brand/logo-card.png') }}"
+                                 alt="พรีวิวโลโก้ร้าน"
+                                 class="w-full h-full object-cover transition-all duration-75 pointer-events-none"
+                                 style="object-position: {{ $profileLogoPosition['x'] ?? 50 }}% {{ $profileLogoPosition['y'] ?? 50 }}%; transform: scale({{ $profileLogoPosition['scale'] ?? 1 }});">
+                        </div>
+                        <div class="mt-2 text-center text-[10.5px] font-bold text-slate-600">
+                            ร้านหม่าล่าสตรีท
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Controls: D-Pad & Sliders (ปรับซ้าย ขวา บน ล่าง และ ซูม) -->
+                <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-700">ปรับมุมมอง (ซ้าย ขวา บน ล่าง)</span>
+                        <button type="button" onclick="resetProfileLogoPosition()" class="text-[11px] font-bold text-rose-600 hover:text-rose-700 cursor-pointer">
+                            🔄 รีเซ็ตกึ่งกลาง
+                        </button>
+                    </div>
+
+                    <!-- D-Pad Buttons + Zoom -->
+                    <div class="flex items-center justify-around gap-2 pt-1">
+                        <!-- Directional Cross -->
+                        <div class="grid grid-cols-3 gap-1.5 w-32 shrink-0">
+                            <div></div>
+                            <button type="button" onclick="nudgeLogoPos(0, -5)" title="เลื่อนขึ้น" class="h-8 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-[#900000] shadow-2xs font-bold text-xs flex items-center justify-center cursor-pointer active:scale-95">
+                                ⬆️
+                            </button>
+                            <div></div>
+
+                            <button type="button" onclick="nudgeLogoPos(-5, 0)" title="เลื่อนซ้าย" class="h-8 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-[#900000] shadow-2xs font-bold text-xs flex items-center justify-center cursor-pointer active:scale-95">
+                                ⬅️
+                            </button>
+                            <button type="button" onclick="resetProfileLogoPosition()" title="กึ่งกลาง" class="h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:bg-rose-50 hover:text-[#900000] shadow-2xs text-[10px] font-bold flex items-center justify-center cursor-pointer active:scale-95">
+                                🎯
+                            </button>
+                            <button type="button" onclick="nudgeLogoPos(5, 0)" title="เลื่อนขวา" class="h-8 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-[#900000] shadow-2xs font-bold text-xs flex items-center justify-center cursor-pointer active:scale-95">
+                                ➡️
+                            </button>
+
+                            <div></div>
+                            <button type="button" onclick="nudgeLogoPos(0, 5)" title="เลื่อนลง" class="h-8 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-[#900000] shadow-2xs font-bold text-xs flex items-center justify-center cursor-pointer active:scale-95">
+                                ⬇️
+                            </button>
+                            <div></div>
+                        </div>
+
+                        <!-- Zoom & Reset Quick Controls -->
+                        <div class="flex flex-col gap-1.5 flex-1 max-w-[170px]">
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" onclick="nudgeLogoZoom(-0.1)" title="ซูมออก" class="flex-1 py-1.5 px-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold shadow-2xs flex items-center justify-center gap-1 cursor-pointer active:scale-95">
+                                    <span>➖</span> <span>ซูมออก</span>
+                                </button>
+                                <button type="button" onclick="nudgeLogoZoom(0.1)" title="ซูมเข้า" class="flex-1 py-1.5 px-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold shadow-2xs flex items-center justify-center gap-1 cursor-pointer active:scale-95">
+                                    <span>➕</span> <span>ซูมเข้า</span>
+                                </button>
+                            </div>
+                            <button type="button" onclick="restoreDefaultLogoImage()" class="w-full py-1.5 px-2 rounded-xl bg-white border border-rose-200 text-rose-700 hover:bg-rose-50 text-[11px] font-bold shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition">
+                                <span>↩️</span> <span>ใช้โลโก้เริ่มต้นของร้าน</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sliders with Live Values -->
+                    <div class="space-y-1.5 pt-1 text-[11px]">
+                        <div class="flex items-center justify-between text-slate-600 font-medium">
+                            <span>แนวนอน (ซ้าย - ขวา):</span>
+                            <span id="logo-val-x" class="font-bold text-slate-800">{{ $profileLogoPosition['x'] ?? 50 }}%</span>
+                        </div>
+                        <input type="range" id="logo-slider-x" min="0" max="100" value="{{ $profileLogoPosition['x'] ?? 50 }}" oninput="updateLogoSliderPos()" class="w-full accent-[#900000] cursor-pointer">
+
+                        <div class="flex items-center justify-between text-slate-600 font-medium pt-1">
+                            <span>แนวตั้ง (บน - ล่าง):</span>
+                            <span id="logo-val-y" class="font-bold text-slate-800">{{ $profileLogoPosition['y'] ?? 50 }}%</span>
+                        </div>
+                        <input type="range" id="logo-slider-y" min="0" max="100" value="{{ $profileLogoPosition['y'] ?? 50 }}" oninput="updateLogoSliderPos()" class="w-full accent-[#900000] cursor-pointer">
+
+                        <div class="flex items-center justify-between text-slate-600 font-medium pt-1">
+                            <span>อัตราขยาย (Zoom):</span>
+                            <span id="logo-val-scale" class="font-bold text-slate-800">{{ $profileLogoPosition['scale'] ?? 1 }}x</span>
+                        </div>
+                        <input type="range" id="logo-slider-scale" min="1" max="2.5" step="0.05" value="{{ $profileLogoPosition['scale'] ?? 1 }}" oninput="updateLogoSliderPos()" class="w-full accent-[#900000] cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- 3. Upload New Image (Canvas Compress to URL) -->
+                <div>
+                    <label class="flex items-center justify-center gap-2 p-3 rounded-2xl border-2 border-dashed border-rose-300 hover:border-[#900000] bg-rose-50/60 hover:bg-rose-50 text-[#900000] text-xs font-bold cursor-pointer transition select-none">
+                        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        <span id="logo-upload-label">📷 เลือกรูปภาพใหม่จากเครื่อง (บีบอัดความละเอียดสูงอัตโนมัติ)</span>
+                        <input type="file" id="profile-logo-file-input" accept="image/*" class="hidden" onchange="handleProfileLogoUpload(event)">
+                    </label>
+                    <canvas id="logo-compress-canvas" class="hidden"></canvas>
+                </div>
+
+                <!-- 4. History of Past Images (ภาพโปรไฟล์เก่าๆ + กากบาทมุมขวาบนไว้ลบ) -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <span class="w-1.5 h-3.5 rounded-full bg-[#900000]"></span>
+                            <span>ประวัติรูปโปรไฟล์เก่า & ภาพที่บันทึกไว้</span>
+                        </span>
+                        <span class="text-[10px] text-slate-400">กด ✕ บนรูปเพื่อลบ</span>
+                    </div>
+
+                    <div id="logo-history-grid" class="grid grid-cols-4 gap-2.5 max-h-40 overflow-y-auto p-1 pr-1.5">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2 shrink-0">
+                <button type="button" onclick="closeProfileLogoModal()" class="py-2.5 px-4 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold cursor-pointer transition">
+                    ยกเลิก
+                </button>
+                <button type="button" id="btn-save-profile-logo" onclick="saveProfileLogoSettings()" class="py-2.5 px-5 rounded-xl bg-[#900000] hover:bg-[#700000] text-white text-xs font-bold shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition active:scale-95">
+                    <span>💾 บันทึกรูปโปรไฟล์นี้</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 space-y-1.5 pointer-events-none w-full max-w-[380px] px-4"></div>
 
@@ -1827,6 +2060,29 @@
                             bannerImg.style.transform = `scale(${pos.scale})`;
                         }
                     }
+                    if (data.profile_logo && data.profile_logo.image) {
+                        const logoImg = document.getElementById('online-profile-logo-img');
+                        if (logoImg) {
+                            logoImg.src = data.profile_logo.image;
+                            const pos = data.profile_logo.position || { x: 50, y: 50, scale: 1 };
+                            logoImg.style.objectPosition = `${pos.x}% ${pos.y}%`;
+                            logoImg.style.transform = `scale(${pos.scale})`;
+                        }
+                    }
+                    if (typeof data.show_promo_banner !== 'undefined') {
+                        const promoBanner = document.getElementById('online-promo-banner');
+                        const promoSwitch = document.getElementById('promo-banner-switch');
+                        const statusText = document.getElementById('promo-switch-status-text');
+                        if (promoBanner) {
+                            if (data.show_promo_banner) {
+                                promoBanner.classList.remove('hidden');
+                            } else {
+                                promoBanner.classList.add('hidden');
+                            }
+                        }
+                        if (promoSwitch) promoSwitch.checked = Boolean(data.show_promo_banner);
+                        if (statusText) statusText.textContent = data.show_promo_banner ? 'กำลังแสดงแถบคูปอง' : 'ซ่อนแถบคูปองอยู่';
+                    }
                 }
             } catch (e) {}
         }
@@ -1840,6 +2096,28 @@
                     bannerImg.style.objectPosition = `${data.hero.x}% ${data.hero.y}%`;
                     bannerImg.style.transform = `scale(${data.hero.scale})`;
                 }
+            }
+            if (data.action === 'profile_logo_updated' && data.logo) {
+                const logoImg = document.getElementById('online-profile-logo-img');
+                if (logoImg) {
+                    logoImg.src = data.logo.image;
+                    logoImg.style.objectPosition = `${data.logo.x}% ${data.logo.y}%`;
+                    logoImg.style.transform = `scale(${data.logo.scale})`;
+                }
+            }
+            if (data.action === 'promo_banner_toggled') {
+                const promoBanner = document.getElementById('online-promo-banner');
+                const promoSwitch = document.getElementById('promo-banner-switch');
+                const statusText = document.getElementById('promo-switch-status-text');
+                if (promoBanner) {
+                    if (data.show) {
+                        promoBanner.classList.remove('hidden');
+                    } else {
+                        promoBanner.classList.add('hidden');
+                    }
+                }
+                if (promoSwitch) promoSwitch.checked = Boolean(data.show);
+                if (statusText) statusText.textContent = data.show ? 'กำลังแสดงแถบคูปอง' : 'ซ่อนแถบคูปองอยู่';
             }
             const oldSlug = data.old_slug || data.slug;
             const pill = document.querySelector(`.online-cat-pill[data-cat="${oldSlug}"]`);
@@ -1860,6 +2138,82 @@
                 pill.style.display = '';
             }
             refreshOnlineCategoriesLive();
+        }
+
+        // =========================================================================
+        // MASTER SETTINGS MENU (3-DOTS POPUP & PROMO BANNER TOGGLE)
+        // =========================================================================
+        function toggleMasterSettingsMenu(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            const menu = document.getElementById('master-settings-menu');
+            if (!menu) return;
+            const isHidden = menu.classList.contains('hidden');
+            if (isHidden) {
+                menu.classList.remove('hidden');
+                setTimeout(() => {
+                    document.addEventListener('click', handleMasterMenuClickOutside, { once: true });
+                }, 10);
+            } else {
+                menu.classList.add('hidden');
+            }
+        }
+
+        function closeMasterSettingsMenu() {
+            const menu = document.getElementById('master-settings-menu');
+            if (menu) menu.classList.add('hidden');
+            document.removeEventListener('click', handleMasterMenuClickOutside);
+        }
+
+        function handleMasterMenuClickOutside(event) {
+            const menu = document.getElementById('master-settings-menu');
+            const btn = document.getElementById('btn-master-settings');
+            if (menu && !menu.contains(event.target) && (!btn || !btn.contains(event.target))) {
+                menu.classList.add('hidden');
+            }
+        }
+
+        async function togglePromoBannerVisibility(shouldShow) {
+            const promoBanner = document.getElementById('online-promo-banner');
+            const statusText = document.getElementById('promo-switch-status-text');
+
+            if (promoBanner) {
+                if (shouldShow) {
+                    promoBanner.classList.remove('hidden');
+                } else {
+                    promoBanner.classList.add('hidden');
+                }
+            }
+            if (statusText) {
+                statusText.textContent = shouldShow ? 'กำลังแสดงแถบคูปอง' : 'ซ่อนแถบคูปองอยู่';
+            }
+
+            try {
+                const res = await fetch('{{ route("online.toggle_promo_banner") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ show: shouldShow })
+                });
+                const data = await res.json();
+                if (data && data.success) {
+                    showToast(shouldShow ? 'เปิดแสดงแถบโปรโมชั่นแล้ว' : 'ปิดการแสดงแถบโปรโมชั่นแล้ว');
+                    if ('BroadcastChannel' in window) {
+                        try {
+                            const catChannel = new BroadcastChannel('mala_category_sync_channel');
+                            catChannel.postMessage({ action: 'promo_banner_toggled', show: shouldShow });
+                        } catch (e) {}
+                    }
+                } else {
+                    showToast(data.message || 'ตั้งค่าไม่สำเร็จ');
+                }
+            } catch (err) {
+                showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            }
         }
 
         // =========================================================================
@@ -2149,6 +2503,294 @@
                 if (btn) {
                     btn.disabled = false;
                     btn.innerHTML = '<span>💾 บันทึกภาพปกนี้</span>';
+                }
+            }
+        }
+
+        // =========================================================================
+        // PROFILE LOGO SETTINGS (MOBILE LOGO BADGE ADMIN MODAL)
+        // =========================================================================
+        const defaultProfileLogoUrl = '{{ asset("assets/brand/logo-card.png") }}';
+        let currentProfileLogo = {
+            image: @json($profileLogoImage ?? asset('assets/brand/logo-card.png')),
+            x: {{ $profileLogoPosition['x'] ?? 50 }},
+            y: {{ $profileLogoPosition['y'] ?? 50 }},
+            scale: {{ $profileLogoPosition['scale'] ?? 1 }},
+            history: @json($profileLogoHistory ?? [asset('assets/brand/logo-card.png')])
+        };
+
+        function openProfileLogoModal() {
+            const modal = document.getElementById('profile-logo-modal');
+            if (!modal) return;
+            renderProfileLogoPreview();
+            renderProfileLogoHistoryGrid();
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeProfileLogoModal() {
+            const modal = document.getElementById('profile-logo-modal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function renderProfileLogoPreview() {
+            const previewImg = document.getElementById('modal-logo-preview-img');
+            const sliderX = document.getElementById('logo-slider-x');
+            const sliderY = document.getElementById('logo-slider-y');
+            const sliderScale = document.getElementById('logo-slider-scale');
+            const valX = document.getElementById('logo-val-x');
+            const valY = document.getElementById('logo-val-y');
+            const valScale = document.getElementById('logo-val-scale');
+
+            if (previewImg) {
+                previewImg.src = currentProfileLogo.image;
+                previewImg.style.objectPosition = `${currentProfileLogo.x}% ${currentProfileLogo.y}%`;
+                previewImg.style.transform = `scale(${currentProfileLogo.scale})`;
+            }
+
+            if (sliderX) sliderX.value = currentProfileLogo.x;
+            if (sliderY) sliderY.value = currentProfileLogo.y;
+            if (sliderScale) sliderScale.value = currentProfileLogo.scale;
+
+            if (valX) valX.textContent = `${currentProfileLogo.x}%`;
+            if (valY) valY.textContent = `${currentProfileLogo.y}%`;
+            if (valScale) valScale.textContent = `${currentProfileLogo.scale}x`;
+        }
+
+        function renderProfileLogoHistoryGrid() {
+            const grid = document.getElementById('logo-history-grid');
+            if (!grid) return;
+
+            const list = Array.isArray(currentProfileLogo.history) ? currentProfileLogo.history : [];
+            if (list.length === 0) {
+                grid.innerHTML = '<div class="col-span-4 text-center text-xs text-slate-400 py-3">ยังไม่มีประวัติรูปโปรไฟล์</div>';
+                return;
+            }
+
+            grid.innerHTML = list.map(url => {
+                const isSelected = (url === currentProfileLogo.image);
+                const isDefault = url.includes('logo-card.png');
+                const safeUrl = String(url).replace(/'/g, "\\'");
+
+                return `
+                    <div class="relative group rounded-xl overflow-visible aspect-square border-2 ${isSelected ? 'border-[#900000] ring-2 ring-rose-200' : 'border-slate-200 hover:border-slate-300'} bg-[#900000] cursor-pointer transition select-none flex items-center justify-center p-0.5" onclick="selectProfileLogoHistoryImage('${safeUrl}')">
+                        <img src="${url}" alt="ภาพโปรไฟล์ประวัติ" class="w-full h-full object-cover rounded-[10px]">
+                        ${isSelected ? '<span class="absolute bottom-1 left-1 px-1 py-0.2 rounded bg-[#900000] text-white text-[8px] font-bold">เลือกอยู่</span>' : ''}
+                        ${isDefault ? '' : `
+                            <button type="button"
+                                    onclick="deleteProfileLogoHistoryImage(event, '${safeUrl}')"
+                                    class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer z-20 active:scale-90 transition-transform"
+                                    title="ลบภาพนี้">
+                                ✕
+                            </button>
+                        `}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectProfileLogoHistoryImage(url) {
+            currentProfileLogo.image = url;
+            renderProfileLogoPreview();
+            renderProfileLogoHistoryGrid();
+        }
+
+        function nudgeLogoPos(dx, dy) {
+            currentProfileLogo.x = Math.max(0, Math.min(100, Math.round(currentProfileLogo.x + dx)));
+            currentProfileLogo.y = Math.max(0, Math.min(100, Math.round(currentProfileLogo.y + dy)));
+            renderProfileLogoPreview();
+        }
+
+        function nudgeLogoZoom(dScale) {
+            currentProfileLogo.scale = Math.max(1, Math.min(2.5, +(currentProfileLogo.scale + dScale).toFixed(2)));
+            renderProfileLogoPreview();
+        }
+
+        function updateLogoSliderPos() {
+            const sliderX = document.getElementById('logo-slider-x');
+            const sliderY = document.getElementById('logo-slider-y');
+            const sliderScale = document.getElementById('logo-slider-scale');
+
+            if (sliderX) currentProfileLogo.x = Number(sliderX.value);
+            if (sliderY) currentProfileLogo.y = Number(sliderY.value);
+            if (sliderScale) currentProfileLogo.scale = Number(sliderScale.value);
+
+            renderProfileLogoPreview();
+        }
+
+        function resetProfileLogoPosition() {
+            currentProfileLogo.x = 50;
+            currentProfileLogo.y = 50;
+            currentProfileLogo.scale = 1;
+            renderProfileLogoPreview();
+            showToast('รีเซ็ตตำแหน่งรูปโปรไฟล์เป็นกึ่งกลางแล้ว');
+        }
+
+        function restoreDefaultLogoImage() {
+            currentProfileLogo.image = defaultProfileLogoUrl;
+            currentProfileLogo.x = 50;
+            currentProfileLogo.y = 50;
+            currentProfileLogo.scale = 1;
+            renderProfileLogoPreview();
+            renderProfileLogoHistoryGrid();
+            showToast('คืนค่าโลโก้เริ่มต้นของร้านแล้ว');
+        }
+
+        async function handleProfileLogoUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            const label = document.getElementById('logo-upload-label');
+            if (label) label.textContent = '⏳ กำลังประมวลผลและบีบอัดภาพความละเอียดสูง...';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = async function() {
+                    const canvas = document.getElementById('logo-compress-canvas');
+                    if (!canvas) return;
+                    const ctx = canvas.getContext('2d');
+
+                    const maxDim = 1024;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const base64Data = canvas.toDataURL('image/png', 0.95);
+
+                    try {
+                        const res = await fetch('{{ route("online.profile_logo.upload") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ image_base64: base64Data })
+                        });
+                        const data = await res.json();
+                        if (data && data.success && data.url) {
+                            currentProfileLogo.image = data.url;
+                            if (Array.isArray(data.history)) {
+                                currentProfileLogo.history = data.history;
+                            }
+                            renderProfileLogoPreview();
+                            renderProfileLogoHistoryGrid();
+                            showToast('อัปโหลดและแปลงภาพโปรไฟล์เป็น URL สำเร็จ 📷');
+                        } else {
+                            showToast(data.message || 'อัปโหลดล้มเหลว');
+                        }
+                    } catch (err) {
+                        showToast('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+                    } finally {
+                        if (label) label.textContent = '📷 เลือกรูปภาพใหม่จากเครื่อง (บีบอัดความละเอียดสูงอัตโนมัติ)';
+                        event.target.value = '';
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function deleteProfileLogoHistoryImage(event, url) {
+            if (event) event.stopPropagation();
+            if (!confirm('ต้องการลบรูปโปรไฟล์นี้ออกจากประวัติหรือไม่?')) return;
+
+            try {
+                const res = await fetch('{{ route("online.profile_logo.delete_history") }}', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ image_url: url })
+                });
+                const data = await res.json();
+                if (data && data.success) {
+                    if (Array.isArray(data.history)) {
+                        currentProfileLogo.history = data.history;
+                    }
+                    if (data.active_image) {
+                        currentProfileLogo.image = data.active_image;
+                    }
+                    renderProfileLogoPreview();
+                    renderProfileLogoHistoryGrid();
+                    showToast('ลบรูปโปรไฟล์ออกจากประวัติแล้ว');
+                } else {
+                    showToast(data.message || 'ไม่สามารถลบภาพได้');
+                }
+            } catch (err) {
+                showToast('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+            }
+        }
+
+        async function saveProfileLogoSettings() {
+            const btn = document.getElementById('btn-save-profile-logo');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span>⏳ กำลังบันทึก...</span>';
+            }
+
+            try {
+                const res = await fetch('{{ route("online.profile_logo.update") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        image_url: currentProfileLogo.image,
+                        pos_x: currentProfileLogo.x,
+                        pos_y: currentProfileLogo.y,
+                        scale: currentProfileLogo.scale
+                    })
+                });
+                const data = await res.json();
+                if (data && data.success) {
+                    const logoImg = document.getElementById('online-profile-logo-img');
+                    if (logoImg) {
+                        logoImg.src = currentProfileLogo.image;
+                        logoImg.style.objectPosition = `${currentProfileLogo.x}% ${currentProfileLogo.y}%`;
+                        logoImg.style.transform = `scale(${currentProfileLogo.scale})`;
+                    }
+                    if (Array.isArray(data.history)) {
+                        currentProfileLogo.history = data.history;
+                    }
+                    closeProfileLogoModal();
+                    showToast('บันทึกรูปโปรไฟล์ร้านเรียบร้อยแล้ว 🔥');
+
+                    if ('BroadcastChannel' in window) {
+                        try {
+                            const catChannel = new BroadcastChannel('mala_category_sync_channel');
+                            catChannel.postMessage({ action: 'profile_logo_updated', logo: currentProfileLogo });
+                        } catch (e) {}
+                    }
+                } else {
+                    showToast(data.message || 'บันทึกภาพล้มเหลว');
+                }
+            } catch (err) {
+                showToast('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>💾 บันทึกรูปโปรไฟล์นี้</span>';
                 }
             }
         }
