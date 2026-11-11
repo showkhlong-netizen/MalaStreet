@@ -138,8 +138,8 @@
             <!-- LEFT COLUMN: ผู้ใช้งาน (Users / Staff List) (Col-span-4 / Col-span-3)   -->
             <!-- --------------------------------------------------------------------- -->
             <div id="col-users-list" 
-                 class="{{ in_array($currentTab, ['autologout', 'audit']) ? 'hidden ' : '' }}lg:col-span-4 xl:col-span-3 bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-sm space-y-3.5"
-                 style="{{ in_array($currentTab, ['autologout', 'audit']) ? 'display: none;' : '' }}">
+                 class="{{ in_array($currentTab, ['autologout', 'audit', 'register']) ? 'hidden ' : '' }}lg:col-span-4 xl:col-span-3 bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-sm space-y-3.5"
+                 style="{{ in_array($currentTab, ['autologout', 'audit', 'register']) ? 'display: none;' : '' }}">
                 <!-- Header with count badge and quick actions -->
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
@@ -276,8 +276,8 @@
             <!-- RIGHT COLUMN: สิทธิ์การเข้าถึง & หน้าต่างจัดการ (Col-span-8 หรือ Col-span-12) -->
             <!-- --------------------------------------------------------------------- -->
             <div id="col-main-content" 
-                 class="{{ in_array($currentTab, ['autologout', 'audit']) ? 'w-full ' : 'lg:col-span-8 xl:col-span-9 w-full ' }}space-y-4"
-                 style="{{ in_array($currentTab, ['autologout', 'audit']) ? 'grid-column: 1 / -1; width: 100%;' : '' }}">
+                 class="{{ in_array($currentTab, ['autologout', 'audit', 'register']) ? 'w-full ' : 'lg:col-span-8 xl:col-span-9 w-full ' }}space-y-4"
+                 style="{{ in_array($currentTab, ['autologout', 'audit', 'register']) ? 'grid-column: 1 / -1; width: 100%;' : '' }}">
 
                 <!-- ================================================================= -->
                 <!-- PANEL 1: สิทธิ์การเข้าถึง (Permission Matrix)                       -->
@@ -480,368 +480,437 @@
             <!-- END PANEL 1: สิทธิ์การเข้าถึง -->
 
             <!-- ===================================================================== -->
-            <!-- PANEL 2: ลงทะเบียนขอสิทธิ์ & สร้างบัญชีผู้ใช้งานจริง (ใช้งานได้จริง 100%) -->
+            <!-- PANEL 2: ลงทะเบียนขอสิทธิ์ & สร้างบัญชีผู้ใช้งานจริง (2 แถบ เหมือนภาพตัวอย่างที่ 2) -->
             <!-- ===================================================================== -->
-            <div id="panel-register" class="bg-white rounded-3xl p-3 sm:p-4.5 border border-slate-200/90 shadow-sm space-y-3 hidden max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin">
-                <!-- Header -->
-                <div class="flex items-center justify-between pb-2 sm:pb-2.5 border-b border-slate-100">
-                    <div>
-                        <span class="text-[10.5px] font-bold text-blue-600 uppercase tracking-wider">ลงทะเบียนขอสิทธิ์ &amp; สร้างบัญชีผู้ใช้จริง</span>
-                        <h2 class="text-base sm:text-lg font-black text-slate-900 mt-0.5">
-                            สร้างบัญชีผู้ใช้งานใหม่ (แอดมิน / พนักงาน / ลูกค้า)
-                        </h2>
-                        <p class="text-[11px] text-slate-500 mt-0.5">
-                            กำหนดรูปภาพโปรไฟล์ ชื่อ-สกุล อีเมล เบอร์โทรศัพท์ รหัสผ่าน และสิทธิ์ตามบทบาทจริง
-                        </p>
-                    </div>
-                    <button type="button"
-                            onclick="switchSubTab('permissions')"
-                            class="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer">
-                        ✕ ปิดกลับหน้าสิทธิ์
-                    </button>
-                </div>
-
-                <!-- Registration Form -->
-                <form id="form-register-user" onsubmit="submitRegisterUser(event)" enctype="multipart/form-data" class="space-y-3">
-                    @csrf
-
-                    <!-- 1. รูปภาพโปรไฟล์ / ภาพประกอบ (Image Upload with Preview) -->
-                    <div class="p-2.5 sm:p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5">
-                        <label class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-slate-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-                            </svg>
-                            <span>รูปภาพประกอบ / ภาพถ่ายโปรไฟล์พนักงานหรือผู้ใช้</span>
-                        </label>
-                        <div class="flex flex-col sm:flex-row items-center gap-3">
-                            <div class="relative shrink-0">
-                                <img id="reg-avatar-preview"
-                                     src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23CBD5E1'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E"
-                                     alt="Avatar Preview"
-                                     class="w-14 h-14 rounded-xl object-cover bg-white border-2 border-dashed border-slate-300 p-0.5 shadow-xs">
-                                <div id="reg-avatar-indicator" class="hidden absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-bold">
-                                    ✓
+            <div id="panel-register" class="w-full max-w-full bg-white rounded-3xl p-3.5 sm:p-5 border border-slate-200/90 shadow-sm space-y-4 {{ $currentTab === 'register' ? '' : 'hidden' }} max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin">
+                
+                <!-- 1. Header Bar: Icon + Title + Subtitle + Buttons (เหมือนหน้าระบบเช็คเอาท์อัตโนมัติ) -->
+                <div class="flex flex-col xl:flex-row xl:items-center justify-between pb-3.5 border-b border-slate-100 gap-3.5">
+                    <div class="space-y-0.5 min-w-0">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs border border-slate-800 shrink-0">
+                                <svg class="w-5 h-5 text-slate-100" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                </svg>
+                            </span>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h2 class="text-base sm:text-lg font-black text-slate-900 leading-tight">
+                                        ลงทะเบียนขอสิทธิ์ &amp; สร้างบัญชีผู้ใช้จริง (User Accounts &amp; Registration Approval)
+                                    </h2>
+                                    <span id="header-pending-badge" class="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10.5px] font-bold">
+                                        ● คำขอรออนุมัติ: <strong id="header-pending-count">{{ count($pendingRegistrations ?? []) }}</strong> รายการ
+                                    </span>
                                 </div>
-                            </div>
-
-                            <div class="space-y-1 flex-1 text-center sm:text-left">
-                                <div class="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
-                                    <label for="reg-avatar-input"
-                                           class="px-3 py-1.5 rounded-xl bg-white hover:bg-blue-50 border border-slate-300 hover:border-blue-400 text-slate-700 hover:text-blue-600 font-bold text-xs cursor-pointer shadow-2xs transition-all flex items-center gap-1.5">
-                                        <svg class="w-3.5 h-3.5 text-blue-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        <span>เลือกภาพถ่ายโปรไฟล์...</span>
-                                    </label>
-                                    <input type="file"
-                                           id="reg-avatar-input"
-                                           name="avatar"
-                                           accept="image/*"
-                                           onchange="previewRegisterAvatar(this)"
-                                           class="hidden">
-
-                                    <button type="button"
-                                            onclick="removeRegisterAvatar()"
-                                            id="btn-remove-avatar"
-                                            class="hidden px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 text-xs font-semibold transition-all cursor-pointer">
-                                        ลบรูปภาพ
-                                    </button>
-                                </div>
-                                <p class="text-[10.5px] text-slate-400">
-                                    รองรับไฟล์ภาพ JPG, PNG, WEBP (ขนาดไม่เกิน 5MB) สามารถใส่ภาพเพื่อยืนยันตัวตนได้ทันที
+                                <p class="text-[11px] text-slate-500 font-medium pt-0.5">
+                                    ระบบสร้างบัญชีผู้ใช้งานใหม่ และการตรวจสอบอนุมัติคำขอลงทะเบียนพนักงานบัญชีใหม่จากหน้า Login
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 2. ข้อมูลส่วนบุคคล (ชื่อ, เมล, เบอร์, รหัสผ่าน) -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        <!-- Full Name -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-0.5">
-                                ชื่อ-นามสกุล <span class="text-rose-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <span class="absolute left-2.5 top-2.5 text-slate-400 pointer-events-none">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                                    </svg>
-                                </span>
-                                <input type="text"
-                                       name="name"
-                                       id="reg-input-name"
-                                       required
-                                       placeholder="เช่น นายอับดุลเลาะห์ สุขสวัสดิ์"
-                                       class="w-full text-xs sm:text-sm pl-9 pr-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 focus:outline-blue-500 focus:bg-white bg-slate-50 text-slate-800 transition-all font-medium">
-                            </div>
-                        </div>
-
-                        <!-- Email -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-0.5">
-                                อีเมลเข้าใช้งาน (Login Email) <span class="text-rose-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <span class="absolute left-2.5 top-2.5 text-slate-400 pointer-events-none">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                                    </svg>
-                                </span>
-                                <input type="email"
-                                       name="email"
-                                       id="reg-input-email"
-                                       required
-                                       placeholder="เช่น abdullah@malastreet.com"
-                                       class="w-full text-xs sm:text-sm pl-9 pr-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 focus:outline-blue-500 focus:bg-white bg-slate-50 text-slate-800 transition-all font-medium">
-                            </div>
-                        </div>
-
-                        <!-- Phone -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-0.5">
-                                เบอร์โทรศัพท์ <span class="text-slate-400 font-normal">(สำหรับติดต่อ)</span>
-                            </label>
-                            <div class="relative">
-                                <span class="absolute left-2.5 top-2.5 text-slate-400 pointer-events-none">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-                                    </svg>
-                                </span>
-                                <input type="tel"
-                                       name="phone"
-                                       id="reg-input-phone"
-                                       placeholder="เช่น 089-123-4567"
-                                       class="w-full text-xs sm:text-sm pl-9 pr-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 focus:outline-blue-500 focus:bg-white bg-slate-50 text-slate-800 transition-all font-medium">
-                            </div>
-                        </div>
-
-                        <!-- Password -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-0.5">
-                                รหัสผ่าน / PIN เข้าสู่ระบบ <span class="text-rose-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <span class="absolute left-2.5 top-2.5 text-slate-400 pointer-events-none">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
-                                    </svg>
-                                </span>
-                                <input type="password"
-                                       name="password"
-                                       id="reg-input-password"
-                                       required
-                                       value="password123"
-                                       placeholder="กำหนดรหัสผ่าน (ค่าเริ่มต้น password123)"
-                                       class="w-full text-xs sm:text-sm pl-9 pr-9 py-1.5 sm:py-2 rounded-xl border border-slate-200 focus:outline-blue-500 focus:bg-white bg-slate-50 text-slate-800 transition-all font-medium font-mono">
-                                <button type="button"
-                                        onclick="togglePasswordVisibility('reg-input-password', this)"
-                                        class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                                        title="แสดง/ซ่อนรหัสผ่าน">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 3. สถานะว่าเป็นแอดมินหรือพนักงาน หรือลูกค้า (3 Interactive Cards) -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-800 mb-1.5">
-                            สถานะและบทบาทการใช้งาน <span class="text-rose-500">*</span>
-                        </label>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5">
-                            <!-- 1. แอดมิน (Admin) -->
-                            <label id="card-role-admin"
-                                   class="role-selector-card p-2 sm:p-2.5 rounded-xl border-2 border-slate-200 bg-white hover:border-rose-400 cursor-pointer transition-all flex flex-col justify-between space-y-1 select-none"
-                                   onclick="selectRoleCard('Admin')">
-                                <div class="flex items-center justify-between">
-                                    <span class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                                        </svg>
-                                    </span>
-                                    <input type="radio" name="role" value="Admin" id="role-admin" class="w-3.5 h-3.5 text-rose-600 focus:ring-rose-500 border-slate-300">
-                                </div>
-                                <div>
-                                    <div class="font-black text-xs sm:text-sm text-slate-900">แอดมิน (Admin)</div>
-                                    <p class="text-[10px] text-slate-500 mt-0.5 leading-snug">
-                                        ผู้ดูแลระบบสูงสุด สิทธิ์เต็มทุกหน้าต่าง ทุกปุ่ม จัดการสาขา และกำหนดสิทธิ์ผู้อื่นได้
-                                    </p>
-                                </div>
-                            </label>
-
-                            <!-- 2. พนักงาน (Employee) -->
-                            <label id="card-role-employee"
-                                   class="role-selector-card p-2 sm:p-2.5 rounded-xl border-2 border-[#2563EB] bg-blue-50/50 cursor-pointer transition-all flex flex-col justify-between space-y-1 select-none"
-                                   onclick="selectRoleCard('Employee')">
-                                <div class="flex items-center justify-between">
-                                    <span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                                        </svg>
-                                    </span>
-                                    <input type="radio" name="role" value="Employee" id="role-employee" checked class="w-3.5 h-3.5 text-blue-600 focus:ring-blue-500 border-slate-300">
-                                </div>
-                                <div>
-                                    <div class="font-black text-xs sm:text-sm text-slate-900">พนักงาน (Employee)</div>
-                                    <p class="text-[10px] text-slate-500 mt-0.5 leading-snug">
-                                        ทีมงานหน้าร้าน แคชเชียร์ POS, จอครัว, เช็คสต็อกไม้ และสแกนใบหน้าเข้า-ออกงาน
-                                    </p>
-                                </div>
-                            </label>
-
-                            <!-- 3. ลูกค้า (Customer) -->
-                            <label id="card-role-customer"
-                                   class="role-selector-card p-2 sm:p-2.5 rounded-xl border-2 border-slate-200 bg-white hover:border-emerald-400 cursor-pointer transition-all flex flex-col justify-between space-y-1 select-none"
-                                   onclick="selectRoleCard('Customer')">
-                                <div class="flex items-center justify-between">
-                                    <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                                        </svg>
-                                    </span>
-                                    <input type="radio" name="role" value="Customer" id="role-customer" class="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500 border-slate-300">
-                                </div>
-                                <div>
-                                    <div class="font-black text-xs sm:text-sm text-slate-900">ลูกค้า (Customer)</div>
-                                    <p class="text-[10px] text-slate-500 mt-0.5 leading-snug">
-                                        ลูกค้าสั่งอาหารออนไลน์ ชำระเงิน สั่งมารับหน้าร้าน และติดตามสถานะอาหาร
-                                    </p>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- 4. สาขา & ตัวเลือกลบบัญชีทดสอบ -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-0.5">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-0.5">
-                                สาขาประจำ
-                            </label>
-                            <select name="branch" id="reg-input-branch" class="w-full text-xs sm:text-sm px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium">
-                                <option value="ทุกสาขา">🏢 ทุกสาขา (แอดมิน / ลูกค้า)</option>
-                                <option value="สาขายะลา">📍 สาขายะลา (ศูนย์บริการหลัก &amp; คลังสต็อก)</option>
-                                <option value="สาขาปัตตานี">📍 สาขาปัตตานี (ศูนย์บริการและจุดรับคืน)</option>
-                            </select>
-                        </div>
-
-                        <!-- Auto-clean test accounts toggle (ตรงตามที่ผู้ใช้ร้องขอ) -->
-                        <div class="p-2 px-2.5 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2">
-                            <input type="checkbox"
-                                   name="clear_test_accounts"
-                                   id="reg-chk-clear-test"
-                                   value="1"
-                                   checked
-                                   class="mt-0.5 w-3.5 h-3.5 rounded text-rose-600 focus:ring-rose-500 border-slate-300 cursor-pointer">
-                            <label for="reg-chk-clear-test" class="text-[11px] text-rose-900 font-medium cursor-pointer leading-tight">
-                                <span class="font-bold text-rose-800 block">🗑️ ลบบัญชีทดสอบทั้งหมด (ตามภาพที่ 2) โดยอัตโนมัติ</span>
-                                เมื่อสร้างบัญชีจริงนี้ บัญชีตัวอย่างทั้งหมดในภาพที่ 2 จะถูกลบออก และแสดงเฉพาะบัญชีจริงที่คุณสร้างเท่านั้น
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Submit Buttons -->
-                    <div class="pt-2 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-end gap-2.5">
-                        <button type="reset"
+                    <!-- ชุดปุ่มฝั่งขวา: ล้างฟอร์ม + ปิดหน้าต่าง -->
+                    <div class="flex items-center gap-2 shrink-0 self-end xl:self-center">
+                        <button type="button"
                                 onclick="resetRegisterForm()"
-                                class="w-full sm:w-auto px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-all cursor-pointer">
+                                class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 text-xs font-bold transition-all cursor-pointer">
                             ล้างฟอร์ม
                         </button>
-                        <button type="submit"
-                                id="btn-submit-register"
-                                class="w-full sm:w-auto px-5 py-2 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-95 text-white font-bold text-xs shadow-md shadow-blue-500/25 flex items-center justify-center gap-1.5 transition-all cursor-pointer">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                            </svg>
-                            <span>สร้างบัญชีและเปิดใช้งานทันที</span>
+                        <button type="button"
+                                onclick="switchSubTab('permissions')"
+                                title="ปิดกลับหน้าสิทธิ์การเข้าถึง"
+                                class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 text-xs font-bold transition-all cursor-pointer flex items-center justify-center">
+                            ✕
                         </button>
                     </div>
-                </form>
+                </div>
 
-                <!-- ===================================================================== -->
-                <!-- การ์ดใหม่ด้านล่างของการ์ดตามภาพที่ 2: รองรับพนักงานบัญชีใหม่ (คำขอรอแอดมินอนุมัติ) -->
-                <!-- ===================================================================== -->
-                <div id="card-pending-registrations" class="mt-4 pt-4 border-t border-slate-200/80 space-y-3">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-slate-100 gap-2">
-                        <div class="flex items-center gap-2.5">
-                            <span class="w-9 h-9 rounded-2xl bg-amber-500/10 text-amber-600 border border-amber-200/80 flex items-center justify-center shrink-0 shadow-2xs font-bold text-base">
-                                🔔
-                            </span>
-                            <div>
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <h3 class="text-sm sm:text-base font-black text-slate-900 leading-tight">
-                                        คำขอลงทะเบียนพนักงานบัญชีและผู้ใช้ใหม่
-                                    </h3>
-                                    <span id="badge-pending-count" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10.5px] font-bold border border-amber-200 shadow-2xs">
-                                        {{ count($pendingRegistrations ?? []) }} คำขอรออนุมัติ
+                <!-- 2 แถบในแถวเดียวกัน เรียงตามหัวข้อ เหมือนตัวอย่างภาพที่ 2 จากหน้าระบบเช็คเอาท์อัตโนมัติ -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4.5 xl:gap-5 items-stretch">
+                    
+                    <!-- ============================================================= -->
+                    <!-- แถบที่ 1: 1. สร้างบัญชีผู้ใช้งานใหม่ (แอดมิน / พนักงาน / ลูกค้า)     -->
+                    <!-- ============================================================= -->
+                    <div class="bg-white rounded-[20px] p-4 sm:p-5 border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4">
+                        <div class="space-y-4">
+                            <!-- Header แถบที่ 1 (ตรงตามแบบภาพที่ 2 เป๊ะๆ) -->
+                            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 border border-blue-200/80 flex items-center justify-center shrink-0 shadow-2xs">
+                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                        </svg>
                                     </span>
+                                    <div>
+                                        <h3 class="text-sm sm:text-base font-black text-slate-900 leading-tight">1. สร้างบัญชีผู้ใช้งานใหม่</h3>
+                                        <p class="text-[11px] text-slate-500 font-medium">กำหนดโปรไฟล์ ชื่อ อีเมล รหัสผ่าน และสิทธิ์</p>
+                                    </div>
                                 </div>
-                                <p class="text-[11px] text-slate-500 font-medium">
-                                    รายการที่ส่งคำขอมาจากหน้า Login — ผู้ดูแลระบบต้องกด "อนุญาต" เพื่อสร้างบัญชีและเปิดใช้งาน
-                                </p>
+                                <span class="text-[10px] font-bold text-blue-800 bg-blue-100/90 px-2.5 py-0.5 rounded-lg border border-blue-200/80 shadow-2xs">แถบ 1</span>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- รายการคำขอรออนุมัติ -->
-                    <div id="pending-registrations-list" class="space-y-2.5">
-                        @forelse(($pendingRegistrations ?? []) as $req)
-                            <div id="pending-card-{{ $req['id'] }}" class="p-3 sm:p-3.5 rounded-2xl border border-slate-200/90 bg-slate-50/70 hover:bg-white hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-                                <div class="flex items-center gap-3 min-w-0">
-                                    @if(!empty($req['avatar']))
-                                        <img src="{{ $req['avatar'] }}" alt="{{ $req['name'] }}" class="w-12 h-12 rounded-2xl object-cover border border-slate-200 shadow-xs shrink-0">
-                                    @else
-                                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-600 text-white font-black text-base flex items-center justify-center shrink-0 shadow-xs">
-                                            {{ mb_substr($req['name'], 0, 2) }}
+                            <!-- Registration Form -->
+                            <form id="form-register-user" onsubmit="submitRegisterUser(event)" enctype="multipart/form-data" class="space-y-3.5">
+                                @csrf
+
+                                <!-- 1. รูปภาพโปรไฟล์ / ภาพประกอบ (Image Upload with Preview) -->
+                                <div class="p-2.5 sm:p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5">
+                                    <label class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-slate-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
+                                        </svg>
+                                        <span>รูปภาพประกอบ / ภาพถ่ายโปรไฟล์พนักงานหรือผู้ใช้</span>
+                                    </label>
+                                    <div class="flex flex-col sm:flex-row items-center gap-3">
+                                        <div class="relative shrink-0">
+                                            <img id="reg-avatar-preview"
+                                                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23CBD5E1'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E"
+                                                 alt="Avatar Preview"
+                                                 class="w-14 h-14 rounded-xl object-cover bg-white border-2 border-dashed border-slate-300 p-0.5 shadow-xs">
+                                            <div id="reg-avatar-indicator" class="hidden absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-bold">
+                                                ✓
+                                            </div>
                                         </div>
-                                    @endif
-                                    <div class="min-w-0 space-y-0.5">
-                                        <div class="flex items-center gap-2 flex-wrap">
-                                            <h4 class="text-sm font-black text-slate-900 truncate">{{ $req['name'] }}</h4>
-                                            <span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 border border-blue-200 text-[10px] font-bold">
-                                                {{ $req['position'] ?? 'พนักงานบัญชี' }}
-                                            </span>
-                                            <span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-bold">
-                                                ⏳ รอแอดมินอนุมัติ
-                                            </span>
-                                        </div>
-                                        <div class="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
-                                            <span class="font-mono text-slate-700">✉ {{ $req['email'] }}</span>
-                                            @if(!empty($req['phone']) && $req['phone'] !== '-')
-                                                <span>• 📞 {{ $req['phone'] }}</span>
-                                            @endif
-                                            <span class="text-[10.5px] text-slate-400">• {{ $req['created_at'] ?? 'เมื่อสักครู่' }}</span>
+
+                                        <div class="space-y-1 flex-1 text-center sm:text-left">
+                                            <div class="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
+                                                <label for="reg-avatar-input"
+                                                       class="px-3 py-1.5 rounded-xl bg-white hover:bg-blue-50 border border-slate-300 hover:border-blue-400 text-slate-700 hover:text-blue-600 font-bold text-xs cursor-pointer shadow-2xs transition-all flex items-center gap-1.5">
+                                                    <svg class="w-3.5 h-3.5 text-blue-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                    <span>เลือกภาพถ่ายโปรไฟล์...</span>
+                                                </label>
+                                                <input type="file"
+                                                       id="reg-avatar-input"
+                                                       name="avatar"
+                                                       accept="image/*"
+                                                       onchange="previewRegisterAvatar(this)"
+                                                       class="hidden">
+
+                                                <button type="button"
+                                                        onclick="removeRegisterAvatar()"
+                                                        id="btn-remove-avatar"
+                                                        class="hidden px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 text-xs font-semibold transition-all cursor-pointer">
+                                                    ลบรูปภาพ
+                                                </button>
+                                            </div>
+                                            <p class="text-[10.5px] text-slate-400">
+                                                รองรับไฟล์ภาพ JPG, PNG, WEBP (ขนาดไม่เกิน 5MB) สามารถใส่ภาพเพื่อยืนยันตัวตนได้ทันที
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                                    <button type="button"
-                                            onclick="approveRegistrationRequest('{{ $req['id'] }}', '{{ addslashes($req['name']) }}')"
-                                            class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                <!-- 2. ข้อมูลส่วนบุคคล (ชื่อ, เมล, เบอร์, รหัสผ่าน) -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <!-- Full Name -->
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 mb-0.5">
+                                            ชื่อ-นามสกุล <span class="text-rose-500">*</span>
+                                        </label>
+                                        <div class="relative">
+                                            <span class="absolute left-2.5 top-2.5 text-slate-400 pointer-events-none">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                                </svg>
+                                            </span>
+                                            <input type="text"
+                                                   name="name"
+                                                   id="reg-input-name"
+                                                   required
+                                                   placeholder="เช่น นายอับดุลเลาะห์ สุขสวัสดิ์"
+                                                   class="w-full text-xs sm:text-sm pl-9 pr-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 focus:outline-blue-500 focus:bg-white bg-slate-50 text-slate-800 transition-all font-medium">
+                                        </div>
+                                    </div>
+
+                                    <!-- Email -->
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 mb-0.5">
+                                            อีเมลเข้าใช้งาน (Login Email) <span class="text-rose-500">*</span>
+                                        </label>
+                                        <div class="relative">
+                                            <span class="absolute left-2.5 top-2.5 text-slate-400 pointer-events-none">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                                                </svg>
+                                            </span>
+                                            <input type="email"
+                                                   name="email"
+                                                   id="reg-input-email"
+                                                   required
+                                                   placeholder="เช่น abdullah@malastreet.com"
+                                                   class="w-full text-xs sm:text-sm pl-9 pr-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 focus:outline-blue-500 focus:bg-white bg-slate-50 text-slate-800 transition-all font-medium">
+                                        </div>
+                                    </div>
+
+                                    <!-- Phone -->
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 mb-0.5">
+                                            เบอร์โทรศัพท์ <span class="text-slate-400 font-normal">(สำหรับติดต่อ)</span>
+                                        </label>
+                                        <div class="relative">
+                                            <span class="absolute left-2.5 top-2.5 text-slate-400 pointer-events-none">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                                                </svg>
+                                            </span>
+                                            <input type="tel"
+                                                   name="phone"
+                                                   id="reg-input-phone"
+                                                   placeholder="เช่น 089-123-4567"
+                                                   class="w-full text-xs sm:text-sm pl-9 pr-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 focus:outline-blue-500 focus:bg-white bg-slate-50 text-slate-800 transition-all font-medium">
+                                        </div>
+                                    </div>
+
+                                    <!-- Password -->
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 mb-0.5">
+                                            รหัสผ่าน / PIN เข้าสู่ระบบ <span class="text-rose-500">*</span>
+                                        </label>
+                                        <div class="relative">
+                                            <span class="absolute left-2.5 top-2.5 text-slate-400 pointer-events-none">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                                                </svg>
+                                            </span>
+                                            <input type="password"
+                                                   name="password"
+                                                   id="reg-input-password"
+                                                   required
+                                                   value="password123"
+                                                   placeholder="กำหนดรหัสผ่าน (ค่าเริ่มต้น password123)"
+                                                   class="w-full text-xs sm:text-sm pl-9 pr-9 py-1.5 sm:py-2 rounded-xl border border-slate-200 focus:outline-blue-500 focus:bg-white bg-slate-50 text-slate-800 transition-all font-medium font-mono">
+                                            <button type="button"
+                                                    onclick="togglePasswordVisibility('reg-input-password', this)"
+                                                    class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                                                    title="แสดง/ซ่อนรหัสผ่าน">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 3. สถานะว่าเป็นแอดมินหรือพนักงาน หรือลูกค้า (3 Interactive Cards) -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-800 mb-1.5">
+                                        สถานะและบทบาทการใช้งาน <span class="text-rose-500">*</span>
+                                    </label>
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5">
+                                        <!-- 1. แอดมิน (Admin) -->
+                                        <label id="card-role-admin"
+                                               class="role-selector-card p-2 sm:p-2.5 rounded-xl border-2 border-slate-200 bg-white hover:border-rose-400 cursor-pointer transition-all flex flex-col justify-between space-y-1 select-none"
+                                               onclick="selectRoleCard('Admin')">
+                                            <div class="flex items-center justify-between">
+                                                <span class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                                                    </svg>
+                                                </span>
+                                                <input type="radio" name="role" value="Admin" id="role-admin" class="w-3.5 h-3.5 text-rose-600 focus:ring-rose-500 border-slate-300">
+                                            </div>
+                                            <div>
+                                                <div class="font-black text-xs sm:text-sm text-slate-900">แอดมิน (Admin)</div>
+                                                <p class="text-[10px] text-slate-500 mt-0.5 leading-snug">
+                                                    ผู้ดูแลระบบสูงสุด สิทธิ์เต็มทุกหน้าต่าง ทุกปุ่ม จัดการสาขา และกำหนดสิทธิ์ผู้อื่นได้
+                                                </p>
+                                            </div>
+                                        </label>
+
+                                        <!-- 2. พนักงาน (Employee) -->
+                                        <label id="card-role-employee"
+                                               class="role-selector-card p-2 sm:p-2.5 rounded-xl border-2 border-[#2563EB] bg-blue-50/50 cursor-pointer transition-all flex flex-col justify-between space-y-1 select-none"
+                                               onclick="selectRoleCard('Employee')">
+                                            <div class="flex items-center justify-between">
+                                                <span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                                    </svg>
+                                                </span>
+                                                <input type="radio" name="role" value="Employee" id="role-employee" checked class="w-3.5 h-3.5 text-blue-600 focus:ring-blue-500 border-slate-300">
+                                            </div>
+                                            <div>
+                                                <div class="font-black text-xs sm:text-sm text-slate-900">พนักงาน (Employee)</div>
+                                                <p class="text-[10px] text-slate-500 mt-0.5 leading-snug">
+                                                    ทีมงานหน้าร้าน แคชเชียร์ POS, จอครัว, เช็คสต็อกไม้ และสแกนใบหน้าเข้า-ออกงาน
+                                                </p>
+                                            </div>
+                                        </label>
+
+                                        <!-- 3. ลูกค้า (Customer) -->
+                                        <label id="card-role-customer"
+                                               class="role-selector-card p-2 sm:p-2.5 rounded-xl border-2 border-slate-200 bg-white hover:border-emerald-400 cursor-pointer transition-all flex flex-col justify-between space-y-1 select-none"
+                                               onclick="selectRoleCard('Customer')">
+                                            <div class="flex items-center justify-between">
+                                                <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                                                    </svg>
+                                                </span>
+                                                <input type="radio" name="role" value="Customer" id="role-customer" class="w-3.5 h-3.5 text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                                            </div>
+                                            <div>
+                                                <div class="font-black text-xs sm:text-sm text-slate-900">ลูกค้า (Customer)</div>
+                                                <p class="text-[10px] text-slate-500 mt-0.5 leading-snug">
+                                                    ลูกค้าสั่งอาหารออนไลน์ ชำระเงิน สั่งมารับหน้าร้าน และติดตามสถานะอาหาร
+                                                </p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- 4. สาขา & ตัวเลือกลบบัญชีทดสอบ -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-0.5">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 mb-0.5">
+                                            สาขาประจำ
+                                        </label>
+                                        <select name="branch" id="reg-input-branch" class="w-full text-xs sm:text-sm px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium">
+                                            <option value="ทุกสาขา">🏢 ทุกสาขา (แอดมิน / ลูกค้า)</option>
+                                            <option value="สาขายะลา">📍 สาขายะลา (ศูนย์บริการหลัก &amp; คลังสต็อก)</option>
+                                            <option value="สาขาปัตตานี">📍 สาขาปัตตานี (ศูนย์บริการและจุดรับคืน)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Auto-clean test accounts toggle -->
+                                    <div class="p-2 px-2.5 rounded-xl bg-rose-50 border border-rose-200 flex items-start gap-2">
+                                        <input type="checkbox"
+                                               name="clear_test_accounts"
+                                               id="reg-chk-clear-test"
+                                               value="1"
+                                               checked
+                                               class="mt-0.5 w-3.5 h-3.5 rounded text-rose-600 focus:ring-rose-500 border-slate-300 cursor-pointer">
+                                        <label for="reg-chk-clear-test" class="text-[11px] text-rose-900 font-medium cursor-pointer leading-tight">
+                                            <span class="font-bold text-rose-800 block">🗑️ ลบบัญชีทดสอบทั้งหมด (ตามภาพที่ 2) โดยอัตโนมัติ</span>
+                                            เมื่อสร้างบัญชีจริงนี้ บัญชีตัวอย่างทั้งหมดในภาพที่ 2 จะถูกลบออก และแสดงเฉพาะบัญชีจริงที่คุณสร้างเท่านั้น
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button แถบ 1 -->
+                                <div class="pt-2.5 border-t border-slate-100 flex items-center justify-end">
+                                    <button type="submit"
+                                            id="btn-submit-register"
+                                            class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-95 text-white font-bold text-xs shadow-md shadow-blue-500/25 flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                                         </svg>
-                                        <span>กดอนุญาต / อนุมัติใช้งาน</span>
-                                    </button>
-                                    <button type="button"
-                                            onclick="rejectRegistrationRequest('{{ $req['id'] }}', '{{ addslashes($req['name']) }}')"
-                                            class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold text-xs transition-all cursor-pointer">
-                                        ✕ ปฏิเสธ
+                                        <span>สร้างบัญชีและเปิดใช้งานทันที</span>
                                     </button>
                                 </div>
-                            </div>
-                        @empty
-                            <div id="pending-empty-state" class="py-7 text-center space-y-1.5 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                                <span class="text-2xl block">📭</span>
-                                <p class="text-xs font-bold text-slate-700">ไม่มีคำขอลงทะเบียนใหม่ที่รอดำเนินการ</p>
-                                <p class="text-[10.5px] text-slate-400">เมื่อพนักงานบัญชีกดลงทะเบียนจากหน้าเข้าสู่ระบบ รายการจะมาปรากฏที่การ์ดนี้เพื่อให้แอดมินกดอนุญาต</p>
-                            </div>
-                        @endforelse
+                            </form>
+                        </div>
+
+                        <!-- Footer แถบ 1 -->
+                        <div class="pt-3 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
+                            <span>บทบาทที่เลือก:</span>
+                            <span id="selected-role-preview-badge" class="font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-200">พนักงาน (Employee)</span>
+                        </div>
                     </div>
+
+                    <!-- ============================================================= -->
+                    <!-- แถบที่ 2: 2. คำขอลงทะเบียนพนักงานบัญชีใหม่ (รอแอดมินอนุมัติ)           -->
+                    <!-- ============================================================= -->
+                    <div id="card-pending-registrations" class="bg-white rounded-[20px] p-4 sm:p-5 border border-slate-200/90 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4">
+                        <div class="space-y-4">
+                            <!-- Header แถบที่ 2 (ตรงตามแบบภาพที่ 2 เป๊ะๆ) -->
+                            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 border border-amber-200/80 flex items-center justify-center shrink-0 shadow-2xs">
+                                        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                                        </svg>
+                                    </span>
+                                    <div>
+                                        <h3 class="text-sm sm:text-base font-black text-slate-900 leading-tight">2. คำขอลงทะเบียนพนักงานบัญชีใหม่</h3>
+                                        <p class="text-[11px] text-slate-500 font-medium">คำขอจากหน้า Login • รอแอดมินกดอนุญาต</p>
+                                    </div>
+                                </div>
+                                <span class="text-[10px] font-bold text-amber-800 bg-amber-100/90 px-2.5 py-0.5 rounded-lg border border-amber-200/80 shadow-2xs">แถบ 2</span>
+                            </div>
+
+                            <!-- รายการคำขอรออนุมัติ -->
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between text-xs pb-1 border-b border-slate-100/80">
+                                    <span class="text-slate-500 font-medium">รายการที่รอดำเนินการ:</span>
+                                    <span id="badge-pending-count" class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10.5px] font-bold border border-amber-200 shadow-2xs">
+                                        {{ count($pendingRegistrations ?? []) }} คำขอรออนุมัติ
+                                    </span>
+                                </div>
+
+                                <div id="pending-registrations-list" class="space-y-2.5 max-h-[580px] overflow-y-auto pr-1 scrollbar-thin">
+                                    @forelse(($pendingRegistrations ?? []) as $req)
+                                        <div id="pending-card-{{ $req['id'] }}" class="p-3 sm:p-3.5 rounded-2xl border border-slate-200/90 bg-slate-50/70 hover:bg-white hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                                            <div class="flex items-center gap-3 min-w-0">
+                                                @if(!empty($req['avatar']))
+                                                    <img src="{{ $req['avatar'] }}" alt="{{ $req['name'] }}" class="w-12 h-12 rounded-2xl object-cover border border-slate-200 shadow-xs shrink-0">
+                                                @else
+                                                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-600 text-white font-black text-base flex items-center justify-center shrink-0 shadow-xs">
+                                                        {{ mb_substr($req['name'], 0, 2) }}
+                                                    </div>
+                                                @endif
+                                                <div class="min-w-0 space-y-0.5">
+                                                    <div class="flex items-center gap-2 flex-wrap">
+                                                        <h4 class="text-sm font-black text-slate-900 truncate">{{ $req['name'] }}</h4>
+                                                        <span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 border border-blue-200 text-[10px] font-bold">
+                                                            {{ $req['position'] ?? 'พนักงานบัญชี' }}
+                                                        </span>
+                                                        <span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200 text-[10px] font-bold">
+                                                            ⏳ รอแอดมินอนุมัติ
+                                                        </span>
+                                                    </div>
+                                                    <div class="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
+                                                        <span class="font-mono text-slate-700">✉ {{ $req['email'] }}</span>
+                                                        @if(!empty($req['phone']) && $req['phone'] !== '-')
+                                                            <span>• 📞 {{ $req['phone'] }}</span>
+                                                        @endif
+                                                        <span class="text-[10.5px] text-slate-400">• {{ $req['created_at'] ?? 'เมื่อสักครู่' }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                                <button type="button"
+                                                        onclick="approveRegistrationRequest('{{ $req['id'] }}', '{{ addslashes($req['name']) }}')"
+                                                        class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                                    </svg>
+                                                    <span>กดอนุญาต / อนุมัติใช้งาน</span>
+                                                </button>
+                                                <button type="button"
+                                                        onclick="rejectRegistrationRequest('{{ $req['id'] }}', '{{ addslashes($req['name']) }}')"
+                                                        class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-bold text-xs transition-all cursor-pointer">
+                                                    ✕ ปฏิเสธ
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div id="pending-empty-state" class="py-10 text-center space-y-2 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                                            <span class="text-3xl block">📭</span>
+                                            <p class="text-xs font-bold text-slate-700">ไม่มีคำขอลงทะเบียนใหม่ที่รอดำเนินการ</p>
+                                            <p class="text-[10.5px] text-slate-400 max-w-xs mx-auto">
+                                                เมื่อพนักงานบัญชีกดลงทะเบียนจากหน้าเข้าสู่ระบบ รายการจะมาปรากฏที่แถบ 2 นี้เพื่อให้แอดมินกดอนุญาต
+                                            </p>
+                                        </div>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer แถบ 2 -->
+                        <div class="pt-3 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
+                            <span class="flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span>ระบบรักษาความปลอดภัย: แอดมินต้องกดอนุญาตก่อนเปิดใช้งาน</span>
+                            </span>
+                        </div>
+                    </div>
+
                 </div>
             </div>
             <!-- END PANEL 2 -->
@@ -2591,8 +2660,8 @@
         if (btnAutoLogout) btnAutoLogout.className = inactiveClasses;
         if (btnAudit) btnAudit.className = inactiveClasses;
 
-        if (tab === 'autologout' || tab === 'audit') {
-            // ระบบเช็คเอาท์อัตโนมัติ และ ประวัติการทำงาน (Audit Log): ซ่อนคอลัมน์เลือกบัญชีผู้ใช้งานทางซ้ายออก และขยายเต็มหน้าจอ
+        if (tab === 'autologout' || tab === 'audit' || tab === 'register') {
+            // ระบบเช็คเอาท์อัตโนมัติ, ประวัติการทำงาน, และ ลงทะเบียนขอสิทธิ์ (2 แถบ): ซ่อนคอลัมน์เลือกบัญชีผู้ใช้งานทางซ้ายออก และขยายเต็มหน้าจอ
             if (colUsersList) {
                 colUsersList.classList.add('hidden');
                 colUsersList.style.display = 'none';
@@ -2604,11 +2673,11 @@
             }
 
             if (pPermissions) pPermissions.classList.add('hidden');
-            if (pRegister) pRegister.classList.add('hidden');
             if (pUsers) pUsers.classList.add('hidden');
 
             if (tab === 'audit') {
                 if (pAutoLogout) pAutoLogout.classList.add('hidden');
+                if (pRegister) pRegister.classList.add('hidden');
                 if (pAudit) {
                     pAudit.classList.remove('hidden');
                     pAudit.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2616,8 +2685,18 @@
                 if (btnAudit) btnAudit.className = activeClasses;
                 loadAuditLogsLive();
                 showToast("เปิดหน้าต่าง: ประวัติการทำงานของระบบ (Audit Trail)");
+            } else if (tab === 'register') {
+                if (pAutoLogout) pAutoLogout.classList.add('hidden');
+                if (pAudit) pAudit.classList.add('hidden');
+                if (pRegister) {
+                    pRegister.classList.remove('hidden');
+                    pRegister.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                if (btnRegister) btnRegister.className = activeClasses;
+                showToast("เปิดหน้าต่าง: ลงทะเบียนขอสิทธิ์ & สร้างบัญชีจริง (2 แถบ)");
             } else {
                 if (pAudit) pAudit.classList.add('hidden');
+                if (pRegister) pRegister.classList.add('hidden');
                 if (pAutoLogout) {
                     pAutoLogout.classList.remove('hidden');
                     pAutoLogout.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2637,21 +2716,11 @@
                 colMainContent.classList.add('lg:col-span-8', 'xl:col-span-9');
             }
             if (pAudit) pAudit.classList.add('hidden');
+            if (pRegister) pRegister.classList.add('hidden');
+            if (pAutoLogout) pAutoLogout.classList.add('hidden');
 
-            if (tab === 'register') {
+            if (tab === 'users') {
                 if (pPermissions) pPermissions.classList.add('hidden');
-                if (pUsers) pUsers.classList.add('hidden');
-                if (pAutoLogout) pAutoLogout.classList.add('hidden');
-                if (pRegister) {
-                    pRegister.classList.remove('hidden');
-                    pRegister.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-                if (btnRegister) btnRegister.className = activeClasses;
-                showToast("เปิดหน้าต่าง: ลงทะเบียนขอสิทธิ์ & สร้างบัญชีจริง");
-            } else if (tab === 'users') {
-                if (pPermissions) pPermissions.classList.add('hidden');
-                if (pRegister) pRegister.classList.add('hidden');
-                if (pAutoLogout) pAutoLogout.classList.add('hidden');
                 if (pUsers) {
                     pUsers.classList.remove('hidden');
                     pUsers.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2660,9 +2729,7 @@
                 showToast("เปิดหน้าต่าง: จัดการพนักงานและแอดมิน");
             } else {
                 // 'permissions' is default
-                if (pRegister) pRegister.classList.add('hidden');
                 if (pUsers) pUsers.classList.add('hidden');
-                if (pAutoLogout) pAutoLogout.classList.add('hidden');
                 if (pPermissions) {
                     pPermissions.classList.remove('hidden');
                     pPermissions.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2841,11 +2908,16 @@
             }
         });
 
+        const roleBadge = document.getElementById('selected-role-preview-badge');
         if (role === 'Admin') {
             if (rAdmin) rAdmin.checked = true;
             if (cardAdmin) {
                 cardAdmin.classList.remove('border-slate-200', 'bg-white');
                 cardAdmin.classList.add('border-rose-500', 'bg-rose-50/40');
+            }
+            if (roleBadge) {
+                roleBadge.className = 'font-bold text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-md border border-rose-200';
+                roleBadge.innerText = 'แอดมิน (Admin)';
             }
         } else if (role === 'Customer') {
             if (rCust) rCust.checked = true;
@@ -2853,12 +2925,20 @@
                 cardCust.classList.remove('border-slate-200', 'bg-white');
                 cardCust.classList.add('border-emerald-500', 'bg-emerald-50/40');
             }
+            if (roleBadge) {
+                roleBadge.className = 'font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200';
+                roleBadge.innerText = 'ลูกค้า (Customer)';
+            }
         } else {
             // Employee
             if (rEmp) rEmp.checked = true;
             if (cardEmp) {
                 cardEmp.classList.remove('border-slate-200', 'bg-white');
                 cardEmp.classList.add('border-[#2563EB]', 'bg-blue-50/50');
+            }
+            if (roleBadge) {
+                roleBadge.className = 'font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-200';
+                roleBadge.innerText = 'พนักงาน (Employee)';
             }
         }
     }
@@ -3377,6 +3457,8 @@
             if (newCount === 0) subtabBadge.classList.add('hidden');
             else subtabBadge.classList.remove('hidden');
         }
+        const headerCount = document.getElementById('header-pending-count');
+        if (headerCount) headerCount.innerText = newCount;
         checkPendingEmptyState();
     }
 
