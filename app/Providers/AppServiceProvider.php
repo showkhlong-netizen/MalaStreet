@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,6 +24,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Enforce HTTPS on Production / Cloud Hosting (Render) to fix mixed-content CSS blocking
+        if (app()->environment('production') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') || str_contains(request()->url(), 'onrender.com') || env('APP_ENV') === 'production') {
+            URL::forceScheme('https');
+        }
+
         View::composer('*', function ($view) {
             // 1. Resolve current user profile
             $user = Auth::user();
