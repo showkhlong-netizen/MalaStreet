@@ -438,12 +438,12 @@
                         type="button"
                         id="btn-cat-approval-toggle"
                         onclick="toggleActiveCategoryApproval()"
-                        class="hidden shrink-0 h-[32px] px-3 rounded-xl text-xs font-bold transition-all shadow-2xs items-center gap-1.5 cursor-pointer ml-1 select-none"
+                        class="hidden shrink-0 w-8 h-8 rounded-xl transition-all shadow-2xs items-center justify-center cursor-pointer ml-1 select-none"
+                        title="อนุมัติทุกรายการในแถบนี้ (สั่งออนไลน์ & แคชเชียร์)"
                     >
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
                         </svg>
-                        <span id="btn-cat-approval-text">อนุมัติทุกรายการในแถบนี้ (สั่งออนไลน์ & แคชเชียร์)</span>
                     </button>
                     <span id="live-sync-indicator" class="hidden 2xl:inline-flex items-center gap-1.5 ml-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70 text-[11px] font-medium whitespace-nowrap">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -1048,14 +1048,12 @@
                     type="button"
                     id="btn-toggle-mat-approval"
                     onclick="toggleCurrentMaterialApproval()"
-                    class="py-2 px-3.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer select-none"
+                    class="w-9 h-9 rounded-xl transition-all shadow-xs cursor-pointer select-none inline-flex items-center justify-center shrink-0"
+                    title="อนุมัติแสดงผล (สั่งออนไลน์ & แคชเชียร์)"
                 >
-                    <span id="btn-toggle-mat-approval-icon">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
-                        </svg>
-                    </span>
-                    <span id="btn-toggle-mat-approval-text">อนุมัติแสดงผล (สั่งออนไลน์ & แคชเชียร์)</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                    </svg>
                 </button>
 
                 <button
@@ -2485,16 +2483,13 @@
 
     function updateCategoryApprovalButtonUI(isActive) {
         const btn = document.getElementById('btn-cat-approval-toggle');
-        const text = document.getElementById('btn-cat-approval-text');
-        if (!btn || !text) return;
+        if (!btn) return;
         if (isActive) {
-            btn.className = 'shrink-0 h-[32px] px-3 rounded-xl text-xs font-bold transition-all shadow-2xs inline-flex items-center gap-1.5 cursor-pointer ml-1 select-none bg-emerald-600 hover:bg-emerald-700 text-white';
-            btn.title = 'คลิกเพื่อปิดการแสดงผลทั้งแถบนี้ในหน้าสั่งออนไลน์และแคชเชียร์';
-            text.textContent = '✓ อนุมัติทั้งแถบนี้แล้ว (สั่งออนไลน์ & แคชเชียร์)';
+            btn.className = 'shrink-0 w-8 h-8 rounded-xl transition-all shadow-2xs inline-flex items-center justify-center cursor-pointer ml-1 select-none bg-emerald-600 hover:bg-emerald-700 text-white';
+            btn.title = 'อนุมัติทุกรายการในแถบนี้แล้ว (คลิกเพื่อปิดการแสดงผลในหน้าสั่งออนไลน์และแคชเชียร์)';
         } else {
-            btn.className = 'shrink-0 h-[32px] px-3 rounded-xl text-xs font-bold transition-all shadow-2xs inline-flex items-center gap-1.5 cursor-pointer ml-1 select-none bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-400 hover:border-emerald-600';
-            btn.title = 'คลิกเพื่ออนุมัติให้ทุกรายการในแถบนี้แสดงในหน้าสั่งออนไลน์และแคชเชียร์ทันที';
-            text.textContent = '✓ ติ๊กถูกอนุมัติทั้งแถบนี้ (สั่งออนไลน์ & แคชเชียร์)';
+            btn.className = 'shrink-0 w-8 h-8 rounded-xl transition-all shadow-2xs inline-flex items-center justify-center cursor-pointer ml-1 select-none bg-white hover:bg-emerald-50 text-emerald-600 border border-emerald-400 hover:border-emerald-600';
+            btn.title = 'คลิกเพื่ออนุมัติทุกรายการในแถบนี้ (สั่งออนไลน์ & แคชเชียร์)';
         }
     }
 
@@ -2892,7 +2887,6 @@
     function updateMaterialApprovalModalUI(isApproved) {
         const saleBadge = document.getElementById('modal-mat-sale-badge');
         const btn = document.getElementById('btn-toggle-mat-approval');
-        const btnText = document.getElementById('btn-toggle-mat-approval-text');
 
         if (saleBadge) {
             if (isApproved) {
@@ -2904,15 +2898,13 @@
             }
         }
 
-        if (btn && btnText) {
+        if (btn) {
             if (isApproved) {
-                btn.className = 'py-2 px-3.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer select-none bg-emerald-600 hover:bg-emerald-700 text-white';
-                btn.title = 'คลิกเพื่อปิดการแสดงผลในหน้าสั่งออนไลน์และแคชเชียร์';
-                btnText.textContent = '✓ อนุมัติแล้ว (สั่งออนไลน์ & แคชเชียร์)';
+                btn.className = 'w-9 h-9 rounded-xl transition-all shadow-xs cursor-pointer select-none inline-flex items-center justify-center shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white';
+                btn.title = 'อนุมัติแล้ว (คลิกเพื่อปิดการแสดงผลในหน้าสั่งออนไลน์และแคชเชียร์)';
             } else {
-                btn.className = 'py-2 px-3.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-xs transition-all cursor-pointer select-none bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 hover:border-emerald-500';
+                btn.className = 'w-9 h-9 rounded-xl transition-all shadow-xs cursor-pointer select-none inline-flex items-center justify-center shrink-0 bg-white hover:bg-emerald-50 text-emerald-600 border border-emerald-400 hover:border-emerald-600';
                 btn.title = 'คลิกเพื่ออนุมัติให้แสดงในหน้าสั่งออนไลน์และแคชเชียร์ทันที';
-                btnText.textContent = '✓ ติ๊กถูกอนุมัติ (สั่งออนไลน์ & แคชเชียร์)';
             }
         }
     }
