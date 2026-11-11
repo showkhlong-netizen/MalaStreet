@@ -309,29 +309,30 @@
                             <svg class="w-3.5 h-3.5 text-[#F59E0B] fill-current shrink-0" viewBox="0 0 20 20">
                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.175 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/>
                             </svg>
-                            <span class="font-extrabold text-[#101114]">4.9</span>
+                            <span class="font-extrabold text-[#D90012]">4.9</span>
                             <span class="text-[#6B7280]">(500+ รีวิว)</span>
                         </button>
                         <span class="text-slate-300">|</span>
                         <span class="inline-flex items-center gap-1 text-[#101114] font-medium">
-                            <!-- Single-color Red Vespa Scooter Icon -->
-                            <svg class="w-4 h-3.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="5" cy="17.5" r="2.5" />
-                                <circle cx="19" cy="17.5" r="2.5" />
-                                <path d="M5 15c0-2.8 1.8-4.5 4.5-4.5h2.5c.9 0 1.6.4 2.1 1.2l2.6 4.8" />
-                                <path d="M9.5 16.5h5" />
-                                <path d="M6.5 10.5h5c.6 0 1 .4 1 1s-.4 1-1 1H7" />
-                                <path d="M15 6h2.2c.8 0 1.5.5 1.7 1.3l.6 2.2" />
-                                <circle cx="18.8" cy="7.2" r="1.2" fill="currentColor" />
+                            <!-- Single-color Red Vespa Scooter Icon Matching Image 2 -->
+                            <svg class="w-4 h-3.5 text-[#D90012] shrink-0" viewBox="0 0 100 85" fill="currentColor">
+                                <rect x="18" y="29" width="27" height="9" rx="4.5" />
+                                <path d="M22 38 C14 39 6 46 6 57 C6 64 12 65 19 65 C20 62 21 59 23 57 C27 52 35 52 39 57 C41 59 42 62 43 65 L48 65 C55 65 60 55 60 52 L50 52 C45 52 43 45 44 41 C44 38 30 38 22 38 Z" />
+                                <path d="M36 53 C37.5 56 37.5 58 36.5 61" stroke="white" stroke-width="2" stroke-linecap="round" fill="none" />
+                                <path d="M51 16 H68 C71 16 73 18 73 21 C73 24 70 26 66 26 L63 26 L67 52 L61 54 L57 26 C54 26 51 23 51 19 Z" />
+                                <path d="M64 45 C73 42 86 46 90 53 C85 58 74 61 64 56 Z" />
+                                <circle cx="24" cy="63" r="11" />
+                                <circle cx="24" cy="63" r="5" fill="white" />
+                                <circle cx="78" cy="63" r="11" />
+                                <circle cx="78" cy="63" r="5" fill="white" />
                             </svg>
                             <span>ส่งเร็ว ~15–20 นาที</span>
                         </span>
                         <span class="text-slate-300">|</span>
                         <button type="button" onclick="openStoreInfoModal()" class="inline-flex items-center gap-1 text-[#101114] hover:text-[#D90012] cursor-pointer" title="ข้อมูลร้านและที่อยู่">
-                            <!-- Single-color Pushpin Icon Matching Image 2 Exactly -->
-                            <svg class="w-3.5 h-3.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M6 3.5h12c.8 0 1.5.7 1.5 1.5v.5c0 .6-.3 1.1-.8 1.4-1.2.7-2 2-2 3.4v.7c0 1.5.9 2.9 2.3 3.6l1.2.6c.7.4 1.1 1.1 1.1 1.9 0 .8-.7 1.5-1.5 1.5H4.2c-.8 0-1.5-.7-1.5-1.5 0-.8.4-1.5 1.1-1.9l1.2-.6c1.4-.7 2.3-2.1 2.3-3.6v-.7c0-1.4-.8-2.7-2-3.4-.5-.3-.8-.8-.8-1.4V5c0-.8.7-1.5 1.5-1.5z" />
-                                <line x1="12" y1="18" x2="12" y2="23" stroke-width="2.2" stroke-linecap="round" />
+                            <!-- Single-color Red Teardrop Map Pin Icon Matching Image 3 -->
+                            <svg class="w-3.5 h-3.5 text-[#D90012] shrink-0" viewBox="0 0 24 28" fill="currentColor">
+                                <path d="M12 1.5 C6.75 1.5 2.5 5.75 2.5 11 C2.5 17.2 11.1 25.8 11.5 26.2 C11.8 26.5 12.2 26.5 12.5 26.2 C12.9 25.8 21.5 17.2 21.5 11 C21.5 5.75 17.25 1.5 12 1.5 Z M12 15 C9.8 15 8 13.2 8 11 C8 8.8 9.8 7 12 7 C14.2 7 16 8.8 16 11 C16 13.2 14.2 15 12 15 Z" />
                             </svg>
                             <span>ระยะทาง 2.3 กม.</span>
                         </button>
@@ -346,9 +347,14 @@
                 <!-- Left Voucher: ส่วนลด ฿10 เมื่อสั่งขั้นต่ำ ฿150 -->
                 <div class="flex-1 flex items-center justify-between gap-1.5 pr-2 border-r border-[#F5C2C7]">
                     <div class="flex items-center gap-1.5 min-w-0">
-                        <div class="w-6 h-5 rounded-[4px] bg-[#E60018] text-white flex items-center justify-center shrink-0">
-                            <svg class="w-3.5 h-3.5 text-white fill-current shrink-0" viewBox="0 0 24 24">
-                                <path d="M2 9a3 3 0 0 1 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 1 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v3zm4 2a1 1 0 0 1 1-1h10a1 1 0 1 1 0 2H7a1 1 0 0 1-1-1zm0 3a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2H7a1 1 0 0 1-1-1z"/>
+                        <div class="w-6 h-5 rounded-[5px] bg-[#D90012] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                            <!-- Ticket Voucher Icon Matching Image 1 Exactly (White Thick Outline + 4 Dots) -->
+                            <svg class="w-4 h-3 shrink-0" viewBox="0 0 28 18" fill="none">
+                                <path d="M4.5 1.5 H7.5 C8.3 1.5 9 2.2 9.5 3 C10 3.8 10.7 3.8 11.2 3 C11.7 2.2 12.4 1.5 13.2 1.5 H23.5 C25.2 1.5 26.5 2.8 26.5 4.5 V13.5 C26.5 15.2 25.2 16.5 23.5 16.5 H13.2 C12.4 16.5 11.7 15.8 11.2 15 C10.7 14.2 10 14.2 9.5 15 C9 15.8 8.3 16.5 7.5 16.5 H4.5 C2.8 16.5 1.5 15.2 1.5 13.5 V4.5 C1.5 2.8 2.8 1.5 4.5 1.5 Z" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" />
+                                <circle cx="10.35" cy="5.5" r="0.95" fill="white" />
+                                <circle cx="10.35" cy="7.8" r="0.95" fill="white" />
+                                <circle cx="10.35" cy="10.2" r="0.95" fill="white" />
+                                <circle cx="10.35" cy="12.5" r="0.95" fill="white" />
                             </svg>
                         </div>
                         <div class="min-w-0 leading-tight">
@@ -367,9 +373,14 @@
                 <!-- Right Voucher: ส่วนลด ฿20 เมื่อสั่งขั้นต่ำ ฿300 -->
                 <div class="flex-1 flex items-center justify-between gap-1.5 pl-1">
                     <div class="flex items-center gap-1.5 min-w-0">
-                        <div class="w-6 h-5 rounded-[4px] bg-[#E60018] text-white flex items-center justify-center shrink-0">
-                            <svg class="w-3.5 h-3.5 text-white fill-current shrink-0" viewBox="0 0 24 24">
-                                <path d="M2 9a3 3 0 0 1 0 6v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a3 3 0 0 1 0-6V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v3zm4 2a1 1 0 0 1 1-1h10a1 1 0 1 1 0 2H7a1 1 0 0 1-1-1zm0 3a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2H7a1 1 0 0 1-1-1z"/>
+                        <div class="w-6 h-5 rounded-[5px] bg-[#D90012] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                            <!-- Ticket Voucher Icon Matching Image 1 Exactly (White Thick Outline + 4 Dots) -->
+                            <svg class="w-4 h-3 shrink-0" viewBox="0 0 28 18" fill="none">
+                                <path d="M4.5 1.5 H7.5 C8.3 1.5 9 2.2 9.5 3 C10 3.8 10.7 3.8 11.2 3 C11.7 2.2 12.4 1.5 13.2 1.5 H23.5 C25.2 1.5 26.5 2.8 26.5 4.5 V13.5 C26.5 15.2 25.2 16.5 23.5 16.5 H13.2 C12.4 16.5 11.7 15.8 11.2 15 C10.7 14.2 10 14.2 9.5 15 C9 15.8 8.3 16.5 7.5 16.5 H4.5 C2.8 16.5 1.5 15.2 1.5 13.5 V4.5 C1.5 2.8 2.8 1.5 4.5 1.5 Z" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" />
+                                <circle cx="10.35" cy="5.5" r="0.95" fill="white" />
+                                <circle cx="10.35" cy="7.8" r="0.95" fill="white" />
+                                <circle cx="10.35" cy="10.2" r="0.95" fill="white" />
+                                <circle cx="10.35" cy="12.5" r="0.95" fill="white" />
                             </svg>
                         </div>
                         <div class="min-w-0 leading-tight">
