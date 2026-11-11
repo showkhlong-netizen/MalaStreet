@@ -1438,34 +1438,26 @@
                 </div>
             </div>
 
-            <!-- Viewfinder Camera Frame -->
-            <div class="relative w-60 h-60 rounded-3xl bg-slate-950 overflow-hidden shadow-inner flex items-center justify-center border-2 border-rose-500">
+            <!-- Viewfinder Camera Frame (ปรับขนาดใหญ่ขึ้น + ตัดไอคอนและข้อความตรงกลางออก) -->
+            <div class="relative w-72 h-72 sm:w-[340px] sm:h-[340px] rounded-3xl bg-slate-950 overflow-hidden shadow-inner flex items-center justify-center border-2 border-rose-500">
                 <!-- Video Element for WebCam (Active Live Stream) -->
-                <video id="webcam-video" autoplay playsinline muted class="w-full h-full object-cover hidden"></video>
+                <video id="webcam-video" autoplay playsinline muted class="w-full h-full object-cover [transform:scaleX(-1)] bg-slate-950"></video>
                 <!-- Image Element for Captured Photo Preview (Shown after snapshot) -->
-                <img id="webcam-preview-img" class="w-full h-full object-cover hidden" alt="ภาพถ่ายที่บันทึก" />
+                <img id="webcam-preview-img" class="w-full h-full object-cover hidden [transform:scaleX(-1)]" alt="ภาพถ่ายที่บันทึก" />
                 <!-- Hidden Canvas for snapshot capturing -->
                 <canvas id="webcam-canvas" class="hidden"></canvas>
 
-                <div id="scanner-placeholder" class="flex flex-col items-center justify-center text-white p-4">
-                    <div class="w-24 h-24 rounded-full bg-rose-950/80 border-2 border-rose-500/70 flex items-center justify-center relative scanner-aura">
-                        <svg class="w-12 h-12 text-rose-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <circle cx="12" cy="11" r="3.5" />
-                            <path stroke-linecap="round" d="M7 19c0-2.5 2.2-4 5-4s5 1.5 5 4" />
-                        </svg>
-                        <div class="absolute inset-0 rounded-full border border-dashed border-rose-400 animate-spin" style="animation-duration: 8s;"></div>
-                    </div>
-                    <span class="text-xs text-rose-200 mt-2 font-medium">กรุณามองตรงมาที่กล้อง</span>
-                </div>
+                <!-- Hidden placeholder for JS compatibility -->
+                <div id="scanner-placeholder" class="hidden"></div>
 
                 <!-- HUD Laser Scanner Line -->
                 <div id="scanner-laser-line" class="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#E50914] to-transparent shadow-[0_0_15px_#E50914] scanner-laser pointer-events-none"></div>
 
                 <!-- Corner HUD Target Lines -->
-                <div class="absolute top-2 left-2 w-5 h-5 border-t-2 border-l-2 border-emerald-400 pointer-events-none"></div>
-                <div class="absolute top-2 right-2 w-5 h-5 border-t-2 border-r-2 border-emerald-400 pointer-events-none"></div>
-                <div class="absolute bottom-2 left-2 w-5 h-5 border-b-2 border-l-2 border-emerald-400 pointer-events-none"></div>
-                <div class="absolute bottom-2 right-2 w-5 h-5 border-b-2 border-r-2 border-emerald-400 pointer-events-none"></div>
+                <div class="absolute top-2.5 left-2.5 w-6 h-6 border-t-2 border-l-2 border-emerald-400 pointer-events-none"></div>
+                <div class="absolute top-2.5 right-2.5 w-6 h-6 border-t-2 border-r-2 border-emerald-400 pointer-events-none"></div>
+                <div class="absolute bottom-2.5 left-2.5 w-6 h-6 border-b-2 border-l-2 border-emerald-400 pointer-events-none"></div>
+                <div class="absolute bottom-2.5 right-2.5 w-6 h-6 border-b-2 border-r-2 border-emerald-400 pointer-events-none"></div>
             </div>
 
             <!-- Geofence Verified Badge in Modal -->
@@ -2378,18 +2370,70 @@
         // รีเซ็ตสถานะปุ่มและการแสดงผลก่อนหน้ากลับสู่โหมดพร้อมถ่าย
         retakePhoto();
 
-        // Try accessing device camera if supported
+        // Try accessing device camera if supported with dual-stage fallback (FacingMode + Generic)
         const video = document.getElementById('webcam-video');
         const placeholder = document.getElementById('scanner-placeholder');
+        const feedback = document.getElementById('scan-feedback-text');
+
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            if (mediaStream) {
+                try {
+                    mediaStream.getTracks().forEach(track => track.stop());
+                } catch (e) {}
+                mediaStream = null;
+            }
+
+            let stream = null;
+
+            // Attempt 1: Front camera (user facing)
             try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-                video.srcObject = mediaStream;
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+                    audio: false
+                });
+            } catch (err1) {
+                console.warn('FacingMode "user" camera constraint failed, attempting generic video:', err1);
+                // Attempt 2: Generic video (essential for Windows PC webcams, USB cameras, and laptops)
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: false
+                    });
+                } catch (err2) {
+                    console.error('All camera access attempts failed:', err2);
+                    if (feedback) {
+                        feedback.innerHTML = '<span class="text-rose-600">⚠️ ไม่สามารถเปิดกล้องได้ (กรุณาอนุญาตสิทธิ์เข้าถึงกล้องในเบราว์เซอร์ หรือกดถ่ายเพื่อจำลองภาพ)</span>';
+                    }
+                }
+            }
+
+            if (stream && video) {
+                mediaStream = stream;
+                video.srcObject = stream;
                 video.classList.remove('hidden');
-                placeholder.classList.add('hidden');
-            } catch (err) {
-                video.classList.add('hidden');
-                placeholder.classList.remove('hidden');
+                if (placeholder) placeholder.classList.add('hidden');
+
+                const playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(playErr => {
+                        console.warn('Autoplay prevented, waiting for loadedmetadata:', playErr);
+                        video.onloadedmetadata = () => {
+                            video.play().catch(e => console.warn('video.play failed:', e));
+                        };
+                    });
+                }
+
+                if (feedback) {
+                    feedback.innerText = 'ระบบพร้อมถ่ายภาพและบันทึกเวลาเข้า-ออกงาน';
+                    feedback.className = 'text-xs font-semibold text-slate-700 mt-2';
+                }
+            } else {
+                if (video) video.classList.remove('hidden');
+                if (placeholder) placeholder.classList.add('hidden');
+            }
+        } else {
+            if (feedback) {
+                feedback.innerHTML = '<span class="text-amber-600">⚠️ เบราว์เซอร์ไม่รองรับ WebCam (ระบบจะใช้ภาพถ่ายจำลองเมื่อกดถ่ายภาพ)</span>';
             }
         }
     }
@@ -2411,7 +2455,12 @@
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
+            // Mirror snapshot horizontally to match live preview
+            ctx.save();
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            ctx.restore();
             return canvas.toDataURL('image/jpeg', 0.90);
         }
 
@@ -2499,12 +2548,17 @@
             previewImg.src = '';
         }
 
-        if (video && video.srcObject) {
-            video.classList.remove('hidden');
-            if (placeholder) placeholder.classList.add('hidden');
-        } else if (placeholder) {
-            placeholder.classList.remove('hidden');
+        if (video) {
+            if (mediaStream) {
+                video.classList.remove('hidden');
+                if (video.paused) {
+                    video.play().catch(() => {});
+                }
+            } else {
+                video.classList.remove('hidden');
+            }
         }
+        if (placeholder) placeholder.classList.add('hidden');
 
         if (laser) laser.classList.remove('hidden');
 
