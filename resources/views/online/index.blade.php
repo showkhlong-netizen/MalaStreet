@@ -112,7 +112,7 @@
         <!-- ===================================================================== -->
         <!-- 1. HERO RESTAURANT BANNER & FLOATING ACTION BUTTONS                   -->
         <!-- ===================================================================== -->
-        <section class="relative w-full bg-[#400306] aspect-[592/195] z-30" style="aspect-ratio: 592/195;">
+        <section class="relative w-full overflow-hidden bg-[#400306] aspect-[592/195]" style="aspect-ratio: 592/195;">
             <!-- Hero Image Wrapper (Clips the banner image cleanly) -->
             <div class="absolute inset-0 overflow-hidden">
                 <img id="online-hero-banner-img"
@@ -123,7 +123,7 @@
             </div>
 
             <!-- Stable Floating Action Buttons Over Banner (Overflows freely over the cards below!) -->
-            <div class="absolute top-3.5 inset-x-3.5 flex items-center justify-between z-40 pointer-events-auto">
+            <div class="absolute top-3.5 inset-x-3.5 flex items-center justify-between z-20 pointer-events-auto">
                 <!-- Top-Left: Back Button -->
                 <button type="button"
                         onclick="window.history.length > 1 ? window.history.back() : window.location.href='{{ route('pos.index') }}'"
@@ -189,7 +189,7 @@
 
                         <!-- Master Settings Dropdown Menu (แผงเลือกตั้งค่าหน้าร้าน: ปก, โปรไฟล์, แถบโปรโมชั่น) -->
                         <div id="master-settings-menu"
-                             class="hidden absolute right-0 top-full mt-2 w-72 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 p-2 z-50 text-slate-800 select-none">
+                             class="hidden fixed w-72 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 p-2 z-[9999] text-slate-800 select-none">
                             <div class="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
                                 <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                                     <span class="w-2 h-2 rounded-full bg-[#E50914] animate-pulse"></span>
@@ -2172,12 +2172,29 @@
                 event.stopPropagation();
             }
             const menu = document.getElementById('master-settings-menu');
+            const btn = document.getElementById('btn-master-settings');
             if (!menu) return;
+
+            // Move to document.body so it floats cleanly above all containers without stacking context issues
+            if (menu.parentElement !== document.body) {
+                document.body.appendChild(menu);
+            }
+
             const isHidden = menu.classList.contains('hidden');
             if (isHidden) {
+                if (btn) {
+                    const rect = btn.getBoundingClientRect();
+                    menu.style.position = 'fixed';
+                    menu.style.top = `${rect.bottom + 8}px`;
+                    const rightOffset = Math.max(8, window.innerWidth - rect.right);
+                    menu.style.right = `${rightOffset}px`;
+                    menu.style.left = 'auto';
+                    menu.style.zIndex = '9999';
+                }
                 menu.classList.remove('hidden');
                 setTimeout(() => {
                     document.addEventListener('click', handleMasterMenuClickOutside, { once: true });
+                    window.addEventListener('scroll', closeMasterSettingsMenu, { passive: true, once: true });
                 }, 10);
             } else {
                 menu.classList.add('hidden');
