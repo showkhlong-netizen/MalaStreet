@@ -2042,7 +2042,13 @@ class ReceiptController extends Controller
      */
     public function updateCategory(Request $request, string $identifier): JsonResponse|RedirectResponse
     {
-        $category = Category::where('slug', $identifier)->orWhere('id', $identifier)->firstOrFail();
+        $category = Category::where(function ($q) use ($identifier) {
+            // PostgreSQL: only compare against bigint id when identifier is numeric
+            $q->where('slug', $identifier);
+            if (ctype_digit((string) $identifier)) {
+                $q->orWhere('id', (int) $identifier);
+            }
+        })->firstOrFail();
 
         $request->validate([
             'name' => 'required|string|max:100',
@@ -2123,7 +2129,13 @@ class ReceiptController extends Controller
      */
     public function destroyCategory(Request $request, string $identifier): JsonResponse|RedirectResponse
     {
-        $category = Category::where('slug', $identifier)->orWhere('id', $identifier)->firstOrFail();
+        $category = Category::where(function ($q) use ($identifier) {
+            // PostgreSQL: only compare against bigint id when identifier is numeric
+            $q->where('slug', $identifier);
+            if (ctype_digit((string) $identifier)) {
+                $q->orWhere('id', (int) $identifier);
+            }
+        })->firstOrFail();
         $catName = $category->name;
         $catSlug = $category->slug;
 
@@ -2209,7 +2221,13 @@ class ReceiptController extends Controller
      */
     public function toggleCategoryApproval(Request $request, string $identifier): JsonResponse
     {
-        $category = Category::where('slug', $identifier)->orWhere('id', $identifier)->first();
+        $category = Category::where(function ($q) use ($identifier) {
+            // PostgreSQL: only compare against bigint id when identifier is numeric
+            $q->where('slug', $identifier);
+            if (ctype_digit((string) $identifier)) {
+                $q->orWhere('id', (int) $identifier);
+            }
+        })->first();
         if (!$category) {
             return response()->json([
                 'success' => false,
