@@ -23,10 +23,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     sqlite3 \
     libsqlite3-dev \
+    libpq-dev \
     ca-certificates \
     curl \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd pdo pdo_sqlite pdo_mysql bcmath zip opcache \
+    && docker-php-ext-install -j$(nproc) gd pdo pdo_sqlite pdo_pgsql pdo_mysql bcmath zip opcache \
     && a2enmod rewrite \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 

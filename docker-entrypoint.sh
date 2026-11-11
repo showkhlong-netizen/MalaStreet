@@ -27,6 +27,7 @@ php artisan config:clear || true
 php artisan route:clear || true
 php artisan view:clear || true
 php artisan migrate --force || true
+php artisan db:seed --force || true
 php artisan storage:link || true
 
 echo "Starting Apache Web Server..."

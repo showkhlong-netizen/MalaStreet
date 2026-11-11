@@ -12,11 +12,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'เจ้าของร้านหม่าล่าสตรีท (Admin)',
-            'email' => 'admin@malastreet.com',
-        ]);
+        if (\App\Models\Category::count() === 0) {
+            User::firstOrCreate(
+                ['email' => 'admin@malastreet.com'],
+                [
+                    'name' => 'เจ้าของร้านหม่าล่าสตรีท (Admin)',
+                    'password' => bcrypt('password'),
+                ]
+            );
 
-        $this->call(MalaStreetSeeder::class);
+            $this->call(MalaStreetSeeder::class);
+        }
     }
 }
