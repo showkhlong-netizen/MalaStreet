@@ -11,9 +11,12 @@ use App\Http\Controllers\PosController;
 use App\Http\Controllers\ReceiptController;
 use Illuminate\Support\Facades\Route;
 
-// Landing redirect to POS or Portal
+// Landing redirect to POS or Login
 Route::get('/', function () {
-    return redirect()->route('pos.index');
+    if (Auth::check()) {
+        return redirect()->route('pos.index');
+    }
+    return redirect()->route('login');
 });
 
 // Authentication Routes (Login, Logout, User Switcher)
@@ -21,10 +24,10 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
-Route::post('/switch-user/{userId}', [AuthController::class, 'switchUser'])->name('switch_user');
+Route::post('/switch-user/{userId}', [AuthController::class, 'switchUser'])->name('switch_user')->middleware('auth');
 
-// 1. บริการหน้าร้าน (In-Store POS & Kitchen Display)
-Route::prefix('pos')->name('pos.')->group(function () {
+// 1. บริการหน้าร้าน (In-Store POS & Kitchen Display) - ต้องเข้าสู่ระบบ (Requires Auth)
+Route::prefix('pos')->name('pos.')->middleware('auth')->group(function () {
     Route::get('/', [PosController::class, 'index'])->name('index');
     Route::post('/order', [PosController::class, 'storeOrder'])->name('order.store');
     Route::get('/kitchen', [PosController::class, 'kitchen'])->name('kitchen');
@@ -52,8 +55,8 @@ Route::prefix('order')->name('online.')->group(function () {
     Route::post('/rewards/redeem', [OnlineOrderController::class, 'redeemReward'])->name('rewards.redeem');
 });
 
-// 3. ระบบหลังบ้าน (Backend Admin & Financial / Inventory Systems)
-Route::prefix('admin')->name('admin.')->group(function () {
+// 3. ระบบหลังบ้าน (Backend Admin & Financial / Inventory Systems) - ต้องเข้าสู่ระบบ (Requires Auth)
+Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/settings/toggle-online-mode', [DashboardController::class, 'toggleOnlineMode'])->name('settings.toggle_online');
 
@@ -102,10 +105,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('/access/settings', [AccessControlController::class, 'updateSettings'])->name('access.update_settings');
 });
 
-// Shortcut alias for employees & access
+// Shortcut alias for employees & access - ต้องเข้าสู่ระบบ (Requires Auth)
 Route::get('/employees', function () {
     return redirect()->route('admin.employees.index');
-});
+})->middleware('auth');
 Route::get('/access', function () {
     return redirect()->route('admin.access.index');
-});
+})->middleware('auth');

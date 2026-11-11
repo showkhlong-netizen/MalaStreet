@@ -24,7 +24,7 @@ class AuthController extends Controller
             Auth::logout();
             $request->session()->put('is_logged_out', true);
         } elseif (Auth::check() && !$request->has('force')) {
-            return redirect()->route('admin.dashboard');
+            return redirect()->route('pos.index');
         }
 
         $timeoutMinutes = (int) Setting::get('access_auto_logout_minutes', 15);
@@ -67,7 +67,7 @@ class AuthController extends Controller
                 $request->session()->put('auth_user_profile', $matched);
             }
 
-            return redirect()->intended(route('admin.dashboard'))
+            return redirect()->intended(route('pos.index'))
                 ->with('success', 'เข้าสู่ระบบสำเร็จ ยินดีต้อนรับ ' . Auth::user()->name);
         }
 
@@ -91,7 +91,7 @@ class AuthController extends Controller
                 $request->session()->put('auth_user_profile', $matched);
             }
 
-            return redirect()->intended(route('admin.dashboard'))
+            return redirect()->intended(route('pos.index'))
                 ->with('success', 'เข้าสู่ระบบสำเร็จ ยินดีต้อนรับ ' . $userModel->name);
         }
 

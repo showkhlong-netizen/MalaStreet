@@ -56,32 +56,6 @@ class AppServiceProvider extends ServiceProvider
                         'branch' => 'ทุกสาขา',
                     ];
                 }
-            } elseif (!$isLoggedOut) {
-                // If not explicitly logged out, default to primary active user
-                if (!empty($savedUsers)) {
-                    $profile = $savedUsers[0];
-                } else {
-                    $profile = [
-                        'id' => 'usr_main_admin',
-                        'name' => 'Munib Salaemae',
-                        'full_name' => 'Munib Salaemae',
-                        'email' => 'salaemaemunib@gmail.com',
-                        'role' => 'Admin',
-                        'role_label' => 'ผู้ดูแลระบบ (Admin)',
-                        'initials' => 'Mu',
-                        'color' => 'bg-rose-600',
-                        'avatar' => asset('uploads/users/user_1794212895_aCeDLF.png'),
-                        'status' => 'online',
-                        'status_label' => 'ใช้งานอยู่',
-                        'branch' => 'ทุกสาขา',
-                    ];
-                }
-
-                // Automatically authenticate this default user
-                $defaultUser = User::where('email', $profile['email'])->first();
-                if ($defaultUser) {
-                    Auth::login($defaultUser);
-                }
             }
 
             // 2. Resolve global auto-logout settings
