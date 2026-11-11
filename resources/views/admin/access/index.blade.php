@@ -1416,48 +1416,132 @@
                 <form id="form-autologout-settings" onsubmit="event.preventDefault(); saveAutoCheckoutSettingsFromPanel();" class="space-y-4">
                     
                     <!-- SECTION 1: ระยะเวลาที่ไม่มีการใช้งาน (Idle Timeout Duration) -->
-                    <div class="p-3.5 sm:p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="w-6 h-6 rounded-lg bg-slate-200/70 text-slate-700 flex items-center justify-center shrink-0">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <div class="p-4 sm:p-5 rounded-3xl bg-slate-50/70 border border-slate-200/80 space-y-4">
+                        <div class="flex items-center justify-between pb-1 border-b border-slate-200/60">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-200/80 flex items-center justify-center shrink-0 shadow-2xs">
+                                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </span>
-                                <h3 class="text-xs sm:text-sm font-bold text-slate-900">1. ระยะเวลาพักหน้าจอก่อนล็อกอัตโนมัติ (Idle Timeout)</h3>
+                                <div>
+                                    <h3 class="text-sm sm:text-base font-black text-slate-900">1. ระยะเวลาพักหน้าจอก่อนล็อกอัตโนมัติ (Idle Timeout)</h3>
+                                    <p class="text-[11px] text-slate-500 font-medium">เลือกระยะเวลาที่ไม่มีการเคลื่อนไหวหน้าจอก่อนเข้าสู่โหมดล็อกความปลอดภัย</p>
+                                </div>
                             </div>
-                            <span class="text-[11px] font-medium text-slate-500">เลือกเวลาที่ต้องการ</span>
+                            <span class="text-[11px] font-bold text-amber-800 bg-amber-100/80 px-2.5 py-1 rounded-lg border border-amber-200/80 shrink-0 hidden sm:inline-block">3 การ์ดต่อแถว</span>
                         </div>
 
                         @php
                             $curTimeout = (int)($autoLogoutSettings['timeout_minutes'] ?? 15);
                             $timeoutOptions = [
-                                ['value' => 3, 'title' => '3 นาที', 'badge' => 'สาธารณะ / พลุกพล่าน', 'badge_color' => 'bg-slate-200 text-slate-700', 'desc' => 'เหมาะกับร้านที่มีลูกค้าเดินผ่านหน้าจอแคชเชียร์บ่อย'],
-                                ['value' => 5, 'title' => '5 นาที', 'badge' => 'ปลอดภัยสูงสุด', 'badge_color' => 'bg-emerald-100 text-emerald-800', 'desc' => 'ตัดการทำงานเร็ว ป้องกันการแอบดูยอดขาย'],
-                                ['value' => 10, 'title' => '10 นาที', 'badge' => 'มาตรฐาน', 'badge_color' => 'bg-blue-100 text-blue-800', 'desc' => 'ความปลอดภัยระดับกลาง เหมาะกับเคาน์เตอร์ทั่วไป'],
-                                ['value' => 15, 'title' => '15 นาที', 'badge' => 'แนะนำสำหรับร้านอาหาร', 'badge_color' => 'bg-amber-100 text-amber-800 font-bold', 'desc' => 'สมดุลที่สุด พนักงานแคชเชียร์และบริการทำงานต่อเนื่องไม่สะดุด'],
-                                ['value' => 30, 'title' => '30 นาที', 'badge' => 'ผ่อนปรน', 'badge_color' => 'bg-indigo-100 text-indigo-800', 'desc' => 'สำหรับร้านที่พนักงานต้องเดินเสิร์ฟหรือดูแลลูกค้าหลายโต๊ะ'],
-                                ['value' => 60, 'title' => '1 ชั่วโมง', 'badge' => 'เวลานาน', 'badge_color' => 'bg-purple-100 text-purple-800', 'desc' => 'สำหรับเคาน์เตอร์เฉพาะพนักงาน หรือโต๊ะออฟฟิศหลังร้าน'],
-                                ['value' => 0, 'title' => 'ปิดใช้งาน', 'badge' => 'ไม่ล็อกอัตโนมัติ', 'badge_color' => 'bg-rose-100 text-rose-800', 'desc' => 'หน้าจอจะเปิดค้างตลอดเวลา ควรระวังเรื่องความปลอดภัยข้อมูล'],
+                                [
+                                    'value' => 3, 
+                                    'title' => '3 นาที', 
+                                    'badge' => 'สาธารณะ / พลุกพล่าน', 
+                                    'badge_color' => 'bg-slate-100 text-slate-700 border border-slate-200', 
+                                    'desc' => 'เหมาะกับร้านที่มีลูกค้าเดินผ่านหน้าจอแคชเชียร์บ่อย',
+                                    'icon_type' => 'flash',
+                                    'icon_bg' => 'bg-amber-100 text-amber-600 border border-amber-200 shadow-2xs',
+                                ],
+                                [
+                                    'value' => 5, 
+                                    'title' => '5 นาที', 
+                                    'badge' => 'ปลอดภัยสูงสุด', 
+                                    'badge_color' => 'bg-emerald-100 text-emerald-800 border border-emerald-200', 
+                                    'desc' => 'ตัดการทำงานเร็ว ป้องกันการแอบดูยอดขาย',
+                                    'icon_type' => 'shield',
+                                    'icon_bg' => 'bg-emerald-100 text-emerald-600 border border-emerald-200 shadow-2xs',
+                                ],
+                                [
+                                    'value' => 10, 
+                                    'title' => '10 นาที', 
+                                    'badge' => 'มาตรฐาน', 
+                                    'badge_color' => 'bg-blue-100 text-blue-800 border border-blue-200', 
+                                    'desc' => 'ความปลอดภัยระดับกลาง เหมาะกับเคาน์เตอร์ทั่วไป',
+                                    'icon_type' => 'clock',
+                                    'icon_bg' => 'bg-blue-100 text-blue-600 border border-blue-200 shadow-2xs',
+                                ],
+                                [
+                                    'value' => 15, 
+                                    'title' => '15 นาที', 
+                                    'badge' => 'แนะนำสำหรับร้านอาหาร', 
+                                    'badge_color' => 'bg-amber-100 text-amber-900 border border-amber-300 font-bold', 
+                                    'desc' => 'สมดุลที่สุด พนักงานแคชเชียร์และบริการทำงานต่อเนื่องไม่สะดุด',
+                                    'icon_type' => 'star',
+                                    'icon_bg' => 'bg-amber-100 text-amber-600 border border-amber-300 shadow-2xs ring-2 ring-amber-300/40',
+                                ],
+                                [
+                                    'value' => 30, 
+                                    'title' => '30 นาที', 
+                                    'badge' => 'ผ่อนปรน', 
+                                    'badge_color' => 'bg-indigo-100 text-indigo-800 border border-indigo-200', 
+                                    'desc' => 'สำหรับร้านที่พนักงานต้องเดินเสิร์ฟหรือดูแลลูกค้าหลายโต๊ะ',
+                                    'icon_type' => 'coffee',
+                                    'icon_bg' => 'bg-indigo-100 text-indigo-600 border border-indigo-200 shadow-2xs',
+                                ],
+                                [
+                                    'value' => 60, 
+                                    'title' => '1 ชั่วโมง', 
+                                    'badge' => 'เวลานาน', 
+                                    'badge_color' => 'bg-purple-100 text-purple-800 border border-purple-200', 
+                                    'desc' => 'สำหรับเคาน์เตอร์เฉพาะพนักงาน หรือโต๊ะออฟฟิศหลังร้าน',
+                                    'icon_type' => 'building',
+                                    'icon_bg' => 'bg-purple-100 text-purple-600 border border-purple-200 shadow-2xs',
+                                ],
+                                [
+                                    'value' => 0, 
+                                    'title' => 'ปิดใช้งาน', 
+                                    'badge' => 'ไม่ล็อกอัตโนมัติ', 
+                                    'badge_color' => 'bg-rose-100 text-rose-800 border border-rose-200', 
+                                    'desc' => 'หน้าจอจะเปิดค้างตลอดเวลา ควรระวังเรื่องความปลอดภัยข้อมูล',
+                                    'icon_type' => 'ban',
+                                    'icon_bg' => 'bg-rose-100 text-rose-600 border border-rose-200 shadow-2xs',
+                                ],
                             ];
                         @endphp
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5" id="timeout-options-container">
+                        <!-- 3 การ์ดต่อแถว แนวตั้ง ตั้งในแถวเดียวกัน -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 items-stretch" id="timeout-options-container">
                             @foreach($timeoutOptions as $opt)
                                 @php $isSelected = ($curTimeout === $opt['value']); @endphp
-                                <label class="timeout-card relative flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer {{ $isSelected ? 'bg-amber-50/70 border-amber-400 ring-2 ring-amber-400/20' : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50' }}">
-                                    <input type="radio" 
-                                           name="panel_timeout_minutes" 
-                                           value="{{ $opt['value'] }}" 
-                                           {{ $isSelected ? 'checked' : '' }}
-                                           onchange="handleTimeoutOptionChange(this)"
-                                           class="mt-1 w-4 h-4 text-amber-600 border-slate-300 focus:ring-amber-500 cursor-pointer">
-                                    <div class="space-y-1 flex-1">
-                                        <div class="flex items-center justify-between gap-1.5 flex-wrap">
-                                            <span class="text-xs sm:text-sm font-bold text-slate-800">{{ $opt['title'] }}</span>
-                                            <span class="text-[9.5px] px-1.5 py-0.5 rounded-md {{ $opt['badge_color'] }} font-semibold">{{ $opt['badge'] }}</span>
+                                <label class="timeout-card relative flex flex-col justify-between p-4 rounded-2xl border transition-all cursor-pointer h-full {{ $isSelected ? 'bg-amber-50/70 border-amber-400 ring-2 ring-amber-400/25 shadow-sm' : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/70 shadow-2xs' }}">
+                                    <div class="space-y-3">
+                                        <!-- Top row: ไอคอนเด่น + Radio Button -->
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span class="w-11 h-11 rounded-2xl {{ $opt['icon_bg'] }} flex items-center justify-center shrink-0">
+                                                @if($opt['icon_type'] === 'flash')
+                                                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
+                                                @elseif($opt['icon_type'] === 'shield')
+                                                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
+                                                @elseif($opt['icon_type'] === 'clock')
+                                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                @elseif($opt['icon_type'] === 'star')
+                                                    <svg class="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" /></svg>
+                                                @elseif($opt['icon_type'] === 'coffee')
+                                                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8.25v-1.5m0 1.5c-1.355 0-2.697.056-4.024.166C6.845 8.51 6 9.473 6 10.608v2.513m6-4.871c1.355 0 2.697.056 4.024.166C17.155 8.51 18 9.473 18 10.608v2.513M15 8.25v-1.5m-6 1.5v-1.5m12 9.75-1.5.75a3.375 3.375 0 01-3 0L15 16.5m-6 0-1.5.75a3.375 3.375 0 01-3 0L3 16.5" /></svg>
+                                                @elseif($opt['icon_type'] === 'building')
+                                                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" /></svg>
+                                                @else
+                                                    <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                                                @endif
+                                            </span>
+                                            <input type="radio" 
+                                                   name="panel_timeout_minutes" 
+                                                   value="{{ $opt['value'] }}" 
+                                                   {{ $isSelected ? 'checked' : '' }}
+                                                   onchange="handleTimeoutOptionChange(this)"
+                                                   class="w-4 h-4 text-amber-600 border-slate-300 focus:ring-amber-500 cursor-pointer">
                                         </div>
-                                        <p class="text-[10.5px] text-slate-500 leading-snug">{{ $opt['desc'] }}</p>
+
+                                        <!-- Middle: หัวข้อการ์ดเด่นกว่าเดิม + ป้ายกำกับ -->
+                                        <div>
+                                            <div class="flex items-center justify-between gap-1.5 flex-wrap">
+                                                <span class="text-sm sm:text-base font-black text-slate-900 tracking-tight">{{ $opt['title'] }}</span>
+                                                <span class="text-[9.5px] px-2 py-0.5 rounded-md {{ $opt['badge_color'] }} font-bold shadow-2xs">{{ $opt['badge'] }}</span>
+                                            </div>
+                                            <p class="text-[11px] text-slate-500 leading-snug pt-1">{{ $opt['desc'] }}</p>
+                                        </div>
                                     </div>
                                 </label>
                             @endforeach
@@ -1465,17 +1549,20 @@
                     </div>
 
                     <!-- SECTION 2: รูปแบบการทำงานเมื่อหมดเวลา (Timeout Action Mode) -->
-                    <div class="p-3.5 sm:p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="w-6 h-6 rounded-lg bg-slate-200/70 text-slate-700 flex items-center justify-center shrink-0">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <div class="p-4 sm:p-5 rounded-3xl bg-slate-50/70 border border-slate-200/80 space-y-4">
+                        <div class="flex items-center justify-between pb-1 border-b border-slate-200/60">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-600 border border-indigo-200/80 flex items-center justify-center shrink-0 shadow-2xs">
+                                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                                     </svg>
                                 </span>
-                                <h3 class="text-xs sm:text-sm font-bold text-slate-900">2. รูปแบบการทำงานเมื่อหมดเวลา (Timeout Action Mode)</h3>
+                                <div>
+                                    <h3 class="text-sm sm:text-base font-black text-slate-900">2. รูปแบบการทำงานเมื่อหมดเวลา (Timeout Action Mode)</h3>
+                                    <p class="text-[11px] text-slate-500 font-medium">กำหนดพฤติกรรมของระบบทันทีที่ครบกำหนดเวลาพักหน้าจอ</p>
+                                </div>
                             </div>
-                            <span class="text-[11px] font-medium text-slate-500">เลือกผลลัพธ์</span>
+                            <span class="text-[11px] font-bold text-indigo-800 bg-indigo-100/80 px-2.5 py-1 rounded-lg border border-indigo-200/80 shrink-0 hidden sm:inline-block">3 การ์ดในแถวเดียวกัน</span>
                         </div>
 
                         @php
@@ -1484,54 +1571,56 @@
                                 [
                                     'value' => 'lock_screen',
                                     'icon_type' => 'lock',
+                                    'icon_bg' => 'bg-emerald-100 text-emerald-600 border border-emerald-300 shadow-xs ring-2 ring-emerald-400/20',
                                     'title' => 'ล็อกหน้าจอชั่วคราว (Lock Screen & PIN)',
-                                    'badge' => 'แนะนำ',
-                                    'badge_color' => 'bg-emerald-100 text-emerald-800',
+                                    'badge' => '✨ แนะนำสำหรับแคชเชียร์',
+                                    'badge_color' => 'bg-emerald-100 text-emerald-800 border border-emerald-200',
                                     'desc' => 'หน้าจอดำชั่วคราว บังคับใส่รหัส PIN หรือสแกนหน้าเพื่อกลับเข้าใช้งานทันทีโดยไม่ต้องล็อกอินใหม่'
                                 ],
                                 [
                                     'value' => 'full_logout',
                                     'icon_type' => 'logout',
-                                    'title' => 'ล็อกเอาท์ออกจากระบบเต็มรูปแบบ (Full Logout)',
-                                    'badge' => 'ความปลอดภัยสูงสุด',
-                                    'badge_color' => 'bg-rose-100 text-rose-800',
+                                    'icon_bg' => 'bg-rose-100 text-rose-600 border border-rose-300 shadow-xs ring-2 ring-rose-400/20',
+                                    'title' => 'ล็อกเอาท์เต็มรูปแบบ (Full Logout)',
+                                    'badge' => '🛡️ ความปลอดภัยสูงสุด',
+                                    'badge_color' => 'bg-rose-100 text-rose-800 border border-rose-200',
                                     'desc' => 'ตัดเซสชันและพากลับไปหน้า Login ต้องกรอกอีเมลและรหัสผ่านใหม่ทั้งหมด'
                                 ],
                                 [
                                     'value' => 'quick_pin',
                                     'icon_type' => 'switch',
-                                    'title' => 'สลับไปหน้าเลือกรหัสพนักงาน (Quick Cashier PIN)',
-                                    'badge' => 'สะดวกสลับกะ',
-                                    'badge_color' => 'bg-blue-100 text-blue-800',
+                                    'icon_bg' => 'bg-blue-100 text-blue-600 border border-blue-300 shadow-xs ring-2 ring-blue-400/20',
+                                    'title' => 'สลับรหัสพนักงาน (Quick Cashier PIN)',
+                                    'badge' => '⚡ สะดวกสลับกะ',
+                                    'badge_color' => 'bg-blue-100 text-blue-800 border border-blue-200',
                                     'desc' => 'ออกจากสิทธิ์พนักงานปัจจุบัน และกลับไปหน้าตารางชื่อพนักงาน เพื่อให้พนักงานคนถัดไปกดรหัสเข้าแคชเชียร์'
                                 ],
                             ];
                         @endphp
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5" id="action-options-container">
+                        <!-- 3 การ์ดต่อแถว แนวตั้ง ตั้งในแถวเดียวกันพอดีเป๊ะ -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 items-stretch" id="action-options-container">
                             @foreach($actionOptions as $act)
                                 @php $isActSelected = ($curAction === $act['value']); @endphp
-                                <label class="action-card relative flex flex-col justify-between p-3.5 rounded-xl border transition-all cursor-pointer {{ $isActSelected ? 'bg-indigo-50/70 border-indigo-500 ring-2 ring-indigo-500/20' : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50' }}">
-                                    <div class="space-y-2">
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center gap-2">
-                                                <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 border border-slate-200/80">
-                                                    @if($act['icon_type'] === 'lock')
-                                                        <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                                                        </svg>
-                                                    @elseif($act['icon_type'] === 'logout')
-                                                        <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-                                                        </svg>
-                                                    @else
-                                                        <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                                                        </svg>
-                                                    @endif
-                                                </span>
-                                                <span class="text-xs font-bold text-slate-800 leading-snug">{{ $act['title'] }}</span>
-                                            </div>
+                                <label class="action-card relative flex flex-col justify-between p-4.5 rounded-2xl border transition-all cursor-pointer h-full {{ $isActSelected ? 'bg-indigo-50/70 border-indigo-500 ring-2 ring-indigo-500/25 shadow-sm' : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/70 shadow-2xs' }}">
+                                    <div class="space-y-3.5">
+                                        <!-- Top row: ไอคอนเดิมปรับให้เด่นขึ้น + Radio Button -->
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span class="w-12 h-12 rounded-2xl {{ $act['icon_bg'] }} flex items-center justify-center shrink-0">
+                                                @if($act['icon_type'] === 'lock')
+                                                    <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                                    </svg>
+                                                @elseif($act['icon_type'] === 'logout')
+                                                    <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                                                    </svg>
+                                                @else
+                                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                                    </svg>
+                                                @endif
+                                            </span>
                                             <input type="radio" 
                                                    name="panel_timeout_action" 
                                                    value="{{ $act['value'] }}" 
@@ -1539,10 +1628,21 @@
                                                    onchange="handleActionModeChange(this)"
                                                    class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500 cursor-pointer">
                                         </div>
-                                        <p class="text-[10.5px] text-slate-500 leading-snug">{{ $act['desc'] }}</p>
-                                    </div>
-                                    <div class="pt-2">
-                                        <span class="text-[9.5px] px-2 py-0.5 rounded-md {{ $act['badge_color'] }} font-semibold">{{ $act['badge'] }}</span>
+
+                                        <!-- Middle: ปรับหัวข้อการ์ดให้เด่นกว่าเดิม + ป้ายกำกับ + คำอธิบาย -->
+                                        <div class="space-y-1.5">
+                                            <h4 class="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-snug">
+                                                {{ $act['title'] }}
+                                            </h4>
+                                            <div>
+                                                <span class="text-[10px] px-2.5 py-0.5 rounded-md {{ $act['badge_color'] }} font-bold shadow-2xs inline-block">
+                                                    {{ $act['badge'] }}
+                                                </span>
+                                            </div>
+                                            <p class="text-[11.5px] text-slate-500 leading-relaxed pt-1">
+                                                {{ $act['desc'] }}
+                                            </p>
+                                        </div>
                                     </div>
                                 </label>
                             @endforeach
@@ -1550,15 +1650,18 @@
                     </div>
 
                     <!-- SECTION 3: ข้อยกเว้นและเงื่อนไขหน้าจอ (Screen Exceptions & Behavior) -->
-                    <div class="p-3.5 sm:p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="w-6 h-6 rounded-lg bg-slate-200/70 text-slate-700 flex items-center justify-center shrink-0">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <div class="p-4 sm:p-5 rounded-3xl bg-slate-50/70 border border-slate-200/80 space-y-4">
+                        <div class="flex items-center justify-between pb-1 border-b border-slate-200/60">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-200/80 flex items-center justify-center shrink-0 shadow-2xs">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
                                     </svg>
                                 </span>
-                                <h3 class="text-xs sm:text-sm font-bold text-slate-900">3. ข้อยกเว้นและเงื่อนไขเฉพาะหน้าจอ (Screen &amp; Role Exceptions)</h3>
+                                <div>
+                                    <h3 class="text-sm sm:text-base font-black text-slate-900">3. ข้อยกเว้นและเงื่อนไขเฉพาะหน้าจอ (Screen &amp; Role Exceptions)</h3>
+                                    <p class="text-[11px] text-slate-500 font-medium">กำหนดว่าหน้าจอหรืออุปกรณ์ใดบ้างที่ได้รับการยกเว้นจากการตัดสิทธิ์</p>
+                                </div>
                             </div>
                             <span class="text-[11px] font-medium text-slate-500">กำหนดเปิด/ปิด</span>
                         </div>
@@ -1643,15 +1746,18 @@
                     </div>
 
                     <!-- SECTION 4: นโยบายความปลอดภัยกะและแคชเชียร์ (Cashier & Shift Security) -->
-                    <div class="p-3.5 sm:p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="w-6 h-6 rounded-lg bg-slate-200/70 text-slate-700 flex items-center justify-center shrink-0">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <div class="p-4 sm:p-5 rounded-3xl bg-slate-50/70 border border-slate-200/80 space-y-4">
+                        <div class="flex items-center justify-between pb-1 border-b border-slate-200/60">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-600 border border-purple-200/80 flex items-center justify-center shrink-0 shadow-2xs">
+                                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                                     </svg>
                                 </span>
-                                <h3 class="text-xs sm:text-sm font-bold text-slate-900">4. นโยบายความปลอดภัยกะและแคชเชียร์ (Cashier &amp; Shift Security)</h3>
+                                <div>
+                                    <h3 class="text-sm sm:text-base font-black text-slate-900">4. นโยบายความปลอดภัยกะและแคชเชียร์ (Cashier &amp; Shift Security)</h3>
+                                    <p class="text-[11px] text-slate-500 font-medium">เพิ่มการตรวจสอบสิทธิ์ความปลอดภัยในจุดสำคัญของการปิดยอดเงิน</p>
+                                </div>
                             </div>
                             <span class="text-[11px] font-medium text-slate-500">นโยบายร้าน</span>
                         </div>
@@ -2429,26 +2535,26 @@
     // Auto-Logout Panel Interactive Functions
     function handleTimeoutOptionChange(radio) {
         document.querySelectorAll('.timeout-card').forEach(card => {
-            card.classList.remove('bg-amber-50/70', 'border-amber-400', 'ring-2', 'ring-amber-400/20');
+            card.classList.remove('bg-amber-50/70', 'border-amber-400', 'ring-2', 'ring-amber-400/20', 'ring-amber-400/25', 'shadow-sm');
             card.classList.add('bg-white', 'border-slate-200');
         });
         const parent = radio.closest('.timeout-card');
         if (parent) {
             parent.classList.remove('bg-white', 'border-slate-200');
-            parent.classList.add('bg-amber-50/70', 'border-amber-400', 'ring-2', 'ring-amber-400/20');
+            parent.classList.add('bg-amber-50/70', 'border-amber-400', 'ring-2', 'ring-amber-400/25', 'shadow-sm');
         }
         updateAutoLogoutStatusPreview();
     }
 
     function handleActionModeChange(radio) {
         document.querySelectorAll('.action-card').forEach(card => {
-            card.classList.remove('bg-indigo-50/70', 'border-indigo-500', 'ring-2', 'ring-indigo-500/20');
+            card.classList.remove('bg-indigo-50/70', 'border-indigo-500', 'ring-2', 'ring-indigo-500/20', 'ring-indigo-500/25', 'shadow-sm');
             card.classList.add('bg-white', 'border-slate-200');
         });
         const parent = radio.closest('.action-card');
         if (parent) {
             parent.classList.remove('bg-white', 'border-slate-200');
-            parent.classList.add('bg-indigo-50/70', 'border-indigo-500', 'ring-2', 'ring-indigo-500/20');
+            parent.classList.add('bg-indigo-50/70', 'border-indigo-500', 'ring-2', 'ring-indigo-500/25', 'shadow-sm');
         }
         updateAutoLogoutStatusPreview();
     }
