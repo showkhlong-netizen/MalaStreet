@@ -1429,11 +1429,14 @@
                                     <p class="text-[11px] text-slate-500 font-medium">เลือกระยะเวลาที่ไม่มีการเคลื่อนไหวหน้าจอก่อนเข้าสู่โหมดล็อกความปลอดภัย</p>
                                 </div>
                             </div>
-                            <span class="text-[11px] font-bold text-amber-800 bg-amber-100/80 px-2.5 py-1 rounded-lg border border-amber-200/80 shrink-0 hidden sm:inline-block">3 การ์ดต่อแถว</span>
+                            <span class="text-[11px] font-bold text-amber-800 bg-amber-100/80 px-2.5 py-1 rounded-lg border border-amber-200/80 shrink-0 hidden sm:inline-block">3 การ์ดในแถวเดียวกัน</span>
                         </div>
 
                         @php
                             $curTimeout = (int)($autoLogoutSettings['timeout_minutes'] ?? 15);
+                            if (!in_array($curTimeout, [3, 15, 0])) {
+                                $curTimeout = 15;
+                            }
                             $timeoutOptions = [
                                 [
                                     'value' => 3, 
@@ -1442,88 +1445,44 @@
                                     'badge_color' => 'bg-slate-100 text-slate-700 border border-slate-200', 
                                     'desc' => 'เหมาะกับร้านที่มีลูกค้าเดินผ่านหน้าจอแคชเชียร์บ่อย',
                                     'icon_type' => 'flash',
-                                    'icon_bg' => 'bg-amber-100 text-amber-600 border border-amber-200 shadow-2xs',
-                                ],
-                                [
-                                    'value' => 5, 
-                                    'title' => '5 นาที', 
-                                    'badge' => 'ปลอดภัยสูงสุด', 
-                                    'badge_color' => 'bg-emerald-100 text-emerald-800 border border-emerald-200', 
-                                    'desc' => 'ตัดการทำงานเร็ว ป้องกันการแอบดูยอดขาย',
-                                    'icon_type' => 'shield',
-                                    'icon_bg' => 'bg-emerald-100 text-emerald-600 border border-emerald-200 shadow-2xs',
-                                ],
-                                [
-                                    'value' => 10, 
-                                    'title' => '10 นาที', 
-                                    'badge' => 'มาตรฐาน', 
-                                    'badge_color' => 'bg-blue-100 text-blue-800 border border-blue-200', 
-                                    'desc' => 'ความปลอดภัยระดับกลาง เหมาะกับเคาน์เตอร์ทั่วไป',
-                                    'icon_type' => 'clock',
-                                    'icon_bg' => 'bg-blue-100 text-blue-600 border border-blue-200 shadow-2xs',
+                                    'icon_bg' => 'bg-amber-100 text-amber-600 border border-amber-300 shadow-xs ring-2 ring-amber-400/20',
                                 ],
                                 [
                                     'value' => 15, 
                                     'title' => '15 นาที', 
-                                    'badge' => 'แนะนำสำหรับร้านอาหาร', 
+                                    'badge' => '✨ แนะนำสำหรับร้านอาหาร', 
                                     'badge_color' => 'bg-amber-100 text-amber-900 border border-amber-300 font-bold', 
                                     'desc' => 'สมดุลที่สุด พนักงานแคชเชียร์และบริการทำงานต่อเนื่องไม่สะดุด',
                                     'icon_type' => 'star',
-                                    'icon_bg' => 'bg-amber-100 text-amber-600 border border-amber-300 shadow-2xs ring-2 ring-amber-300/40',
-                                ],
-                                [
-                                    'value' => 30, 
-                                    'title' => '30 นาที', 
-                                    'badge' => 'ผ่อนปรน', 
-                                    'badge_color' => 'bg-indigo-100 text-indigo-800 border border-indigo-200', 
-                                    'desc' => 'สำหรับร้านที่พนักงานต้องเดินเสิร์ฟหรือดูแลลูกค้าหลายโต๊ะ',
-                                    'icon_type' => 'coffee',
-                                    'icon_bg' => 'bg-indigo-100 text-indigo-600 border border-indigo-200 shadow-2xs',
-                                ],
-                                [
-                                    'value' => 60, 
-                                    'title' => '1 ชั่วโมง', 
-                                    'badge' => 'เวลานาน', 
-                                    'badge_color' => 'bg-purple-100 text-purple-800 border border-purple-200', 
-                                    'desc' => 'สำหรับเคาน์เตอร์เฉพาะพนักงาน หรือโต๊ะออฟฟิศหลังร้าน',
-                                    'icon_type' => 'building',
-                                    'icon_bg' => 'bg-purple-100 text-purple-600 border border-purple-200 shadow-2xs',
+                                    'icon_bg' => 'bg-amber-100 text-amber-600 border border-amber-300 shadow-xs ring-2 ring-amber-400/20',
                                 ],
                                 [
                                     'value' => 0, 
                                     'title' => 'ปิดใช้งาน', 
-                                    'badge' => 'ไม่ล็อกอัตโนมัติ', 
+                                    'badge' => '🛡️ ไม่ล็อกอัตโนมัติ', 
                                     'badge_color' => 'bg-rose-100 text-rose-800 border border-rose-200', 
                                     'desc' => 'หน้าจอจะเปิดค้างตลอดเวลา ควรระวังเรื่องความปลอดภัยข้อมูล',
                                     'icon_type' => 'ban',
-                                    'icon_bg' => 'bg-rose-100 text-rose-600 border border-rose-200 shadow-2xs',
+                                    'icon_bg' => 'bg-rose-100 text-rose-600 border border-rose-300 shadow-xs ring-2 ring-rose-400/20',
                                 ],
                             ];
                         @endphp
 
-                        <!-- 3 การ์ดต่อแถว แนวตั้ง ตั้งในแถวเดียวกัน -->
+                        <!-- 3 การ์ดในแถวเดียวกัน แนวตั้งแบบเดียวกับส่วนที่ 2 -->
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 items-stretch" id="timeout-options-container">
                             @foreach($timeoutOptions as $opt)
                                 @php $isSelected = ($curTimeout === $opt['value']); @endphp
-                                <label class="timeout-card relative flex flex-col justify-between p-4 rounded-2xl border transition-all cursor-pointer h-full {{ $isSelected ? 'bg-amber-50/70 border-amber-400 ring-2 ring-amber-400/25 shadow-sm' : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/70 shadow-2xs' }}">
-                                    <div class="space-y-3">
+                                <label class="timeout-card relative flex flex-col justify-between p-4.5 rounded-2xl border transition-all cursor-pointer h-full {{ $isSelected ? 'bg-amber-50/70 border-amber-400 ring-2 ring-amber-400/25 shadow-sm' : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/70 shadow-2xs' }}">
+                                    <div class="space-y-3.5">
                                         <!-- Top row: ไอคอนเด่น + Radio Button -->
                                         <div class="flex items-center justify-between gap-2">
-                                            <span class="w-11 h-11 rounded-2xl {{ $opt['icon_bg'] }} flex items-center justify-center shrink-0">
+                                            <span class="w-12 h-12 rounded-2xl {{ $opt['icon_bg'] }} flex items-center justify-center shrink-0">
                                                 @if($opt['icon_type'] === 'flash')
-                                                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
-                                                @elseif($opt['icon_type'] === 'shield')
-                                                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
-                                                @elseif($opt['icon_type'] === 'clock')
-                                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                    <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
                                                 @elseif($opt['icon_type'] === 'star')
-                                                    <svg class="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" /></svg>
-                                                @elseif($opt['icon_type'] === 'coffee')
-                                                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8.25v-1.5m0 1.5c-1.355 0-2.697.056-4.024.166C6.845 8.51 6 9.473 6 10.608v2.513m6-4.871c1.355 0 2.697.056 4.024.166C17.155 8.51 18 9.473 18 10.608v2.513M15 8.25v-1.5m-6 1.5v-1.5m12 9.75-1.5.75a3.375 3.375 0 01-3 0L15 16.5m-6 0-1.5.75a3.375 3.375 0 01-3 0L3 16.5" /></svg>
-                                                @elseif($opt['icon_type'] === 'building')
-                                                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" /></svg>
+                                                    <svg class="w-6 h-6 text-amber-600" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clip-rule="evenodd" /></svg>
                                                 @else
-                                                    <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                                                    <svg class="w-6 h-6 text-rose-600" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
                                                 @endif
                                             </span>
                                             <input type="radio" 
@@ -1534,13 +1493,19 @@
                                                    class="w-4 h-4 text-amber-600 border-slate-300 focus:ring-amber-500 cursor-pointer">
                                         </div>
 
-                                        <!-- Middle: หัวข้อการ์ดเด่นกว่าเดิม + ป้ายกำกับ -->
-                                        <div>
-                                            <div class="flex items-center justify-between gap-1.5 flex-wrap">
-                                                <span class="text-sm sm:text-base font-black text-slate-900 tracking-tight">{{ $opt['title'] }}</span>
-                                                <span class="text-[9.5px] px-2 py-0.5 rounded-md {{ $opt['badge_color'] }} font-bold shadow-2xs">{{ $opt['badge'] }}</span>
+                                        <!-- Middle: ปรับหัวข้อการ์ดให้เด่นกว่าเดิม + ป้ายกำกับ + คำอธิบาย -->
+                                        <div class="space-y-1.5">
+                                            <h4 class="text-sm sm:text-base font-black text-slate-900 tracking-tight leading-snug">
+                                                {{ $opt['title'] }}
+                                            </h4>
+                                            <div>
+                                                <span class="text-[10px] px-2.5 py-0.5 rounded-md {{ $opt['badge_color'] }} font-bold shadow-2xs inline-block">
+                                                    {{ $opt['badge'] }}
+                                                </span>
                                             </div>
-                                            <p class="text-[11px] text-slate-500 leading-snug pt-1">{{ $opt['desc'] }}</p>
+                                            <p class="text-[11.5px] text-slate-500 leading-relaxed pt-1">
+                                                {{ $opt['desc'] }}
+                                            </p>
                                         </div>
                                     </div>
                                 </label>
