@@ -14,9 +14,9 @@ services:
       - key: APP_KEY
         value: base64:Nx0XPKfCVXXEgwe/qqnFiTogRERZdfPsF+QDUlW4fuM=
       - key: DB_CONNECTION
-        value: sqlite
-      - key: DB_DATABASE
-        value: /var/www/html/database/database.sqlite
+        value: pgsql
+      - key: DB_URL
+        value: postgresql://neondb_owner:npg_ydpEaT1XOq6s@ep-dawn-pond-azu0undh.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
       - key: SESSION_DRIVER
         value: cookie
       - key: CACHE_STORE
