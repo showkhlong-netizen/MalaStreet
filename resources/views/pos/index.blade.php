@@ -185,17 +185,35 @@
 
                                 <!-- Store Metrics Row -->
                                 <div class="flex items-center gap-2 text-[9.5px] sm:text-[10.5px] text-slate-700 mt-1 whitespace-nowrap overflow-hidden">
-                                    <button type="button" onclick="openStoreInfoModal('reviews')" class="inline-flex items-center gap-0.5 font-bold text-slate-900 hover:text-[#E50914] transition-colors cursor-pointer">
-                                        <span class="text-amber-500 text-xs">★</span> 4.9 <span class="font-normal text-slate-500">(500+ รีวิว)</span>
+                                    <button type="button" onclick="openStoreInfoModal('reviews')" class="inline-flex items-center gap-1 font-bold text-slate-900 hover:text-[#E50914] transition-colors cursor-pointer">
+                                        <!-- Single-color Gold Star -->
+                                        <svg class="w-3.5 h-3.5 text-[#F59E0B] fill-current shrink-0" viewBox="0 0 20 20">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.175 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/>
+                                        </svg>
+                                        <span>4.9</span>
+                                        <span class="font-normal text-slate-500">(500+ รีวิว)</span>
                                     </button>
                                     <span class="text-slate-300">|</span>
                                     <span class="inline-flex items-center gap-1 font-medium text-slate-800">
-                                        <span class="text-xs">🛵</span>
+                                        <!-- Single-color Red Vespa Scooter Icon -->
+                                        <svg class="w-4 h-3.5 text-[#E50914] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="5" cy="17.5" r="2.5" />
+                                            <circle cx="19" cy="17.5" r="2.5" />
+                                            <path d="M5 15c0-2.8 1.8-4.5 4.5-4.5h2.5c.9 0 1.6.4 2.1 1.2l2.6 4.8" />
+                                            <path d="M9.5 16.5h5" />
+                                            <path d="M6.5 10.5h5c.6 0 1 .4 1 1s-.4 1-1 1H7" />
+                                            <path d="M15 6h2.2c.8 0 1.5.5 1.7 1.3l.6 2.2" />
+                                            <circle cx="18.8" cy="7.2" r="1.2" fill="currentColor" />
+                                        </svg>
                                         <span>ส่งเร็ว ~15–20 นาที</span>
                                     </span>
                                     <span class="text-slate-300">|</span>
-                                    <button type="button" onclick="openStoreInfoModal('info')" class="inline-flex items-center gap-0.5 text-slate-600 hover:text-[#E50914] transition-colors cursor-pointer">
-                                        <span class="text-rose-600">📍</span>
+                                    <button type="button" onclick="openStoreInfoModal('info')" class="inline-flex items-center gap-1 text-slate-600 hover:text-[#E50914] transition-colors cursor-pointer">
+                                        <!-- Single-color Pushpin Icon Matching Image 2 Exactly -->
+                                        <svg class="w-3.5 h-3.5 text-[#E50914] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M6 3.5h12c.8 0 1.5.7 1.5 1.5v.5c0 .6-.3 1.1-.8 1.4-1.2.7-2 2-2 3.4v.7c0 1.5.9 2.9 2.3 3.6l1.2.6c.7.4 1.1 1.1 1.1 1.9 0 .8-.7 1.5-1.5 1.5H4.2c-.8 0-1.5-.7-1.5-1.5 0-.8.4-1.5 1.1-1.9l1.2-.6c1.4-.7 2.3-2.1 2.3-3.6v-.7c0-1.4-.8-2.7-2-3.4-.5-.3-.8-.8-.8-1.4V5c0-.8.7-1.5 1.5-1.5z" />
+                                            <line x1="12" y1="18" x2="12" y2="23" stroke-width="2.2" stroke-linecap="round" />
+                                        </svg>
                                         <span>ระยะทาง 2.3 กม.</span>
                                     </button>
                                 </div>

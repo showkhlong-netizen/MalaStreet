@@ -234,25 +234,35 @@
 
                     <!-- Store Metrics Row -->
                     <div class="flex items-center gap-1.5 text-[11px] text-[#374151] mt-1.5 whitespace-nowrap overflow-x-auto scrollbar-none">
-                        <button type="button" onclick="openReviewsModal()" class="inline-flex items-center gap-0.5 hover:text-[#D90012] cursor-pointer">
-                            <span class="text-[#FFB800] text-xs">★</span>
+                        <button type="button" onclick="openReviewsModal()" class="inline-flex items-center gap-1 hover:text-[#D90012] cursor-pointer" title="รีวิวลูกค้า">
+                            <!-- Single-color Gold Star -->
+                            <svg class="w-3.5 h-3.5 text-[#F59E0B] fill-current shrink-0" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.175 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/>
+                            </svg>
                             <span class="font-extrabold text-[#101114]">4.9</span>
                             <span class="text-[#6B7280]">(500+ รีวิว)</span>
                         </button>
                         <span class="text-slate-300">|</span>
                         <span class="inline-flex items-center gap-1 text-[#101114] font-medium">
-                            <svg class="w-3.5 h-3.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="18" cy="17" r="2.5" />
-                                <circle cx="6" cy="17" r="2.5" />
-                                <path d="M6 14h4l3-6h5l2 3.5" />
-                                <path d="M14 8h-3.5" />
-                                <path d="M9 17h5" />
+                            <!-- Single-color Red Vespa Scooter Icon -->
+                            <svg class="w-4 h-3.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="5" cy="17.5" r="2.5" />
+                                <circle cx="19" cy="17.5" r="2.5" />
+                                <path d="M5 15c0-2.8 1.8-4.5 4.5-4.5h2.5c.9 0 1.6.4 2.1 1.2l2.6 4.8" />
+                                <path d="M9.5 16.5h5" />
+                                <path d="M6.5 10.5h5c.6 0 1 .4 1 1s-.4 1-1 1H7" />
+                                <path d="M15 6h2.2c.8 0 1.5.5 1.7 1.3l.6 2.2" />
+                                <circle cx="18.8" cy="7.2" r="1.2" fill="currentColor" />
                             </svg>
                             <span>ส่งเร็ว ~15–20 นาที</span>
                         </span>
                         <span class="text-slate-300">|</span>
-                        <button type="button" onclick="openStoreInfoModal()" class="inline-flex items-center gap-0.5 text-[#101114] hover:text-[#D90012] cursor-pointer">
-                            <span class="text-[#D90012]">📍</span>
+                        <button type="button" onclick="openStoreInfoModal()" class="inline-flex items-center gap-1 text-[#101114] hover:text-[#D90012] cursor-pointer" title="ข้อมูลร้านและที่อยู่">
+                            <!-- Single-color Pushpin Icon Matching Image 2 Exactly -->
+                            <svg class="w-3.5 h-3.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6 3.5h12c.8 0 1.5.7 1.5 1.5v.5c0 .6-.3 1.1-.8 1.4-1.2.7-2 2-2 3.4v.7c0 1.5.9 2.9 2.3 3.6l1.2.6c.7.4 1.1 1.1 1.1 1.9 0 .8-.7 1.5-1.5 1.5H4.2c-.8 0-1.5-.7-1.5-1.5 0-.8.4-1.5 1.1-1.9l1.2-.6c1.4-.7 2.3-2.1 2.3-3.6v-.7c0-1.4-.8-2.7-2-3.4-.5-.3-.8-.8-.8-1.4V5c0-.8.7-1.5 1.5-1.5z" />
+                                <line x1="12" y1="18" x2="12" y2="23" stroke-width="2.2" stroke-linecap="round" />
+                            </svg>
                             <span>ระยะทาง 2.3 กม.</span>
                         </button>
                     </div>
@@ -931,9 +941,26 @@
                 <button type="button" onclick="closeStoreInfoModal()" class="text-slate-400 cursor-pointer">✕</button>
             </div>
             <div class="py-3 space-y-2.5 text-[#374151]">
-                <div><strong class="text-[#101114]">📍 ที่ตั้งร้าน:</strong> สาขาสุขุมวิท (ระยะทาง 2.3 กม.)</div>
+                <div class="flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 3.5h12c.8 0 1.5.7 1.5 1.5v.5c0 .6-.3 1.1-.8 1.4-1.2.7-2 2-2 3.4v.7c0 1.5.9 2.9 2.3 3.6l1.2.6c.7.4 1.1 1.1 1.1 1.9 0 .8-.7 1.5-1.5 1.5H4.2c-.8 0-1.5-.7-1.5-1.5 0-.8.4-1.5 1.1-1.9l1.2-.6c1.4-.7 2.3-2.1 2.3-3.6v-.7c0-1.4-.8-2.7-2-3.4-.5-.3-.8-.8-.8-1.4V5c0-.8.7-1.5 1.5-1.5z" />
+                        <line x1="12" y1="18" x2="12" y2="23" stroke-width="2.2" stroke-linecap="round" />
+                    </svg>
+                    <span><strong class="text-[#101114]">ที่ตั้งร้าน:</strong> สาขาสุขุมวิท (ระยะทาง 2.3 กม.)</span>
+                </div>
                 <div><strong class="text-[#101114]">🕒 เวลาทำการ:</strong> เปิดบริการทุกวัน 16:00 – 02:00 น.</div>
-                <div><strong class="text-[#101114]">🛵 บริการจัดส่ง:</strong> ส่งเร็วถึงที่ภายใน ~15–20 นาที</div>
+                <div class="flex items-center gap-1.5">
+                    <svg class="w-4 h-3.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="5" cy="17.5" r="2.5" />
+                        <circle cx="19" cy="17.5" r="2.5" />
+                        <path d="M5 15c0-2.8 1.8-4.5 4.5-4.5h2.5c.9 0 1.6.4 2.1 1.2l2.6 4.8" />
+                        <path d="M9.5 16.5h5" />
+                        <path d="M6.5 10.5h5c.6 0 1 .4 1 1s-.4 1-1 1H7" />
+                        <path d="M15 6h2.2c.8 0 1.5.5 1.7 1.3l.6 2.2" />
+                        <circle cx="18.8" cy="7.2" r="1.2" fill="currentColor" />
+                    </svg>
+                    <span><strong class="text-[#101114]">บริการจัดส่ง:</strong> ส่งเร็วถึงที่ภายใน ~15–20 นาที</span>
+                </div>
             </div>
             <button type="button" onclick="closeStoreInfoModal()" class="w-full mt-2 py-2 rounded-xl bg-slate-100 text-xs font-bold cursor-pointer">ปิด</button>
         </div>
