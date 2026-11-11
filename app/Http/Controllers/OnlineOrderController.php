@@ -43,6 +43,15 @@ class OnlineOrderController extends Controller
                 ->values();
         }
 
+        $defaultHeroImage = asset('assets/online/hero-banner-ref.png');
+        $heroBannerImage = Setting::get('online_hero_banner_image') ?: $defaultHeroImage;
+        $rawHeroPos = Setting::get('online_hero_banner_position', '{"x":50,"y":50,"scale":1}');
+        $heroBannerPosition = is_array($rawHeroPos) ? $rawHeroPos : (json_decode($rawHeroPos, true) ?: ['x' => 50, 'y' => 50, 'scale' => 1]);
+        $heroBannerHistory = json_decode(Setting::get('online_hero_banner_history', '[]'), true) ?: [];
+        if (empty($heroBannerHistory)) {
+            $heroBannerHistory = [$defaultHeroImage];
+        }
+
         // Lightweight live-sync endpoint: active category names/icons & recommended products (synced with the stock page)
         if ($request->boolean('categories_json')) {
             $emojiIcons = ['🥩', '🍗', '🍢', '🥬', '🍥', '🥤', '🍟'];
@@ -66,6 +75,11 @@ class OnlineOrderController extends Controller
                     'supports_grill' => (bool) $p->supports_grill,
                     'supports_soup' => (bool) $p->supports_soup,
                 ])->values(),
+                'hero_banner' => [
+                    'image' => $heroBannerImage,
+                    'position' => $heroBannerPosition,
+                    'history' => $heroBannerHistory,
+                ],
             ]);
         }
 
@@ -84,7 +98,7 @@ class OnlineOrderController extends Controller
             ->take(6)
             ->get();
 
-        return view('online.index', compact('categories', 'featuredProducts', 'recommendedProducts'));
+        return view('online.index', compact('categories', 'featuredProducts', 'recommendedProducts', 'heroBannerImage', 'heroBannerPosition', 'heroBannerHistory'));
     }
 
     /**
@@ -706,6 +720,164 @@ class OnlineOrderController extends Controller
             'status' => $order->status,
             'queue_number' => $order->queue_number,
             'updated_at' => $order->updated_at->toTimeString(),
+        ]);
+    }
+
+    /**
+     * Update active Online Hero Banner image and position.
+     */
+    public function updateHeroBanner(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'image_url' => 'required|string',
+            'pos_x' => 'nullable|numeric|min:0|max:100',
+            'pos_y' => 'nullable|numeric|min:0|max:100',
+            'scale' => 'nullable|numeric|min:0.5|max:3',
+        ]);
+
+        $imageUrl = trim($validated['image_url']);
+        $position = [
+            'x' => isset($validated['pos_x']) ? round((float) $validated['pos_x'], 1) : 50,
+            'y' => isset($validated['pos_y']) ? round((float) $validated['pos_y'], 1) : 50,
+            'scale' => isset($validated['scale']) ? round((float) $validated['scale'], 2) : 1.0,
+        ];
+
+        Setting::set('online_hero_banner_image', $imageUrl, 'storefront');
+        Setting::set('online_hero_banner_position', json_encode($position), 'storefront');
+
+        // Update history
+        $history = json_decode(Setting::get('online_hero_banner_history', '[]'), true) ?: [];
+        $defaultHeroImage = asset('assets/online/hero-banner-ref.png');
+        if (!in_array($defaultHeroImage, $history)) {
+            $history[] = $defaultHeroImage;
+        }
+        if (!in_array($imageUrl, $history)) {
+            array_unshift($history, $imageUrl);
+        } else {
+            $history = array_values(array_diff($history, [$imageUrl]));
+            array_unshift($history, $imageUrl);
+        }
+        $history = array_slice($history, 0, 24);
+        Setting::set('online_hero_banner_history', json_encode($history), 'storefront');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'บันทึกภาพปกหน้าร้านและตำแหน่งแสดงผลเรียบร้อยแล้ว 🔥',
+            'image_url' => $imageUrl,
+            'position' => $position,
+            'history' => $history,
+        ]);
+    }
+
+    /**
+     * Upload and canvas-compress a new Online Hero Banner image, converting to URL immediately.
+     */
+    public function uploadHeroBannerImage(Request $request): JsonResponse
+    {
+        $destDir = public_path('uploads/hero');
+        if (!file_exists($destDir)) {
+            mkdir($destDir, 0755, true);
+        }
+
+        $imageUrl = null;
+
+        // Process client canvas-compressed base64 or file upload
+        if ($request->filled('image_base64')) {
+            $base64 = $request->input('image_base64');
+            $ext = 'jpg';
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64, $matches)) {
+                $ext = strtolower($matches[1]);
+                if ($ext === 'jpeg') $ext = 'jpg';
+                $base64 = substr($base64, strpos($base64, ',') + 1);
+            }
+            $decoded = base64_decode($base64);
+            if ($decoded !== false && strlen($decoded) > 50) {
+                $filename = 'hero_' . time() . '_' . Str::random(6) . '.' . $ext;
+                file_put_contents($destDir . '/' . $filename, $decoded);
+                $imageUrl = asset('uploads/hero/' . $filename);
+            }
+        } elseif ($request->hasFile('image_file')) {
+            $file = $request->file('image_file');
+            if ($file->isValid()) {
+                $ext = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
+                if ($ext === 'jpeg') $ext = 'jpg';
+                $filename = 'hero_' . time() . '_' . Str::random(6) . '.' . $ext;
+                $file->move($destDir, $filename);
+                $imageUrl = asset('uploads/hero/' . $filename);
+            }
+        }
+
+        if (!$imageUrl) {
+            return response()->json([
+                'success' => false,
+                'message' => 'ไม่พบไฟล์ภาพหรือการประมวลผลล้มเหลว กรุณาลองใหม่อีกครั้ง',
+            ], 422);
+        }
+
+        // Add to history
+        $history = json_decode(Setting::get('online_hero_banner_history', '[]'), true) ?: [];
+        $defaultHeroImage = asset('assets/online/hero-banner-ref.png');
+        if (!in_array($defaultHeroImage, $history)) {
+            $history[] = $defaultHeroImage;
+        }
+        if (!in_array($imageUrl, $history)) {
+            array_unshift($history, $imageUrl);
+        }
+        $history = array_slice($history, 0, 24);
+        Setting::set('online_hero_banner_history', json_encode($history), 'storefront');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'อัปโหลดและแปลงภาพปกเป็น URL สำเร็จแล้ว',
+            'url' => $imageUrl,
+            'history' => $history,
+        ]);
+    }
+
+    /**
+     * Delete an image from hero banner history.
+     */
+    public function deleteHeroBannerHistory(Request $request): JsonResponse
+    {
+        $imageUrl = trim((string) $request->input('image_url'));
+        if (empty($imageUrl)) {
+            return response()->json(['success' => false, 'message' => 'กรุณาระบุ URL ภาพ'], 422);
+        }
+
+        $defaultHeroImage = asset('assets/online/hero-banner-ref.png');
+        if (str_contains($imageUrl, 'hero-banner-ref.png')) {
+            return response()->json(['success' => false, 'message' => 'ภาพปกเริ่มต้นของระบบไม่สามารถลบได้'], 422);
+        }
+
+        $history = json_decode(Setting::get('online_hero_banner_history', '[]'), true) ?: [];
+        $history = array_values(array_filter($history, fn ($url) => trim($url) !== $imageUrl));
+        if (empty($history)) {
+            $history = [$defaultHeroImage];
+        }
+        Setting::set('online_hero_banner_history', json_encode($history), 'storefront');
+
+        // If active image was deleted, fallback to default
+        $currentActive = Setting::get('online_hero_banner_image');
+        $newActive = $currentActive;
+        if ($currentActive === $imageUrl) {
+            $newActive = $history[0] ?? $defaultHeroImage;
+            Setting::set('online_hero_banner_image', $newActive, 'storefront');
+        }
+
+        // Try deleting file if stored in uploads/hero
+        if (str_contains($imageUrl, '/uploads/hero/')) {
+            $filename = basename(parse_url($imageUrl, PHP_URL_PATH));
+            $path = public_path('uploads/hero/' . $filename);
+            if (file_exists($path)) {
+                @unlink($path);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'ลบภาพปกออกจากประวัติเรียบร้อยแล้ว',
+            'active_image' => $newActive,
+            'history' => $history,
         ]);
     }
 }

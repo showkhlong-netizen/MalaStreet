@@ -112,10 +112,12 @@
         <!-- ===================================================================== -->
         <!-- 1. HERO RESTAURANT BANNER & FLOATING ACTION BUTTONS                   -->
         <!-- ===================================================================== -->
-        <section class="relative w-full overflow-hidden bg-[#400306]">
-            <img src="{{ asset('assets/online/hero-banner-ref.png') }}"
+        <section class="relative w-full overflow-hidden bg-[#400306] aspect-[592/195]" style="aspect-ratio: 592/195;">
+            <img id="online-hero-banner-img"
+                 src="{{ $heroBannerImage ?? asset('assets/online/hero-banner-ref.png') }}"
                  alt="หม่าล่า Mala Street เผ็ดชา ต้นตำรับ"
-                 class="w-full h-auto block object-cover select-none pointer-events-none">
+                 class="w-full h-full block object-cover select-none pointer-events-none transition-all duration-150"
+                 style="object-position: {{ $heroBannerPosition['x'] ?? 50 }}% {{ $heroBannerPosition['y'] ?? 50 }}%; transform: scale({{ $heroBannerPosition['scale'] ?? 1 }});">
 
             <!-- Stable Floating Action Buttons Over Banner -->
             <div class="absolute top-3.5 inset-x-3.5 flex items-center justify-between z-20 pointer-events-auto">
@@ -130,7 +132,7 @@
                     </svg>
                 </button>
 
-                <!-- Top-Right Group: Search, Favorite, Share -->
+                <!-- Top-Right Group: Search, Favorite, Share, Master Settings (Admin) -->
                 <div class="flex items-center gap-2">
                     <!-- Search Button -->
                     <button type="button"
@@ -165,6 +167,21 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                         </svg>
                     </button>
+
+                    <!-- Settings Button: 3 Vertical Dots (ขวาสุดถัดจากปุ่มแชร์ - แอดมินเท่านั้น) -->
+                    @if(auth()->check() || request()->has('admin'))
+                    <button type="button"
+                            onclick="openHeroBannerModal()"
+                            class="w-9 h-9 rounded-full bg-white/90 hover:bg-white active:scale-95 text-slate-800 shadow-md backdrop-blur-xs flex items-center justify-center transition-all cursor-pointer border border-white/60 shrink-0"
+                            title="ตั้งค่าภาพปกหน้าร้าน (แอดมิน)"
+                            aria-label="ตั้งค่าภาพปกหน้าร้าน">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="12" cy="5" r="1.8" />
+                            <circle cx="12" cy="12" r="1.8" />
+                            <circle cx="12" cy="19" r="1.8" />
+                        </svg>
+                    </button>
+                    @endif
                 </div>
             </div>
         </section>
@@ -948,6 +965,180 @@
         </div>
     </div>
 
+    <!-- ========================================================================= -->
+    <!-- HERO BANNER SETTINGS MODAL (MOBILE FIXED PREVIEW & ADJUSTMENTS)           -->
+    <!-- ========================================================================= -->
+    <div id="hero-banner-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/75 backdrop-blur-xs p-3 overflow-y-auto" onclick="if(event.target === this) closeHeroBannerModal()">
+        <div class="bg-white rounded-[26px] max-w-[420px] w-full shadow-2xl border border-slate-100 overflow-hidden flex flex-col my-auto max-h-[92vh]">
+            <!-- Modal Header -->
+            <div class="p-4 bg-gradient-to-r from-[#4A0408] via-[#8B0912] to-[#4A0408] text-white flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-base">
+                        🖼️
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold leading-tight">ตั้งค่าภาพปกหน้าร้าน</h3>
+                        <p class="text-[11px] text-rose-200/90 font-normal">ปรับตำแหน่ง ซูม และจัดการภาพปกสำหรับโมบาย</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeHeroBannerModal()" class="w-7 h-7 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white cursor-pointer transition">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-4 space-y-4 overflow-y-auto">
+                <!-- 1. Mobile Fixed Live Preview Frame -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <span class="w-1.5 h-3.5 rounded-full bg-[#E50914]"></span>
+                            <span>ตัวอย่างขนาดจริงบนโมบาย (Mobile 16:5.3)</span>
+                        </span>
+                        <span class="text-[10.5px] text-slate-500 font-medium">กดปุ่มปรับตำแหน่งสดได้ทันที</span>
+                    </div>
+                    
+                    <div class="relative w-full rounded-2xl overflow-hidden border-2 border-slate-300/80 shadow-md bg-slate-900 select-none" style="aspect-ratio: 592/195;">
+                        <img id="modal-hero-preview-img"
+                             src="{{ $heroBannerImage ?? asset('assets/online/hero-banner-ref.png') }}"
+                             alt="พรีวิวภาพปกโมบาย"
+                             class="w-full h-full object-cover transition-all duration-75 pointer-events-none"
+                             style="object-position: {{ $heroBannerPosition['x'] ?? 50 }}% {{ $heroBannerPosition['y'] ?? 50 }}%; transform: scale({{ $heroBannerPosition['scale'] ?? 1 }});">
+
+                        <!-- Overlay Mock Top Floating Buttons (แสดงตำแหน่งจริงของปุ่มบนมือถือ) -->
+                        <div class="absolute top-2 inset-x-2 flex items-center justify-between pointer-events-none opacity-85">
+                            <div class="w-6 h-6 rounded-full bg-white/90 shadow text-slate-800 text-[10px] flex items-center justify-center font-bold">‹</div>
+                            <div class="flex items-center gap-1">
+                                <div class="w-6 h-6 rounded-full bg-white/90 shadow text-[9px] flex items-center justify-center">🔍</div>
+                                <div class="w-6 h-6 rounded-full bg-white/90 shadow text-[9px] flex items-center justify-center text-rose-600">❤️</div>
+                                <div class="w-6 h-6 rounded-full bg-white/90 shadow text-[9px] flex items-center justify-center">🔗</div>
+                                <div class="w-6 h-6 rounded-full bg-white/90 shadow text-[9px] flex items-center justify-center font-bold">⋮</div>
+                            </div>
+                        </div>
+
+                        <!-- Guide Label -->
+                        <div class="absolute bottom-1.5 right-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-white text-[9.5px] font-medium pointer-events-none">
+                            📱 สัดส่วนโมบาย
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Controls: D-Pad & Sliders (ปรับซ้าย ขวา บน ล่าง และ ซูม) -->
+                <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-700">ปรับมุมมอง (ซ้าย ขวา บน ล่าง)</span>
+                        <button type="button" onclick="resetHeroBannerPosition()" class="text-[11px] font-bold text-rose-600 hover:text-rose-700 cursor-pointer">
+                            🔄 รีเซ็ตกึ่งกลาง
+                        </button>
+                    </div>
+
+                    <!-- D-Pad Buttons + Zoom -->
+                    <div class="flex items-center justify-around gap-2 pt-1">
+                        <!-- Directional Cross -->
+                        <div class="grid grid-cols-3 gap-1.5 w-32 shrink-0">
+                            <div></div>
+                            <button type="button" onclick="nudgeHeroPos(0, -5)" title="เลื่อนขึ้น" class="h-8 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-[#E50914] shadow-2xs font-bold text-xs flex items-center justify-center cursor-pointer active:scale-95">
+                                ⬆️
+                            </button>
+                            <div></div>
+
+                            <button type="button" onclick="nudgeHeroPos(-5, 0)" title="เลื่อนซ้าย" class="h-8 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-[#E50914] shadow-2xs font-bold text-xs flex items-center justify-center cursor-pointer active:scale-95">
+                                ⬅️
+                            </button>
+                            <button type="button" onclick="resetHeroBannerPosition()" title="กึ่งกลาง" class="h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:bg-rose-50 hover:text-[#E50914] shadow-2xs text-[10px] font-bold flex items-center justify-center cursor-pointer active:scale-95">
+                                🎯
+                            </button>
+                            <button type="button" onclick="nudgeHeroPos(5, 0)" title="เลื่อนขวา" class="h-8 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-[#E50914] shadow-2xs font-bold text-xs flex items-center justify-center cursor-pointer active:scale-95">
+                                ➡️
+                            </button>
+
+                            <div></div>
+                            <button type="button" onclick="nudgeHeroPos(0, 5)" title="เลื่อนลง" class="h-8 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-[#E50914] shadow-2xs font-bold text-xs flex items-center justify-center cursor-pointer active:scale-95">
+                                ⬇️
+                            </button>
+                            <div></div>
+                        </div>
+
+                        <!-- Zoom & Reset Quick Controls -->
+                        <div class="flex flex-col gap-1.5 flex-1 max-w-[170px]">
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" onclick="nudgeHeroZoom(-0.1)" title="ซูมออก" class="flex-1 py-1.5 px-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold shadow-2xs flex items-center justify-center gap-1 cursor-pointer active:scale-95">
+                                    <span>➖</span> <span>ซูมออก</span>
+                                </button>
+                                <button type="button" onclick="nudgeHeroZoom(0.1)" title="ซูมเข้า" class="flex-1 py-1.5 px-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold shadow-2xs flex items-center justify-center gap-1 cursor-pointer active:scale-95">
+                                    <span>➕</span> <span>ซูมเข้า</span>
+                                </button>
+                            </div>
+                            <button type="button" onclick="restoreDefaultHeroImage()" class="w-full py-1.5 px-2 rounded-xl bg-white border border-rose-200 text-rose-700 hover:bg-rose-50 text-[11px] font-bold shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition">
+                                <span>↩️</span> <span>ใช้ภาพปกเริ่มต้นของร้าน</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sliders with Live Values -->
+                    <div class="space-y-1.5 pt-1 text-[11px]">
+                        <div class="flex items-center justify-between text-slate-600 font-medium">
+                            <span>แนวนอน (ซ้าย - ขวา):</span>
+                            <span id="hero-val-x" class="font-bold text-slate-800">{{ $heroBannerPosition['x'] ?? 50 }}%</span>
+                        </div>
+                        <input type="range" id="hero-slider-x" min="0" max="100" value="{{ $heroBannerPosition['x'] ?? 50 }}" oninput="updateHeroSliderPos()" class="w-full accent-[#E50914] cursor-pointer">
+
+                        <div class="flex items-center justify-between text-slate-600 font-medium pt-1">
+                            <span>แนวตั้ง (บน - ล่าง):</span>
+                            <span id="hero-val-y" class="font-bold text-slate-800">{{ $heroBannerPosition['y'] ?? 50 }}%</span>
+                        </div>
+                        <input type="range" id="hero-slider-y" min="0" max="100" value="{{ $heroBannerPosition['y'] ?? 50 }}" oninput="updateHeroSliderPos()" class="w-full accent-[#E50914] cursor-pointer">
+
+                        <div class="flex items-center justify-between text-slate-600 font-medium pt-1">
+                            <span>อัตราขยาย (Zoom):</span>
+                            <span id="hero-val-scale" class="font-bold text-slate-800">{{ $heroBannerPosition['scale'] ?? 1 }}x</span>
+                        </div>
+                        <input type="range" id="hero-slider-scale" min="1" max="2.5" step="0.05" value="{{ $heroBannerPosition['scale'] ?? 1 }}" oninput="updateHeroSliderPos()" class="w-full accent-[#E50914] cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- 3. Upload New Image (Canvas Compress to URL) -->
+                <div>
+                    <label class="flex items-center justify-center gap-2 p-3 rounded-2xl border-2 border-dashed border-rose-300 hover:border-[#E50914] bg-rose-50/60 hover:bg-rose-50 text-[#E50914] text-xs font-bold cursor-pointer transition select-none">
+                        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        <span id="hero-upload-label">📷 เลือกรูปภาพใหม่จากเครื่อง (บีบอัดความละเอียดสูงอัตโนมัติ)</span>
+                        <input type="file" id="hero-banner-file-input" accept="image/*" class="hidden" onchange="handleHeroBannerUpload(event)">
+                    </label>
+                    <canvas id="hero-compress-canvas" class="hidden"></canvas>
+                </div>
+
+                <!-- 4. History of Past Images (ภาพปกเก่าๆ + กากบาทมุมขวาบนไว้ลบ) -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <span class="w-1.5 h-3.5 rounded-full bg-[#E50914]"></span>
+                            <span>ประวัติภาพปกเก่า & ภาพที่บันทึกไว้</span>
+                        </span>
+                        <span class="text-[10px] text-slate-400">กด ✕ บนรูปเพื่อลบ</span>
+                    </div>
+
+                    <div id="hero-history-grid" class="grid grid-cols-4 gap-2.5 max-h-40 overflow-y-auto p-1 pr-1.5">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2 shrink-0">
+                <button type="button" onclick="closeHeroBannerModal()" class="py-2.5 px-4 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold cursor-pointer transition">
+                    ยกเลิก
+                </button>
+                <button type="button" id="btn-save-hero-banner" onclick="saveHeroBannerSettings()" class="py-2.5 px-5 rounded-xl bg-[#E50914] hover:bg-[#C8102E] text-white text-xs font-bold shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition active:scale-95">
+                    <span>💾 บันทึกภาพปกนี้</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast-container" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 space-y-1.5 pointer-events-none w-full max-w-[380px] px-4"></div>
 
@@ -1600,12 +1791,29 @@
                     if (Array.isArray(data.recommended_products)) {
                         syncOnlineRecommendedProducts(data.recommended_products);
                     }
+                    if (data.hero_banner && data.hero_banner.image) {
+                        const bannerImg = document.getElementById('online-hero-banner-img');
+                        if (bannerImg) {
+                            bannerImg.src = data.hero_banner.image;
+                            const pos = data.hero_banner.position || { x: 50, y: 50, scale: 1 };
+                            bannerImg.style.objectPosition = `${pos.x}% ${pos.y}%`;
+                            bannerImg.style.transform = `scale(${pos.scale})`;
+                        }
+                    }
                 }
             } catch (e) {}
         }
 
         function applyOnlineCategorySyncMessage(data) {
             if (!data || !data.action) return;
+            if (data.action === 'hero_banner_updated' && data.hero) {
+                const bannerImg = document.getElementById('online-hero-banner-img');
+                if (bannerImg) {
+                    bannerImg.src = data.hero.image;
+                    bannerImg.style.objectPosition = `${data.hero.x}% ${data.hero.y}%`;
+                    bannerImg.style.transform = `scale(${data.hero.scale})`;
+                }
+            }
             const oldSlug = data.old_slug || data.slug;
             const pill = document.querySelector(`.online-cat-pill[data-cat="${oldSlug}"]`);
             if (data.action === 'category_deleted' || (data.action === 'category_updated' && data.is_active === false)) {
@@ -1625,6 +1833,297 @@
                 pill.style.display = '';
             }
             refreshOnlineCategoriesLive();
+        }
+
+        // =========================================================================
+        // HERO BANNER SETTINGS (MOBILE COVER BANNER ADMIN MODAL)
+        // =========================================================================
+        const defaultHeroImageUrl = '{{ asset("assets/online/hero-banner-ref.png") }}';
+        let currentHeroBanner = {
+            image: @json($heroBannerImage ?? asset('assets/online/hero-banner-ref.png')),
+            x: {{ $heroBannerPosition['x'] ?? 50 }},
+            y: {{ $heroBannerPosition['y'] ?? 50 }},
+            scale: {{ $heroBannerPosition['scale'] ?? 1 }},
+            history: @json($heroBannerHistory ?? [asset('assets/online/hero-banner-ref.png')])
+        };
+
+        function openHeroBannerModal() {
+            const modal = document.getElementById('hero-banner-modal');
+            if (!modal) return;
+            renderHeroPreview();
+            renderHeroHistoryGrid();
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeHeroBannerModal() {
+            const modal = document.getElementById('hero-banner-modal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function renderHeroPreview() {
+            const previewImg = document.getElementById('modal-hero-preview-img');
+            const sliderX = document.getElementById('hero-slider-x');
+            const sliderY = document.getElementById('hero-slider-y');
+            const sliderScale = document.getElementById('hero-slider-scale');
+            const valX = document.getElementById('hero-val-x');
+            const valY = document.getElementById('hero-val-y');
+            const valScale = document.getElementById('hero-val-scale');
+
+            if (previewImg) {
+                previewImg.src = currentHeroBanner.image;
+                previewImg.style.objectPosition = `${currentHeroBanner.x}% ${currentHeroBanner.y}%`;
+                previewImg.style.transform = `scale(${currentHeroBanner.scale})`;
+            }
+
+            if (sliderX) sliderX.value = currentHeroBanner.x;
+            if (sliderY) sliderY.value = currentHeroBanner.y;
+            if (sliderScale) sliderScale.value = currentHeroBanner.scale;
+
+            if (valX) valX.textContent = `${currentHeroBanner.x}%`;
+            if (valY) valY.textContent = `${currentHeroBanner.y}%`;
+            if (valScale) valScale.textContent = `${currentHeroBanner.scale}x`;
+        }
+
+        function renderHeroHistoryGrid() {
+            const grid = document.getElementById('hero-history-grid');
+            if (!grid) return;
+
+            const list = Array.isArray(currentHeroBanner.history) ? currentHeroBanner.history : [];
+            if (list.length === 0) {
+                grid.innerHTML = '<div class="col-span-4 text-center text-xs text-slate-400 py-3">ยังไม่มีประวัติภาพปก</div>';
+                return;
+            }
+
+            grid.innerHTML = list.map(url => {
+                const isSelected = (url === currentHeroBanner.image);
+                const isDefault = url.includes('hero-banner-ref.png');
+                const safeUrl = String(url).replace(/'/g, "\\'");
+
+                return `
+                    <div class="relative group rounded-xl overflow-visible aspect-[16/8] border-2 ${isSelected ? 'border-[#E50914] ring-2 ring-rose-200' : 'border-slate-200 hover:border-slate-300'} bg-slate-900 cursor-pointer transition select-none" onclick="selectHeroHistoryImage('${safeUrl}')">
+                        <img src="${url}" alt="ภาพปกประวัติ" class="w-full h-full object-cover rounded-[10px]">
+                        ${isSelected ? '<span class="absolute bottom-1 left-1 px-1 py-0.2 rounded bg-[#E50914] text-white text-[8px] font-bold">เลือกอยู่</span>' : ''}
+                        ${isDefault ? '' : `
+                            <button type="button"
+                                    onclick="deleteHeroHistoryImage(event, '${safeUrl}')"
+                                    class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer z-20 active:scale-90 transition-transform"
+                                    title="ลบภาพนี้">
+                                ✕
+                            </button>
+                        `}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectHeroHistoryImage(url) {
+            currentHeroBanner.image = url;
+            renderHeroPreview();
+            renderHeroHistoryGrid();
+        }
+
+        function nudgeHeroPos(dx, dy) {
+            currentHeroBanner.x = Math.max(0, Math.min(100, Math.round(currentHeroBanner.x + dx)));
+            currentHeroBanner.y = Math.max(0, Math.min(100, Math.round(currentHeroBanner.y + dy)));
+            renderHeroPreview();
+        }
+
+        function nudgeHeroZoom(dScale) {
+            currentHeroBanner.scale = Math.max(1, Math.min(2.5, +(currentHeroBanner.scale + dScale).toFixed(2)));
+            renderHeroPreview();
+        }
+
+        function updateHeroSliderPos() {
+            const sliderX = document.getElementById('hero-slider-x');
+            const sliderY = document.getElementById('hero-slider-y');
+            const sliderScale = document.getElementById('hero-slider-scale');
+
+            if (sliderX) currentHeroBanner.x = Number(sliderX.value);
+            if (sliderY) currentHeroBanner.y = Number(sliderY.value);
+            if (sliderScale) currentHeroBanner.scale = Number(sliderScale.value);
+
+            renderHeroPreview();
+        }
+
+        function resetHeroBannerPosition() {
+            currentHeroBanner.x = 50;
+            currentHeroBanner.y = 50;
+            currentHeroBanner.scale = 1;
+            renderHeroPreview();
+            showToast('รีเซ็ตตำแหน่งภาพปกเป็นกึ่งกลางแล้ว');
+        }
+
+        function restoreDefaultHeroImage() {
+            currentHeroBanner.image = defaultHeroImageUrl;
+            currentHeroBanner.x = 50;
+            currentHeroBanner.y = 50;
+            currentHeroBanner.scale = 1;
+            renderHeroPreview();
+            renderHeroHistoryGrid();
+            showToast('คืนค่าภาพปกเริ่มต้นของร้านแล้ว');
+        }
+
+        async function handleHeroBannerUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            const label = document.getElementById('hero-upload-label');
+            if (label) label.textContent = '⏳ กำลังประมวลผลและบีบอัดภาพความละเอียดสูง...';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = async function() {
+                    const canvas = document.getElementById('hero-compress-canvas');
+                    if (!canvas) return;
+                    const ctx = canvas.getContext('2d');
+
+                    // Maximum dimension 1920 to keep crystal clear sharpness while avoiding upload timeouts
+                    const maxDim = 1920;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // High quality JPEG (0.92)
+                    const base64Data = canvas.toDataURL('image/jpeg', 0.92);
+
+                    try {
+                        const res = await fetch('{{ route("online.hero_banner.upload") }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ image_base64: base64Data })
+                        });
+                        const data = await res.json();
+                        if (data && data.success && data.url) {
+                            currentHeroBanner.image = data.url;
+                            if (Array.isArray(data.history)) {
+                                currentHeroBanner.history = data.history;
+                            }
+                            renderHeroPreview();
+                            renderHeroHistoryGrid();
+                            showToast('อัปโหลดและแปลงภาพเป็น URL สำเร็จ 📷');
+                        } else {
+                            showToast(data.message || 'อัปโหลดล้มเหลว');
+                        }
+                    } catch (err) {
+                        showToast('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+                    } finally {
+                        if (label) label.textContent = '📷 เลือกรูปภาพใหม่จากเครื่อง (บีบอัดความละเอียดสูงอัตโนมัติ)';
+                        event.target.value = '';
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function deleteHeroHistoryImage(event, url) {
+            if (event) event.stopPropagation();
+            if (!confirm('ต้องการลบภาพปกนี้ออกจากประวัติหรือไม่?')) return;
+
+            try {
+                const res = await fetch('{{ route("online.hero_banner.delete_history") }}', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ image_url: url })
+                });
+                const data = await res.json();
+                if (data && data.success) {
+                    if (Array.isArray(data.history)) {
+                        currentHeroBanner.history = data.history;
+                    }
+                    if (data.active_image) {
+                        currentHeroBanner.image = data.active_image;
+                    }
+                    renderHeroPreview();
+                    renderHeroHistoryGrid();
+                    showToast('ลบภาพปกออกจากประวัติแล้ว');
+                } else {
+                    showToast(data.message || 'ไม่สามารถลบภาพได้');
+                }
+            } catch (err) {
+                showToast('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+            }
+        }
+
+        async function saveHeroBannerSettings() {
+            const btn = document.getElementById('btn-save-hero-banner');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span>⏳ กำลังบันทึก...</span>';
+            }
+
+            try {
+                const res = await fetch('{{ route("online.hero_banner.update") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        image_url: currentHeroBanner.image,
+                        pos_x: currentHeroBanner.x,
+                        pos_y: currentHeroBanner.y,
+                        scale: currentHeroBanner.scale
+                    })
+                });
+                const data = await res.json();
+                if (data && data.success) {
+                    // Update main page hero banner live
+                    const bannerImg = document.getElementById('online-hero-banner-img');
+                    if (bannerImg) {
+                        bannerImg.src = currentHeroBanner.image;
+                        bannerImg.style.objectPosition = `${currentHeroBanner.x}% ${currentHeroBanner.y}%`;
+                        bannerImg.style.transform = `scale(${currentHeroBanner.scale})`;
+                    }
+                    if (Array.isArray(data.history)) {
+                        currentHeroBanner.history = data.history;
+                    }
+                    closeHeroBannerModal();
+                    showToast('บันทึกภาพปกหน้าร้านเรียบร้อยแล้ว 🔥');
+
+                    if ('BroadcastChannel' in window) {
+                        try {
+                            const catChannel = new BroadcastChannel('mala_category_sync_channel');
+                            catChannel.postMessage({ action: 'hero_banner_updated', hero: currentHeroBanner });
+                        } catch (e) {}
+                    }
+                } else {
+                    showToast(data.message || 'บันทึกภาพปล้มเหลว');
+                }
+            } catch (err) {
+                showToast('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>💾 บันทึกภาพปกนี้</span>';
+                }
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {

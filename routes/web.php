@@ -60,6 +60,11 @@ Route::prefix('order')->name('online.')->group(function () {
     Route::post('/rewards/lookup', [OnlineOrderController::class, 'lookupRewards'])->name('rewards.lookup');
     Route::post('/rewards/review', [OnlineOrderController::class, 'submitReview'])->name('rewards.review');
     Route::post('/rewards/redeem', [OnlineOrderController::class, 'redeemReward'])->name('rewards.redeem');
+
+    // 2.3 ตั้งค่าภาพปกหน้าร้าน (Hero Banner Settings for Mobile)
+    Route::post('/hero-banner', [OnlineOrderController::class, 'updateHeroBanner'])->name('hero_banner.update');
+    Route::post('/hero-banner/upload', [OnlineOrderController::class, 'uploadHeroBannerImage'])->name('hero_banner.upload');
+    Route::delete('/hero-banner/history', [OnlineOrderController::class, 'deleteHeroBannerHistory'])->name('hero_banner.delete_history');
 });
 
 // 3. ระบบหลังบ้าน (Backend Admin & Financial / Inventory Systems) - ต้องเข้าสู่ระบบ (Requires Auth)
