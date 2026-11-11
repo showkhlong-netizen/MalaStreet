@@ -859,213 +859,59 @@ class EmployeeController extends Controller
     }
 
     /**
-     * Build attendance logs for real employees across sample period dates.
+     * Build attendance logs for real employees based on actual saved/scanned records.
+     * All mock/test entries from historical sample dates are removed.
      */
     protected function buildRealAttendanceLogs(array $realEmployees): array
     {
         $loggedActor = AuditLog::resolveCurrentUserActor();
         $sessionEmpId = session('employee_active_emp_id');
-
-        $dates = [
-            '2026-11-08' => [
-                'formatted' => '08/11/2569',
-                'is_today' => true,
-                'off' => false
-            ],
-            '2026-11-07' => [
-                'formatted' => '07/11/2569',
-                'is_today' => false,
-                'in' => '08:42 น.',
-                'out' => '17:35 น.',
-                'hours' => '8 ชม. 53 นาที',
-                'ot' => '1 ชม. 35 นาที',
-                'ot_start' => '17:30',
-                'ot_end' => '19:05',
-                'status' => 'present',
-                'label' => 'เช็คอินตรงเวลา',
-                'badge' => 'ปกติ 🟢',
-                'photo_in' => '/uploads/attendance/sample_check_in.jpg',
-                'photo_out' => '/uploads/attendance/sample_check_out.jpg',
-                'off' => false
-            ],
-            '2026-11-06' => [
-                'formatted' => '06/11/2569',
-                'is_today' => false,
-                'in' => '08:50 น.',
-                'out' => '17:30 น.',
-                'hours' => '8 ชม. 40 นาที',
-                'ot' => '45 นาที',
-                'ot_start' => '17:30',
-                'ot_end' => '18:15',
-                'status' => 'present',
-                'label' => 'เช็คอินตรงเวลา',
-                'badge' => 'ปกติ 🟢',
-                'photo_in' => '/uploads/attendance/sample_check_in.jpg',
-                'photo_out' => '/uploads/attendance/sample_check_out.jpg',
-                'off' => false
-            ],
-            '2026-11-05' => [
-                'formatted' => '05/11/2569',
-                'is_today' => false,
-                'in' => '08:45 น.',
-                'out' => '18:00 น.',
-                'hours' => '9 ชม. 15 นาที',
-                'ot' => '2 ชม. 00 นาที',
-                'ot_start' => '17:30',
-                'ot_end' => '19:30',
-                'status' => 'present',
-                'label' => 'เช็คอินตรงเวลา',
-                'badge' => 'ปกติ 🟢',
-                'photo_in' => '/uploads/attendance/sample_check_in.jpg',
-                'photo_out' => '/uploads/attendance/sample_check_out.jpg',
-                'off' => false
-            ],
-            '2026-11-04' => [
-                'formatted' => '04/11/2569',
-                'is_today' => false,
-                'in' => '08:55 น.',
-                'out' => '17:30 น.',
-                'hours' => '8 ชม. 35 นาที',
-                'ot' => '—',
-                'ot_start' => '—',
-                'ot_end' => '—',
-                'status' => 'present',
-                'label' => 'เช็คอินตรงเวลา',
-                'badge' => 'ปกติ 🟢',
-                'photo_in' => '/uploads/attendance/sample_check_in.jpg',
-                'photo_out' => '/uploads/attendance/sample_check_out.jpg',
-                'off' => false
-            ],
-            '2026-11-03' => [
-                'formatted' => '03/11/2569',
-                'is_today' => false,
-                'in' => '08:40 น.',
-                'out' => '17:30 น.',
-                'hours' => '8 ชม. 50 นาที',
-                'ot' => '1 ชม. 00 นาที',
-                'ot_start' => '17:30',
-                'ot_end' => '18:30',
-                'status' => 'present',
-                'label' => 'เช็คอินตรงเวลา',
-                'badge' => 'ปกติ 🟢',
-                'photo_in' => '/uploads/attendance/sample_check_in.jpg',
-                'photo_out' => '/uploads/attendance/sample_check_out.jpg',
-                'off' => false
-            ],
-            '2026-11-02' => [
-                'formatted' => '02/11/2569',
-                'is_today' => false,
-                'in' => '09:05 น.',
-                'out' => '17:35 น.',
-                'hours' => '8 ชม. 30 นาที',
-                'ot' => '—',
-                'ot_start' => '—',
-                'ot_end' => '—',
-                'status' => 'late',
-                'label' => 'มาสาย 5 นาที',
-                'badge' => 'สาย 🟡',
-                'photo_in' => '/uploads/attendance/sample_check_in.jpg',
-                'photo_out' => '/uploads/attendance/sample_check_out.jpg',
-                'off' => false
-            ],
-            '2026-11-01' => [
-                'formatted' => '01/11/2569',
-                'is_today' => false,
-                'in' => null,
-                'out' => null,
-                'hours' => null,
-                'ot' => '—',
-                'ot_start' => '—',
-                'ot_end' => '—',
-                'status' => 'offday',
-                'label' => 'วันหยุดประจำสัปดาห์ ☕',
-                'badge' => 'วันหยุด',
-                'photo_in' => null,
-                'photo_out' => null,
-                'off' => true
-            ],
-        ];
+        $todayDateKey = '2026-11-08';
+        $todayDateFormatted = '08/11/2569';
 
         $logs = [];
-        foreach ($dates as $dateKey => $cfg) {
-            $isToday = !empty($cfg['is_today']);
+        $processedRecords = []; // track [empId_dateKey] to prevent duplicates
 
-            foreach ($realEmployees as $idx => $emp) {
-                $empId = $emp['id'] ?? (string)$idx;
-                $roleLabel = $emp['role_label'] ?? $emp['role'] ?? 'พนักงานร้าน (Employee)';
-                $isAdmin = (str_contains(strtolower($roleLabel), 'admin') || str_contains(strtolower($emp['role'] ?? ''), 'admin'));
+        // 1. Load actual saved attendance records from Setting
+        try {
+            $savedSettings = Setting::where('key', 'like', 'attendance_today_%')->get();
+            foreach ($savedSettings as $settingRow) {
+                if (preg_match('/^attendance_today_(.+)_(\d{8})$/', $settingRow->key, $matches)) {
+                    $recEmpId = $matches[1];
+                    $rawDate = $matches[2]; // e.g. 20261108
+                    $dateKey = substr($rawDate, 0, 4) . '-' . substr($rawDate, 4, 2) . '-' . substr($rawDate, 6, 2);
+                    $yearBuddhist = (int)substr($rawDate, 0, 4) + 543;
+                    $dateFormatted = substr($rawDate, 6, 2) . '/' . substr($rawDate, 4, 2) . '/' . $yearBuddhist;
 
-                if ($isToday) {
-                    // Check if this specific employee has attendance recorded
-                    $savedToday = json_decode(Setting::get('attendance_today_' . $empId . '_' . date('Ymd'), 'null'), true);
-                    if (!$savedToday) {
-                        $savedToday = json_decode(Setting::get('attendance_today_' . $empId . '_20261108', 'null'), true);
+                    $data = json_decode($settingRow->value, true);
+                    if (empty($data) || empty($data['check_in']) || $data['check_in'] === '—') {
+                        continue;
                     }
 
-                    // Check if this employee matches the active actor who scanned
-                    $isSessionActor = false;
-                    if (!empty($sessionEmpId) && $sessionEmpId === $empId) {
-                        $isSessionActor = true;
-                    } elseif (!empty($loggedActor['id']) && $empId === $loggedActor['id']) {
-                        $isSessionActor = true;
-                    } elseif (!empty($loggedActor['email']) && strtolower($emp['email'] ?? '') === strtolower($loggedActor['email'])) {
-                        $isSessionActor = true;
-                    } elseif (!empty($loggedActor['name']) && strtolower($emp['name'] ?? '') === strtolower($loggedActor['name'])) {
-                        $isSessionActor = true;
+                    $recordKey = "{$recEmpId}_{$dateKey}";
+                    if (isset($processedRecords[$recordKey])) {
+                        continue;
                     }
+                    $processedRecords[$recordKey] = true;
 
-                    $checkInTime = null;
-                    $checkOutTime = null;
-                    $workHours = null;
-                    $photoIn = null;
-                    $photoOut = null;
-                    $statusCode = 'pending';
-                    $statusLabel = 'ยังไม่เข้างาน';
-                    $statusBadge = 'ยังไม่เข้างาน ⚪';
-                    $distIn = null;
-                    $distOut = null;
-                    $locIn = null;
-                    $locOut = null;
+                    // Match with employee from access list
+                    $emp = collect($realEmployees)->firstWhere('id', $recEmpId);
+                    $empName = $emp['name'] ?? $emp['full_name'] ?? $data['employee_name'] ?? 'พนักงาน';
+                    $roleLabel = $emp['role_label'] ?? $emp['role'] ?? 'พนักงานร้าน (Employee)';
+                    $branch = $emp['branch'] ?? 'ทุกสาขา';
+                    $isAdmin = (str_contains(strtolower($roleLabel), 'admin') || str_contains(strtolower($emp['role'] ?? ''), 'admin'));
 
-                    if ($savedToday && (!empty($savedToday['check_in']) || !empty($savedToday['status']))) {
-                        $checkInTime = $savedToday['check_in'] ?? '—';
-                        $checkOutTime = $savedToday['check_out'] ?? '—';
-                        $st = $savedToday['status'] ?? 'เข้างานแล้ว';
-                        $workHours = $savedToday['work_hours'] ?? $this->calculateWorkHours($checkInTime, $checkOutTime, $st);
-                        $photoIn = $this->normalizeAvatarUrl($savedToday['check_in_photo'] ?? null);
-                        $photoOut = $this->normalizeAvatarUrl($savedToday['check_out_photo'] ?? null);
-                        $statusCode = ($st === 'ออกงานแล้ว' || $st === 'เข้างานแล้ว') ? 'present' : 'pending';
-                        $statusLabel = ($st === 'ออกงานแล้ว') ? 'ออกงานแล้ว' : ($st === 'เข้างานแล้ว' ? 'เช็คอินตรงเวลา' : 'ยังไม่เข้างาน');
-                        $statusBadge = ($st === 'ออกงานแล้ว') ? 'ออกงานแล้ว 🟢' : ($st === 'เข้างานแล้ว' ? 'ปกติ 🟢' : 'ยังไม่เข้างาน ⚪');
-                        $distIn = '0ม.';
-                        $distOut = ($checkOutTime !== '—') ? '0ม.' : null;
-                        $locIn = $savedToday['check_in_location'] ?? 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)';
-                        $locOut = $savedToday['check_out_location'] ?? 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)';
-                    } elseif ($isSessionActor && session()->has('employee_check_in')) {
-                        $checkInTime = session('employee_check_in') ?: '—';
-                        $checkOutTime = session('employee_check_out') ?: '—';
-                        $st = session('employee_status', 'ออกงานแล้ว');
-                        $workHours = session('employee_work_hours');
-                        if (empty($workHours) || $workHours === '8 ชม. 34 นาที') {
-                            $workHours = $this->calculateWorkHours($checkInTime, $checkOutTime, $st);
-                        }
-                        $photoIn = $this->normalizeAvatarUrl(session('employee_check_in_photo'));
-                        $photoOut = $this->normalizeAvatarUrl(session('employee_check_out_photo'));
-                        $statusCode = ($st === 'ออกงานแล้ว' || $st === 'เข้างานแล้ว') ? 'present' : 'pending';
-                        $statusLabel = ($st === 'ออกงานแล้ว') ? 'ออกงานแล้ว' : ($st === 'เข้างานแล้ว' ? 'เช็คอินตรงเวลา' : 'ยังไม่เข้างาน');
-                        $statusBadge = ($st === 'ออกงานแล้ว') ? 'ออกงานแล้ว 🟢' : ($st === 'เข้างานแล้ว' ? 'ปกติ 🟢' : 'ยังไม่เข้างาน ⚪');
-                        $distIn = '0ม.';
-                        $distOut = ($checkOutTime !== '—') ? '0ม.' : null;
-                        $locIn = session('employee_check_in_location', 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)');
-                        $locOut = session('employee_check_out_location', 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)');
-                    }
+                    $checkIn = $data['check_in'];
+                    $checkOut = $data['check_out'] ?? '—';
+                    $st = $data['status'] ?? 'เข้างานแล้ว';
+                    $hours = $data['work_hours'] ?? $this->calculateWorkHours($checkIn, $checkOut, $st);
 
                     $logs[] = [
-                        'id' => 'att_' . str_replace('-', '', $dateKey) . '_' . $empId,
-                        'employee_id' => $empId,
+                        'id' => 'att_' . str_replace('-', '', $dateKey) . '_' . $recEmpId,
+                        'employee_id' => $recEmpId,
                         'date' => $dateKey,
-                        'date_formatted' => $cfg['formatted'],
-                        'name' => $emp['name'] ?? 'พนักงาน',
+                        'date_formatted' => $dateFormatted,
+                        'name' => $empName,
                         'roles' => [
                             [
                                 'label' => $roleLabel,
@@ -1073,60 +919,133 @@ class EmployeeController extends Controller
                                 'icon' => $isAdmin ? '🛡️' : '💼'
                             ]
                         ],
-                        'branch' => $emp['branch'] ?? 'ทุกสาขา',
+                        'branch' => $branch,
                         'is_offday' => false,
-                        'status_label' => $statusLabel,
-                        'status_badge' => $statusBadge,
-                        'check_in_time' => $checkInTime ?: '—',
-                        'check_in_photo' => $photoIn,
-                        'check_in_distance' => $distIn,
-                        'check_in_location' => $locIn,
-                        'check_out_time' => $checkOutTime ?: '—',
-                        'check_out_photo' => $photoOut,
-                        'check_out_distance' => $distOut,
-                        'check_out_location' => $locOut,
-                        'total_hours' => $workHours ?: '—',
-                        'status' => $statusCode,
+                        'status_label' => ($st === 'ออกงานแล้ว') ? 'ออกงานแล้ว' : ($st === 'เข้างานแล้ว' ? 'เช็คอินตรงเวลา' : 'ยังไม่เข้างาน'),
+                        'status_badge' => ($st === 'ออกงานแล้ว') ? 'ออกงานแล้ว 🟢' : ($st === 'เข้างานแล้ว' ? 'ปกติ 🟢' : 'ยังไม่เข้างาน ⚪'),
+                        'check_in_time' => $checkIn,
+                        'check_in_photo' => $this->normalizeAvatarUrl($data['check_in_photo'] ?? null),
+                        'check_in_distance' => '0ม.',
+                        'check_in_location' => $data['check_in_location'] ?? 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)',
+                        'check_out_time' => $checkOut,
+                        'check_out_photo' => $this->normalizeAvatarUrl($data['check_out_photo'] ?? null),
+                        'check_out_distance' => ($checkOut !== '—') ? '0ม.' : null,
+                        'check_out_location' => $data['check_out_location'] ?? 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)',
+                        'total_hours' => $hours,
+                        'status' => ($st === 'ออกงานแล้ว' || $st === 'เข้างานแล้ว') ? 'present' : 'pending',
                         'ot_start' => '—',
                         'ot_end' => '—',
                         'ot_hours' => '—',
                     ];
-                } else {
-                    // Historical Sample Dates
-                    $logs[] = [
-                        'id' => 'att_' . str_replace('-', '', $dateKey) . '_' . $empId,
-                        'employee_id' => $empId,
-                        'date' => $dateKey,
-                        'date_formatted' => $cfg['formatted'],
-                        'name' => $emp['name'] ?? 'พนักงาน',
-                        'roles' => [
-                            [
-                                'label' => $roleLabel,
-                                'color' => $isAdmin ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-blue-50 text-blue-700 border-blue-200',
-                                'icon' => $isAdmin ? '🛡️' : '💼'
-                            ]
-                        ],
-                        'branch' => $emp['branch'] ?? 'ทุกสาขา',
-                        'is_offday' => $cfg['off'],
-                        'status_label' => $cfg['label'],
-                        'status_badge' => $cfg['badge'] ?? 'ปกติ 🟢',
-                        'check_in_time' => $cfg['in'] ?: '—',
-                        'check_in_photo' => $cfg['off'] ? null : $this->normalizeAvatarUrl($cfg['photo_in']),
-                        'check_in_distance' => $cfg['off'] ? null : '0ม.',
-                        'check_in_location' => $cfg['off'] ? null : 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)',
-                        'check_out_time' => $cfg['out'] ?: '—',
-                        'check_out_photo' => $cfg['off'] ? null : $this->normalizeAvatarUrl($cfg['photo_out']),
-                        'check_out_distance' => $cfg['off'] ? null : '0ม.',
-                        'check_out_location' => $cfg['off'] ? null : 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)',
-                        'total_hours' => $cfg['hours'] ?: '—',
-                        'status' => $cfg['status'],
-                        'ot_start' => $cfg['ot_start'],
-                        'ot_end' => $cfg['ot_end'],
-                        'ot_hours' => $cfg['ot'],
-                    ];
                 }
             }
+        } catch (\Throwable $e) {
+            // gracefully fallback if table query issues
         }
+
+        // 2. Build TODAY's records (date: 2026-11-08) for all registered employees
+        foreach ($realEmployees as $idx => $emp) {
+            $empId = $emp['id'] ?? (string)$idx;
+            $recordKey = "{$empId}_{$todayDateKey}";
+
+            // If already processed from Setting, do not duplicate
+            if (isset($processedRecords[$recordKey])) {
+                continue;
+            }
+
+            $roleLabel = $emp['role_label'] ?? $emp['role'] ?? 'พนักงานร้าน (Employee)';
+            $isAdmin = (str_contains(strtolower($roleLabel), 'admin') || str_contains(strtolower($emp['role'] ?? ''), 'admin'));
+
+            // Check if this employee is the session actor who scanned
+            $isSessionActor = false;
+            if (!empty($sessionEmpId) && $sessionEmpId === $empId) {
+                $isSessionActor = true;
+            } elseif (!empty($loggedActor['id']) && $empId === $loggedActor['id']) {
+                $isSessionActor = true;
+            } elseif (!empty($loggedActor['email']) && strtolower($emp['email'] ?? '') === strtolower($loggedActor['email'])) {
+                $isSessionActor = true;
+            } elseif (!empty($loggedActor['name']) && strtolower($emp['name'] ?? '') === strtolower($loggedActor['name'])) {
+                $isSessionActor = true;
+            }
+
+            if ($isSessionActor && session()->has('employee_check_in') && session('employee_check_in') !== '—') {
+                $checkIn = session('employee_check_in');
+                $checkOut = session('employee_check_out') ?: '—';
+                $st = session('employee_status', 'ออกงานแล้ว');
+                $hours = session('employee_work_hours');
+                if (empty($hours) || $hours === '8 ชม. 34 นาที') {
+                    $hours = $this->calculateWorkHours($checkIn, $checkOut, $st);
+                }
+                $photoIn = $this->normalizeAvatarUrl(session('employee_check_in_photo'));
+                $photoOut = $this->normalizeAvatarUrl(session('employee_check_out_photo'));
+
+                $logs[] = [
+                    'id' => 'att_' . str_replace('-', '', $todayDateKey) . '_' . $empId,
+                    'employee_id' => $empId,
+                    'date' => $todayDateKey,
+                    'date_formatted' => $todayDateFormatted,
+                    'name' => $emp['name'] ?? 'พนักงาน',
+                    'roles' => [
+                        [
+                            'label' => $roleLabel,
+                            'color' => $isAdmin ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-blue-50 text-blue-700 border-blue-200',
+                            'icon' => $isAdmin ? '🛡️' : '💼'
+                        ]
+                    ],
+                    'branch' => $emp['branch'] ?? 'ทุกสาขา',
+                    'is_offday' => false,
+                    'status_label' => ($st === 'ออกงานแล้ว') ? 'ออกงานแล้ว' : 'เช็คอินตรงเวลา',
+                    'status_badge' => ($st === 'ออกงานแล้ว') ? 'ออกงานแล้ว 🟢' : 'ปกติ 🟢',
+                    'check_in_time' => $checkIn,
+                    'check_in_photo' => $photoIn,
+                    'check_in_distance' => '0ม.',
+                    'check_in_location' => session('employee_check_in_location', 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)'),
+                    'check_out_time' => $checkOut,
+                    'check_out_photo' => $photoOut,
+                    'check_out_distance' => ($checkOut !== '—') ? '0ม.' : null,
+                    'check_out_location' => session('employee_check_out_location', 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)'),
+                    'total_hours' => $hours ?: '—',
+                    'status' => 'present',
+                    'ot_start' => '—',
+                    'ot_end' => '—',
+                    'ot_hours' => '—',
+                ];
+            } else {
+                // Employee has NOT scanned today -> display pending with NO PHOTO and NO FAKE TIMES
+                $logs[] = [
+                    'id' => 'att_' . str_replace('-', '', $todayDateKey) . '_' . $empId,
+                    'employee_id' => $empId,
+                    'date' => $todayDateKey,
+                    'date_formatted' => $todayDateFormatted,
+                    'name' => $emp['name'] ?? 'พนักงาน',
+                    'roles' => [
+                        [
+                            'label' => $roleLabel,
+                            'color' => $isAdmin ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-blue-50 text-blue-700 border-blue-200',
+                            'icon' => $isAdmin ? '🛡️' : '💼'
+                        ]
+                    ],
+                    'branch' => $emp['branch'] ?? 'ทุกสาขา',
+                    'is_offday' => false,
+                    'status_label' => 'ยังไม่เข้างาน',
+                    'status_badge' => 'ยังไม่เข้างาน ⚪',
+                    'check_in_time' => '—',
+                    'check_in_photo' => null,
+                    'check_in_distance' => null,
+                    'check_in_location' => null,
+                    'check_out_time' => '—',
+                    'check_out_photo' => null,
+                    'check_out_distance' => null,
+                    'check_out_location' => null,
+                    'total_hours' => '—',
+                    'status' => 'pending',
+                    'ot_start' => '—',
+                    'ot_end' => '—',
+                    'ot_hours' => '—',
+                ];
+            }
+        }
+
         return $logs;
     }
 

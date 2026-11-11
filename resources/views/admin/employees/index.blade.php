@@ -1018,7 +1018,7 @@
                                     onclick="toggleOverviewDatePopover(event)"
                                     class="h-8 px-3 rounded-xl bg-white hover:bg-slate-50 active:scale-95 border-2 border-slate-900 text-slate-900 flex items-center gap-1.5 text-xs font-bold cursor-pointer transition-all shadow-2xs">
                                 <span>📅</span>
-                                <span id="label-overview-active-filter">3 วันล่าสุด</span>
+                                <span id="label-overview-active-filter">วันนี้</span>
                                 <svg id="chevron-overview-popover" class="w-3.5 h-3.5 text-slate-600 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                                 </svg>
@@ -1034,8 +1034,8 @@
 
                         <!-- Quick Presets Pills (Matches Image 1) -->
                         <div class="inline-flex flex-wrap items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/90 shadow-2xs">
-                            <button type="button" onclick="setOverviewPresetFilter('today')" id="pill-ov-today" class="overview-pill px-3 py-1 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer">วันนี้</button>
-                            <button type="button" onclick="setOverviewPresetFilter('3days')" id="pill-ov-3days" class="overview-pill px-3 py-1 rounded-xl text-xs font-bold bg-[#0F172A] text-white shadow-xs transition-all cursor-pointer">3 วันล่าสุด</button>
+                            <button type="button" onclick="setOverviewPresetFilter('today')" id="pill-ov-today" class="overview-pill px-3 py-1 rounded-xl text-xs font-bold bg-[#0F172A] text-white shadow-xs transition-all cursor-pointer">วันนี้</button>
+                            <button type="button" onclick="setOverviewPresetFilter('3days')" id="pill-ov-3days" class="overview-pill px-3 py-1 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer">3 วันล่าสุด</button>
                             <button type="button" onclick="setOverviewPresetFilter('7days')" id="pill-ov-7days" class="overview-pill px-3 py-1 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer">7 วันล่าสุด</button>
                             <button type="button" onclick="setOverviewPresetFilter('15days')" id="pill-ov-15days" class="overview-pill px-3 py-1 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer">15 วันล่าสุด</button>
                             <button type="button" onclick="setOverviewPresetFilter('30days')" id="pill-ov-30days" class="overview-pill px-3 py-1 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer">30 วันล่าสุด</button>
@@ -2812,11 +2812,11 @@
 
     // 10. Multi-Day Dataset & Interactive Calendar Popover for Overview (Image 1)
     const allAttendanceLogs = @json($allAttendanceLogs ?? []);
-    let currentOverviewPreset = '3days';
+    let currentOverviewPreset = 'today';
     let overviewCalMode = 'daily'; // 'daily' or 'range'
     let overviewCalYear = 2026;
     let overviewCalMonth = 10; // 0-indexed: 10 = November
-    let overviewSelectedDate = '2026-11-07'; // matches Image 1 where 7 is selected
+    let overviewSelectedDate = '2026-11-08';
     let overviewRangeStart = null;
     let overviewRangeEnd = null;
 
@@ -2990,7 +2990,7 @@
 
     function setOverviewPresetFilter(preset) {
         currentOverviewPreset = preset;
-        let label = '3 วันล่าสุด';
+        let label = 'วันนี้';
         let filtered = [];
 
         // Reset pills UI
