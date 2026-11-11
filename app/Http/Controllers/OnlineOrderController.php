@@ -45,6 +45,15 @@ class OnlineOrderController extends Controller
 
         $defaultHeroImage = asset('assets/online/hero-banner-ref.png');
         $heroBannerImage = Setting::get('online_hero_banner_image') ?: $defaultHeroImage;
+        if (str_contains($heroBannerImage, '/uploads/hero/')) {
+            $parsedPath = parse_url($heroBannerImage, PHP_URL_PATH);
+            if ($parsedPath && !file_exists(public_path(ltrim($parsedPath, '/')))) {
+                $savedBase64 = Setting::get('online_hero_banner_base64');
+                if ($savedBase64) {
+                    $heroBannerImage = $savedBase64;
+                }
+            }
+        }
         $rawHeroPos = Setting::get('online_hero_banner_position', '{"x":50,"y":50,"scale":1}');
         $heroBannerPosition = is_array($rawHeroPos) ? $rawHeroPos : (json_decode($rawHeroPos, true) ?: ['x' => 50, 'y' => 50, 'scale' => 1]);
         $heroBannerHistory = json_decode(Setting::get('online_hero_banner_history', '[]'), true) ?: [];
@@ -54,6 +63,15 @@ class OnlineOrderController extends Controller
 
         $defaultLogoImage = asset('assets/brand/logo-card.png');
         $profileLogoImage = Setting::get('online_profile_logo_image') ?: $defaultLogoImage;
+        if (str_contains($profileLogoImage, '/uploads/logo/')) {
+            $parsedPath = parse_url($profileLogoImage, PHP_URL_PATH);
+            if ($parsedPath && !file_exists(public_path(ltrim($parsedPath, '/')))) {
+                $savedBase64 = Setting::get('online_profile_logo_base64');
+                if ($savedBase64) {
+                    $profileLogoImage = $savedBase64;
+                }
+            }
+        }
         $rawLogoPos = Setting::get('online_profile_logo_position', '{"x":50,"y":50,"scale":1}');
         $profileLogoPosition = is_array($rawLogoPos) ? $rawLogoPos : (json_decode($rawLogoPos, true) ?: ['x' => 50, 'y' => 50, 'scale' => 1]);
         $profileLogoHistory = json_decode(Setting::get('online_profile_logo_history', '[]'), true) ?: [];
@@ -831,6 +849,12 @@ class OnlineOrderController extends Controller
             ], 422);
         }
 
+        // Persist immediately as active and save base64 backup
+        Setting::set('online_hero_banner_image', $imageUrl, 'storefront');
+        if ($request->filled('image_base64')) {
+            Setting::set('online_hero_banner_base64', $request->input('image_base64'), 'storefront');
+        }
+
         // Add to history
         $history = json_decode(Setting::get('online_hero_banner_history', '[]'), true) ?: [];
         $defaultHeroImage = asset('assets/online/hero-banner-ref.png');
@@ -986,6 +1010,12 @@ class OnlineOrderController extends Controller
                 'success' => false,
                 'message' => 'ไม่พบไฟล์ภาพหรือการประมวลผลล้มเหลว กรุณาลองใหม่อีกครั้ง',
             ], 422);
+        }
+
+        // Persist immediately as active and save base64 backup
+        Setting::set('online_profile_logo_image', $imageUrl, 'storefront');
+        if ($request->filled('image_base64')) {
+            Setting::set('online_profile_logo_base64', $request->input('image_base64'), 'storefront');
         }
 
         $history = json_decode(Setting::get('online_profile_logo_history', '[]'), true) ?: [];

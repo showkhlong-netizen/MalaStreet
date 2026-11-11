@@ -112,15 +112,18 @@
         <!-- ===================================================================== -->
         <!-- 1. HERO RESTAURANT BANNER & FLOATING ACTION BUTTONS                   -->
         <!-- ===================================================================== -->
-        <section class="relative w-full overflow-hidden bg-[#400306] aspect-[592/195]" style="aspect-ratio: 592/195;">
-            <img id="online-hero-banner-img"
-                 src="{{ $heroBannerImage ?? asset('assets/online/hero-banner-ref.png') }}"
-                 alt="หม่าล่า Mala Street เผ็ดชา ต้นตำรับ"
-                 class="w-full h-full block object-cover select-none pointer-events-none transition-all duration-150"
-                 style="object-position: {{ $heroBannerPosition['x'] ?? 50 }}% {{ $heroBannerPosition['y'] ?? 50 }}%; transform: scale({{ $heroBannerPosition['scale'] ?? 1 }});">
+        <section class="relative w-full bg-[#400306] aspect-[592/195] z-30" style="aspect-ratio: 592/195;">
+            <!-- Hero Image Wrapper (Clips the banner image cleanly) -->
+            <div class="absolute inset-0 overflow-hidden">
+                <img id="online-hero-banner-img"
+                     src="{{ $heroBannerImage ?? asset('assets/online/hero-banner-ref.png') }}"
+                     alt="หม่าล่า Mala Street เผ็ดชา ต้นตำรับ"
+                     class="w-full h-full block object-cover select-none pointer-events-none transition-all duration-150"
+                     style="object-position: {{ $heroBannerPosition['x'] ?? 50 }}% {{ $heroBannerPosition['y'] ?? 50 }}%; transform: scale({{ $heroBannerPosition['scale'] ?? 1 }});">
+            </div>
 
-            <!-- Stable Floating Action Buttons Over Banner -->
-            <div class="absolute top-3.5 inset-x-3.5 flex items-center justify-between z-20 pointer-events-auto">
+            <!-- Stable Floating Action Buttons Over Banner (Overflows freely over the cards below!) -->
+            <div class="absolute top-3.5 inset-x-3.5 flex items-center justify-between z-40 pointer-events-auto">
                 <!-- Top-Left: Back Button -->
                 <button type="button"
                         onclick="window.history.length > 1 ? window.history.back() : window.location.href='{{ route('pos.index') }}'"
@@ -196,12 +199,16 @@
                             </div>
 
                             <div class="py-1 space-y-1">
-                                <!-- Option 1: แก้ไขภาพปกหน้าร้าน -->
+                                <!-- Option 1: แก้ไขภาพปกหน้าร้าน (Single-color Red SVG Icon) -->
                                 <button type="button"
                                         onclick="closeMasterSettingsMenu(); openHeroBannerModal();"
                                         class="w-full px-3 py-2.5 rounded-xl hover:bg-rose-50/80 active:bg-rose-100/80 flex items-center gap-3 text-left transition cursor-pointer group">
-                                    <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-rose-600 text-white flex items-center justify-center text-sm shadow-xs shrink-0 group-hover:scale-105 transition-transform">
-                                        🖼️
+                                    <div class="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200/80 text-[#D90012] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                        <svg class="w-4 h-4 text-[#D90012]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="3" width="18" height="18" rx="3" />
+                                            <circle cx="8.5" cy="8.5" r="1.8" fill="currentColor" stroke="none" />
+                                            <path d="M21 15l-5-5L5 21" />
+                                        </svg>
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <div class="text-xs font-bold text-slate-800 group-hover:text-[#E50914]">แก้ไขภาพปกหน้าร้าน</div>
@@ -210,12 +217,15 @@
                                     <span class="text-slate-400 text-xs">›</span>
                                 </button>
 
-                                <!-- Option 2: แก้ไขรูปโปรไฟล์ / โลโก้ร้าน -->
+                                <!-- Option 2: แก้ไขรูปโปรไฟล์ / โลโก้ร้าน (Single-color Red SVG Icon) -->
                                 <button type="button"
                                         onclick="closeMasterSettingsMenu(); openProfileLogoModal();"
                                         class="w-full px-3 py-2.5 rounded-xl hover:bg-rose-50/80 active:bg-rose-100/80 flex items-center gap-3 text-left transition cursor-pointer group">
-                                    <div class="w-8 h-8 rounded-xl bg-[#900000] text-white flex items-center justify-center text-sm shadow-xs shrink-0 group-hover:scale-105 transition-transform border border-rose-300">
-                                        🔴
+                                    <div class="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200/80 text-[#D90012] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                        <svg class="w-4 h-4 text-[#D90012]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                            <circle cx="12" cy="7" r="4" />
+                                        </svg>
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <div class="text-xs font-bold text-slate-800 group-hover:text-[#E50914]">แก้ไขรูปโปรไฟล์ / โลโก้ร้าน</div>
@@ -224,11 +234,13 @@
                                     <span class="text-slate-400 text-xs">›</span>
                                 </button>
 
-                                <!-- Option 3: แถบโปรโมชั่น (เปิด / ปิด) -->
+                                <!-- Option 3: แถบโปรโมชั่น (Single-color Red SVG Icon) -->
                                 <div class="px-3 py-2 rounded-xl bg-slate-50/90 border border-slate-200/60 flex items-center justify-between gap-2">
                                     <div class="flex items-center gap-2.5 min-w-0">
-                                        <div class="w-7 h-7 rounded-lg bg-rose-500 text-white flex items-center justify-center text-xs shadow-2xs shrink-0">
-                                            🎟️
+                                        <div class="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200/80 text-[#D90012] flex items-center justify-center shrink-0">
+                                            <svg class="w-4 h-2.5 text-[#D90012]" viewBox="0 0 100 60" fill="currentColor" fill-rule="evenodd">
+                                                <path d="M 8 0 H 59 A 6 6 0 0 0 71 0 H 92 A 8 8 0 0 1 100 8 V 16 A 14 14 0 0 0 100 44 V 52 A 8 8 0 0 1 92 60 H 71 A 6 6 0 0 0 59 60 H 8 A 8 8 0 0 1 0 52 V 44 A 14 14 0 0 0 0 16 V 8 A 8 8 0 0 1 8 0 Z M 62 17 A 3 3 0 0 1 68 17 V 26 A 3 3 0 0 1 62 26 Z M 62 34 A 3 3 0 0 1 68 34 V 43 A 3 3 0 0 1 62 43 Z" />
+                                            </svg>
                                         </div>
                                         <div class="min-w-0">
                                             <div class="text-xs font-bold text-slate-800">แสดงแถบโปรโมชั่น</div>
@@ -348,13 +360,9 @@
                 <div class="flex-1 flex items-center justify-between gap-1.5 pr-2 border-r border-[#F5C2C7]">
                     <div class="flex items-center gap-1.5 min-w-0">
                         <div class="w-6 h-5 rounded-[5px] bg-[#D90012] text-white flex items-center justify-center shrink-0 shadow-2xs">
-                            <!-- Ticket Voucher Icon Matching Image 1 Exactly (White Thick Outline + 4 Dots) -->
-                            <svg class="w-4 h-3 shrink-0" viewBox="0 0 28 18" fill="none">
-                                <path d="M4.5 1.5 H7.5 C8.3 1.5 9 2.2 9.5 3 C10 3.8 10.7 3.8 11.2 3 C11.7 2.2 12.4 1.5 13.2 1.5 H23.5 C25.2 1.5 26.5 2.8 26.5 4.5 V13.5 C26.5 15.2 25.2 16.5 23.5 16.5 H13.2 C12.4 16.5 11.7 15.8 11.2 15 C10.7 14.2 10 14.2 9.5 15 C9 15.8 8.3 16.5 7.5 16.5 H4.5 C2.8 16.5 1.5 15.2 1.5 13.5 V4.5 C1.5 2.8 2.8 1.5 4.5 1.5 Z" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" />
-                                <circle cx="10.35" cy="5.5" r="0.95" fill="white" />
-                                <circle cx="10.35" cy="7.8" r="0.95" fill="white" />
-                                <circle cx="10.35" cy="10.2" r="0.95" fill="white" />
-                                <circle cx="10.35" cy="12.5" r="0.95" fill="white" />
+                            <!-- Solid Ticket Voucher Icon Matching Image 1 Exactly (White Silhouette with Notches & 2 Perforation Slots) -->
+                            <svg class="w-4 h-2.5 shrink-0" viewBox="0 0 100 60" fill="white" fill-rule="evenodd">
+                                <path d="M 8 0 H 59 A 6 6 0 0 0 71 0 H 92 A 8 8 0 0 1 100 8 V 16 A 14 14 0 0 0 100 44 V 52 A 8 8 0 0 1 92 60 H 71 A 6 6 0 0 0 59 60 H 8 A 8 8 0 0 1 0 52 V 44 A 14 14 0 0 0 0 16 V 8 A 8 8 0 0 1 8 0 Z M 62 17 A 3 3 0 0 1 68 17 V 26 A 3 3 0 0 1 62 26 Z M 62 34 A 3 3 0 0 1 68 34 V 43 A 3 3 0 0 1 62 43 Z" />
                             </svg>
                         </div>
                         <div class="min-w-0 leading-tight">
@@ -374,13 +382,9 @@
                 <div class="flex-1 flex items-center justify-between gap-1.5 pl-1">
                     <div class="flex items-center gap-1.5 min-w-0">
                         <div class="w-6 h-5 rounded-[5px] bg-[#D90012] text-white flex items-center justify-center shrink-0 shadow-2xs">
-                            <!-- Ticket Voucher Icon Matching Image 1 Exactly (White Thick Outline + 4 Dots) -->
-                            <svg class="w-4 h-3 shrink-0" viewBox="0 0 28 18" fill="none">
-                                <path d="M4.5 1.5 H7.5 C8.3 1.5 9 2.2 9.5 3 C10 3.8 10.7 3.8 11.2 3 C11.7 2.2 12.4 1.5 13.2 1.5 H23.5 C25.2 1.5 26.5 2.8 26.5 4.5 V13.5 C26.5 15.2 25.2 16.5 23.5 16.5 H13.2 C12.4 16.5 11.7 15.8 11.2 15 C10.7 14.2 10 14.2 9.5 15 C9 15.8 8.3 16.5 7.5 16.5 H4.5 C2.8 16.5 1.5 15.2 1.5 13.5 V4.5 C1.5 2.8 2.8 1.5 4.5 1.5 Z" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" />
-                                <circle cx="10.35" cy="5.5" r="0.95" fill="white" />
-                                <circle cx="10.35" cy="7.8" r="0.95" fill="white" />
-                                <circle cx="10.35" cy="10.2" r="0.95" fill="white" />
-                                <circle cx="10.35" cy="12.5" r="0.95" fill="white" />
+                            <!-- Solid Ticket Voucher Icon Matching Image 1 Exactly (White Silhouette with Notches & 2 Perforation Slots) -->
+                            <svg class="w-4 h-2.5 shrink-0" viewBox="0 0 100 60" fill="white" fill-rule="evenodd">
+                                <path d="M 8 0 H 59 A 6 6 0 0 0 71 0 H 92 A 8 8 0 0 1 100 8 V 16 A 14 14 0 0 0 100 44 V 52 A 8 8 0 0 1 92 60 H 71 A 6 6 0 0 0 59 60 H 8 A 8 8 0 0 1 0 52 V 44 A 14 14 0 0 0 0 16 V 8 A 8 8 0 0 1 8 0 Z M 62 17 A 3 3 0 0 1 68 17 V 26 A 3 3 0 0 1 62 26 Z M 62 34 A 3 3 0 0 1 68 34 V 43 A 3 3 0 0 1 62 43 Z" />
                             </svg>
                         </div>
                         <div class="min-w-0 leading-tight">
@@ -472,7 +476,18 @@
                         id="btn-method-delivery"
                         onclick="setOrderingMethod('delivery')"
                         class="rounded-[14px] px-2 py-2 sm:px-2.5 sm:py-2.5 bg-gradient-to-r from-[#D91A1E] via-[#CB1318] to-[#B80F13] text-white shadow-[0_4px_14px_rgba(217,26,30,0.35)] flex items-center gap-1.5 sm:gap-2 text-left transition-all cursor-pointer border border-[#E6282C]">
-                    <img id="scooter-delivery-icon" src="{{ asset('assets/brand/scooter-white.png') }}" class="w-5 sm:w-5.5 h-auto shrink-0 object-contain drop-shadow-xs" alt="Delivery">
+                    <!-- Solid Vespa Scooter Silhouette Matching Image 1 in White -->
+                    <svg class="method-icon w-5 sm:w-5.5 h-auto text-white shrink-0 drop-shadow-xs" viewBox="0 0 100 85" fill="currentColor">
+                        <rect x="18" y="29" width="27" height="9" rx="4.5" />
+                        <path d="M22 38 C14 39 6 46 6 57 C6 64 12 65 19 65 C20 62 21 59 23 57 C27 52 35 52 39 57 C41 59 42 62 43 65 L48 65 C55 65 60 55 60 52 L50 52 C45 52 43 45 44 41 C44 38 30 38 22 38 Z" />
+                        <path d="M36 53 C37.5 56 37.5 58 36.5 61" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none" class="opacity-80" />
+                        <path d="M51 16 H68 C71 16 73 18 73 21 C73 24 70 26 66 26 L63 26 L67 52 L61 54 L57 26 C54 26 51 23 51 19 Z" />
+                        <path d="M64 45 C73 42 86 46 90 53 C85 58 74 61 64 56 Z" />
+                        <circle cx="24" cy="63" r="11" />
+                        <circle cx="24" cy="63" r="5" fill="#D91A1E" class="scooter-hub transition-colors" />
+                        <circle cx="78" cy="63" r="11" />
+                        <circle cx="78" cy="63" r="5" fill="#D91A1E" class="scooter-hub transition-colors" />
+                    </svg>
                     <div class="min-w-0">
                         <div class="method-title text-[11px] sm:text-[12px] font-bold leading-tight truncate text-white">สั่งเดลิเวอรี่</div>
                         <div class="method-sub text-[8.5px] sm:text-[9.5px] text-white/95 leading-tight truncate mt-0.5 font-normal tracking-tight">ส่งถึงที่ ~15–20 นาที</div>
@@ -1544,9 +1559,8 @@
                         icon.classList.remove('text-[#101114]');
                         icon.classList.add('text-white');
                     }
-                    if (m === 'delivery' && scooterImg) {
-                        scooterImg.src = '{{ asset("assets/brand/scooter-white.png") }}';
-                    }
+                    const hubs = btn.querySelectorAll('.scooter-hub');
+                    hubs.forEach(h => h.setAttribute('fill', '#D91A1E'));
                 } else {
                     btn.className = 'rounded-[14px] px-2 py-2 sm:px-2.5 sm:py-2.5 bg-white text-[#101114] border border-[#E5E7EB] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex items-center gap-1.5 sm:gap-2 text-left transition-all cursor-pointer';
                     if (title) title.className = 'method-title text-[11px] sm:text-[12px] font-bold leading-tight truncate text-[#101114]';
@@ -1555,9 +1569,8 @@
                         icon.classList.remove('text-white');
                         icon.classList.add('text-[#101114]');
                     }
-                    if (m === 'delivery' && scooterImg) {
-                        scooterImg.src = '{{ asset("assets/brand/scooter-dark.png") }}';
-                    }
+                    const hubs = btn.querySelectorAll('.scooter-hub');
+                    hubs.forEach(h => h.setAttribute('fill', '#ffffff'));
                 }
             });
 
@@ -2315,6 +2328,10 @@
             currentHeroBanner.image = url;
             renderHeroPreview();
             renderHeroHistoryGrid();
+            const bannerImg = document.getElementById('online-hero-banner-img');
+            if (bannerImg) {
+                bannerImg.src = url;
+            }
         }
 
         function nudgeHeroPos(dx, dy) {
@@ -2413,7 +2430,11 @@
                             }
                             renderHeroPreview();
                             renderHeroHistoryGrid();
-                            showToast('อัปโหลดและแปลงภาพเป็น URL สำเร็จ 📷');
+                            const bannerImg = document.getElementById('online-hero-banner-img');
+                            if (bannerImg) {
+                                bannerImg.src = data.url;
+                            }
+                            showToast('อัปโหลดและบันทึกภาพปกแล้ว 📷');
                         } else {
                             showToast(data.message || 'อัปโหลดล้มเหลว');
                         }
@@ -2606,6 +2627,10 @@
             currentProfileLogo.image = url;
             renderProfileLogoPreview();
             renderProfileLogoHistoryGrid();
+            const logoImg = document.getElementById('online-profile-logo-img');
+            if (logoImg) {
+                logoImg.src = url;
+            }
         }
 
         function nudgeLogoPos(dx, dy) {
@@ -2702,7 +2727,11 @@
                             }
                             renderProfileLogoPreview();
                             renderProfileLogoHistoryGrid();
-                            showToast('อัปโหลดและแปลงภาพโปรไฟล์เป็น URL สำเร็จ 📷');
+                            const logoImg = document.getElementById('online-profile-logo-img');
+                            if (logoImg) {
+                                logoImg.src = data.url;
+                            }
+                            showToast('อัปโหลดและบันทึกรูปโปรไฟล์แล้ว 📷');
                         } else {
                             showToast(data.message || 'อัปโหลดล้มเหลว');
                         }
