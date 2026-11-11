@@ -82,6 +82,10 @@ class AppServiceProvider extends ServiceProvider
                         'branch' => 'ทุกสาขา',
                     ];
                 }
+
+                if (!empty($profile['avatar']) && preg_match('#/(uploads/.+)#', $profile['avatar'], $avatarMatches)) {
+                    $profile['avatar'] = '/' . ltrim($avatarMatches[1], '/');
+                }
             }
 
             // 4. Resolve global auto-logout settings

@@ -204,7 +204,10 @@
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <!-- Avatar: Image or Initials -->
                                 @if(!empty($u['avatar']))
-                                    <img src="{{ $u['avatar'] }}" alt="{{ $u['name'] }}" class="w-10 h-10 rounded-xl object-cover shrink-0 shadow-2xs border border-slate-200">
+                                    <img src="{{ $u['avatar'] }}" alt="{{ $u['name'] }}" class="w-10 h-10 rounded-xl object-cover shrink-0 shadow-2xs border border-slate-200" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+                                    <div class="hidden w-10 h-10 rounded-xl {{ $u['color'] ?? 'bg-slate-800' }} text-white font-black text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                                        {{ $u['initials'] ?? 'US' }}
+                                    </div>
                                 @else
                                     <div class="w-10 h-10 rounded-xl {{ $u['color'] ?? 'bg-slate-800' }} text-white font-black text-xs flex items-center justify-center shrink-0 shadow-2xs">
                                         {{ $u['initials'] ?? 'US' }}

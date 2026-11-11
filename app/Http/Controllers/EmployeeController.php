@@ -55,7 +55,7 @@ class EmployeeController extends Controller
             'name' => $activeEmployee['name'] ?? $activeEmployee['full_name'] ?? 'พนักงาน',
             'role' => $activeEmployee['role_label'] ?? $activeEmployee['role'] ?? 'พนักงานร้าน',
             'department' => $activeEmployee['branch'] ?? 'สาขายะลา',
-            'avatar' => !empty($activeEmployee['avatar']) ? $activeEmployee['avatar'] : null,
+            'avatar' => $this->normalizeAvatarUrl($activeEmployee['avatar'] ?? null),
             'initials' => !empty($activeEmployee['initials']) ? $activeEmployee['initials'] : mb_substr($activeEmployee['name'] ?? 'พ', 0, 2),
             'color' => $activeEmployee['color'] ?? 'bg-blue-600',
             'email' => $activeEmployee['email'] ?? '',
@@ -78,19 +78,43 @@ class EmployeeController extends Controller
             'allow_mock' => $storeAllowMock,
         ];
 
-        // Today's Attendance Info (จ. 13 ม.ค. 2568 - Synced with Real Employee)
+        // Persistent & Synced Today's Attendance Record for Active Employee
+        $empId = $activeEmployee['id'] ?? 'EMP-001';
+        $todayAttendanceKey = 'attendance_today_' . $empId . '_' . date('Ymd');
+        $savedToday = json_decode(Setting::get($todayAttendanceKey, 'null'), true);
+
+        // Fallbacks checking saved setting, session, or default
+        $todayCheckIn = $savedToday['check_in'] ?? session('employee_check_in');
+        $todayCheckOut = $savedToday['check_out'] ?? session('employee_check_out');
+        $todayStatus = $savedToday['status'] ?? session('employee_status');
+
+        if (empty($todayCheckIn) && empty($todayCheckOut) && empty($todayStatus)) {
+            $todayCheckIn = '—';
+            $todayCheckOut = '—';
+            $todayStatus = 'ยังไม่เข้างาน';
+            $todayWorkHours = '—';
+        } else {
+            $todayCheckIn = $todayCheckIn ?: '—';
+            $todayCheckOut = $todayCheckOut ?: '—';
+            $todayStatus = $todayStatus ?: 'เข้างานแล้ว';
+            $todayWorkHours = $this->calculateWorkHours($todayCheckIn, $todayCheckOut, $todayStatus);
+        }
+
+        $checkInPhoto = $savedToday['check_in_photo'] ?? session('employee_check_in_photo', asset('uploads/attendance/attendance_check_in_20261109_042948_75fb.jpg'));
+        $checkOutPhoto = $savedToday['check_out_photo'] ?? session('employee_check_out_photo', asset('uploads/attendance/attendance_check_out_20261109_054738_a218.jpg'));
+
         $todayAttendance = [
-            'date_formatted' => 'จ. 13 ม.ค. 2568',
-            'check_in' => session('employee_check_in', '07:47 น.'),
-            'check_out' => session('employee_check_out', '05:47 น.'),
-            'work_hours' => session('employee_work_hours', '8 ชม. 34 นาที'),
-            'status' => session('employee_status', 'เข้างานแล้ว'), // 'เข้างานแล้ว', 'ออกงานแล้ว', 'ยังไม่เข้างาน'
+            'date_formatted' => $this->getThaiDateFormatted(),
+            'check_in' => $todayCheckIn,
+            'check_out' => $todayCheckOut,
+            'work_hours' => $todayWorkHours,
+            'status' => $todayStatus,
             'is_in_geofence' => session('employee_in_geofence', true),
-            'geofence_status' => session('employee_geofence_status', 'อยู่ในเขตร้าน (โหมดทดสอบเปิดอยู่)'),
-            'check_in_photo' => session('employee_check_in_photo', asset('uploads/attendance/attendance_check_in_20261109_042948_75fb.jpg')),
-            'check_out_photo' => session('employee_check_out_photo', asset('uploads/attendance/attendance_check_out_20261109_054738_a218.jpg')),
-            'check_in_location' => session('employee_check_in_location', 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)'),
-            'check_out_location' => session('employee_check_out_location', 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)'),
+            'geofence_status' => session('employee_geofence_status', 'อยู่ในเขตร้าน (ยืนยันแล้ว)'),
+            'check_in_photo' => $this->normalizeAvatarUrl($checkInPhoto),
+            'check_out_photo' => $this->normalizeAvatarUrl($checkOutPhoto),
+            'check_in_location' => $savedToday['check_in_location'] ?? session('employee_check_in_location', 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)'),
+            'check_out_location' => $savedToday['check_out_location'] ?? session('employee_check_out_location', 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)'),
         ];
 
         // Monthly Payroll Records
@@ -461,32 +485,6 @@ class EmployeeController extends Controller
         $photoUrl = asset('uploads/attendance/' . $filename);
         $locationText = "พิกัดร้าน: 13.7563, 100.5018 (ระยะห่าง {$distance} ม. - ในเขตร้าน)";
 
-        if ($actionType === 'check_in') {
-            $newStatus = 'เข้างานแล้ว';
-            session([
-                'employee_check_in' => $formattedTime,
-                'employee_check_in_photo' => $photoUrl,
-                'employee_check_in_location' => $locationText,
-                'employee_status' => $newStatus,
-                'employee_in_geofence' => true,
-                'employee_geofence_status' => 'อยู่ในเขตร้าน (ยืนยันแล้ว)',
-                $todayKey => 1,
-            ]);
-            $message = "สแกนใบหน้าสำเร็จ! เช็คอินเข้างานเวลา {$formattedTime} (บันทึกภาพและพิกัดร้านแล้ว)";
-        } else {
-            $newStatus = 'ออกงานแล้ว';
-            session([
-                'employee_check_out' => $formattedTime,
-                'employee_check_out_photo' => $photoUrl,
-                'employee_check_out_location' => $locationText,
-                'employee_status' => $newStatus,
-                'employee_in_geofence' => true,
-                'employee_geofence_status' => 'อยู่ในเขตร้าน (ยืนยันแล้ว)',
-                $todayKey => 2,
-            ]);
-            $message = "สแกนใบหน้าสำเร็จ! เช็คเอาท์ออกงานเวลา {$formattedTime} (บันทึกภาพและพิกัดร้านแล้ว)";
-        }
-
         $loggedActor = AuditLog::resolveCurrentUserActor();
         $realEmps = $this->getRealEmployeesList();
         $activeEmp = collect($realEmps)->first(function ($emp) use ($loggedActor) {
@@ -497,6 +495,68 @@ class EmployeeController extends Controller
 
         $empName = $activeEmp['name'] ?? $loggedActor['name'] ?? 'Munib Salaemae';
         $empId = $activeEmp['id'] ?? $loggedActor['id'] ?? 'EMP-001';
+
+        $attendanceSettingKey = 'attendance_today_' . $empId . '_' . date('Ymd');
+        $savedAttendance = json_decode(Setting::get($attendanceSettingKey, 'null'), true) ?: [];
+
+        if ($actionType === 'check_in') {
+            $newStatus = 'เข้างานแล้ว';
+            $checkInTime = $formattedTime;
+            $checkOutTime = '—';
+            $workHours = '0 นาที';
+
+            $savedAttendance['check_in'] = $checkInTime;
+            $savedAttendance['check_out'] = $checkOutTime;
+            $savedAttendance['check_in_photo'] = $photoUrl;
+            $savedAttendance['check_in_location'] = $locationText;
+            $savedAttendance['status'] = $newStatus;
+            $savedAttendance['work_hours'] = $workHours;
+
+            session([
+                'employee_check_in' => $checkInTime,
+                'employee_check_out' => $checkOutTime,
+                'employee_check_in_photo' => $photoUrl,
+                'employee_check_in_location' => $locationText,
+                'employee_status' => $newStatus,
+                'employee_work_hours' => $workHours,
+                'employee_in_geofence' => true,
+                'employee_geofence_status' => 'อยู่ในเขตร้าน (ยืนยันแล้ว)',
+                $todayKey => 1,
+            ]);
+            Setting::set($attendanceSettingKey, json_encode($savedAttendance));
+
+            $message = "สแกนใบหน้าสำเร็จ! เช็คอินเข้างานเวลา {$formattedTime} (บันทึกภาพและพิกัดร้านแล้ว)";
+        } else {
+            $newStatus = 'ออกงานแล้ว';
+            $checkInTime = $savedAttendance['check_in'] ?? session('employee_check_in', $formattedTime);
+            if (empty($checkInTime) || $checkInTime === '—') {
+                $checkInTime = $formattedTime;
+                $savedAttendance['check_in'] = $checkInTime;
+            }
+            $checkOutTime = $formattedTime;
+            $workHours = $this->calculateWorkHours($checkInTime, $checkOutTime, $newStatus);
+
+            $savedAttendance['check_out'] = $checkOutTime;
+            $savedAttendance['check_out_photo'] = $photoUrl;
+            $savedAttendance['check_out_location'] = $locationText;
+            $savedAttendance['status'] = $newStatus;
+            $savedAttendance['work_hours'] = $workHours;
+
+            session([
+                'employee_check_in' => $checkInTime,
+                'employee_check_out' => $checkOutTime,
+                'employee_check_out_photo' => $photoUrl,
+                'employee_check_out_location' => $locationText,
+                'employee_status' => $newStatus,
+                'employee_work_hours' => $workHours,
+                'employee_in_geofence' => true,
+                'employee_geofence_status' => 'อยู่ในเขตร้าน (ยืนยันแล้ว)',
+                $todayKey => 2,
+            ]);
+            Setting::set($attendanceSettingKey, json_encode($savedAttendance));
+
+            $message = "สแกนใบหน้าสำเร็จ! เช็คเอาท์ออกงานเวลา {$formattedTime} (บันทึกภาพและพิกัดร้านแล้ว)";
+        }
 
         AuditLog::record(
             'employees',
@@ -516,11 +576,12 @@ class EmployeeController extends Controller
             'photo_url' => $photoUrl,
             'employee_name' => $empName,
             'employee_id' => $empId,
-            'check_in' => session('employee_check_in', '08:58 น.'),
-            'check_out' => session('employee_check_out', '17:32 น.'),
-            'check_in_photo' => session('employee_check_in_photo', asset('uploads/attendance/sample_check_in.jpg')),
-            'check_out_photo' => session('employee_check_out_photo', asset('uploads/attendance/sample_check_out.jpg')),
-            'work_hours' => session('employee_work_hours', '8 ชม. 34 นาที'),
+            'check_in' => $checkInTime,
+            'check_out' => $checkOutTime,
+            'check_in_photo' => $savedAttendance['check_in_photo'] ?? session('employee_check_in_photo', $photoUrl),
+            'check_out_photo' => $savedAttendance['check_out_photo'] ?? session('employee_check_out_photo', $photoUrl),
+            'work_hours' => $workHours,
+            'date_formatted' => $this->getThaiDateFormatted(),
             'distance' => $distance,
             'geofence_status' => 'อยู่ในเขตร้าน (ยืนยันแล้ว)',
         ]);
@@ -676,10 +737,12 @@ class EmployeeController extends Controller
         $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true);
         if (!empty($savedUsers)) {
             $realUsers = array_values(array_filter($savedUsers, fn($u) => empty($u['is_test'])));
-            if (!empty($realUsers)) {
-                return $realUsers;
+            $targetUsers = !empty($realUsers) ? $realUsers : $savedUsers;
+            foreach ($targetUsers as &$u) {
+                $u['avatar'] = $this->normalizeAvatarUrl($u['avatar'] ?? null);
             }
-            return $savedUsers;
+            unset($u);
+            return $targetUsers;
         }
 
         return [
@@ -693,13 +756,98 @@ class EmployeeController extends Controller
                 'role_label' => 'ผู้ดูแลระบบ (Admin)',
                 'initials' => 'Mu',
                 'color' => 'bg-rose-600',
-                'avatar' => asset('uploads/users/user_1794212895_aCeDLF.png'),
+                'avatar' => '/uploads/users/user_1794212895_aCeDLF.png',
                 'status' => 'online',
                 'status_label' => 'ใช้งานอยู่',
                 'branch' => 'ทุกสาขา',
                 'is_test' => false,
             ]
         ];
+    }
+
+    /**
+     * Normalize avatar/photo URLs to ensure relative paths work across domains and bypass mixed content.
+     */
+    protected function normalizeAvatarUrl(?string $url): ?string
+    {
+        if (empty($url)) {
+            return null;
+        }
+        if (preg_match('#/(uploads/.+)#', $url, $matches)) {
+            return '/' . ltrim($matches[1], '/');
+        }
+        return $url;
+    }
+
+    /**
+     * Get current Thai date formatted (e.g. "พ. 11 พ.ย. 2569").
+     */
+    protected function getThaiDateFormatted(?Carbon $date = null): string
+    {
+        $date = $date ?: Carbon::now();
+        $days = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+        $months = [
+            1 => 'ม.ค.', 2 => 'ก.พ.', 3 => 'มี.ค.', 4 => 'เม.ย.',
+            5 => 'พ.ค.', 6 => 'มิ.ย.', 7 => 'ก.ค.', 8 => 'ส.ค.',
+            9 => 'ก.ย.', 10 => 'ต.ค.', 11 => 'พ.ย.', 12 => 'ธ.ค.'
+        ];
+        $dayOfWeek = $days[$date->dayOfWeek] ?? '';
+        $day = $date->day;
+        $month = $months[$date->month] ?? '';
+        $year = $date->year + 543;
+        return "{$dayOfWeek} {$day} {$month} {$year}";
+    }
+
+    /**
+     * Calculate dynamic work hours between check-in and check-out or current time.
+     */
+    protected function calculateWorkHours(?string $checkInTime, ?string $checkOutTime, string $status): string
+    {
+        if (empty($checkInTime) || $checkInTime === '—') {
+            return '—';
+        }
+
+        $cleanIn = trim(str_replace('น.', '', $checkInTime));
+        $inParts = explode(':', $cleanIn);
+        if (count($inParts) < 2) {
+            return '—';
+        }
+
+        try {
+            $inCarbon = Carbon::today()->setTime((int)$inParts[0], (int)$inParts[1]);
+
+            if ($status === 'ออกงานแล้ว' && !empty($checkOutTime) && $checkOutTime !== '—') {
+                $cleanOut = trim(str_replace('น.', '', $checkOutTime));
+                $outParts = explode(':', $cleanOut);
+                if (count($outParts) < 2) {
+                    return '—';
+                }
+                $outCarbon = Carbon::today()->setTime((int)$outParts[0], (int)$outParts[1]);
+                if ($outCarbon->lt($inCarbon)) {
+                    $outCarbon->addDay();
+                }
+                $diffMinutes = (int) round($inCarbon->diffInMinutes($outCarbon));
+            } elseif ($status === 'เข้างานแล้ว') {
+                $now = Carbon::now();
+                if ($now->lt($inCarbon)) {
+                    $diffMinutes = 0;
+                } else {
+                    $diffMinutes = (int) round($inCarbon->diffInMinutes($now));
+                }
+            } else {
+                return '—';
+            }
+
+            $hours = intdiv($diffMinutes, 60);
+            $minutes = $diffMinutes % 60;
+
+            if ($hours > 0) {
+                return "{$hours} ชม. " . str_pad((string)$minutes, 2, '0', STR_PAD_LEFT) . " นาที";
+            }
+            return "{$minutes} นาที";
+        } catch (\Throwable $e) {
+            return '—';
+        }
     }
 
     /**

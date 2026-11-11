@@ -298,12 +298,15 @@
                         <!-- Header: Synced Real Employee Profile (Matches Image 2) -->
                         <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                             <div class="flex items-center gap-2.5 min-w-0">
-                                <div class="w-10 h-10 rounded-2xl overflow-hidden border border-slate-200 shrink-0 shadow-2xs">
+                                <div class="w-10 h-10 rounded-2xl overflow-hidden border border-slate-200 shrink-0 shadow-2xs relative bg-slate-100 flex items-center justify-center">
                                     @if(!empty($employee['avatar']))
-                                        <img src="{{ $employee['avatar'] }}" alt="{{ $employee['name'] }}" class="w-full h-full object-cover">
+                                        <img src="{{ $employee['avatar'] }}" alt="{{ $employee['name'] }}" class="w-full h-full object-cover" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
+                                        <div class="hidden w-full h-full {{ $employee['color'] ?? 'bg-rose-600' }} text-white flex items-center justify-center font-bold text-xs">
+                                            {{ $employee['initials'] ?? mb_substr($employee['name'], 0, 2) }}
+                                        </div>
                                     @else
-                                        <div class="w-full h-full bg-rose-600 text-white flex items-center justify-center font-bold text-xs">
-                                            {{ mb_substr($employee['name'], 0, 2) }}
+                                        <div class="w-full h-full {{ $employee['color'] ?? 'bg-rose-600' }} text-white flex items-center justify-center font-bold text-xs">
+                                            {{ $employee['initials'] ?? mb_substr($employee['name'], 0, 2) }}
                                         </div>
                                     @endif
                                 </div>
@@ -317,7 +320,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold shrink-0">
+                            <span id="disp-today-date" class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold shrink-0">
                                 {{ $todayAttendance['date_formatted'] }}
                             </span>
                         </div>
@@ -2637,10 +2640,14 @@
                     showToast(json.message);
                     currentAttendanceStatus = json.status;
                     
-                    document.getElementById('disp-check-in').innerText = json.check_in;
-                    document.getElementById('disp-check-out').innerText = json.check_out;
-                    document.getElementById('disp-work-hours').innerText = json.work_hours;
+                    document.getElementById('disp-check-in').innerText = json.check_in || '—';
+                    document.getElementById('disp-check-out').innerText = json.check_out || '—';
+                    document.getElementById('disp-work-hours').innerText = json.work_hours || '—';
                     document.getElementById('disp-status-pill').innerText = '✓ ' + json.status;
+                    const dateEl = document.getElementById('disp-today-date');
+                    if (dateEl && json.date_formatted) {
+                        dateEl.innerText = json.date_formatted;
+                    }
 
                     if (json.check_in_photo) {
                         const inImg = document.getElementById('disp-check-in-img');
