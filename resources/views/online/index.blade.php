@@ -112,7 +112,7 @@
         <!-- ===================================================================== -->
         <!-- 1. HERO RESTAURANT BANNER & FLOATING ACTION BUTTONS                   -->
         <!-- ===================================================================== -->
-        <section class="relative w-full overflow-hidden bg-[#400306] aspect-[592/195]" style="aspect-ratio: 592/195;">
+        <section class="relative z-0 w-full overflow-hidden bg-[#400306] aspect-[592/195]" style="aspect-ratio: 592/195;">
             <!-- Hero Image Wrapper (Clips the banner image cleanly) -->
             <div class="absolute inset-0 overflow-hidden">
                 <img id="online-hero-banner-img"
@@ -269,10 +269,10 @@
         <!-- ===================================================================== -->
         <!-- 2. RESTAURANT INFORMATION CARD (Overlaps Banner by -24px)             -->
         <!-- ===================================================================== -->
-        <section class="relative z-10 -mt-6 bg-white rounded-t-[26px] px-3.5 pt-3 pb-2.5 shadow-sm">
+        <section class="relative z-10 -mt-6 bg-white rounded-t-[28px] px-3.5 pt-3 pb-2.5 shadow-sm">
             <div class="flex items-start gap-3">
                 <!-- Left: Rounded Red Logo Card with White Border -->
-                <div class="w-[78px] h-[78px] rounded-[18px] border-[3px] border-white shadow-md overflow-hidden shrink-0 -mt-5 bg-[#900000]">
+                <div class="w-[78px] h-[78px] rounded-[20px] border-[3px] border-white shadow-md overflow-hidden shrink-0 -mt-5 bg-[#900000]">
                     <img id="online-profile-logo-img"
                          src="{{ $profileLogoImage ?? asset('assets/brand/logo-card.png') }}"
                          alt="โลโก้ ร้านหม่าล่าสตรีท"
