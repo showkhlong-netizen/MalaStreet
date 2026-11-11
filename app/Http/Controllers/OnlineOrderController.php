@@ -16,6 +16,8 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -446,36 +448,14 @@ class OnlineOrderController extends Controller
             'is_read' => true,
         ]);
 
-        // Smart Bot Auto-Reply
+        // Smart AI Auto-Reply (Google Gemini Flash with Intelligent Rule-Based Fallback)
         $botReply = null;
-        $userText = mb_strtolower($validated['message'] ?? '');
-
-        if (str_contains($userText, 'ถึงไหน') || str_contains($userText, 'สถานะ') || str_contains($userText, 'คิว') || str_contains($userText, 'เสร็จยัง')) {
-            $statusText = 'รอยืนยัน';
-            $qNum = '-';
-            if ($order) {
-                $statusMap = [
-                    'pending' => 'รอร้านค้ายืนยันคำสั่งซื้อ',
-                    'confirmed' => 'ร้านรับออเดอร์แล้ว กำลังรอคิวขึ้นเตา',
-                    'cooking' => '🔥 กำลังย่างเตาถ่าน / ต้มซุปในครัว',
-                    'ready' => '🎉 ทำเสร็จแล้ว พร้อมให้รับที่หน้าร้านได้เลยครับ!',
-                    'completed' => '✅ ส่งมอบอาหารเรียบร้อยแล้ว',
-                ];
-                $statusText = $statusMap[$order->status] ?? $order->status;
-                $qNum = $order->queue_number;
-            }
-            $replyText = "ขณะนี้ออเดอร์คิว [{$qNum}] อยู่ในสถานะ: \"{$statusText}\" ครับ ทางร้านกำลังเร่งทำให้เต็มที่ครับ 🙏";
-        } elseif (str_contains($userText, 'พริก') || str_contains($userText, 'เผ็ด') || str_contains($userText, 'ชา') || str_contains($userText, 'ซอส')) {
-            $replyText = "รับทราบครับ! ทางร้านแจ้งเตาปิ้งย่างเพื่อปรับความเผ็ดชาและรสชาติตามที่คุณลูกค้าต้องการเรียบร้อยครับ 🌶️🔥";
-        } elseif (str_contains($userText, 'ที่อยู่') || str_contains($userText, 'ร้านอยู่') || str_contains($userText, 'พิกัด') || str_contains($userText, 'แผนที่')) {
-            $replyText = "📍 ร้านหม่าล่าสตรีท ตั้งอยู่หน้าตลาดสตรีทฟู้ด ใกล้สี่แยก มีที่จอดรถหน้าร้านสะดวกสบาย เปิดทุกวัน 16:00 - 23:00 น. ครับ";
-        } elseif (!empty($validated['image_url'])) {
-            $replyText = "ได้รับรูปภาพเรียบร้อยแล้วครับ ขอบคุณที่ส่งภาพให้ทางร้านตรวจสอบครับ 📸✨";
-        } elseif (str_contains($userText, 'สวัสดี') || str_contains($userText, 'ดีครับ') || str_contains($userText, 'ดีค่ะ')) {
-            $replyText = "สวัสดีครับ! หากต้องการสอบถามรายการอาหาร หรือปรับเปลี่ยนอะไรในออเดอร์ แจ้งไว้ได้เลยนะครับ 🍢";
-        } else {
-            $replyText = "รับทราบข้อความครับ ร้านหม่าล่าสตรีทได้รับข้อความของคุณแล้ว และยินดีดูแลคุณลูกค้าอย่างเต็มที่ครับ 🙏✨";
-        }
+        $replyText = $this->generateSmartChatReply(
+            $validated['message'] ?? null,
+            $validated['image_url'] ?? null,
+            $order,
+            $sessionId
+        );
 
         if ($replyText) {
             $botReply = ChatMessage::create([
@@ -495,6 +475,201 @@ class OnlineOrderController extends Controller
             'message' => $chatMsg,
             'bot_reply' => $botReply,
         ]);
+    }
+
+    /**
+     * Generate Smart AI Chat Reply via Google Gemini with intelligent fallback.
+     */
+    protected function generateSmartChatReply(?string $userMessage, ?string $imageUrl, ?Order $order, string $sessionId): string
+    {
+        $apiKey = env('GEMINI_API_KEY') ?: config('services.gemini.key') ?: Setting::get('gemini_api_key');
+
+        if (!empty($apiKey) && (!empty($userMessage) || !empty($imageUrl))) {
+            try {
+                $aiReply = $this->callGeminiChat($userMessage, $imageUrl, $order, $sessionId, $apiKey);
+                if (!empty($aiReply)) {
+                    return $aiReply;
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Gemini Chat AI Error, falling back to rule-based reply: ' . $e->getMessage());
+            }
+        }
+
+        return $this->getRuleBasedReply($userMessage, $imageUrl, $order);
+    }
+
+    /**
+     * Call Google Gemini API to generate contextual chat response.
+     */
+    protected function callGeminiChat(?string $userMessage, ?string $imageUrl, ?Order $order, string $sessionId, string $apiKey): ?string
+    {
+        // 1. Gather Shop Context & Menu samples
+        $menuSamples = Product::where('is_available', true)
+            ->take(15)
+            ->pluck('name')
+            ->implode(', ');
+
+        // 2. Gather Order Context
+        if ($order) {
+            $itemsSummary = $order->items ? $order->items->map(fn($it) => $it->product_name . ' x' . $it->quantity)->implode(', ') : '-';
+            $statusMap = [
+                'pending' => 'รอร้านค้ายืนยันคำสั่งซื้อ',
+                'confirmed' => 'ร้านรับออเดอร์แล้ว กำลังรอคิวขึ้นเตา',
+                'cooking' => '🔥 กำลังย่างเตาถ่าน / ต้มซุปในครัว',
+                'ready' => '🎉 ทำเสร็จแล้ว พร้อมให้รับที่หน้าร้านได้เลยครับ!',
+                'completed' => '✅ ส่งมอบอาหารเรียบร้อยแล้ว',
+                'cancelled' => '❌ ยกเลิกคำสั่งซื้อแล้ว',
+            ];
+            $statusText = $statusMap[$order->status] ?? $order->status;
+            $orderContext = "ข้อมูลออเดอร์ของลูกค้าที่กำลังคุยอยู่:\n"
+                . "- รหัสออเดอร์: {$order->order_no}\n"
+                . "- หมายเลขคิว: คิวที่ {$order->queue_number}\n"
+                . "- สถานะปัจจุบัน: {$statusText}\n"
+                . "- ยอดรวม: ฿" . number_format($order->total_price, 2) . "\n"
+                . "- รายการอาหาร: {$itemsSummary}";
+        } else {
+            $orderContext = "ลูกค้ายังไม่มีออเดอร์ในระบบ กำลังเลือกดูเมนูหรือสอบถามข้อมูลทั่วไป";
+        }
+
+        // 3. Build System Instruction
+        $systemInstruction = "คุณคือ \"น้องหม่าล่า\" แอดมิน AI อัจฉริยะประจำร้าน \"หม่าล่าสตรีท (Mala Street)\" 🍢🔥\n"
+            . "ทำหน้าที่บริการลูกค้า พูดคุยสุภาพ อบอุ่น เป็นมิตร น่ารัก มีหางเสียง \"ครับ/ยินดีให้บริการครับ\" และใส่อีโมจิอาหาร เช่น 🍢🔥🌶️🍲✨ อย่างเหมาะสม\n\n"
+            . "[ข้อมูลร้านค้า]\n"
+            . "- ชื่อร้าน: ร้านหม่าล่าสตรีท (Mala Street)\n"
+            . "- สโลแกน: เผ็ดชา ต้นตำรับ ไม้เดียว ปิ้งย่าง น้ำจิ้มสูตรพิเศษ\n"
+            . "- เวลาเปิดบริการ: เปิดทุกวัน 16:00 - 23:00 น.\n"
+            . "- พิกัด/ที่อยู่: หน้าตลาดสตรีทฟู้ด ใกล้สี่แยก มีที่จอดรถหน้าร้านสะดวกสบาย\n"
+            . "- รูปแบบอาหาร: หม่าล่าปิ้งย่างเตาถ่าน, ต้มซุปหม่าล่า, ของทานเล่น\n"
+            . "- ระดับความเผ็ด: เผ็ดน้อย, เผ็ดกลาง, เผ็ดมาก, เผ็ดชาสะใจ (ลูกค้าสามารถระบุระดับความเผ็ดหรือแยกพริกได้)\n"
+            . "- ตัวอย่างเมนูในร้าน: " . ($menuSamples ?: 'เนื้อโคขุน, หมูสามชั้นพันเห็ดเข็มทอง, ลูกชิ้นปลาหมึก, ไส้กรอกไก่, เต้าหู้ชีส, เครื่องดื่ม') . "\n\n"
+            . "[ข้อมูลลูกค้า]\n"
+            . "{$orderContext}\n\n"
+            . "[กฎการตอบ]\n"
+            . "1. ตอบให้ตรงประเด็น ชัดเจน สุภาพ กระชับ (1-3 ประโยคเป็นหลัก ไม่ตอบยาวเกินไป)\n"
+            . "2. หากลูกค้าถามเรื่องคิว หรือสถานะออเดอร์ ให้ใช้ข้อมูลออเดอร์ข้างต้นตอบลูกค้าอย่างแม่นยำ\n"
+            . "3. หากลูกค้าส่งรูปภาพ (เช่น สลิปโอนเงิน หรือรูปอาหาร) ให้ขอบคุณและแจ้งว่าได้รับภาพเรียบร้อยแล้ว\n"
+            . "4. หากลูกค้าถามเรื่องที่เกินขอบเขต หรือต้องการคุยกับเจ้าของร้าน ให้แจ้งว่าทางร้านบันทึกเรื่องไว้ให้แล้ว แอดมินจะติดต่อกลับโดยตรงครับ";
+
+        // 4. Retrieve recent chat history (last 4 messages)
+        $recentMsgs = ChatMessage::where('session_id', $sessionId)
+            ->orderBy('id', 'desc')
+            ->take(4)
+            ->get()
+            ->reverse();
+
+        $contents = [];
+
+        foreach ($recentMsgs as $m) {
+            $role = ($m->sender === 'customer') ? 'user' : 'model';
+            $text = $m->message ?: ($m->image_url ? '[แนบรูปภาพ]' : '');
+            if (!empty($text)) {
+                $contents[] = [
+                    'role' => $role,
+                    'parts' => [['text' => $text]]
+                ];
+            }
+        }
+
+        // Add current user prompt
+        $currentParts = [];
+        if (!empty($userMessage)) {
+            $currentParts[] = ['text' => $userMessage];
+        }
+        if (!empty($imageUrl)) {
+            $parsedUrl = parse_url($imageUrl, PHP_URL_PATH);
+            $localPath = public_path(ltrim($parsedUrl, '/'));
+            if (file_exists($localPath) && filesize($localPath) < 4000000) {
+                $mimeType = mime_content_type($localPath) ?: 'image/jpeg';
+                $imgData = base64_encode(file_get_contents($localPath));
+                $currentParts[] = [
+                    'inline_data' => [
+                        'mime_type' => $mimeType,
+                        'data' => $imgData
+                    ]
+                ];
+            } else {
+                $currentParts[] = ['text' => '[ลูกค้าส่งรูปภาพ: ' . $imageUrl . ']'];
+            }
+        }
+
+        if (empty($currentParts)) {
+            return null;
+        }
+
+        $contents[] = [
+            'role' => 'user',
+            'parts' => $currentParts
+        ];
+
+        // 5. Call Gemini API
+        $candidateModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-flash-lite-latest'];
+
+        foreach ($candidateModels as $model) {
+            try {
+                $response = Http::withoutVerifying()
+                    ->timeout(6)
+                    ->withHeaders(['Content-Type' => 'application/json'])
+                    ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}", [
+                        'systemInstruction' => [
+                            'parts' => [
+                                ['text' => $systemInstruction]
+                            ]
+                        ],
+                        'contents' => $contents,
+                        'generationConfig' => [
+                            'temperature' => 0.7,
+                            'maxOutputTokens' => 300,
+                        ]
+                    ]);
+
+                if ($response->successful()) {
+                    $json = $response->json();
+                    $replyText = $json['candidates'][0]['content']['parts'][0]['text'] ?? null;
+                    if (!empty($replyText)) {
+                        return trim($replyText);
+                    }
+                }
+            } catch (\Throwable $ex) {
+                Log::warning("Gemini chat model {$model} attempt failed: " . $ex->getMessage());
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Rule-based fallback auto-reply if Gemini API is unavailable or offline.
+     */
+    protected function getRuleBasedReply(?string $userMessage, ?string $imageUrl, ?Order $order): string
+    {
+        $userText = mb_strtolower($userMessage ?? '');
+
+        if (str_contains($userText, 'ถึงไหน') || str_contains($userText, 'สถานะ') || str_contains($userText, 'คิว') || str_contains($userText, 'เสร็จยัง')) {
+            $statusText = 'รอยืนยัน';
+            $qNum = '-';
+            if ($order) {
+                $statusMap = [
+                    'pending' => 'รอร้านค้ายืนยันคำสั่งซื้อ',
+                    'confirmed' => 'ร้านรับออเดอร์แล้ว กำลังรอคิวขึ้นเตา',
+                    'cooking' => '🔥 กำลังย่างเตาถ่าน / ต้มซุปในครัว',
+                    'ready' => '🎉 ทำเสร็จแล้ว พร้อมให้รับที่หน้าร้านได้เลยครับ!',
+                    'completed' => '✅ ส่งมอบอาหารเรียบร้อยแล้ว',
+                ];
+                $statusText = $statusMap[$order->status] ?? $order->status;
+                $qNum = $order->queue_number;
+            }
+            return "ขณะนี้ออเดอร์คิว [{$qNum}] อยู่ในสถานะ: \"{$statusText}\" ครับ ทางร้านกำลังเร่งทำให้เต็มที่ครับ 🙏";
+        } elseif (str_contains($userText, 'พริก') || str_contains($userText, 'เผ็ด') || str_contains($userText, 'ชา') || str_contains($userText, 'ซอส')) {
+            return "รับทราบครับ! ทางร้านแจ้งเตาปิ้งย่างเพื่อปรับความเผ็ดชาและรสชาติตามที่คุณลูกค้าต้องการเรียบร้อยครับ 🌶️🔥";
+        } elseif (str_contains($userText, 'ที่อยู่') || str_contains($userText, 'ร้านอยู่') || str_contains($userText, 'พิกัด') || str_contains($userText, 'แผนที่')) {
+            return "📍 ร้านหม่าล่าสตรีท ตั้งอยู่หน้าตลาดสตรีทฟู้ด ใกล้สี่แยก มีที่จอดรถหน้าร้านสะดวกสบาย เปิดทุกวัน 16:00 - 23:00 น. ครับ";
+        } elseif (!empty($imageUrl)) {
+            return "ได้รับรูปภาพเรียบร้อยแล้วครับ ขอบคุณที่ส่งภาพให้ทางร้านตรวจสอบครับ 📸✨";
+        } elseif (str_contains($userText, 'สวัสดี') || str_contains($userText, 'ดีครับ') || str_contains($userText, 'ดีค่ะ')) {
+            return "สวัสดีครับ! หากต้องการสอบถามรายการอาหาร หรือปรับเปลี่ยนอะไรในออเดอร์ แจ้งไว้ได้เลยนะครับ 🍢";
+        } else {
+            return "รับทราบข้อความครับ ร้านหม่าล่าสตรีทได้รับข้อความของคุณแล้ว และยินดีดูแลคุณลูกค้าอย่างเต็มที่ครับ 🙏✨";
+        }
     }
 
     /**

@@ -38,7 +38,7 @@ class ReceiptController extends Controller
         $todayCost = $costSummary['today_cost'];
         $thisMonthCost = $costSummary['this_month_cost'];
         $rawMaterials = RawMaterial::orderBy('name')->get();
-        $hasGeminiKey = !empty(env('GEMINI_API_KEY')) || !empty(config('services.gemini.key'));
+        $hasGeminiKey = !empty(env('GEMINI_API_KEY')) || !empty(config('services.gemini.key')) || !empty(Setting::get('gemini_api_key'));
 
         if ($request->wantsJson() || $request->boolean('json')) {
             return response()->json([
@@ -141,7 +141,7 @@ class ReceiptController extends Controller
 
         // Fetch known raw materials from DB to match yields accurately
         $knownMaterials = RawMaterial::all();
-        $apiKey = env('GEMINI_API_KEY') ?: config('services.gemini.key');
+        $apiKey = env('GEMINI_API_KEY') ?: config('services.gemini.key') ?: Setting::get('gemini_api_key');
 
         // Priority 1: High-Accuracy Multimodal AI Vision (Gemini 1.5/2.0 Flash)
         if (!empty($images) && !empty($apiKey)) {
@@ -697,6 +697,8 @@ class ReceiptController extends Controller
                 'message' => 'บันทึก Gemini API Key เรียบร้อยแล้ว! (โหมดทดสอบ)'
             ]);
         }
+
+        Setting::set('gemini_api_key', $key);
 
         $envPath = base_path('.env');
         if (file_exists($envPath)) {
