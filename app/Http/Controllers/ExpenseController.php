@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Expense;
 use App\Models\Order;
 use App\Models\Receipt;
@@ -82,7 +83,21 @@ class ExpenseController extends Controller
             'notes' => 'nullable|string|max:255',
         ]);
 
-        Expense::create($validated);
+        $expense = Expense::create($validated);
+
+        AuditLog::record(
+            'expenses',
+            'create',
+            'บันทึกรายการรายรับ-รายจ่าย',
+            "{$expense->title} (฿" . number_format((float) $expense->amount, 2) . ")",
+            [
+                'expense_id' => $expense->id,
+                'type' => $expense->type,
+                'category' => $expense->category,
+                'amount' => (float) $expense->amount,
+                'expense_date' => $validated['expense_date'],
+            ]
+        );
 
         return redirect()->route('admin.expenses.index', ['date' => $validated['expense_date']])
             ->with('success', 'บันทึกรายการรายจ่ายเรียบร้อยแล้ว');
@@ -94,7 +109,17 @@ class ExpenseController extends Controller
     public function destroy(Expense $expense): RedirectResponse
     {
         $date = $expense->expense_date->toDateString();
+        $title = $expense->title;
+        $amount = (float) $expense->amount;
         $expense->delete();
+
+        AuditLog::record(
+            'expenses',
+            'delete',
+            'ลบรายการรายรับ-รายจ่าย',
+            "{$title} (฿" . number_format($amount, 2) . ")",
+            ['date' => $date, 'amount' => $amount]
+        );
 
         return redirect()->route('admin.expenses.index', ['date' => $date])
             ->with('success', 'ลบรายการเรียบร้อยแล้ว');

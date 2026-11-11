@@ -110,6 +110,18 @@
                 <span>ลงทะเบียนขอสิทธิ์</span>
                 <span class="px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 text-[10px] font-bold">สร้างบัญชีจริง</span>
             </button>
+
+            <!-- 5. ประวัติการทำงาน (Audit Log) -->
+            <button type="button"
+                    id="subtab-btn-audit"
+                    onclick="switchSubTab('audit')"
+                    class="subtab-btn shrink-0 py-2 px-3.5 rounded-xl text-xs font-semibold {{ $currentTab === 'audit' ? 'text-[#2563EB] bg-[#EFF6FF] border border-[#BFDBFE] shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent' }} flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap">
+                <svg class="w-4 h-4 {{ $currentTab === 'audit' ? 'text-[#2563EB]' : 'text-slate-400' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>ประวัติการทำงาน (Audit Log)</span>
+                <span id="subtab-audit-count-badge" class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">{{ isset($auditLogs) ? count($auditLogs) : 0 }} รายการ</span>
+            </button>
         </div>
 
         <!-- ========================================================================= -->
@@ -121,8 +133,8 @@
             <!-- LEFT COLUMN: ผู้ใช้งาน (Users / Staff List) (Col-span-4 / Col-span-3)   -->
             <!-- --------------------------------------------------------------------- -->
             <div id="col-users-list" 
-                 class="{{ $currentTab === 'autologout' ? 'hidden ' : '' }}lg:col-span-4 xl:col-span-3 bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-sm space-y-3.5"
-                 style="{{ $currentTab === 'autologout' ? 'display: none;' : '' }}">
+                 class="{{ in_array($currentTab, ['autologout', 'audit']) ? 'hidden ' : '' }}lg:col-span-4 xl:col-span-3 bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-sm space-y-3.5"
+                 style="{{ in_array($currentTab, ['autologout', 'audit']) ? 'display: none;' : '' }}">
                 <!-- Header with count badge and quick actions -->
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
@@ -245,8 +257,8 @@
             <!-- RIGHT COLUMN: สิทธิ์การเข้าถึง & หน้าต่างจัดการ (Col-span-8 หรือ Col-span-12) -->
             <!-- --------------------------------------------------------------------- -->
             <div id="col-main-content" 
-                 class="{{ $currentTab === 'autologout' ? 'w-full ' : 'lg:col-span-8 xl:col-span-9 w-full ' }}space-y-4"
-                 style="{{ $currentTab === 'autologout' ? 'grid-column: 1 / -1; width: 100%;' : '' }}">
+                 class="{{ in_array($currentTab, ['autologout', 'audit']) ? 'w-full ' : 'lg:col-span-8 xl:col-span-9 w-full ' }}space-y-4"
+                 style="{{ in_array($currentTab, ['autologout', 'audit']) ? 'grid-column: 1 / -1; width: 100%;' : '' }}">
 
                 <!-- ================================================================= -->
                 <!-- PANEL 1: สิทธิ์การเข้าถึง (Permission Matrix)                       -->
@@ -1700,6 +1712,160 @@
             </div>
             <!-- END PANEL 4: ระบบเช็คเอาท์อัตโนมัติ -->
 
+            <!-- ===================================================================== -->
+            <!-- PANEL 5: ประวัติการทำงานของระบบ (Audit Trail & Real-Time Activity Log) -->
+            <!-- ===================================================================== -->
+            <div id="panel-audit" class="w-full max-w-full bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-sm space-y-4 {{ $currentTab === 'audit' ? '' : 'hidden' }}">
+                <!-- Header -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div class="flex items-start gap-3">
+                        <span class="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-sm shrink-0 text-lg">
+                            📋
+                        </span>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h2 class="text-base sm:text-lg font-black text-slate-900">
+                                    ประวัติการทำงานของระบบ (Audit Trail &amp; Activity Log)
+                                </h2>
+                                <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                                    ซิงค์เรียลไทม์ • เวลาประเทศไทย (พ.ศ.)
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-0.5">
+                                บันทึกทุกการเพิ่ม แก้ไข ลบ สลับสถานะ เช็คอิน และจัดการระบบ พร้อมระบุชื่อบัญชีผู้ทำรายการ บทบาท สาขา และเวลา พ.ศ.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button"
+                                onclick="loadAuditLogsLive()"
+                                id="btn-refresh-audit-logs"
+                                class="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200 transition-all cursor-pointer flex items-center gap-1.5">
+                            <span>🔄 อัปเดตข้อมูลล่าสุด</span>
+                        </button>
+                        <button type="button"
+                                onclick="switchSubTab('permissions')"
+                                class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all cursor-pointer">
+                            ✕ ปิดกลับหน้าสิทธิ์
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter Bar -->
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
+                    <div class="sm:col-span-5 relative">
+                        <input type="text"
+                               id="audit-search-input"
+                               oninput="filterAuditLogsClientSide()"
+                               placeholder="ค้นหาชื่อผู้ทำรายการ, รายละเอียด, เลขบิล, วัตถุดิบ..."
+                               class="w-full text-xs bg-white border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-slate-800 focus:outline-blue-500 font-medium">
+                        <span class="absolute left-2.5 top-2.5 text-slate-400 text-xs">🔍</span>
+                    </div>
+                    <div class="sm:col-span-3">
+                        <select id="audit-module-filter" onchange="filterAuditLogsClientSide()" class="w-full text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-semibold">
+                            <option value="all">ทุกหน้าต่าง / ทุกโมดูล (ทั้งหมด)</option>
+                            <option value="pos">🛒 แคชเชียร์หน้าร้าน (POS)</option>
+                            <option value="kitchen">🍳 จอครัว (KDS)</option>
+                            <option value="online">🛵 สั่งออนไลน์ (Online)</option>
+                            <option value="price_tracker">📈 ตรวจจับราคา (Price Tracker)</option>
+                            <option value="receipts">🧾 สแกนบิล (OCR Receipts)</option>
+                            <option value="inventory">📦 สต็อกวัตถุดิบ (Inventory)</option>
+                            <option value="expenses">💰 บัญชี &amp; ฟิกคอส (Expenses)</option>
+                            <option value="employees">👥 พนักงาน &amp; เช็คอิน (Employees)</option>
+                            <option value="access">🛡️ การเข้าถึง &amp; สิทธิ์ (Access)</option>
+                            <option value="auth">🔐 เข้าสู่ระบบ / สลับบัญชี (Auth)</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-4">
+                        <select id="audit-user-filter" onchange="filterAuditLogsClientSide()" class="w-full text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-semibold">
+                            <option value="all">ผู้ใช้งานทุกคน (All Users)</option>
+                            @foreach($users as $u)
+                                <option value="{{ strtolower($u['name'] ?? '') }}">👤 {{ $u['name'] }} ({{ $u['role'] ?? 'Staff' }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Audit Logs Table -->
+                <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900 text-white text-[11px] font-bold uppercase tracking-wider">
+                                <th class="py-3 px-3.5 whitespace-nowrap">วัน-เวลาไทย (พ.ศ.)</th>
+                                <th class="py-3 px-3.5 whitespace-nowrap">ผู้ทำรายการ (Actor)</th>
+                                <th class="py-3 px-3.5 whitespace-nowrap">หน้าต่าง / โมดูล</th>
+                                <th class="py-3 px-3.5 whitespace-nowrap">การกระทำ</th>
+                                <th class="py-3 px-3.5">รายละเอียดการเปลี่ยนแปลง &amp; รายการที่ดำเนินการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-logs-tbody" class="divide-y divide-slate-100 text-xs bg-white">
+                            @forelse($auditLogs ?? [] as $log)
+                                @php
+                                    $actBadge = match($log->action) {
+                                        'create' => ['label' => '➕ เพิ่มรายการ', 'cls' => 'bg-emerald-50 text-emerald-700 border-emerald-200'],
+                                        'update' => ['label' => '✏️ แก้ไขข้อมูล', 'cls' => 'bg-blue-50 text-blue-700 border-blue-200'],
+                                        'delete' => ['label' => '🗑️ ลบรายการ', 'cls' => 'bg-rose-50 text-rose-700 border-rose-200'],
+                                        'status' => ['label' => '🔄 เปลี่ยนสถานะ', 'cls' => 'bg-amber-50 text-amber-800 border-amber-200'],
+                                        'reconcile' => ['label' => '⚖️ ปิดกะ/กระทบยอด', 'cls' => 'bg-purple-50 text-purple-700 border-purple-200'],
+                                        'login' => ['label' => '🔑 เข้าสู่ระบบ', 'cls' => 'bg-teal-50 text-teal-700 border-teal-200'],
+                                        'logout' => ['label' => '🚪 ออกจากระบบ', 'cls' => 'bg-slate-100 text-slate-600 border-slate-200'],
+                                        'switch_user' => ['label' => '👤 สลับบัญชี', 'cls' => 'bg-indigo-50 text-indigo-700 border-indigo-200'],
+                                        default => ['label' => $log->action, 'cls' => 'bg-slate-100 text-slate-700 border-slate-200'],
+                                    };
+                                    $modName = \App\Models\AuditLog::moduleLabel($log->module ?? 'general');
+                                @endphp
+                                <tr class="audit-log-row hover:bg-slate-50/80 transition-colors"
+                                    data-module="{{ strtolower($log->module ?? '') }}"
+                                    data-user="{{ strtolower($log->user_name ?? '') }}"
+                                    data-search="{{ strtolower(($log->user_name ?? '') . ' ' . ($log->description ?? '') . ' ' . ($log->target_name ?? '') . ' ' . $modName) }}">
+                                    <td class="py-3 px-3.5 whitespace-nowrap font-mono text-[11px] text-slate-600 font-semibold">
+                                        {{ $log->thai_datetime ?: \App\Support\ThaiDate::format($log->created_at) }}
+                                    </td>
+                                    <td class="py-3 px-3.5 whitespace-nowrap">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-7 h-7 rounded-full bg-blue-600 text-white font-black text-[10px] flex items-center justify-center shrink-0">
+                                                {{ mb_substr($log->user_name ?? 'U', 0, 2) }}
+                                            </span>
+                                            <div>
+                                                <div class="font-bold text-slate-900 leading-tight">{{ $log->user_name ?? 'ไม่ระบุ' }}</div>
+                                                <div class="text-[10px] text-slate-500">{{ $log->user_role ?? 'Staff' }} • {{ $log->branch ?? 'สาขายะลา' }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-3.5 whitespace-nowrap">
+                                        <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-[11px]">
+                                            {{ $modName }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-3.5 whitespace-nowrap">
+                                        <span class="px-2.5 py-1 rounded-full border text-[10.5px] font-bold {{ $actBadge['cls'] }}">
+                                            {{ $actBadge['label'] }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-3.5">
+                                        <div class="font-semibold text-slate-800">{{ $log->description }}</div>
+                                        @if(!empty($log->target_name))
+                                            <div class="text-[10.5px] text-slate-500 mt-0.5">
+                                                เป้าหมาย: <span class="font-bold text-slate-700">{{ $log->target_name }}</span>
+                                            </div>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="py-10 text-center text-slate-400 font-medium">
+                                        ยังไม่มีประวัติการทำงานในระบบ
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- END PANEL 5: ประวัติการทำงานของระบบ -->
+
         </div>
         <!-- END RIGHT COLUMN -->
     </div>
@@ -2144,6 +2310,7 @@
         const pRegister = document.getElementById('panel-register');
         const pUsers = document.getElementById('panel-users');
         const pAutoLogout = document.getElementById('panel-autologout');
+        const pAudit = document.getElementById('panel-audit');
 
         const colUsersList = document.getElementById('col-users-list');
         const colMainContent = document.getElementById('col-main-content');
@@ -2152,6 +2319,7 @@
         const btnPermissions = document.getElementById('subtab-btn-permissions');
         const btnRegister = document.getElementById('subtab-btn-register');
         const btnAutoLogout = document.getElementById('subtab-btn-autologout');
+        const btnAudit = document.getElementById('subtab-btn-audit');
 
         const activeClasses = "subtab-btn shrink-0 py-2 px-3.5 rounded-xl text-xs font-bold text-[#2563EB] bg-[#EFF6FF] border border-[#BFDBFE] shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap";
         const inactiveClasses = "subtab-btn shrink-0 py-2 px-3.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap border-transparent";
@@ -2160,9 +2328,10 @@
         if (btnPermissions) btnPermissions.className = inactiveClasses;
         if (btnRegister) btnRegister.className = inactiveClasses;
         if (btnAutoLogout) btnAutoLogout.className = inactiveClasses;
+        if (btnAudit) btnAudit.className = inactiveClasses;
 
-        if (tab === 'autologout') {
-            // ระบบเช็คเอาท์อัตโนมัติเป็นการตั้งค่าระบบสำหรับทุกคน: ซ่อนคอลัมน์เลือกบัญชีผู้ใช้งานทางซ้ายออก และขยายเต็มหน้าจอ
+        if (tab === 'autologout' || tab === 'audit') {
+            // ระบบเช็คเอาท์อัตโนมัติ และ ประวัติการทำงาน (Audit Log): ซ่อนคอลัมน์เลือกบัญชีผู้ใช้งานทางซ้ายออก และขยายเต็มหน้าจอ
             if (colUsersList) {
                 colUsersList.classList.add('hidden');
                 colUsersList.style.display = 'none';
@@ -2176,12 +2345,25 @@
             if (pPermissions) pPermissions.classList.add('hidden');
             if (pRegister) pRegister.classList.add('hidden');
             if (pUsers) pUsers.classList.add('hidden');
-            if (pAutoLogout) {
-                pAutoLogout.classList.remove('hidden');
-                pAutoLogout.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            if (tab === 'audit') {
+                if (pAutoLogout) pAutoLogout.classList.add('hidden');
+                if (pAudit) {
+                    pAudit.classList.remove('hidden');
+                    pAudit.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                if (btnAudit) btnAudit.className = activeClasses;
+                loadAuditLogsLive();
+                showToast("เปิดหน้าต่าง: ประวัติการทำงานของระบบ (Audit Trail)");
+            } else {
+                if (pAudit) pAudit.classList.add('hidden');
+                if (pAutoLogout) {
+                    pAutoLogout.classList.remove('hidden');
+                    pAutoLogout.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                if (btnAutoLogout) btnAutoLogout.className = activeClasses;
+                showToast("เปิดหน้าต่าง: ระบบเช็คเอาท์อัตโนมัติ (การตั้งค่าความปลอดภัยส่วนกลาง)");
             }
-            if (btnAutoLogout) btnAutoLogout.className = activeClasses;
-            showToast("เปิดหน้าต่าง: ระบบเช็คเอาท์อัตโนมัติ (การตั้งค่าความปลอดภัยส่วนกลาง)");
         } else {
             // แท็บอื่นๆ แสดงคอลัมน์เลือกผู้ใช้งานทางซ้ายตามปกติ
             if (colUsersList) {
@@ -2193,6 +2375,7 @@
                 colMainContent.style.width = '';
                 colMainContent.classList.add('lg:col-span-8', 'xl:col-span-9');
             }
+            if (pAudit) pAudit.classList.add('hidden');
 
             if (tab === 'register') {
                 if (pPermissions) pPermissions.classList.add('hidden');
@@ -2783,6 +2966,119 @@
         }
     }
 
+    // 22. Audit Log Live Filter & Real-Time Loader
+    function filterAuditLogsClientSide() {
+        const searchVal = (document.getElementById('audit-search-input')?.value || '').toLowerCase().trim();
+        const modVal = (document.getElementById('audit-module-filter')?.value || 'all').toLowerCase();
+        const userVal = (document.getElementById('audit-user-filter')?.value || 'all').toLowerCase();
+
+        document.querySelectorAll('#audit-logs-tbody .audit-log-row').forEach(row => {
+            const rMod = (row.dataset.module || '').toLowerCase();
+            const rUser = (row.dataset.user || '').toLowerCase();
+            const rSearch = (row.dataset.search || '').toLowerCase();
+
+            const matchMod = (modVal === 'all' || rMod === modVal);
+            const matchUser = (userVal === 'all' || rUser.includes(userVal));
+            const matchSearch = (!searchVal || rSearch.includes(searchVal));
+
+            row.style.display = (matchMod && matchUser && matchSearch) ? '' : 'none';
+        });
+    }
+
+    const auditModuleLabelsMap = {
+        pos: 'แคชเชียร์หน้าร้าน (POS)',
+        kitchen: 'จอทำอาหารในครัว (KDS)',
+        online: 'สั่งออนไลน์ (Online Order)',
+        dashboard: 'ภาพรวมระบบ (Dashboard)',
+        price_tracker: 'ระบบตรวจจับราคา (Price Tracker)',
+        receipts: 'สแกนบิล & ใบเสร็จ (OCR)',
+        inventory: 'คลังสต็อกวัตถุดิบ (Inventory)',
+        expenses: 'บัญชี & ฟิกคอส (Expenses)',
+        employees: 'พนักงาน & เช็คอิน (HR)',
+        access: 'การเข้าถึง & สิทธิ์ (Access)',
+        auth: 'ระบบยืนยันตัวตน (Auth)'
+    };
+
+    const auditActionBadgesMap = {
+        create: { label: '➕ เพิ่มรายการ', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+        update: { label: '✏️ แก้ไขข้อมูล', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
+        delete: { label: '🗑️ ลบรายการ', cls: 'bg-rose-50 text-rose-700 border-rose-200' },
+        status: { label: '🔄 เปลี่ยนสถานะ', cls: 'bg-amber-50 text-amber-800 border-amber-200' },
+        reconcile: { label: '⚖️ ปิดกะ/กระทบยอด', cls: 'bg-purple-50 text-purple-700 border-purple-200' },
+        login: { label: '🔑 เข้าสู่ระบบ', cls: 'bg-teal-50 text-teal-700 border-teal-200' },
+        logout: { label: '🚪 ออกจากระบบ', cls: 'bg-slate-100 text-slate-600 border-slate-200' },
+        switch_user: { label: '👤 สลับบัญชี', cls: 'bg-indigo-50 text-indigo-700 border-indigo-200' }
+    };
+
+    async function loadAuditLogsLive() {
+        const tbody = document.getElementById('audit-logs-tbody');
+        const btn = document.getElementById('btn-refresh-audit-logs');
+        if (!tbody) return;
+        if (btn) btn.innerHTML = '<span>⏳ กำลังดึงข้อมูล...</span>';
+
+        try {
+            const res = await fetch('/system/audit-logs?limit=120', {
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
+            });
+            const data = await res.json();
+            if (data.success && Array.isArray(data.logs)) {
+                const countBadge = document.getElementById('subtab-audit-count-badge');
+                if (countBadge) countBadge.innerText = data.logs.length + ' รายการ';
+
+                if (data.logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-slate-400 font-medium">ยังไม่มีประวัติการทำงานในระบบ</td></tr>';
+                } else {
+                    tbody.innerHTML = data.logs.map(log => {
+                        const modKey = (log.module || 'general').toLowerCase();
+                        const modLabel = auditModuleLabelsMap[modKey] || log.module || 'ระบบทั่วไป';
+                        const actBadge = auditActionBadgesMap[log.action] || { label: log.action || 'ดำเนินการ', cls: 'bg-slate-100 text-slate-700 border-slate-200' };
+                        const uName = log.user_name || 'ไม่ระบุ';
+                        const uInitials = uName.substring(0, 2);
+                        const searchBlob = `${uName} ${log.description || ''} ${log.target_name || ''} ${modLabel}`.toLowerCase().replace(/"/g, '');
+                        return `<tr class="audit-log-row hover:bg-slate-50/80 transition-colors"
+                                    data-module="${modKey}"
+                                    data-user="${uName.toLowerCase()}"
+                                    data-search="${searchBlob}">
+                            <td class="py-3 px-3.5 whitespace-nowrap font-mono text-[11px] text-slate-600 font-semibold">${log.thai_datetime || ''}</td>
+                            <td class="py-3 px-3.5 whitespace-nowrap">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-7 h-7 rounded-full bg-blue-600 text-white font-black text-[10px] flex items-center justify-center shrink-0">${uInitials}</span>
+                                    <div>
+                                        <div class="font-bold text-slate-900 leading-tight">${uName}</div>
+                                        <div class="text-[10px] text-slate-500">${log.user_role || 'Staff'} • ${log.branch || 'สาขายะลา'}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 px-3.5 whitespace-nowrap">
+                                <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-[11px]">${modLabel}</span>
+                            </td>
+                            <td class="py-3 px-3.5 whitespace-nowrap">
+                                <span class="px-2.5 py-1 rounded-full border text-[10.5px] font-bold ${actBadge.cls}">${actBadge.label}</span>
+                            </td>
+                            <td class="py-3 px-3.5">
+                                <div class="font-semibold text-slate-800">${log.description || ''}</div>
+                                ${log.target_name ? `<div class="text-[10.5px] text-slate-500 mt-0.5">เป้าหมาย: <span class="font-bold text-slate-700">${log.target_name}</span></div>` : ''}
+                            </td>
+                        </tr>`;
+                    }).join('');
+                    filterAuditLogsClientSide();
+                }
+            }
+        } catch (err) {
+            console.warn(err);
+        } finally {
+            if (btn) btn.innerHTML = '<span>🔄 อัปเดตข้อมูลล่าสุด</span>';
+        }
+    }
+
+    // Listen to global real-time sync event to auto-refresh Audit Log table if open
+    window.addEventListener('mala:realtime-update', () => {
+        if (currentTab === 'audit') {
+            loadAuditLogsLive();
+        }
+    });
+
     // Initialize subtab from URL query if present
     document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -2793,6 +3089,8 @@
             switchSubTab('users');
         } else if (tab === 'autologout') {
             switchSubTab('autologout');
+        } else if (tab === 'audit') {
+            switchSubTab('audit');
         }
     });
 </script>

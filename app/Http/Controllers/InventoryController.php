@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\InventoryDaily;
 use App\Models\Product;
 use Carbon\Carbon;
@@ -255,6 +256,18 @@ class InventoryController extends Controller
         $actionLabel = $action === 'add' ? 'เสียบเพิ่มเข้าสต็อก' : 'ตัดของเสียออกจากสต็อก';
         $msg = "บันทึก{$actionLabel} จำนวน " . count($updatedProductNames) . " รายการ (รวม {$totalAdjustedSticks} ไม้) เรียบร้อยแล้ว";
 
+        AuditLog::record(
+            'inventory',
+            $action === 'add' ? 'create' : 'delete',
+            $actionLabel,
+            implode(', ', array_slice($updatedProductNames, 0, 4)) . " (รวม {$totalAdjustedSticks} ไม้)",
+            [
+                'date' => $validated['date'],
+                'action' => $action,
+                'total_adjusted_sticks' => $totalAdjustedSticks,
+            ]
+        );
+
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
@@ -314,6 +327,14 @@ class InventoryController extends Controller
         });
 
         $msg = "บันทึกยอดตรวจนับจริงสิ้นวัน ({$updatedCount} รายการ) เรียบร้อยแล้ว ยอดนี้จะยกยอดไปวันถัดไปโดยอัตโนมัติ";
+
+        AuditLog::record(
+            'inventory',
+            'reconcile',
+            'บันทึกยอดตรวจนับสต็อกจริงสิ้นวัน',
+            "อัปเดต {$updatedCount} รายการ (วันที่ {$validated['date']})",
+            ['date' => $validated['date'], 'updated_count' => $updatedCount]
+        );
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Category;
 use App\Models\InventoryDaily;
 use App\Models\PriceHistory;
@@ -902,6 +903,19 @@ class ReceiptController extends Controller
                 }
             }
 
+            AuditLog::record(
+                'receipts',
+                'create',
+                'บันทึกใบเสร็จซื้อวัตถุดิบ',
+                "ใบเสร็จ {$receipt->receipt_no} ({$receipt->vendor_name}) ยอด ฿" . number_format((float) $receipt->total_amount, 2),
+                [
+                    'receipt_id' => $receipt->id,
+                    'receipt_no' => $receipt->receipt_no,
+                    'vendor_name' => $receipt->vendor_name,
+                    'total_amount' => (float) $receipt->total_amount,
+                ]
+            );
+
             if ($request->wantsJson()) {
                 $costSummary = $this->getReceiptCostSummary();
                 $todayCost = $costSummary['today_cost'];
@@ -974,6 +988,13 @@ class ReceiptController extends Controller
                     }
                 }
             });
+
+            AuditLog::record(
+                'receipts',
+                'delete',
+                'ลบรายการใบเสร็จ',
+                "ใบเสร็จ {$receiptNo}"
+            );
 
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
@@ -1283,10 +1304,25 @@ class ReceiptController extends Controller
             );
         }
 
+        $actor = AuditLog::resolveCurrentUserActor();
+        AuditLog::record(
+            'price_tracker',
+            'create',
+            'เพิ่มวัตถุดิบใหม่',
+            "{$rawMaterial->name} (ราคา ฿" . number_format((float) $rawMaterial->latest_cost_price, 2) . "/{$rawMaterial->purchase_unit})",
+            [
+                'material_id' => $rawMaterial->id,
+                'latest_cost_price' => (float) $rawMaterial->latest_cost_price,
+                'cost_per_stick' => (float) $rawMaterial->cost_per_stick,
+            ],
+            $actor
+        );
+
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
                 'message' => 'เพิ่มรายการวัตถุดิบและข้อมูลสต็อกเรียบร้อยแล้ว',
+                'updated_by' => $actor['name'] ?? 'ผู้ใช้งาน',
                 'material' => [
                     'id' => $rawMaterial->id,
                     'name' => $rawMaterial->name,
@@ -1468,6 +1504,21 @@ class ReceiptController extends Controller
             ]);
         }
 
+        $actor = AuditLog::resolveCurrentUserActor();
+        AuditLog::record(
+            'price_tracker',
+            'update',
+            'แก้ไขข้อมูลราคาวัตถุดิบ',
+            "{$rawMaterial->name} (฿" . number_format($previousPrice, 2) . " ➔ ฿" . number_format($newPrice, 2) . ")",
+            [
+                'material_id' => $rawMaterial->id,
+                'previous_price' => $previousPrice,
+                'new_price' => $newPrice,
+                'cost_per_stick' => $costPerStick,
+            ],
+            $actor
+        );
+
         if ($request->wantsJson() || $request->ajax()) {
             $rawMaterial->load(['priceHistories' => fn ($q) => $q->orderByDesc('recorded_at')->orderByDesc('id')->take(5)]);
             $latestHist = $rawMaterial->priceHistories->first();
@@ -1475,6 +1526,7 @@ class ReceiptController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'อัปเดตข้อมูลรายการ "' . $rawMaterial->name . '" เรียบร้อยแล้ว',
+                'updated_by' => $actor['name'] ?? 'ผู้ใช้งาน',
                 'material' => [
                     'id' => $rawMaterial->id,
                     'name' => $rawMaterial->name,
@@ -1544,6 +1596,19 @@ class ReceiptController extends Controller
             $mat->delete();
             $deletedCount++;
         }
+
+        $actor = AuditLog::resolveCurrentUserActor();
+        AuditLog::record(
+            'price_tracker',
+            'delete',
+            "ลบวัตถุดิบ ({$deletedCount} รายการ)",
+            implode(', ', array_slice($deletedNames, 0, 5)),
+            [
+                'deleted_ids' => $ids,
+                'deleted_names' => $deletedNames,
+            ],
+            $actor
+        );
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([

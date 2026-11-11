@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Category;
 use App\Models\InventoryDaily;
 use App\Models\Order;
@@ -186,6 +187,20 @@ class PosController extends Controller
 
             $order->load('items.product');
 
+            AuditLog::record(
+                'pos',
+                'create',
+                'เปิดบิลขายหน้าร้าน (POS)',
+                "คิว {$queueNumber} ({$orderNo}) ยอด ฿" . number_format($totalAmount, 2),
+                [
+                    'order_id' => $order->id,
+                    'order_no' => $orderNo,
+                    'queue_number' => $queueNumber,
+                    'total_amount' => $totalAmount,
+                    'payment_method' => $validated['payment_method'],
+                ]
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => 'บันทึกออเดอร์หน้าร้านเรียบร้อยแล้ว',
@@ -220,11 +235,34 @@ class PosController extends Controller
             'status' => 'required|in:pending,confirmed,cooking,ready,completed,cancelled',
         ]);
 
+        $oldStatus = $order->status;
         $order->status = $validated['status'];
         if ($validated['status'] === 'completed') {
             $order->completed_at = Carbon::now();
         }
         $order->save();
+
+        $statusLabels = [
+            'pending' => 'รอคิว',
+            'confirmed' => 'รับออเดอร์',
+            'cooking' => 'กำลังปรุง',
+            'ready' => 'พร้อมเสิร์ฟ',
+            'completed' => 'เสร็จสิ้น',
+            'cancelled' => 'ยกเลิกออเดอร์',
+        ];
+        $statusLabel = $statusLabels[$validated['status']] ?? $validated['status'];
+
+        AuditLog::record(
+            'kitchen',
+            'status',
+            "อัปเดตสถานะครัว: {$statusLabel}",
+            "คิว {$order->queue_number} ({$order->order_no})",
+            [
+                'order_id' => $order->id,
+                'old_status' => $oldStatus,
+                'new_status' => $order->status,
+            ]
+        );
 
         return response()->json([
             'success' => true,

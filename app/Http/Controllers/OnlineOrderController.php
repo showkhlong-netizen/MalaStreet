@@ -219,6 +219,16 @@ class OnlineOrderController extends Controller
                 'is_read' => false,
             ]);
 
+            \App\Models\AuditLog::record(
+                'online',
+                'create',
+                "รับออเดอร์ออนไลน์คิว {$order->queue_number} ({$order->order_no}) ลูกค้า: {$order->customer_name} ยอด ฿" . number_format($order->total_amount, 2),
+                "{$order->queue_number} ({$order->order_no})",
+                'order',
+                (string) $order->id,
+                ['queue' => $order->queue_number, 'customer' => $order->customer_name, 'total' => $order->total_amount]
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => 'ส่งออเดอร์สำเร็จ ชำระเงินเรียบร้อยแล้ว',

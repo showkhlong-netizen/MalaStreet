@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -67,6 +68,8 @@ class AuthController extends Controller
                 $request->session()->put('auth_user_profile', $matched);
             }
 
+            AuditLog::record('auth', 'login', 'เข้าสู่ระบบ', Auth::user()->name, ['email' => $email]);
+
             $redirectUrl = $request->input('redirect') ?: route('pos.index');
             return redirect()->intended($redirectUrl)
                 ->with('success', 'เข้าสู่ระบบสำเร็จ ยินดีต้อนรับ ' . Auth::user()->name);
@@ -92,6 +95,8 @@ class AuthController extends Controller
                 $request->session()->put('auth_user_profile', $matched);
             }
 
+            AuditLog::record('auth', 'login', 'เข้าสู่ระบบ', $userModel->name, ['email' => $email]);
+
             $redirectUrl = $request->input('redirect') ?: route('pos.index');
             return redirect()->intended($redirectUrl)
                 ->with('success', 'เข้าสู่ระบบสำเร็จ ยินดีต้อนรับ ' . $userModel->name);
@@ -108,6 +113,8 @@ class AuthController extends Controller
     public function logout(Request $request): RedirectResponse
     {
         $reason = $request->input('reason', $request->query('reason', 'logout'));
+
+        AuditLog::record('auth', 'logout', $reason === 'timeout' ? 'ออกจากระบบอัตโนมัติ (Timeout)' : 'ออกจากระบบ', Auth::user()?->name ?? 'ผู้ใช้งาน');
 
         Auth::logout();
         if ($request->hasSession()) {
@@ -133,15 +140,30 @@ class AuthController extends Controller
         $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true) ?: [];
         $targetUser = collect($savedUsers)->firstWhere('id', $userId);
 
-        if ($targetUser && !empty($targetUser['email'])) {
-            $userModel = User::where('email', $targetUser['email'])->first();
-            if ($userModel) {
-                Auth::login($userModel);
-                $request->session()->regenerate();
-                $request->session()->forget('is_logged_out');
-                $request->session()->put('auth_user_profile', $targetUser);
-                return back()->with('success', "สลับไปยังผู้ใช้งาน '{$targetUser['name']}' เรียบร้อยแล้ว");
+        if ($targetUser) {
+            $email = $targetUser['email'] ?? ($userId . '@malastreet.com');
+            $userModel = User::where('email', $email)->first();
+            if (!$userModel) {
+                $userModel = User::firstOrCreate(
+                    ['email' => $email],
+                    [
+                        'name' => $targetUser['name'] ?? 'พนักงาน',
+                        'password' => Hash::make('password123'),
+                    ]
+                );
             }
+
+            Auth::login($userModel, true);
+            $request->session()->regenerate();
+            $request->session()->forget('is_logged_out');
+            $request->session()->put('auth_user_profile', $targetUser);
+
+            AuditLog::record('auth', 'switch_user', 'สลับบัญชีผู้ใช้งาน', $targetUser['name'] ?? $userModel->name, [
+                'role' => $targetUser['role'] ?? 'Employee',
+                'branch' => $targetUser['branch'] ?? 'สาขายะลา',
+            ]);
+
+            return back()->with('success', "สลับไปยังผู้ใช้งาน '{$targetUser['name']}' เรียบร้อยแล้ว");
         }
 
         return back()->with('error', 'ไม่พบบัญชีผู้ใช้งานที่ต้องการสลับ');

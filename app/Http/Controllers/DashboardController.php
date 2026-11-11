@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Expense;
 use App\Models\InventoryDaily;
 use App\Models\Order;
@@ -90,6 +91,15 @@ class DashboardController extends Controller
         $msg = $targetMode === 'live' 
             ? 'เปิดระบบสั่งออนไลน์รับออเดอร์จริงเรียบร้อยแล้ว!' 
             : 'เปลี่ยนระบบสั่งออนไลน์เป็น "โหมดพรีวิว (Preview Mode)" เรียบร้อยแล้ว';
+
+        AuditLog::record(
+            'dashboard',
+            'update',
+            $msg,
+            "Online Order Mode: {$targetMode}",
+            'setting',
+            'online_order_status'
+        );
 
         return redirect()->back()->with('success', $msg);
     }

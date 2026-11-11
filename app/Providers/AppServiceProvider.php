@@ -2,8 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\AuditLog;
+use App\Models\MasterSummary;
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\ThaiDate;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
@@ -24,22 +28,44 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Enforce HTTPS on Production / Cloud Hosting (Render) to fix mixed-content CSS blocking
+        // 1. Strictly enforce Thailand Timezone (Asia/Bangkok) & Thai Locale across the entire application
+        date_default_timezone_set('Asia/Bangkok');
+        Carbon::setLocale('th');
+
+        Carbon::macro('toThaiDate', function (bool $includeTime = false, bool $fullMonth = false): string {
+            /** @var Carbon $this */
+            return ThaiDate::format($this, $includeTime, $fullMonth);
+        });
+
+        Carbon::macro('toThaiSlash', function (bool $includeTime = false): string {
+            /** @var Carbon $this */
+            return ThaiDate::formatSlash($this, $includeTime);
+        });
+
+        // 2. Enforce HTTPS on Production / Cloud Hosting (Render) to fix mixed-content CSS blocking
         if (app()->environment('production') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') || str_contains(request()->url(), 'onrender.com') || env('APP_ENV') === 'production') {
             URL::forceScheme('https');
         }
 
         View::composer('*', function ($view) {
-            // 1. Resolve current user profile
+            // 3. Resolve current user profile (Synced across Auth, Session Switcher, and Access Control list)
             $user = Auth::user();
             $profile = null;
             $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true) ?: [];
 
             $isLoggedOut = session('is_logged_out', false);
+            $sessionProfile = session('auth_user_profile');
 
             if ($user && !$isLoggedOut) {
-                // Find matching profile in access_users_list
-                $profile = collect($savedUsers)->firstWhere('email', $user->email);
+                if ($sessionProfile && is_array($sessionProfile) && !empty($sessionProfile['id'])) {
+                    // Refresh from latest access_users_list if available
+                    $freshMatch = collect($savedUsers)->firstWhere('id', $sessionProfile['id'])
+                        ?? collect($savedUsers)->firstWhere('email', $user->email);
+                    $profile = $freshMatch ?: $sessionProfile;
+                } else {
+                    $profile = collect($savedUsers)->firstWhere('email', $user->email);
+                }
+
                 if (!$profile) {
                     $profile = [
                         'id' => 'usr_' . $user->id,
@@ -58,7 +84,7 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
 
-            // 2. Resolve global auto-logout settings
+            // 4. Resolve global auto-logout settings
             $savedSettings = json_decode(Setting::get('access_auto_logout_settings', '{}'), true) ?: [];
             $autoLogoutSettings = array_merge([
                 'timeout_minutes' => (int) Setting::get('access_auto_logout_minutes', 15),
@@ -72,7 +98,9 @@ class AppServiceProvider extends ServiceProvider
             ], $savedSettings);
 
             $view->with('currentUser', $profile);
+            $view->with('allSystemUsers', $savedUsers);
             $view->with('globalAutoLogoutSettings', $autoLogoutSettings);
+            $view->with('thaiServerNow', ThaiDate::now());
         });
     }
 }

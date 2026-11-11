@@ -9,7 +9,13 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\OnlineOrderController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ReceiptController;
+use App\Http\Controllers\SystemSyncController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+
+// Real-Time Sync & Authoritative Thai Time Endpoint
+Route::get('/system/sync-state', [SystemSyncController::class, 'syncState'])->name('system.sync_state');
+Route::get('/system/audit-logs', [SystemSyncController::class, 'auditLogs'])->name('system.audit_logs')->middleware('auth');
 
 // Landing redirect to POS or Login
 Route::get('/', function () {

@@ -11,6 +11,10 @@ services:
         value: production
       - key: APP_DEBUG
         value: "false"
+      - key: APP_TIMEZONE
+        value: Asia/Bangkok
+      - key: TZ
+        value: Asia/Bangkok
       - key: APP_KEY
         value: base64:Nx0XPKfCVXXEgwe/qqnFiTogRERZdfPsF+QDUlW4fuM=
       - key: DB_CONNECTION

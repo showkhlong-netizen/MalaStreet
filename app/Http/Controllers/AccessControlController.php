@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\ThaiDate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -208,12 +210,16 @@ class AccessControlController extends Controller
             }
         }
 
-        // Active selected user
+        // Active selected user (sync with logged-in user if user_id not explicitly requested)
         if ($selectedUserId) {
             $selectedUser = collect($users)->firstWhere('id', $selectedUserId) ?? ($users[0] ?? null);
         } else {
-            // Default to first user in list (e.g. real user created from Access Control)
-            $selectedUser = $users[0] ?? (collect($users)->firstWhere('id', 'usr_arena_employee') ?? null);
+            $actor = AuditLog::resolveCurrentUserActor();
+            $selectedUser = collect($users)->first(function ($u) use ($actor) {
+                return ($u['id'] ?? '') === ($actor['id'] ?? '')
+                    || strtolower($u['email'] ?? '') === strtolower($actor['email'] ?? '')
+                    || ($u['name'] ?? '') === ($actor['name'] ?? '');
+            }) ?? ($users[0] ?? null);
         }
 
         // Modules & Granular Permission Capabilities for Mala Street System
@@ -604,6 +610,24 @@ class AccessControlController extends Controller
 
         $defaultRolePermissions = $this->getDefaultPermissionsForRole($selectedUser['role'] ?? 'Employee');
 
+        // Fetch Audit Logs (seed initial system audit logs if empty so Audit tab is immediately populated)
+        $auditLogs = collect();
+        try {
+            if (AuditLog::count() === 0) {
+                AuditLog::record(
+                    'access',
+                    'update',
+                    'เปิดใช้งานระบบบันทึกประวัติการทำงาน (Audit Trail & Real-Time Sync พ.ศ. 2569)',
+                    'ระบบการเข้าถึง & ความปลอดภัย',
+                    'setting',
+                    'audit_init'
+                );
+            }
+            $auditLogs = AuditLog::orderByDesc('id')->limit(120)->get();
+        } catch (\Throwable $e) {
+            $auditLogs = collect();
+        }
+
         return view('admin.access.index', compact(
             'currentTab',
             'users',
@@ -613,7 +637,8 @@ class AccessControlController extends Controller
             'defaultRolePermissions',
             'isTestCleared',
             'activeEmployeeData',
-            'autoLogoutSettings'
+            'autoLogoutSettings',
+            'auditLogs'
         ));
     }
 
@@ -631,6 +656,19 @@ class AccessControlController extends Controller
 
         $key = "permissions_user_{$userId}";
         Setting::set($key, json_encode($permissions), 'permissions');
+
+        $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true);
+        $targetUser = collect($savedUsers)->firstWhere('id', $userId);
+        $targetUserName = $targetUser['name'] ?? $userId;
+
+        AuditLog::record(
+            'access',
+            'update',
+            "อัปเดตสิทธิ์การเข้าถึงของ {$targetUserName} (" . count($permissions) . " โมดูล)",
+            $targetUserName,
+            'permission',
+            (string) $userId
+        );
 
         return response()->json([
             'success' => true,
@@ -682,6 +720,7 @@ class AccessControlController extends Controller
         // Update name or position in access_users_list if modified
         $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true);
         $updated = false;
+        $targetUserName = $profile['name'] ?? $userId;
         foreach ($savedUsers as &$u) {
             if ($u['id'] === $userId) {
                 if (!empty($profile['name'])) $u['name'] = $profile['name'];
@@ -690,6 +729,7 @@ class AccessControlController extends Controller
                 if (!empty($profile['phone'])) $u['phone'] = $profile['phone'];
                 if (!empty($profile['email'])) $u['email'] = $profile['email'];
                 if (!empty($profile['branch'])) $u['branch'] = $profile['branch'];
+                $targetUserName = $u['name'] ?? $targetUserName;
                 $updated = true;
                 break;
             }
@@ -697,6 +737,15 @@ class AccessControlController extends Controller
         if ($updated) {
             Setting::set('access_users_list', json_encode($savedUsers), 'access');
         }
+
+        AuditLog::record(
+            'access',
+            'update',
+            "บันทึกข้อมูลตารางงาน/เงินเดือน/โปรไฟล์พนักงาน: {$targetUserName}",
+            $targetUserName,
+            'employee_data',
+            (string) $userId
+        );
 
         return response()->json([
             'success' => true,
@@ -871,6 +920,15 @@ class AccessControlController extends Controller
         ];
         Setting::set('employee_data_' . $userId, json_encode($initialEmployeeData), 'employees');
 
+        AuditLog::record(
+            'access',
+            'create',
+            "สร้างบัญชีผู้ใช้งานจริงใหม่: {$name} ({$roleLabels[$role]}) สาขา: {$branch}",
+            $name,
+            'user',
+            (string) $userId
+        );
+
         return response()->json([
             'success' => true,
             'message' => "สร้างบัญชีจริง '{$name}' ({$roleLabels[$role]}) เรียบร้อยแล้ว! สามารถเข้าใช้งานได้ทันที",
@@ -885,6 +943,9 @@ class AccessControlController extends Controller
     public function deleteUser(string $id): JsonResponse
     {
         $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true);
+        $deletedUser = collect($savedUsers)->firstWhere('id', $id);
+        $deletedName = $deletedUser['name'] ?? $id;
+
         $savedUsers = array_values(array_filter($savedUsers, fn($u) => ($u['id'] ?? '') !== $id));
         Setting::set('access_users_list', json_encode($savedUsers), 'access');
 
@@ -892,6 +953,15 @@ class AccessControlController extends Controller
         if (str_starts_with($id, 'usr_00') || $id === 'usr_test_admin') {
             Setting::set('access_test_accounts_cleared', '1', 'access');
         }
+
+        AuditLog::record(
+            'access',
+            'delete',
+            "ลบบัญชีผู้ใช้งาน: {$deletedName}",
+            $deletedName,
+            'user',
+            (string) $id
+        );
 
         return response()->json([
             'success' => true,
@@ -905,6 +975,15 @@ class AccessControlController extends Controller
     public function clearTestUsers(): JsonResponse
     {
         Setting::set('access_test_accounts_cleared', '1', 'access');
+
+        AuditLog::record(
+            'access',
+            'delete',
+            'ล้างบัญชีทดสอบทั้งหมด เหลือเฉพาะบัญชีผู้ใช้งานจริง',
+            'บัญชีทดสอบทั้งหมด',
+            'user',
+            'test_users'
+        );
 
         return response()->json([
             'success' => true,
@@ -933,6 +1012,15 @@ class AccessControlController extends Controller
         $label = $autoLogoutMinutes === 0 
             ? 'ปิดใช้งาน' 
             : ($autoLogoutMinutes >= 60 ? ($autoLogoutMinutes / 60) . ' ชม.' : $autoLogoutMinutes . ' นาที');
+
+        AuditLog::record(
+            'access',
+            'update',
+            "อัปเดตตั้งค่าระบบเช็คเอาท์อัตโนมัติ ({$label})",
+            "Auto-Logout: {$label}",
+            'setting',
+            'access_auto_logout'
+        );
 
         return response()->json([
             'success' => true,

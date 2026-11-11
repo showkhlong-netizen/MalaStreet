@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -26,6 +27,15 @@ class EmployeeController extends Controller
         $activeEmployee = null;
         if ($selectedEmployeeId) {
             $activeEmployee = collect($realEmployees)->firstWhere('id', $selectedEmployeeId);
+        }
+        if (!$activeEmployee) {
+            // Default to currently logged-in user account so it stays 100% synced!
+            $loggedActor = AuditLog::resolveCurrentUserActor();
+            $activeEmployee = collect($realEmployees)->first(function ($emp) use ($loggedActor) {
+                return ($emp['id'] ?? '') === ($loggedActor['id'] ?? '')
+                    || (!empty($loggedActor['email']) && strtolower($emp['email'] ?? '') === strtolower($loggedActor['email']))
+                    || strtolower($emp['name'] ?? '') === strtolower($loggedActor['name'] ?? '');
+            });
         }
         if (!$activeEmployee) {
             $activeEmployee = $realEmployees[0] ?? [
@@ -477,9 +487,26 @@ class EmployeeController extends Controller
             $message = "สแกนใบหน้าสำเร็จ! เช็คเอาท์ออกงานเวลา {$formattedTime} (บันทึกภาพและพิกัดร้านแล้ว)";
         }
 
-        $activeEmp = $this->getRealEmployeesList()[0] ?? null;
-        $empName = $activeEmp['name'] ?? 'Munib Salaemae';
-        $empId = $activeEmp['id'] ?? 'EMP-001';
+        $loggedActor = AuditLog::resolveCurrentUserActor();
+        $realEmps = $this->getRealEmployeesList();
+        $activeEmp = collect($realEmps)->first(function ($emp) use ($loggedActor) {
+            return ($emp['id'] ?? '') === ($loggedActor['id'] ?? '')
+                || (!empty($loggedActor['email']) && strtolower($emp['email'] ?? '') === strtolower($loggedActor['email']))
+                || strtolower($emp['name'] ?? '') === strtolower($loggedActor['name'] ?? '');
+        }) ?: ($realEmps[0] ?? null);
+
+        $empName = $activeEmp['name'] ?? $loggedActor['name'] ?? 'Munib Salaemae';
+        $empId = $activeEmp['id'] ?? $loggedActor['id'] ?? 'EMP-001';
+
+        AuditLog::record(
+            'employees',
+            $actionType,
+            $actionType === 'check_in' ? 'สแกนใบหน้าเช็คอินเข้างาน' : 'สแกนใบหน้าเช็คเอาท์ออกงาน',
+            "{$empName} (เวลา {$formattedTime} • ระยะ {$distance} ม.)",
+            ['employee_id' => $empId, 'distance' => $distance, 'time' => $formattedTime],
+            $loggedActor
+        );
+
         return response()->json([
             'success' => true,
             'message' => $message,
@@ -619,6 +646,14 @@ class EmployeeController extends Controller
         Setting::set('store_radius_meters', (string) $radius, 'geofence');
         Setting::set('store_allow_mock_location', $allowMock ? '1' : '0', 'geofence');
         Setting::set('store_location_name', $name, 'geofence');
+
+        AuditLog::record(
+            'employees',
+            'update',
+            'อัปเดตพิกัดร้านและรัศมี Geofence',
+            "พิกัด ({$lat}, {$lng}) รัศมี {$radius} เมตร",
+            ['lat' => $lat, 'lng' => $lng, 'radius' => $radius, 'allow_mock' => $allowMock]
+        );
 
         return response()->json([
             'success' => true,
