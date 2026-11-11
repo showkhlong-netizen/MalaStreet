@@ -1,0 +1,13 @@
+ดาวน์โหลดฟอนต์ตัวจริงจาก Google Fonts (ภายนอกชุด ZIP นี้)
+
+Prompt (แนะนำ): https://fonts.google.com/specimen/Prompt
+Kanit (ตัวเลือกสำรองเพื่อเทียบรูปลักษณ์): https://fonts.google.com/specimen/Kanit
+
+เปิดหน้า Prompt แล้วกด Get font > Download all เพื่อรับไฟล์ฟอนต์ไปติดตั้ง
+ไฟล์ที่ต้องใช้คือ Prompt-Regular.ttf (400) และ Prompt-Bold.ttf (700)
+เมื่อใช้งานในเว็บผ่าน CSS ไม่จำเป็นต้องดาวน์โหลดไฟล์ฟอนต์
+
+สำหรับนักพัฒนา CDN:
+https://fonts.googleapis.com/css2?family=Prompt:wght@400;700&display=swap
+
+ลิขสิทธิ์: ฟอนต์ Prompt เผยแพร่ภายใต้ SIL Open Font License 1.1

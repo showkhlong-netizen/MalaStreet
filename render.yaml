@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: mala-street
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_KEY
+        value: base64:Nx0XPKfCVXXEgwe/qqnFiTogRERZdfPsF+QDUlW4fuM=
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: DB_DATABASE
+        value: /var/www/html/database/database.sqlite
+      - key: SESSION_DRIVER
+        value: cookie
+      - key: CACHE_STORE
+        value: array

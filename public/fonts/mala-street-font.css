@@ -1,0 +1,73 @@
+/* Mala Street — 4 weight font kit. Official Prompt from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap');
+
+:root {
+  --mala-font-family: 'Prompt', 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --mala-font: var(--mala-font-family);
+  --mala-weight-thin: 400;        /* บาง: regular (400) */
+  --mala-weight-bold: 500;        /* หนา: medium (500) */
+  --mala-weight-mid-bold: 600;    /* หนากลาง: semibold (600) */
+  --mala-weight-max-bold: 700;    /* หนามาก: bold (700) - maximum for this project */
+}
+
+/* Apply across entire system */
+*,
+html,
+body,
+button,
+input,
+textarea,
+select,
+.font-kanit,
+.font-sans,
+.mala-app {
+  font-family: var(--mala-font-family) !important;
+}
+
+body {
+  font-family: var(--mala-font-family) !important;
+  font-weight: var(--mala-weight-thin);
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 4 Weight Classes matching ANTIGRAVITY_4_WEIGHTS_PROMPT.txt */
+.mala-font-thin     { font-weight: var(--mala-weight-thin) !important; }
+.mala-font-bold     { font-weight: var(--mala-weight-bold) !important; }
+.mala-font-mid-bold { font-weight: var(--mala-weight-mid-bold) !important; }
+.mala-font-max-bold { font-weight: var(--mala-weight-max-bold) !important; }
+
+/* Aliases */
+.mala-font-regular  { font-weight: 400 !important; }
+.mala-font-medium   { font-weight: 500 !important; }
+.mala-font-semibold { font-weight: 600 !important; }
+.mala-font-heavy    { font-weight: 700 !important; }
+
+/* Clamp any 800/900 to 700 max */
+.font-black,
+.font-extrabold,
+.font-bolder {
+  font-weight: var(--mala-weight-max-bold) !important;
+}
+
+/* Force .font-kanit to use Prompt and not faux bold */
+.font-kanit {
+  font-family: var(--mala-font-family) !important;
+}
+
+/* Semantic Typography Hierarchy */
+.mala-store-name    { font-weight: var(--mala-weight-max-bold) !important; line-height: 1.3; letter-spacing: -0.015em; }
+.mala-store-subline { font-weight: var(--mala-weight-thin) !important; line-height: 1.45; }
+.mala-meta          { font-weight: var(--mala-weight-bold) !important; line-height: 1.4; }
+.mala-rating-number { font-weight: var(--mala-weight-max-bold) !important; }
+.mala-tab           { font-weight: var(--mala-weight-mid-bold) !important; }
+.mala-button-text   { font-weight: var(--mala-weight-mid-bold) !important; }
+.mala-product-name  { font-weight: var(--mala-weight-mid-bold) !important; }
+.mala-price         { font-weight: var(--mala-weight-max-bold) !important; }
+.mala-coupon-title  { font-weight: var(--mala-weight-mid-bold) !important; }
+
+/* Prevent synthetic faux bold */
+html, body, .mala-app {
+  font-synthesis: none;
+}

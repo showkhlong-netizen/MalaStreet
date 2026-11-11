@@ -1,0 +1,41 @@
+/* Mala Street — 4 weight font kit. Reference match is approximate. */
+/* No bundled font binaries. Loads official Prompt from Google Fonts. */
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap');
+
+:root {
+  --mala-font-family: 'Prompt', 'Noto Sans Thai', Tahoma, sans-serif;
+  --mala-weight-thin: 400;        /* บาง: previous regular */
+  --mala-weight-bold: 500;        /* หนา: new, lighter than 600 */
+  --mala-weight-mid-bold: 600;    /* หนากลาง: new, lighter than 700 */
+  --mala-weight-max-bold: 700;    /* หนามาก: previous bold; maximum for this project */
+}
+
+/* Apply only in the Mala Street app scope to avoid affecting other projects/pages */
+.mala-app { font-family: var(--mala-font-family); font-weight: var(--mala-weight-thin); }
+.mala-app button, .mala-app input, .mala-app textarea, .mala-app select {
+  font: inherit;
+  font-family: var(--mala-font-family);
+}
+.mala-font-thin       { font-weight: var(--mala-weight-thin) !important; }
+.mala-font-bold       { font-weight: var(--mala-weight-bold) !important; }
+.mala-font-mid-bold   { font-weight: var(--mala-weight-mid-bold) !important; }
+.mala-font-max-bold   { font-weight: var(--mala-weight-max-bold) !important; }
+/* Alias classes for gradual migration of older layouts */
+.mala-font-regular    { font-weight: 400; }
+.mala-font-medium     { font-weight: 500; }
+.mala-font-semibold   { font-weight: 600; }
+.mala-font-heavy      { font-weight: 700; }
+
+/* Recommended mapping of screenshot typography */
+.mala-app .mala-store-name    { font-weight: var(--mala-weight-max-bold); line-height: 1.3; letter-spacing: -0.015em; }
+.mala-app .mala-store-subline { font-weight: var(--mala-weight-thin); line-height: 1.45; }
+.mala-app .mala-meta         { font-weight: var(--mala-weight-bold); line-height: 1.4; }
+.mala-app .mala-rating-number{ font-weight: var(--mala-weight-max-bold); }
+.mala-app .mala-tab          { font-weight: var(--mala-weight-mid-bold); }
+.mala-app .mala-button-text  { font-weight: var(--mala-weight-mid-bold); }
+.mala-app .mala-product-name { font-weight: var(--mala-weight-mid-bold); }
+.mala-app .mala-price        { font-weight: var(--mala-weight-max-bold); }
+.mala-app .mala-coupon-title { font-weight: var(--mala-weight-mid-bold); }
+
+/* Prevent browser-generated artificial bold */
+.mala-app { font-synthesis: none; }

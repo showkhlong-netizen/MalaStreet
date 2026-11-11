@@ -1,0 +1,2 @@
+Prompt official download: https://fonts.google.com/specimen/Prompt
+Google Fonts CSS API: https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap

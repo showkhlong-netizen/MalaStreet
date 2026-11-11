@@ -1,0 +1,2 @@
+# Keep pre-seeded database for initial deployment
+!database.sqlite
