@@ -41,50 +41,50 @@
         }
     </style>
 </head>
-<body class="bg-[#0f1115] text-[#101114] antialiased min-h-screen flex flex-col font-prompt select-none">
+<body class="bg-[#F4F6F8] text-slate-800 antialiased min-h-screen flex flex-col font-prompt select-none">
 
     <!-- ========================================================================= -->
     <!-- TOP APPLICATION NAVBAR                                                    -->
     <!-- ========================================================================= -->
-    <header class="bg-[#181a20] border-b border-slate-800 text-white px-4 py-2.5 shrink-0 z-20">
+    <header class="bg-white border-b border-slate-200/90 text-slate-900 px-4 py-2.5 shrink-0 z-20 shadow-xs">
         <div class="max-w-[1880px] mx-auto flex flex-wrap items-center justify-between gap-3">
             <!-- Left Branding & Title -->
             <div class="flex items-center gap-3">
-                <a href="{{ route('pos.index') }}" class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#D90012] to-[#8B000F] flex items-center justify-center shadow-md shadow-rose-950/40 shrink-0 hover:scale-105 transition-transform" title="กลับหน้าแคชเชียร์">
+                <a href="{{ route('pos.index') }}" class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#D90012] to-[#8B000F] flex items-center justify-center shadow-md shadow-rose-950/20 shrink-0 hover:scale-105 transition-transform" title="กลับหน้าแคชเชียร์">
                     <span class="text-white text-lg">🍢</span>
                 </a>
                 <div>
                     <div class="flex items-center gap-2">
-                        <h1 class="text-base sm:text-lg font-extrabold text-white tracking-tight flex items-center gap-1.5">
+                        <h1 class="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight flex items-center gap-1.5">
                             <span>หน้าลูกค้า</span>
-                            <span class="text-xs font-semibold text-slate-400 font-mono">(Customer 3-in-1 Hub)</span>
+                            <span class="text-xs font-semibold text-slate-500 font-mono">(Customer 3-in-1 Hub)</span>
                         </h1>
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-300">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                             <span>ซิงค์ 3 จอเรียลไทม์</span>
                         </span>
                     </div>
-                    <p class="text-[11px] text-slate-400 hidden sm:block">รวมระบบสั่งออนไลน์ แชทสดลูกค้า และแต้มสะสม แสดงผลพร้อมกันในหน้าจอเดียว</p>
+                    <p class="text-[11px] text-slate-600 hidden sm:block">รวมระบบสั่งออนไลน์ แชทสดลูกค้า และแต้มสะสม แสดงผลพร้อมกันในหน้าจอเดียว</p>
                 </div>
             </div>
 
             <!-- Right Toolbar Controls -->
             <div class="flex items-center gap-2">
-                <button type="button" onclick="refreshAllFrames()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition active:scale-95 border border-slate-700" title="รีเฟรชทั้ง 3 จอ">
-                    <svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <button type="button" onclick="refreshAllFrames()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition active:scale-95 border border-slate-200" title="รีเฟรชทั้ง 3 จอ">
+                    <svg class="w-3.5 h-3.5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
                     </svg>
                     <span>รีเฟรชทั้งหมด</span>
                 </button>
 
-                <button type="button" onclick="toggleFullScreen()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition active:scale-95 border border-slate-700" title="ขยายเต็มหน้าจอ">
-                    <svg class="w-3.5 h-3.5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <button type="button" onclick="toggleFullScreen()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition active:scale-95 border border-slate-200" title="ขยายเต็มหน้าจอ">
+                    <svg class="w-3.5 h-3.5 text-sky-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
                     </svg>
                     <span class="hidden md:inline">เต็มจอ</span>
                 </button>
 
-                <a href="{{ route('pos.index') }}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#D90012] to-[#B8000F] hover:from-[#B8000F] hover:to-[#900000] text-white text-xs font-bold transition active:scale-95 shadow-sm shadow-rose-950/40">
+                <a href="{{ route('pos.index') }}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#D90012] to-[#B8000F] hover:from-[#B8000F] hover:to-[#900000] text-white text-xs font-bold transition active:scale-95 shadow-sm shadow-rose-950/20">
                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M19 12H5M12 19l-7-7 7-7"/>
                     </svg>
@@ -277,3 +277,4 @@
     </script>
 </body>
 </html>
+

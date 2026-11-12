@@ -58,17 +58,17 @@
 
                     <!-- 3. หน้าลูกค้า (Customer Hub: รวมสั่งออนไลน์, แชทลูกค้า, แต้มสะสม เรียง 3 จอพร้อมกัน) -->
                     <a href="{{ route('online.hub') }}" target="_blank" 
-                       class="group flex flex-col items-center justify-center px-4 py-1.5 rounded-2xl transition-all duration-150 {{ request()->routeIs('online.hub') ? 'bg-amber-500/25 text-amber-300 ring-2 ring-amber-400/50' : 'text-amber-300 hover:text-white hover:bg-slate-900/90 border border-amber-500/40' }}"
+                       class="group flex flex-col items-center justify-center px-4 py-1.5 rounded-2xl transition-all duration-150 {{ request()->routeIs('online.hub') ? 'bg-white text-slate-950 ring-2 ring-amber-400' : 'bg-white hover:bg-slate-100 text-slate-950 shadow-md shadow-white/10 border-2 border-white' }}"
                        title="เปิดหน้าลูกค้า (รวมสั่งออนไลน์, แชทสด, แต้มสะสม เรียง 3 จอพร้อมกัน)">
                         <div class="relative flex items-center justify-center">
-                            <svg class="w-6 h-6 text-amber-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <svg class="w-6 h-6 text-slate-950 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
-                            <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-slate-950 animate-pulse"></span>
+                            <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white animate-pulse"></span>
                         </div>
                         <div class="flex items-center space-x-1 mt-1 leading-none">
-                            <span class="text-[10.5px] font-extrabold tracking-tight whitespace-nowrap">หน้าลูกค้า</span>
-                            <span class="text-[8.5px] bg-gradient-to-r from-amber-500 to-rose-500 text-slate-950 px-1 py-0.2 rounded font-black tracking-tighter">3 in 1</span>
+                            <span class="text-[10.5px] font-black text-slate-950 tracking-tight whitespace-nowrap">หน้าลูกค้า</span>
+                            <span class="text-[8.5px] bg-gradient-to-r from-amber-500 to-rose-500 text-white px-1 py-0.2 rounded font-black tracking-tighter">3 in 1</span>
                         </div>
                     </a>
 
