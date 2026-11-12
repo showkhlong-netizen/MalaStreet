@@ -33,9 +33,10 @@
                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                     <span>เสร็จวันนี้: <strong class="text-slate-900 font-black text-sm">{{ $completedCount }}</strong> บิล</span>
                 </div>
-                <button onclick="window.location.reload()" 
+                <button onclick="syncKitchenOrdersSilently(true)" 
+                    id="manual-refresh-btn"
                     class="py-2 px-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer active:scale-95" title="รีเฟรชออเดอร์">
-                    <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                    <svg id="manual-refresh-icon" class="w-4 h-4 stroke-current transition-transform duration-500" fill="none" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                     <span>รีเฟรช</span>
@@ -392,9 +393,12 @@
 </div>
 
 @push('scripts')
+<script id="kitchen-data-script" type="application/json">
+@json($activeOrders->keyBy('id'))
+</script>
 <script>
     // All active orders data for modal preview
-    const activeOrdersMap = @json($activeOrders->keyBy('id'));
+    let activeOrdersMap = @json($activeOrders->keyBy('id'));
 
     function openOrderModal(orderId) {
         const order = activeOrdersMap[orderId];
@@ -564,7 +568,8 @@
 
             const data = await res.json();
             if (data.success) {
-                window.location.reload();
+                closeOrderModal();
+                await syncKitchenOrdersSilently(true);
             } else {
                 alert('เกิดข้อผิดพลาดในการอัปเดตสถานะ');
             }
@@ -601,17 +606,58 @@
         scrollToKitchenChat();
     }
 
-    // Auto-refresh every 15 seconds to fetch incoming orders, preserving active chat order in URL
-    setTimeout(() => {
-        const activeChatOrder = localStorage.getItem('kitchen_active_chat_order');
-        if (activeChatOrder) {
-            const url = new URL(window.location.href);
-            url.searchParams.set('chat_order', activeChatOrder);
-            window.location.replace(url.toString());
-        } else {
-            window.location.reload();
+    // SILENT REAL-TIME BACKGROUND SYNC (NO FULL PAGE RELOAD - 100% FLICKER-FREE)
+    let isSyncing = false;
+
+    async function syncKitchenOrdersSilently(isManual = false) {
+        if (isSyncing) return;
+        isSyncing = true;
+
+        const refreshIcon = document.getElementById('manual-refresh-icon');
+        if (isManual && refreshIcon) {
+            refreshIcon.classList.add('rotate-180');
         }
-    }, 15000);
+
+        try {
+            const res = await fetch(window.location.href, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!res.ok) return;
+
+            const html = await res.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            // 1. Update Left Kitchen Orders Area (cards & stats) seamlessly
+            const newArea = doc.getElementById('kitchen-main-orders-area');
+            const curArea = document.getElementById('kitchen-main-orders-area');
+
+            if (newArea && curArea && newArea.innerHTML !== curArea.innerHTML) {
+                curArea.innerHTML = newArea.innerHTML;
+            }
+
+            // 2. Update activeOrdersMap JSON in memory
+            const newScript = doc.getElementById('kitchen-data-script');
+            if (newScript) {
+                try {
+                    activeOrdersMap = JSON.parse(newScript.textContent);
+                } catch (e) {}
+            }
+        } catch (err) {
+            // Silently ignore background polling network errors
+        } finally {
+            isSyncing = false;
+            if (isManual && refreshIcon) {
+                setTimeout(() => refreshIcon.classList.remove('rotate-180'), 500);
+            }
+        }
+    }
+
+    // Background silent sync every 8 seconds - ZERO screen flickering, ZERO iframe reload!
+    setInterval(() => syncKitchenOrdersSilently(false), 8000);
 </script>
 @endpush
 @endsection
