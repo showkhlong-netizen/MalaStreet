@@ -1,8 +1,11 @@
 @extends('layouts.app', ['title' => 'จอครัว (KDS) - ร้านหม่าล่าสตรีท'])
 
 @section('content')
-<div class="flex-1 bg-slate-100/70 text-slate-800 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-    <div class="max-w-7xl mx-auto space-y-6">
+<div class="flex-1 bg-slate-100/70 text-slate-800 p-3 sm:p-4 lg:p-6 overflow-y-auto">
+    <div class="max-w-[1920px] mx-auto flex flex-col xl:flex-row gap-5 items-start">
+        
+        <!-- LEFT: KITCHEN DISPLAY (จอคุมเตาย่าง & หม้อซุป) -->
+        <div class="flex-1 min-w-0 space-y-6 w-full" id="kitchen-main-orders-area">
         
         <!-- 1. Kitchen Header (Light Theme, Premium White Card) -->
         <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -39,9 +42,10 @@
                 </button>
 
                 <!-- แถบหน้าต่างแชทลูกค้า (ฝั่งแอดมิน) - ตั้งฝั่งขวาสุดของแถบหน้าจอครัว -->
-                <a href="{{ route('kitchen.chat') }}" 
-                    class="py-2 px-4 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black transition-all shadow-md shadow-rose-950/20 flex items-center space-x-2 shrink-0 group active:scale-95 border border-rose-400/40" 
-                    title="เปิดหน้าต่างแชทลูกค้า (ฝั่งแอดมิน/จอครัว) จับคู่ IP และชื่อออร์เดอร์">
+                <button type="button" 
+                    onclick="scrollToKitchenChat()" 
+                    class="py-2 px-4 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black transition-all shadow-md shadow-rose-950/20 flex items-center space-x-2 shrink-0 group active:scale-95 border border-rose-400/40 cursor-pointer" 
+                    title="เลื่อนไปยังหน้าต่างแชทลูกค้า (ฝั่งแอดมิน) ฝั่งขวามือสุด">
                     <div class="relative flex items-center justify-center">
                         <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -54,7 +58,7 @@
                             {{ $unreadChatCount }}
                         </span>
                     @endif
-                </a>
+                </button>
             </div>
         </div>
 
@@ -123,14 +127,15 @@
                                                 🌐 IP: {{ $order->ip_address }}
                                             </span>
                                         @endif
-                                        <a href="{{ route('kitchen.chat', ['order_no' => $order->order_no]) }}" 
-                                           class="inline-flex items-center gap-1 text-[10.5px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-lg border border-rose-200 transition active:scale-95" 
-                                           title="เปิดแชทกับลูกค้ารายนี้ (จับคู่ IP และชื่อออร์เดอร์)">
+                                        <button type="button"
+                                           onclick="openOrderInSideChat('{{ $order->order_no }}')" 
+                                           class="inline-flex items-center gap-1 text-[10.5px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-lg border border-rose-200 transition active:scale-95 cursor-pointer" 
+                                           title="เปิดแชทกับลูกค้ารายนี้ในหน้าต่างแชทขวามือสุด">
                                             <svg class="w-3 h-3 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                             </svg>
                                             <span>แชท</span>
-                                        </a>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -307,6 +312,17 @@
                 @endforeach
             </div>
         @endif
+        </div> <!-- End of LEFT: KITCHEN DISPLAY (จอคุมเตาย่าง & หม้อซุป) -->
+
+        <!-- RIGHT: PERMANENTLY OPEN ADMIN CHAT (ฝั่งขวามือสุด เปิดค้างอยู่ตลอด) -->
+        <aside class="w-full xl:w-[420px] 2xl:w-[430px] shrink-0 xl:sticky xl:top-4 h-[calc(100vh-2rem)] min-h-[720px] max-h-[960px] flex flex-col bg-slate-950 rounded-3xl border-2 border-slate-800 shadow-2xl overflow-hidden transition-all ring-1 ring-slate-700/60" id="kitchen-side-chat-panel">
+            <iframe id="kitchen-side-chat-frame" 
+                    src="{{ route('kitchen.chat', array_filter(['order_no' => request('chat_order') ?: request('order_no')])) }}" 
+                    class="w-full h-full border-0 flex-1 bg-slate-950"
+                    title="แชทลูกค้า (ฝั่งแอดมิน / จอครัว) เปิดค้างตลอดเวลา">
+            </iframe>
+        </aside>
+
     </div>
 </div>
 
@@ -558,10 +574,44 @@
         }
     }
 
-    // Auto-refresh every 12 seconds to fetch incoming orders
+    // Smooth scrolling to chat panel on mobile/tablet or highlight on desktop
+    function scrollToKitchenChat() {
+        const chatPanel = document.getElementById('kitchen-side-chat-panel');
+        if (chatPanel) {
+            chatPanel.scrollIntoView({ behavior: 'smooth' });
+            chatPanel.classList.add('ring-4', 'ring-rose-500/40');
+            setTimeout(() => chatPanel.classList.remove('ring-4', 'ring-rose-500/40'), 1500);
+        }
+    }
+
+    function scrollToKitchenOrders() {
+        const ordersArea = document.getElementById('kitchen-main-orders-area');
+        if (ordersArea) {
+            ordersArea.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    // Switch embedded chat to specific order
+    function openOrderInSideChat(orderNo) {
+        const frame = document.getElementById('kitchen-side-chat-frame');
+        if (frame) {
+            frame.src = "{{ route('kitchen.chat') }}?order_no=" + encodeURIComponent(orderNo);
+            localStorage.setItem('kitchen_active_chat_order', orderNo);
+        }
+        scrollToKitchenChat();
+    }
+
+    // Auto-refresh every 15 seconds to fetch incoming orders, preserving active chat order in URL
     setTimeout(() => {
-        window.location.reload();
-    }, 12000);
+        const activeChatOrder = localStorage.getItem('kitchen_active_chat_order');
+        if (activeChatOrder) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('chat_order', activeChatOrder);
+            window.location.replace(url.toString());
+        } else {
+            window.location.reload();
+        }
+    }, 15000);
 </script>
 @endpush
 @endsection

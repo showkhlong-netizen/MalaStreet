@@ -41,23 +41,33 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-[#111317] flex justify-center items-start selection:bg-[#E60018] selection:text-white">
+<body class="h-full min-h-screen bg-[#111317] flex justify-center items-stretch selection:bg-[#E60018] selection:text-white">
 
-    <!-- MOBILE CONTAINER (400 - 430px Frame Layout ตรงกลางจอคอมพิวเตอร์) -->
-    <div class="w-full max-w-[430px] min-h-screen bg-[#F6F7F9] shadow-[0_0_60px_rgba(0,0,0,0.6)] flex flex-col justify-between relative overflow-hidden">
+    <!-- MOBILE CONTAINER (400 - 430px Frame Layout ตรงกลางจอคอมพิวเตอร์ / ฝั่งขวาของจอครัว) -->
+    <div class="w-full max-w-[430px] h-full min-h-screen bg-[#F6F7F9] shadow-[0_0_60px_rgba(0,0,0,0.6)] flex flex-col justify-between relative overflow-hidden">
 
         <!-- ================================================================= -->
         <!-- 1. TOP HEADER (ADMIN KITCHEN BAR)                                 -->
         <!-- ================================================================= -->
-        <header class="sticky top-0 z-30 bg-slate-950 text-white px-3.5 py-2.5 shadow-md border-b border-slate-800">
+        <header class="sticky top-0 z-30 bg-slate-950 text-white px-3.5 py-2.5 shadow-md border-b border-slate-800 shrink-0">
             <div class="flex items-center justify-between gap-2">
                 <!-- Back Button to Kitchen (KDS) & Title -->
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <a href="{{ route('pos.kitchen') }}"
-                       class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center transition-all shrink-0 active:scale-95"
+                <div class="flex items-center gap-2 min-w-0">
+                    <button type="button"
+                       onclick="handleBackToKitchen()"
+                       class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center transition-all shrink-0 active:scale-95 cursor-pointer"
                        title="กลับจอครัว (KDS)">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+
+                    <!-- Pop-out standalone button -->
+                    <a href="{{ route('kitchen.chat', array_filter(['order_no' => $activeOrder ? $activeOrder->order_no : null])) }}" target="_blank"
+                       class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-all shrink-0 active:scale-95"
+                       title="เปิดเต็มหน้าต่างใหม่">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
                     </a>
 
@@ -635,6 +645,16 @@
             modal.classList.remove('flex');
         }
 
+        function handleBackToKitchen() {
+            if (window.self !== window.top) {
+                if (window.parent && typeof window.parent.scrollToKitchenOrders === 'function') {
+                    window.parent.scrollToKitchenOrders();
+                }
+            } else {
+                window.location.href = "{{ route('pos.kitchen') }}";
+            }
+        }
+
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/[&<>"']/g, function (m) {
@@ -644,3 +664,4 @@
     </script>
 </body>
 </html>
+
