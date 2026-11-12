@@ -158,6 +158,19 @@
         scrollbar-width: none;
     }
 
+    /* Soft Ambient Glow matching Loyalty Banner in Image 2 */
+    @keyframes banner-glow {
+        0%, 100% {
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.2), 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+        50% {
+            box-shadow: 0 0 22px rgba(251, 191, 36, 0.38), 0 0 10px rgba(255, 255, 255, 0.7), 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+    }
+    .animate-soft-glow {
+        animation: banner-glow 2.8s ease-in-out infinite;
+    }
+
     /* Edit Mode visibility for 3-line (☰) buttons on cards & hero banner */
     .edit-mode-trigger {
         display: none;
@@ -336,19 +349,19 @@
                                 </a>
                             </div>
 
-                            <!-- แถวที่ 2: เพิ่มรายการ (ปรับเป็นสีเทาอ่อน ไล่เฉดเงา เรียบหรู) -->
+                            <!-- แถวที่ 2: เพิ่มรายการ (ปรับให้เหมือนแถบสะสมแต้มตามภาพที่ 2 พร้อมเอฟเฟกต์เรื่อแสง animate-soft-glow) -->
                             <button
                                 type="button"
                                 onclick="openCreateMaterialModal()"
-                                class="w-full py-2.5 sm:py-3 px-4 rounded-xl bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 hover:from-slate-100 hover:via-slate-200 hover:to-slate-100 text-slate-800 text-[13.5px] sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md shadow-slate-400/20 hover:shadow-lg transition-all cursor-pointer active:scale-[0.99] border border-slate-300/80"
+                                class="w-full py-2.5 sm:py-3 px-4 rounded-[16px] bg-gradient-to-r from-slate-100 via-[#FFFBEB] to-[#FFEDD5] border-2 border-white text-amber-950 text-[13.5px] sm:text-sm font-extrabold flex items-center justify-center gap-2 shadow-xs transition-all animate-soft-glow cursor-pointer active:scale-[0.99] select-none hover:brightness-105"
                                 title="เพิ่มรายการวัตถุดิบและข้อมูลสต็อกใหม่"
                             >
-                                <span class="w-6 h-6 rounded-lg bg-white border border-slate-300/80 shadow-2xs flex items-center justify-center shrink-0">
-                                    <svg class="w-4 h-4 text-slate-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                                <span class="w-6 h-6 rounded-lg bg-white border border-slate-100 shadow-xs flex items-center justify-center shrink-0">
+                                    <svg class="w-4 h-4 text-[#D90012]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M12 5v14M5 12h14"/>
                                     </svg>
                                 </span>
-                                <span class="tracking-wide text-slate-800">เพิ่มรายการ</span>
+                                <span class="tracking-wide text-amber-950 font-extrabold">เพิ่มรายการ</span>
                             </button>
                         </div>
                     </div>
