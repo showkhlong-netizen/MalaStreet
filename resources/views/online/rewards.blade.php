@@ -20,6 +20,19 @@
         body { font-family: 'Prompt', sans-serif; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Dimmer soft glow for member phone bar (softer than banner-glow) */
+        @keyframes soft-dim-glow {
+            0%, 100% {
+                box-shadow: 0 0 8px rgba(251, 191, 36, 0.16), 0 2px 6px rgba(0, 0, 0, 0.03);
+            }
+            50% {
+                box-shadow: 0 0 16px rgba(251, 191, 36, 0.28), 0 0 8px rgba(255, 255, 255, 0.6), 0 2px 8px rgba(0, 0, 0, 0.05);
+            }
+        }
+        .animate-soft-dim-glow {
+            animation: soft-dim-glow 3s ease-in-out infinite;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-[#111317] flex justify-center items-start selection:bg-[#E60018] selection:text-white">
@@ -62,22 +75,25 @@
             <!-- 2. CUSTOMER PHONE BAR & NOTICE                                -->
             <!-- ============================================================= -->
             <div class="space-y-1.5">
-                <!-- ข้อความอยู่ข้างบนแถบเบอร์สมาชิก (ตัวอักษรสีดำ หนาพิเศษ ใหญ่เด่นสะดุดตาชัดเจน) -->
+                <!-- ข้อความอยู่ข้างบนแถบเบอร์สมาชิก (ตัวอักษรสีดำ หนาพิเศษ ใหญ่ขึ้นเด่นชัดเจน) -->
                 <div class="px-1 flex items-center gap-1.5">
-                    <span class="text-sm sm:text-[15px] font-black text-slate-900 tracking-tight leading-tight">
+                    <span class="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug">
                         โปรใส่เบอร์ติดต่อเพื่อเก็บแต้ม
                     </span>
                 </div>
 
-                <!-- แถบเบอร์สมาชิก -->
-                <div class="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2.5 min-w-0">
-                        <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-800 flex items-center justify-center font-bold text-sm shrink-0">
-                            📱
+                <!-- แถบเบอร์สมาชิก สไตล์เดียวกับ Image 3 พร้อมแสงสลัวๆ เบากว่า และไอคอนเดี่ยวสีแดง -->
+                <div class="bg-gradient-to-r from-slate-100 via-[#FFFBEB] to-[#FFEDD5] border-2 border-white rounded-[18px] p-2.5 sm:p-3 animate-soft-dim-glow shadow-xs flex items-center justify-between gap-2.5 transition-all">
+                    <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-slate-100 shadow-xs flex items-center justify-center shrink-0">
+                            <!-- Single-color Red Phone Icon -->
+                            <svg class="w-5 h-5 sm:w-5.5 sm:h-5.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/>
+                            </svg>
                         </div>
                         <div class="min-w-0">
-                            <div class="text-[10px] text-slate-500 font-medium">เบอร์โทรสมาชิก</div>
-                            <div id="display-phone" class="text-xs sm:text-[13px] font-black text-slate-900 truncate font-mono">
+                            <div class="text-xs sm:text-[13px] text-amber-950/85 font-bold leading-tight">เบอร์โทรสมาชิก</div>
+                            <div id="display-phone" class="text-base sm:text-lg font-black text-slate-900 truncate font-mono tracking-tight leading-snug">
                                 {{ $reward->customer_phone }}
                             </div>
                         </div>
@@ -85,7 +101,7 @@
 
                     <button type="button"
                             onclick="openPhoneLookupModal()"
-                            class="text-[10.5px] font-bold text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-all border border-slate-300 shrink-0 cursor-pointer active:scale-95 shadow-2xs">
+                            class="text-xs sm:text-[12.5px] font-extrabold text-amber-900 bg-white/95 hover:bg-amber-100 border border-amber-300/90 px-3.5 py-1.5 rounded-full shrink-0 transition-all shadow-2xs cursor-pointer active:scale-95">
                         เปลี่ยนเบอร์ / เช็คแต้ม
                     </button>
                 </div>
