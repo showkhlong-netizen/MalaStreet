@@ -336,19 +336,19 @@
                                 </a>
                             </div>
 
-                            <!-- แถวที่ 2: เพิ่มรายการ (อยู่เดี่ยวๆ ปรับให้ใหญ่และเด่นทั้งแถบ ความยาวแถบเสมอกับสามแถบด้านบน) -->
+                            <!-- แถวที่ 2: เพิ่มรายการ (ปรับเป็นสีเทาอ่อน ไล่เฉดเงา เรียบหรู) -->
                             <button
                                 type="button"
                                 onclick="openCreateMaterialModal()"
-                                class="w-full py-2.5 sm:py-3 px-4 rounded-xl bg-gradient-to-r from-[#8B0912] via-[#E50914] to-[#8B0912] hover:from-[#73070E] hover:via-[#C8102E] hover:to-[#73070E] text-white text-[13.5px] sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md shadow-[#E50914]/25 hover:shadow-lg transition-all cursor-pointer active:scale-[0.99] border border-white/20"
+                                class="w-full py-2.5 sm:py-3 px-4 rounded-xl bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200 hover:from-slate-100 hover:via-slate-200 hover:to-slate-100 text-slate-800 text-[13.5px] sm:text-sm font-bold flex items-center justify-center gap-2 shadow-md shadow-slate-400/20 hover:shadow-lg transition-all cursor-pointer active:scale-[0.99] border border-slate-300/80"
                                 title="เพิ่มรายการวัตถุดิบและข้อมูลสต็อกใหม่"
                             >
-                                <span class="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
-                                    <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                                <span class="w-6 h-6 rounded-lg bg-white border border-slate-300/80 shadow-2xs flex items-center justify-center shrink-0">
+                                    <svg class="w-4 h-4 text-slate-800" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M12 5v14M5 12h14"/>
                                     </svg>
                                 </span>
-                                <span class="tracking-wide">เพิ่มรายการ</span>
+                                <span class="tracking-wide text-slate-800">เพิ่มรายการ</span>
                             </button>
                         </div>
                     </div>
