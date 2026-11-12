@@ -74,6 +74,49 @@
         .btn-chat-custom:focus .chat-dot {
             background-color: #065f46 !important;
         }
+
+        /* Loyalty Gift Box Icon Wiggle Animation */
+        @keyframes gift-wiggle {
+            0%, 100% {
+                transform: rotate(0deg) scale(1);
+            }
+            15% {
+                transform: rotate(-14deg) scale(1.12);
+            }
+            30% {
+                transform: rotate(12deg) scale(1.12);
+            }
+            45% {
+                transform: rotate(-8deg) scale(1.08);
+            }
+            60% {
+                transform: rotate(6deg) scale(1.05);
+            }
+            75% {
+                transform: rotate(0deg) scale(1);
+            }
+        }
+        .animate-gift-wiggle {
+            animation: gift-wiggle 1.8s ease-in-out infinite;
+            transform-origin: center bottom;
+            display: inline-block;
+        }
+        .group:hover .animate-gift-wiggle {
+            animation-duration: 1.0s;
+        }
+
+        /* Soft Ambient Glow for Loyalty Banner */
+        @keyframes banner-glow {
+            0%, 100% {
+                box-shadow: 0 0 10px rgba(251, 191, 36, 0.2), 0 2px 6px rgba(0, 0, 0, 0.04);
+            }
+            50% {
+                box-shadow: 0 0 22px rgba(251, 191, 36, 0.38), 0 0 10px rgba(255, 255, 255, 0.7), 0 2px 8px rgba(0, 0, 0, 0.06);
+            }
+        }
+        .animate-soft-glow {
+            animation: banner-glow 2.8s ease-in-out infinite;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-[#111317] flex justify-center items-start selection:bg-[#E60018] selection:text-white font-prompt text-[#101114] antialiased">
@@ -407,11 +450,14 @@
             <!-- ================================================================= -->
             <!-- 3.1 LOYALTY CARD & STAMP PROMPT BANNER                             -->
             <!-- ================================================================= -->
-            <a href="{{ route('online.rewards') }}" class="mt-2 block bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 border border-amber-200/90 rounded-[14px] p-2 hover:border-amber-300 transition-all shadow-2xs group">
+            <a href="{{ route('online.rewards') }}" class="mt-2 block bg-gradient-to-r from-slate-100 via-[#FFFBEB] to-[#FFEDD5] border-2 border-white rounded-[16px] p-2 transition-all animate-soft-glow group select-none shadow-xs">
                 <div class="flex items-center justify-between gap-2">
                     <div class="flex items-center gap-2 min-w-0">
-                        <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-500 to-rose-500 text-white flex items-center justify-center shrink-0 shadow-xs text-xs font-black">
-                            🎁
+                        <div class="w-7 h-7 rounded-full bg-white border border-slate-100 shadow-xs flex items-center justify-center shrink-0">
+                            <!-- Single-color Red Gift Box SVG with Back-and-Forth Wiggle Animation -->
+                            <svg class="w-4 h-4 text-[#D90012] shrink-0 animate-gift-wiggle" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20 7h-2.087A3.989 3.989 0 0 0 18 6a4 4 0 0 0-7.071-2.543A3.99 3.99 0 0 0 4.087 7H2a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h1v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-8h1a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1zm-6-3a2 2 0 1 1 2 2h-2zm-6 2a2 2 0 1 1 2-2v2zm-5 4h8v2H3zm10 0h8v2h-8zm-8 4h6v7H5zm8 7v-7h6v7z"/>
+                            </svg>
                         </div>
                         <div class="min-w-0">
                             <div class="text-[11.5px] font-extrabold text-amber-950 truncate flex items-center gap-1.5">
@@ -421,7 +467,7 @@
                             <div class="text-[9.5px] text-amber-800/90 truncate">เขียนรีวิวอาหารรับเพิ่มทันที +1 แต้ม • กดเช็คแต้มเลย</div>
                         </div>
                     </div>
-                    <span class="text-[10px] font-extrabold text-amber-900 bg-white/95 border border-amber-300/80 px-2 py-0.5 rounded-full shrink-0 group-hover:bg-amber-100 transition-colors">
+                    <span class="text-[10px] font-extrabold text-amber-900 bg-white/95 border border-amber-300/80 px-2 py-0.5 rounded-full shrink-0 group-hover:bg-amber-100 transition-colors shadow-2xs">
                         เช็คแต้ม →
                     </span>
                 </div>
