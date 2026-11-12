@@ -61,22 +61,27 @@
             <!-- ============================================================= -->
             <!-- 2. CUSTOMER PHONE BAR                                         -->
             <!-- ============================================================= -->
-            <div class="bg-white rounded-2xl p-2.5 border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2 min-w-0">
-                    <div class="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-xs shrink-0">
+            <div class="bg-white rounded-2xl p-3 border border-rose-200/90 shadow-2xs flex items-center justify-between gap-2.5">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-9 h-9 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-base shrink-0 shadow-2xs">
                         📱
                     </div>
                     <div class="min-w-0">
-                        <div class="text-[10px] text-slate-400 font-medium">เบอร์โทรสมาชิก</div>
-                        <div id="display-phone" class="text-xs font-black text-slate-800 truncate font-mono">
-                            {{ $reward->customer_phone }}
+                        <div class="text-[12.5px] sm:text-sm font-black text-rose-600 leading-tight tracking-tight">
+                            โปรใส่เบอร์ติดต่อเพื่อเก็บแต้ม
+                        </div>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            <span class="text-[10.5px] text-slate-400 font-medium">เบอร์โทรสมาชิก:</span>
+                            <span id="display-phone" class="text-xs sm:text-[13px] font-black text-slate-800 truncate font-mono">
+                                {{ $reward->customer_phone }}
+                            </span>
                         </div>
                     </div>
                 </div>
 
                 <button type="button"
                         onclick="openPhoneLookupModal()"
-                        class="text-[10px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-xl transition-all border border-rose-200 shrink-0 cursor-pointer">
+                        class="text-[10.5px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-xl transition-all border border-rose-200 shrink-0 cursor-pointer active:scale-95 shadow-2xs">
                     เปลี่ยนเบอร์ / เช็คแต้ม
                 </button>
             </div>

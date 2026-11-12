@@ -858,10 +858,13 @@
                         <!-- Option 1: หม่าล่าย่าง -->
                         <label class="flex items-center gap-2.5 p-3 rounded-2xl border-2 border-slate-200 cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
                             <input type="radio" name="opt_cooking_type" value="grill" checked onchange="onCookingTypeChange('grill')" class="text-[#D90012] focus:ring-0">
-                            <!-- Large Standout Single-Color Red Skewer Grill Icon -->
+                            <!-- Large Standout Single-Color Red Skewer Grill Icon Matching Image 3 -->
                             <div class="w-8 h-8 rounded-xl bg-white border border-rose-100 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-                                <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M21.71 3.71a1 1 0 0 0-1.42 0l-1.59 1.59-1.3-1.3a1 1 0 0 0-1.41 1.42l1.29 1.29-2.59 2.59-1.29-1.29a1 1 0 0 0-1.42 1.41l1.3 1.3-2.59 2.58-1.29-1.29a1 1 0 0 0-1.42 1.42l1.3 1.29-4.88 4.88a1 1 0 0 0 1.41 1.41l4.88-4.88 1.29 1.3a1 1 0 0 0 1.42-1.42l-1.3-1.29 2.59-2.59 1.29 1.3a1 1 0 0 0 1.42-1.42l-1.3-1.29 2.59-2.59 1.29 1.3a1 1 0 0 0 1.42-1.42l-1.3-1.29 1.59-1.59a1 1 0 0 0 0-1.42z"/>
+                                <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M5 19L19 5" stroke-width="2.6" />
+                                    <path d="M8 14l2 4" />
+                                    <path d="M11 11l2 4" />
+                                    <path d="M14 8l2 4" />
                                 </svg>
                             </div>
                             <div class="min-w-0">
@@ -873,10 +876,13 @@
                         <!-- Option 2: น้ำซุป -->
                         <label class="flex items-center gap-2.5 p-3 rounded-2xl border-2 border-slate-200 cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
                             <input type="radio" name="opt_cooking_type" value="soup" onchange="onCookingTypeChange('soup')" class="text-[#D90012] focus:ring-0">
-                            <!-- Large Standout Single-Color Red Hotpot Soup Icon -->
+                            <!-- Large Standout Single-Color Red Hotpot Soup Icon Matching Image 3 -->
                             <div class="w-8 h-8 rounded-xl bg-white border border-rose-100 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-                                <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M21 11H3a1 1 0 0 0-1 1c0 5 3.5 9 8.5 9.8V23h3v-1.2c5-.8 8.5-4.8 8.5-9.8a1 1 0 0 0-1-1zm-9 8.8C7.5 19.8 4.5 16.5 4.1 13h15.8c-.4 3.5-3.4 6.8-7.9 6.8zM6.5 8a1 1 0 0 1 1-1c1 0 1-1 1-1s0-1 1-1a1 1 0 0 1 2 0c0 1 1 2 2 2s1-1 1-1 0-1 1-1a1 1 0 0 1 2 0c0 1 1 2 2 2a1 1 0 1 1 0 2c-1.5 0-2.5-1-2.9-1.6-.4.6-1.4 1.6-2.9 1.6s-2.5-1-2.9-1.6c-.4.6-1.4 1.6-2.9 1.6a1 1 0 0 1-1-1z" />
+                                <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M4 11h16a1 1 0 0 1 1 1c0 5-3.5 8-9 8s-9-3-9-8a1 1 0 0 1 1-1z" />
+                                    <path d="M2 13h2M20 13h2" />
+                                    <path d="M4 11h16" />
+                                    <path d="M9 7c.5-1 1.5-1.5 2-1.5s1.5.5 2 1.5" />
                                 </svg>
                             </div>
                             <div class="min-w-0">
