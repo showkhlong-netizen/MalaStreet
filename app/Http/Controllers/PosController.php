@@ -247,27 +247,40 @@ class PosController extends Controller
             $activeOrder = Order::with('items')->where('order_no', $orderNo)->first();
         }
 
-        // If no specific order selected, find latest active online order or latest order with messages
-        if (!$activeOrder) {
-            $latestMsg = ChatMessage::whereNotNull('order_no')->latest('id')->first();
-            if ($latestMsg) {
-                $activeOrder = Order::with('items')->where('order_no', $latestMsg->order_no)->first();
-            }
-        }
-        if (!$activeOrder) {
-            $activeOrder = Order::with('items')->where('order_type', 'online')->latest('id')->first();
-        }
-        if (!$activeOrder) {
-            $activeOrder = Order::with('items')->latest('id')->first();
-        }
-
-        // Get recent active orders list for quick switching
+        // Get recent orders list for LINE / Messenger chat inbox
         $recentOrders = Order::with('items')
             ->latest('id')
-            ->take(15)
+            ->take(35)
             ->get();
 
-        // Get messages for current active order/customer
+        $recentOrders->each(function ($ord) {
+            $lastMsg = ChatMessage::where(function ($q) use ($ord) {
+                $q->where('order_no', $ord->order_no);
+                if ($ord->customer_phone) {
+                    $q->orWhere('customer_phone', $ord->customer_phone);
+                }
+            })->latest('id')->first();
+
+            $ord->last_message = $lastMsg ? $lastMsg->message : null;
+            $ord->last_message_time = $lastMsg ? $lastMsg->created_at : $ord->created_at;
+            $ord->last_message_sender = $lastMsg ? $lastMsg->sender : null;
+
+            $ord->unread_count = ChatMessage::where('order_no', $ord->order_no)
+                ->where('sender', 'customer')
+                ->where('is_read', false)
+                ->count();
+
+            // Online criteria: active order in kitchen OR message within last 12 hours
+            $isActiveInKitchen = in_array($ord->status, ['pending', 'confirmed', 'cooking', 'ready']);
+            $isRecent = $lastMsg && $lastMsg->created_at && $lastMsg->created_at->gt(now()->subHours(12));
+            $ord->is_online = $isActiveInKitchen || $isRecent;
+        });
+
+        // Split into Online and Offline collections
+        $onlineOrders = $recentOrders->filter(fn($o) => $o->is_online)->values();
+        $offlineOrders = $recentOrders->filter(fn($o) => !$o->is_online)->values();
+
+        // Get messages for current active order/customer (if viewing chat room)
         $messages = collect();
         $targetIp = '127.0.0.1';
 
@@ -300,7 +313,16 @@ class PosController extends Controller
         // Unread count across all orders
         $totalUnread = ChatMessage::where('sender', 'customer')->where('is_read', false)->count();
 
-        return view('pos.kitchen_chat', compact('activeOrder', 'recentOrders', 'messages', 'targetIp', 'totalUnread'));
+        return view('pos.kitchen_chat', compact(
+            'activeOrder',
+            'recentOrders',
+            'onlineOrders',
+            'offlineOrders',
+            'messages',
+            'targetIp',
+            'totalUnread',
+            'orderNo'
+        ));
     }
 
     /**
