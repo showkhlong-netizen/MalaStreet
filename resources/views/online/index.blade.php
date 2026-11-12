@@ -903,7 +903,7 @@
                         <!-- เผ็ดกลาง -->
                         <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
                             <input type="radio" name="opt_spice_level" value="medium" checked class="text-[#D90012] mb-1.5 focus:ring-0">
-                            <div class="h-6 flex items-center justify-center -space-x-1 mb-1 group-hover:scale-110 transition-transform">
+                            <div class="h-6 flex items-center justify-center gap-1.5 mb-1 group-hover:scale-110 transition-transform">
                                 <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-5 w-auto object-contain shrink-0" alt="เผ็ดกลาง">
                                 <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-5 w-auto object-contain shrink-0" alt="เผ็ดกลาง">
                             </div>
@@ -913,9 +913,9 @@
                         <!-- เผ็ดมาก -->
                         <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
                             <input type="radio" name="opt_spice_level" value="hot" class="text-[#D90012] mb-1.5 focus:ring-0">
-                            <div class="h-6 flex items-center justify-center -space-x-1.5 mb-1 group-hover:scale-110 transition-transform">
+                            <div class="h-6 flex items-center justify-center gap-1 mb-1 group-hover:scale-110 transition-transform">
                                 <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4.5 w-auto object-contain shrink-0" alt="เผ็ดมาก">
-                                <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4.5 w-auto object-contain shrink-0 z-10" alt="เผ็ดมาก">
+                                <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4.5 w-auto object-contain shrink-0" alt="เผ็ดมาก">
                                 <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4.5 w-auto object-contain shrink-0" alt="เผ็ดมาก">
                             </div>
                             <span class="font-extrabold text-[#101114] text-[11.5px]">เผ็ดมาก</span>
