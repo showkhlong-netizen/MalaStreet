@@ -117,6 +117,21 @@
         .animate-soft-glow {
             animation: banner-glow 2.8s ease-in-out infinite;
         }
+
+        /* Smooth Transition between Pastel Green and Light Gray for Chat Status Dot */
+        @keyframes live-status-pulse {
+            0%, 100% {
+                background-color: #4ade80;
+                box-shadow: 0 0 6px rgba(74, 222, 128, 0.65);
+            }
+            50% {
+                background-color: #cbd5e1;
+                box-shadow: 0 0 3px rgba(203, 213, 225, 0.45);
+            }
+        }
+        .animate-status-switch {
+            animation: live-status-pulse 2.8s ease-in-out infinite;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-[#111317] flex justify-center items-start selection:bg-[#E60018] selection:text-white font-prompt text-[#101114] antialiased">
@@ -332,21 +347,16 @@
                             <span>เปิดรับออเดอร์</span>
                         </span>
 
-                        <!-- Minimalist Standout Single-Color Chat Button -->
+                        <!-- Glowing Pastel Chat Button (Styled Exactly like Loyalty Banner with Smooth Status Indicator) -->
                         <a href="{{ route('online.chat') }}"
                            id="btn-chat-with-shop"
-                           class="btn-chat-custom inline-flex items-center gap-1.5 px-3 py-1 rounded-full shadow-xs transition-all duration-150 cursor-pointer select-none group"
-                           style="background-color: #111317; color: #ffffff; border: 1px solid #27272a;"
-                           onmouseover="this.style.backgroundColor='#10B981'; this.style.borderColor='#059669'; this.style.color='#ffffff';"
-                           onmouseout="this.style.backgroundColor='#111317'; this.style.borderColor='#27272a'; this.style.color='#ffffff';"
-                           onmousedown="this.style.backgroundColor='#4ADE80'; this.style.borderColor='#22C55E'; this.style.color='#052e16'; this.style.transform='scale(0.95)';"
-                           onmouseup="this.style.transform='scale(1)';"
+                           class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-slate-100 via-[#FFFBEB] to-[#FFEDD5] border-2 border-white shadow-xs animate-soft-glow transition-all duration-200 cursor-pointer select-none group text-[#101114] hover:brightness-105 active:scale-95"
                            title="แชทสอบถามร้านค้า">
-                            <svg class="w-3.5 h-3.5 shrink-0 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <svg class="w-3.5 h-3.5 text-[#101114] shrink-0 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                             </svg>
-                            <span class="text-[11px] font-bold tracking-tight">แชทกับร้าน</span>
-                            <span class="chat-dot w-2 h-2 rounded-full" style="background-color: #10B981;"></span>
+                            <span class="text-[11px] font-extrabold text-[#101114] tracking-tight">แชทกับร้าน</span>
+                            <span class="chat-dot w-2 h-2 rounded-full animate-status-switch"></span>
                         </a>
                     </div>
 
