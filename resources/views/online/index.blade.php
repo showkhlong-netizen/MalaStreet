@@ -624,8 +624,7 @@
         <!-- 7. RECOMMENDED PRODUCTS SECTION (เมนูแนะนำ 🔥 ซิงค์จากหน้าสต๊อกสินค้า)     -->
         <!-- ===================================================================== -->
         <section class="px-3.5 pt-3 {{ $recommendedList->isEmpty() ? 'hidden' : '' }}" id="recommended-section">
-            <div class="flex items-center gap-1.5 mb-2">
-                <span class="w-1 h-4 rounded-full bg-[#D90012] block"></span>
+            <div class="flex items-center mb-2">
                 <h2 class="text-[14.5px] font-extrabold text-[#101114] tracking-tight">เมนูแนะนำ 🔥</h2>
             </div>
 
@@ -673,7 +672,6 @@
             <!-- Header + Sort Dropdown -->
             <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-1.5">
-                    <span class="w-1 h-4 rounded-full bg-[#D90012] block"></span>
                     <h2 class="text-[14.5px] font-extrabold text-[#101114] tracking-tight">เมนูทั้งหมด</h2>
                     <span class="text-[11px] text-[#596272]">(<span id="all-menu-count">{{ $totalCount }}</span> รายการ)</span>
                 </div>
@@ -840,8 +838,7 @@
                 <!-- 1. Cooking Style (รูปแบบการปรุงอาหาร) -->
                 <div>
                     <label class="font-bold text-[#101114] block mb-2 flex items-center justify-between">
-                        <span class="flex items-center gap-1.5">
-                            <span class="w-1.5 h-3.5 rounded-full bg-[#D90012]"></span>
+                        <span class="flex items-center gap-1">
                             <span>รูปแบบการปรุงอาหาร</span>
                             <span class="text-[#D90012]">*</span>
                         </span>
@@ -883,8 +880,7 @@
                 <!-- 2.1 Spiciness Levels (เมื่อเลือก หม่าล่าย่าง) -->
                 <div id="section-spiciness">
                     <label class="font-bold text-[#101114] block mb-2 flex items-center justify-between">
-                        <span class="flex items-center gap-1.5">
-                            <span class="w-1.5 h-3.5 rounded-full bg-[#D90012]"></span>
+                        <span class="flex items-center gap-1">
                             <span>ระดับความเผ็ด</span>
                             <span class="text-[#D90012]">*</span>
                         </span>
@@ -926,8 +922,7 @@
                 <!-- 2.2 Soup Options (เมื่อเลือก น้ำซุป) -->
                 <div id="section-soup-choice" class="hidden">
                     <label class="font-bold text-[#101114] block mb-2 flex items-center justify-between">
-                        <span class="flex items-center gap-1.5">
-                            <span class="w-1.5 h-3.5 rounded-full bg-[#D90012]"></span>
+                        <span class="flex items-center gap-1">
                             <span>เลือกประเภทน้ำซุป</span>
                             <span class="text-[#D90012]">*</span>
                         </span>
@@ -971,10 +966,7 @@
 
                 <!-- 3. Notes -->
                 <div>
-                    <label class="font-bold text-[#101114] block mb-1.5 flex items-center gap-1.5">
-                        <span class="w-1.5 h-3.5 rounded-full bg-[#D90012]"></span>
-                        <span>คำขอพิเศษเพิ่มเติม</span>
-                    </label>
+                    <label class="font-bold text-[#101114] block mb-1.5">คำขอพิเศษเพิ่มเติม</label>
                     <div class="relative">
                         <input type="text" id="modal-special-notes" placeholder="เช่น แยกพริก, ไม่โรยงา..."
                                class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-[#D90012] focus:bg-white text-xs transition-all">
@@ -989,10 +981,7 @@
 
                 <!-- 4. Stepper -->
                 <div class="flex items-center justify-between pt-2.5 border-t border-slate-100">
-                    <span class="font-bold text-[#101114] text-sm flex items-center gap-1.5">
-                        <span class="w-1.5 h-3.5 rounded-full bg-[#D90012]"></span>
-                        <span>จำนวนไม้</span>
-                    </span>
+                    <span class="font-bold text-[#101114] text-sm">จำนวนไม้</span>
                     <div class="flex items-center gap-3">
                         <button type="button" onclick="adjustModalQty(-1)" class="w-8 h-8 rounded-full bg-rose-50 border border-rose-200 text-[#D90012] hover:bg-rose-100 font-extrabold text-base flex items-center justify-center cursor-pointer transition active:scale-95 shadow-2xs">−</button>
                         <span id="modal-qty" class="font-black text-base text-[#101114] min-w-6 text-center">1</span>
