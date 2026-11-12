@@ -837,60 +837,178 @@
             </div>
 
             <div class="p-4 overflow-y-auto space-y-3.5 flex-1 text-xs">
-                <!-- Cooking Style -->
+                <!-- 1. Cooking Style (รูปแบบการปรุงอาหาร) -->
                 <div>
-                    <label class="font-bold text-[#101114] block mb-1.5">รูปแบบการปรุงอาหาร <span class="text-[#D90012]">*</span></label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 cursor-pointer has-checked:border-[#D90012] has-checked:bg-[#FFF0F1]">
-                            <input type="radio" name="opt_cooking_type" value="grill" checked class="text-[#D90012]">
-                            <div>
-                                <div class="font-bold text-[#101114]">🍢 ย่างเตาถ่าน</div>
-                                <div class="text-[10px] text-[#596272]">ทาซอสหม่าล่าต้นตำรับ</div>
+                    <label class="font-bold text-[#101114] block mb-2 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-1.5 h-3.5 rounded-full bg-[#D90012]"></span>
+                            <span>รูปแบบการปรุงอาหาร</span>
+                            <span class="text-[#D90012]">*</span>
+                        </span>
+                        <span class="text-[10px] text-slate-400 font-normal">เลือกอย่างใดอย่างหนึ่ง</span>
+                    </label>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <!-- Option 1: หม่าล่าย่าง -->
+                        <label class="flex items-center gap-2.5 p-3 rounded-2xl border-2 border-slate-200 cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                            <input type="radio" name="opt_cooking_type" value="grill" checked onchange="onCookingTypeChange('grill')" class="text-[#D90012] focus:ring-0">
+                            <!-- Large Standout Single-Color Red Skewer Grill Icon -->
+                            <div class="w-8 h-8 rounded-xl bg-white border border-rose-100 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                                <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M21.71 3.71a1 1 0 0 0-1.42 0l-1.59 1.59-1.3-1.3a1 1 0 0 0-1.41 1.42l1.29 1.29-2.59 2.59-1.29-1.29a1 1 0 0 0-1.42 1.41l1.3 1.3-2.59 2.58-1.29-1.29a1 1 0 0 0-1.42 1.42l1.3 1.29-4.88 4.88a1 1 0 0 0 1.41 1.41l4.88-4.88 1.29 1.3a1 1 0 0 0 1.42-1.42l-1.3-1.29 2.59-2.59 1.29 1.3a1 1 0 0 0 1.42-1.42l-1.3-1.29 2.59-2.59 1.29 1.3a1 1 0 0 0 1.42-1.42l-1.3-1.29 1.59-1.59a1 1 0 0 0 0-1.42z"/>
+                                </svg>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="font-extrabold text-[#101114] text-[12.5px] leading-tight group-hover:text-[#D90012]">หม่าล่าย่าง</div>
+                                <div class="text-[10px] text-[#596272] truncate mt-0.5">ทาซอสหม่าล่าต้นตำรับ</div>
                             </div>
                         </label>
-                        <label class="flex items-center gap-2 p-2.5 rounded-xl border border-slate-200 cursor-pointer has-checked:border-[#D90012] has-checked:bg-[#FFF0F1]">
-                            <input type="radio" name="opt_cooking_type" value="soup" class="text-[#D90012]">
-                            <div>
-                                <div class="font-bold text-[#101114]">🍲 ต้มซุปหม่าล่า</div>
-                                <div class="text-[10px] text-[#596272]">ซุปหม่าล่าน้ำข้นเสฉวน</div>
+
+                        <!-- Option 2: น้ำซุป -->
+                        <label class="flex items-center gap-2.5 p-3 rounded-2xl border-2 border-slate-200 cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                            <input type="radio" name="opt_cooking_type" value="soup" onchange="onCookingTypeChange('soup')" class="text-[#D90012] focus:ring-0">
+                            <!-- Large Standout Single-Color Red Hotpot Soup Icon -->
+                            <div class="w-8 h-8 rounded-xl bg-white border border-rose-100 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                                <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M21 11H3a1 1 0 0 0-1 1c0 5 3.5 9 8.5 9.8V23h3v-1.2c5-.8 8.5-4.8 8.5-9.8a1 1 0 0 0-1-1zm-9 8.8C7.5 19.8 4.5 16.5 4.1 13h15.8c-.4 3.5-3.4 6.8-7.9 6.8zM6.5 8a1 1 0 0 1 1-1c1 0 1-1 1-1s0-1 1-1a1 1 0 0 1 2 0c0 1 1 2 2 2s1-1 1-1 0-1 1-1a1 1 0 0 1 2 0c0 1 1 2 2 2a1 1 0 1 1 0 2c-1.5 0-2.5-1-2.9-1.6-.4.6-1.4 1.6-2.9 1.6s-2.5-1-2.9-1.6c-.4.6-1.4 1.6-2.9 1.6a1 1 0 0 1-1-1z" />
+                                </svg>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="font-extrabold text-[#101114] text-[12.5px] leading-tight group-hover:text-[#D90012]">น้ำซุป</div>
+                                <div class="text-[10px] text-[#596272] truncate mt-0.5">เลือกประเภทน้ำซุป</div>
                             </div>
                         </label>
                     </div>
                 </div>
 
-                <!-- Spiciness -->
-                <div>
-                    <label class="font-bold text-[#101114] block mb-1.5">ระดับความเผ็ด <span class="text-[#D90012]">*</span></label>
+                <!-- 2.1 Spiciness Levels (เมื่อเลือก หม่าล่าย่าง) -->
+                <div id="section-spiciness">
+                    <label class="font-bold text-[#101114] block mb-2 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-1.5 h-3.5 rounded-full bg-[#D90012]"></span>
+                            <span>ระดับความเผ็ด</span>
+                            <span class="text-[#D90012]">*</span>
+                        </span>
+                        <span class="text-[10px] text-slate-400 font-normal">รสชาติหม่าล่า</span>
+                    </label>
                     <div class="grid grid-cols-3 gap-2">
-                        <label class="flex flex-col items-center p-2 rounded-xl border border-slate-200 text-center cursor-pointer has-checked:border-[#D90012] has-checked:bg-[#FFF0F1]">
-                            <input type="radio" name="opt_spice_level" value="mild" class="text-[#D90012] mb-1">
-                            <span class="font-bold text-[#101114]">🌶️ เผ็ดน้อย</span>
+                        <!-- เผ็ดน้อย -->
+                        <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                            <input type="radio" name="opt_spice_level" value="mild" class="text-[#D90012] mb-1.5 focus:ring-0">
+                            <div class="h-6 flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
+                                <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19.3 5.4c-.4-.4-1.1-.4-1.5 0l-1.3 1.3C14.7 5.6 12.3 5 10 5c-4.4 0-8 3.6-8 8 0 4.2 3.1 7.7 7.2 8 .3 0 .6-.1.8-.4.3-.4.3-.9 0-1.3-.9-1.2-1.5-2.7-1.7-4.3 1.6.5 3.3.7 5 .4 3.9-.7 7-3.7 7.8-7.6.2-.8.1-1.6-.2-2.3l1.4-1.4c.4-.4.4-1.1 0-1.5zM12 2a1 1 0 0 1 1 1v1.5a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1z" />
+                                </svg>
+                            </div>
+                            <span class="font-extrabold text-[#101114] text-[11.5px]">เผ็ดน้อย</span>
                         </label>
-                        <label class="flex flex-col items-center p-2 rounded-xl border border-slate-200 text-center cursor-pointer has-checked:border-[#D90012] has-checked:bg-[#FFF0F1]">
-                            <input type="radio" name="opt_spice_level" value="medium" checked class="text-[#D90012] mb-1">
-                            <span class="font-bold text-[#101114]">🌶️🌶️ เผ็ดกลาง</span>
+
+                        <!-- เผ็ดกลาง -->
+                        <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                            <input type="radio" name="opt_spice_level" value="medium" checked class="text-[#D90012] mb-1.5 focus:ring-0">
+                            <div class="h-6 flex items-center justify-center gap-0.5 mb-1 group-hover:scale-110 transition-transform">
+                                <svg class="w-4.5 h-4.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19.3 5.4c-.4-.4-1.1-.4-1.5 0l-1.3 1.3C14.7 5.6 12.3 5 10 5c-4.4 0-8 3.6-8 8 0 4.2 3.1 7.7 7.2 8 .3 0 .6-.1.8-.4.3-.4.3-.9 0-1.3-.9-1.2-1.5-2.7-1.7-4.3 1.6.5 3.3.7 5 .4 3.9-.7 7-3.7 7.8-7.6.2-.8.1-1.6-.2-2.3l1.4-1.4c.4-.4.4-1.1 0-1.5zM12 2a1 1 0 0 1 1 1v1.5a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1z" />
+                                </svg>
+                                <svg class="w-4.5 h-4.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19.3 5.4c-.4-.4-1.1-.4-1.5 0l-1.3 1.3C14.7 5.6 12.3 5 10 5c-4.4 0-8 3.6-8 8 0 4.2 3.1 7.7 7.2 8 .3 0 .6-.1.8-.4.3-.4.3-.9 0-1.3-.9-1.2-1.5-2.7-1.7-4.3 1.6.5 3.3.7 5 .4 3.9-.7 7-3.7 7.8-7.6.2-.8.1-1.6-.2-2.3l1.4-1.4c.4-.4.4-1.1 0-1.5zM12 2a1 1 0 0 1 1 1v1.5a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1z" />
+                                </svg>
+                            </div>
+                            <span class="font-extrabold text-[#101114] text-[11.5px]">เผ็ดกลาง</span>
                         </label>
-                        <label class="flex flex-col items-center p-2 rounded-xl border border-slate-200 text-center cursor-pointer has-checked:border-[#D90012] has-checked:bg-[#FFF0F1]">
-                            <input type="radio" name="opt_spice_level" value="hot" class="text-[#D90012] mb-1">
-                            <span class="font-bold text-[#101114]">🌶️🌶️🌶️ เผ็ดมาก</span>
+
+                        <!-- เผ็ดมาก -->
+                        <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                            <input type="radio" name="opt_spice_level" value="hot" class="text-[#D90012] mb-1.5 focus:ring-0">
+                            <div class="h-6 flex items-center justify-center -space-x-1 mb-1 group-hover:scale-110 transition-transform">
+                                <svg class="w-4 h-4 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19.3 5.4c-.4-.4-1.1-.4-1.5 0l-1.3 1.3C14.7 5.6 12.3 5 10 5c-4.4 0-8 3.6-8 8 0 4.2 3.1 7.7 7.2 8 .3 0 .6-.1.8-.4.3-.4.3-.9 0-1.3-.9-1.2-1.5-2.7-1.7-4.3 1.6.5 3.3.7 5 .4 3.9-.7 7-3.7 7.8-7.6.2-.8.1-1.6-.2-2.3l1.4-1.4c.4-.4.4-1.1 0-1.5zM12 2a1 1 0 0 1 1 1v1.5a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1z" />
+                                </svg>
+                                <svg class="w-4 h-4 text-[#D90012] shrink-0 z-10" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19.3 5.4c-.4-.4-1.1-.4-1.5 0l-1.3 1.3C14.7 5.6 12.3 5 10 5c-4.4 0-8 3.6-8 8 0 4.2 3.1 7.7 7.2 8 .3 0 .6-.1.8-.4.3-.4.3-.9 0-1.3-.9-1.2-1.5-2.7-1.7-4.3 1.6.5 3.3.7 5 .4 3.9-.7 7-3.7 7.8-7.6.2-.8.1-1.6-.2-2.3l1.4-1.4c.4-.4.4-1.1 0-1.5zM12 2a1 1 0 0 1 1 1v1.5a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1z" />
+                                </svg>
+                                <svg class="w-4 h-4 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19.3 5.4c-.4-.4-1.1-.4-1.5 0l-1.3 1.3C14.7 5.6 12.3 5 10 5c-4.4 0-8 3.6-8 8 0 4.2 3.1 7.7 7.2 8 .3 0 .6-.1.8-.4.3-.4.3-.9 0-1.3-.9-1.2-1.5-2.7-1.7-4.3 1.6.5 3.3.7 5 .4 3.9-.7 7-3.7 7.8-7.6.2-.8.1-1.6-.2-2.3l1.4-1.4c.4-.4.4-1.1 0-1.5zM12 2a1 1 0 0 1 1 1v1.5a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1z" />
+                                </svg>
+                            </div>
+                            <span class="font-extrabold text-[#101114] text-[11.5px]">เผ็ดมาก</span>
                         </label>
                     </div>
                 </div>
 
-                <!-- Notes -->
-                <div>
-                    <label class="font-bold text-[#101114] block mb-1">คำขอพิเศษเพิ่มเติม</label>
-                    <input type="text" id="modal-special-notes" placeholder="เช่น แยกพริก, ไม่โรยงา..."
-                           class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-[#D90012]">
+                <!-- 2.2 Soup Options (เมื่อเลือก น้ำซุป) -->
+                <div id="section-soup-choice" class="hidden">
+                    <label class="font-bold text-[#101114] block mb-2 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-1.5 h-3.5 rounded-full bg-[#D90012]"></span>
+                            <span>เลือกประเภทน้ำซุป</span>
+                            <span class="text-[#D90012]">*</span>
+                        </span>
+                        <span class="text-[10px] text-slate-400 font-normal">รสชาติน้ำซุป</span>
+                    </label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <!-- ซุปน้ำดำ -->
+                        <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                            <input type="radio" name="opt_soup_style" value="black_soup" class="text-[#D90012] mb-1.5 focus:ring-0">
+                            <div class="h-6 flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
+                                <svg class="w-5.5 h-5.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M21 11H3a1 1 0 0 0-1 1c0 5 3.5 9 8.5 9.8V23h3v-1.2c5-.8 8.5-4.8 8.5-9.8a1 1 0 0 0-1-1zm-9 8.8C7.5 19.8 4.5 16.5 4.1 13h15.8c-.4 3.5-3.4 6.8-7.9 6.8zM6.5 8a1 1 0 0 1 1-1c1 0 1-1 1-1s0-1 1-1a1 1 0 0 1 2 0c0 1 1 2 2 2s1-1 1-1 0-1 1-1a1 1 0 0 1 2 0c0 1 1 2 2 2a1 1 0 1 1 0 2c-1.5 0-2.5-1-2.9-1.6-.4.6-1.4 1.6-2.9 1.6s-2.5-1-2.9-1.6c-.4.6-1.4 1.6-2.9 1.6a1 1 0 0 1-1-1z" />
+                                </svg>
+                            </div>
+                            <span class="font-extrabold text-[#101114] text-[11px] leading-tight">ซุปน้ำดำ</span>
+                        </label>
+
+                        <!-- ซุปต้มยำ-น้ำข้น -->
+                        <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                            <input type="radio" name="opt_soup_style" value="tomyum_rich" class="text-[#D90012] mb-1.5 focus:ring-0">
+                            <div class="h-6 flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
+                                <svg class="w-5.5 h-5.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2c-1.5 2.5-4 4.5-4 7a4 4 0 0 0 8 0c0-2.5-2.5-4.5-4-7zm0 9c-1.1 0-2-.9-2-2 0-1 .9-2 2-3.3 1.1 1.3 2 2.3 2 3.3 0 1.1-.9 2-2 2zM2 13h20c0 5-4.5 9-10 9S2 18 2 13z"/>
+                                </svg>
+                            </div>
+                            <span class="font-extrabold text-[#101114] text-[11px] leading-tight">ซุปต้มยำ-น้ำข้น</span>
+                        </label>
+
+                        <!-- ซุปหม่าล่า-น้ำข้น -->
+                        <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                            <input type="radio" name="opt_soup_style" value="mala_rich" checked class="text-[#D90012] mb-1.5 focus:ring-0">
+                            <div class="h-6 flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
+                                <svg class="w-5.5 h-5.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 1a3 3 0 0 0-3 3c0 2 2 3 3 5 1-2 3-3 3-5a3 3 0 0 0-3-3zm-6 4a2 2 0 0 0-2 2c0 1.5 1.5 2.5 2 4 .5-1.5 2-2.5 2-4a2 2 0 0 0-2-2zm12 0a2 2 0 0 0-2 2c0 1.5 1.5 2.5 2 4 .5-1.5 2-2.5 2-4a2 2 0 0 0-2-2zM2 13h20c0 5-4.5 9-10 9S2 18 2 13z"/>
+                                </svg>
+                            </div>
+                            <span class="font-extrabold text-[#101114] text-[11px] leading-tight">ซุปหม่าล่า-น้ำข้น</span>
+                        </label>
+                    </div>
                 </div>
 
-                <!-- Stepper -->
-                <div class="flex items-center justify-between pt-2 border-t border-slate-100">
-                    <span class="font-bold text-[#101114] text-sm">จำนวนไม้</span>
+                <!-- 3. Notes -->
+                <div>
+                    <label class="font-bold text-[#101114] block mb-1.5 flex items-center gap-1.5">
+                        <span class="w-1.5 h-3.5 rounded-full bg-[#D90012]"></span>
+                        <span>คำขอพิเศษเพิ่มเติม</span>
+                    </label>
+                    <div class="relative">
+                        <input type="text" id="modal-special-notes" placeholder="เช่น แยกพริก, ไม่โรยงา..."
+                               class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-[#D90012] focus:bg-white text-xs transition-all">
+                        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-[#D90012] pointer-events-none">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Stepper -->
+                <div class="flex items-center justify-between pt-2.5 border-t border-slate-100">
+                    <span class="font-bold text-[#101114] text-sm flex items-center gap-1.5">
+                        <span class="w-1.5 h-3.5 rounded-full bg-[#D90012]"></span>
+                        <span>จำนวนไม้</span>
+                    </span>
                     <div class="flex items-center gap-3">
-                        <button type="button" onclick="adjustModalQty(-1)" class="w-7 h-7 rounded-full bg-[#FFE4E6] text-[#D90012] font-bold flex items-center justify-center cursor-pointer">-</button>
-                        <span id="modal-qty" class="font-bold text-sm text-[#101114] min-w-5 text-center">1</span>
-                        <button type="button" onclick="adjustModalQty(1)" class="w-7 h-7 rounded-full bg-[#D90012] text-white font-bold flex items-center justify-center cursor-pointer">+</button>
+                        <button type="button" onclick="adjustModalQty(-1)" class="w-8 h-8 rounded-full bg-rose-50 border border-rose-200 text-[#D90012] hover:bg-rose-100 font-extrabold text-base flex items-center justify-center cursor-pointer transition active:scale-95 shadow-2xs">−</button>
+                        <span id="modal-qty" class="font-black text-base text-[#101114] min-w-6 text-center">1</span>
+                        <button type="button" onclick="adjustModalQty(1)" class="w-8 h-8 rounded-full bg-[#D90012] hover:bg-[#B8000F] text-white font-extrabold text-base flex items-center justify-center cursor-pointer transition active:scale-95 shadow-2xs">+</button>
                     </div>
                 </div>
             </div>
@@ -1531,6 +1649,8 @@
                     quantity: 1,
                     cooking_type: 'grill',
                     spice_level: 'medium',
+                    soup_style: null,
+                    option_label: 'เผ็ดกลาง',
                     notes: ''
                 });
             }
@@ -1730,6 +1850,19 @@
         }
 
         // Customization Modal
+        function onCookingTypeChange(type) {
+            const secSpiciness = document.getElementById('section-spiciness');
+            const secSoup = document.getElementById('section-soup-choice');
+            if (!secSpiciness || !secSoup) return;
+            if (type === 'grill') {
+                secSpiciness.classList.remove('hidden');
+                secSoup.classList.add('hidden');
+            } else {
+                secSpiciness.classList.add('hidden');
+                secSoup.classList.remove('hidden');
+            }
+        }
+
         function openCustomizationModal(productId) {
             const p = productMap[productId];
             if (!p || p.stock_sticks <= 0) return;
@@ -1741,6 +1874,21 @@
             document.getElementById('modal-product-price').innerText = '฿' + parseFloat(p.price_per_stick).toFixed(0) + ' /ไม้';
             document.getElementById('modal-special-notes').value = '';
             document.getElementById('modal-qty').innerText = '1';
+
+            // Reset cooking type to grill
+            const grillRadio = document.querySelector('input[name="opt_cooking_type"][value="grill"]');
+            if (grillRadio) {
+                grillRadio.checked = true;
+                onCookingTypeChange('grill');
+            }
+
+            // Reset spice level to medium
+            const mediumRadio = document.querySelector('input[name="opt_spice_level"][value="medium"]');
+            if (mediumRadio) mediumRadio.checked = true;
+
+            // Reset soup style to mala_rich
+            const malaSoupRadio = document.querySelector('input[name="opt_soup_style"][value="mala_rich"]');
+            if (malaSoupRadio) malaSoupRadio.checked = true;
 
             updateModalPrice();
             document.getElementById('custom-modal').classList.remove('hidden');
@@ -1772,13 +1920,28 @@
             if (!p) return;
 
             const cookingType = document.querySelector('input[name="opt_cooking_type"]:checked')?.value || 'grill';
-            const spiceLevel = document.querySelector('input[name="opt_spice_level"]:checked')?.value || 'medium';
             const specialNotes = document.getElementById('modal-special-notes')?.value.trim() || '';
+
+            let spiceLevel = 'medium';
+            let soupStyle = null;
+            let optionLabel = '';
+
+            if (cookingType === 'grill') {
+                spiceLevel = document.querySelector('input[name="opt_spice_level"]:checked')?.value || 'medium';
+                optionLabel = spiceLevel === 'mild' ? 'เผ็ดน้อย' : (spiceLevel === 'hot' ? 'เผ็ดมาก' : 'เผ็ดกลาง');
+            } else {
+                soupStyle = document.querySelector('input[name="opt_soup_style"]:checked')?.value || 'mala_rich';
+                spiceLevel = (soupStyle === 'black_soup') ? 'none' : 'medium';
+                if (soupStyle === 'black_soup') optionLabel = 'ซุปน้ำดำ';
+                else if (soupStyle === 'tomyum_rich') optionLabel = 'ซุปต้มยำ-น้ำข้น';
+                else optionLabel = 'ซุปหม่าล่า-น้ำข้น';
+            }
 
             const existing = cart.find(item =>
                 item.product_id === p.id &&
                 item.cooking_type === cookingType &&
                 item.spice_level === spiceLevel &&
+                item.soup_style === soupStyle &&
                 item.notes === specialNotes
             );
 
@@ -1792,6 +1955,8 @@
                     quantity: currentModalQty,
                     cooking_type: cookingType,
                     spice_level: spiceLevel,
+                    soup_style: soupStyle,
+                    option_label: optionLabel,
                     notes: specialNotes
                 });
             }
@@ -1851,14 +2016,25 @@
                 container.innerHTML = '<div class="text-center py-4 text-slate-400">ยังไม่มีรายการอาหารในตะกร้า</div>';
                 return;
             }
-            container.innerHTML = cart.map((item, idx) => `
+            container.innerHTML = cart.map((item, idx) => {
+                const cookingText = item.cooking_type === 'grill' ? 'หม่าล่าย่าง' : 'น้ำซุป';
+                const detailText = item.option_label || (item.cooking_type === 'grill'
+                    ? (item.spice_level === 'mild' ? 'เผ็ดน้อย' : (item.spice_level === 'hot' ? 'เผ็ดมาก' : 'เผ็ดกลาง'))
+                    : (item.soup_style === 'black_soup' ? 'ซุปน้ำดำ' : (item.soup_style === 'tomyum_rich' ? 'ซุปต้มยำ-น้ำข้น' : 'ซุปหม่าล่า-น้ำข้น'))
+                );
+                return `
                 <div class="p-2.5 rounded-xl bg-white border border-slate-200 flex items-center justify-between gap-2">
                     <div class="min-w-0 flex-1">
                         <div class="font-bold text-[#101114] truncate">${item.name}</div>
-                        <div class="text-[10px] text-[#596272]">
-                            ${item.cooking_type === 'grill' ? '🍢 ย่างเตาถ่าน' : '🍲 ต้มซุปหม่าล่า'} • ${item.spice_level === 'mild' ? 'เผ็ดน้อย' : (item.spice_level === 'hot' ? 'เผ็ดมาก' : 'เผ็ดกลาง')}
+                        <div class="text-[10px] text-[#596272] flex items-center gap-1.5 flex-wrap mt-0.5">
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-rose-50 text-[#D90012] font-bold text-[10px]">
+                                ${cookingText}
+                            </span>
+                            <span>•</span>
+                            <span class="font-medium text-slate-700">${detailText}</span>
+                            ${item.notes ? `<span class="text-slate-400">(${item.notes})</span>` : ''}
                         </div>
-                        <div class="text-[11px] font-bold text-[#D90012]">฿${(item.unit_price * item.quantity).toFixed(0)}</div>
+                        <div class="text-[11px] font-bold text-[#D90012] mt-0.5">฿${(item.unit_price * item.quantity).toFixed(0)}</div>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
                         <button type="button" onclick="adjustCartItemQty(${idx}, -1)" class="w-6 h-6 rounded-full bg-[#FFE4E6] text-[#D90012] font-bold flex items-center justify-center cursor-pointer">−</button>
@@ -1866,7 +2042,8 @@
                         <button type="button" onclick="adjustCartItemQty(${idx}, 1)" class="w-6 h-6 rounded-full bg-[#D90012] text-white font-bold flex items-center justify-center cursor-pointer">+</button>
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function adjustCartItemQty(index, delta) {
@@ -1942,8 +2119,8 @@
                     quantity: item.quantity,
                     cooking_type: item.cooking_type,
                     grill_style: 'brush',
-                    soup_style: 'mala_rich',
-                    spiciness_level: item.spice_level,
+                    soup_style: item.soup_style || (item.cooking_type === 'soup' ? 'mala_rich' : null),
+                    spiciness_level: item.spice_level || 'medium',
                     special_instructions: item.notes || null,
                 })),
                 coupon_code: activeCoupon,
