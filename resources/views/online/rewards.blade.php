@@ -59,31 +59,36 @@
         <main class="flex-1 overflow-y-auto px-3.5 py-3 space-y-3.5 hide-scrollbar">
 
             <!-- ============================================================= -->
-            <!-- 2. CUSTOMER PHONE BAR                                         -->
+            <!-- 2. CUSTOMER PHONE BAR & NOTICE                                -->
             <!-- ============================================================= -->
-            <div class="bg-white rounded-2xl p-3 border border-rose-200/90 shadow-2xs flex items-center justify-between gap-2.5">
-                <div class="flex items-center gap-2.5 min-w-0">
-                    <div class="w-9 h-9 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-base shrink-0 shadow-2xs">
-                        📱
-                    </div>
-                    <div class="min-w-0">
-                        <div class="text-[12.5px] sm:text-sm font-black text-rose-600 leading-tight tracking-tight">
-                            โปรใส่เบอร์ติดต่อเพื่อเก็บแต้ม
-                        </div>
-                        <div class="flex items-center gap-1.5 mt-0.5">
-                            <span class="text-[10.5px] text-slate-400 font-medium">เบอร์โทรสมาชิก:</span>
-                            <span id="display-phone" class="text-xs sm:text-[13px] font-black text-slate-800 truncate font-mono">
-                                {{ $reward->customer_phone }}
-                            </span>
-                        </div>
-                    </div>
+            <div class="space-y-1.5">
+                <!-- ข้อความอยู่ข้างบนแถบเบอร์สมาชิก (ตัวอักษรสีดำ หนาพิเศษ ใหญ่เด่นสะดุดตาชัดเจน) -->
+                <div class="px-1 flex items-center gap-1.5">
+                    <span class="text-sm sm:text-[15px] font-black text-slate-900 tracking-tight leading-tight">
+                        โปรใส่เบอร์ติดต่อเพื่อเก็บแต้ม
+                    </span>
                 </div>
 
-                <button type="button"
-                        onclick="openPhoneLookupModal()"
-                        class="text-[10.5px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-xl transition-all border border-rose-200 shrink-0 cursor-pointer active:scale-95 shadow-2xs">
-                    เปลี่ยนเบอร์ / เช็คแต้ม
-                </button>
+                <!-- แถบเบอร์สมาชิก -->
+                <div class="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-800 flex items-center justify-center font-bold text-sm shrink-0">
+                            📱
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-[10px] text-slate-500 font-medium">เบอร์โทรสมาชิก</div>
+                            <div id="display-phone" class="text-xs sm:text-[13px] font-black text-slate-900 truncate font-mono">
+                                {{ $reward->customer_phone }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button"
+                            onclick="openPhoneLookupModal()"
+                            class="text-[10.5px] font-bold text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-all border border-slate-300 shrink-0 cursor-pointer active:scale-95 shadow-2xs">
+                        เปลี่ยนเบอร์ / เช็คแต้ม
+                    </button>
+                </div>
             </div>
 
             <!-- ============================================================= -->
@@ -117,23 +122,65 @@
                     <span>✨ สะสมครบ 5 แต้ม = แลกรับหม่าล่าฟรี 1 ไม้!</span>
                 </div>
 
-                <!-- 5 Stamp Slots Grid -->
+                <!-- 5 Stamp Slots Grid (ไอคอนไม้ทั้ง 5 แถบตรงตามภาพที่ 3: เส้นขาว ไส้กรอกสีเหลืองทอง แสงสลัวๆ) -->
                 <div class="mt-4 grid grid-cols-5 gap-1.5">
                     @for($i = 1; $i <= 5; $i++)
                         @php
                             $isStamped = ($reward->points >= $i) || ($stamps >= $i && $reward->points > 0);
                             $isSlot5 = ($i === 5);
                         @endphp
-                        <div class="relative flex flex-col items-center justify-center p-2 rounded-2xl border transition-all duration-300 {{ $isStamped ? 'bg-amber-400/20 border-amber-300 text-amber-200 shadow-inner' : 'bg-white/10 border-white/20 text-white/40' }} aspect-square">
+                        <div class="relative flex flex-col items-center justify-center p-1.5 rounded-2xl border transition-all duration-300 {{ $isStamped ? 'bg-amber-400/20 border-amber-300 text-amber-200 shadow-inner' : 'bg-white/10 border-white/20 text-white/40' }} aspect-square">
+                            <!-- Custom 2-Skewer Icon matching Image 3 (White Lines + Golden Yellow Sausage + Soft Glow) -->
+                            <div class="flex items-center justify-center">
+                                <svg class="w-7 h-7 sm:w-8 sm:h-8 transition-transform duration-200 {{ $isStamped ? 'scale-110' : 'opacity-35' }}"
+                                     style="{{ $isStamped ? 'filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.75));' : 'filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.2));' }}"
+                                     viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <linearGradient id="stampGoldGrad-{{ $i }}" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#FEF08A" />
+                                            <stop offset="50%" stop-color="#F59E0B" />
+                                            <stop offset="100%" stop-color="#D97706" />
+                                        </linearGradient>
+                                    </defs>
+
+                                    <!-- Left Skewer: Meatballs (3 round meatballs on stick in white) -->
+                                    <g transform="translate(42, 44) rotate(-45)">
+                                        <!-- Stick -->
+                                        <line x1="0" y1="-34" x2="0" y2="46" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" />
+                                        
+                                        <!-- Ball 3 (Top) -->
+                                        <circle cx="0" cy="-22" r="9" fill="rgba(255,255,255,0.08)" stroke="#FFFFFF" stroke-width="3" />
+                                        <path d="M -5 -24 A 5.5 5.5 0 0 1 -1 -28" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+
+                                        <!-- Ball 2 (Middle) -->
+                                        <circle cx="0" cy="0" r="9" fill="rgba(255,255,255,0.08)" stroke="#FFFFFF" stroke-width="3" />
+                                        <path d="M -5 -2 A 5.5 5.5 0 0 1 -1 -6" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+
+                                        <!-- Ball 1 (Bottom) -->
+                                        <circle cx="0" cy="22" r="9" fill="rgba(255,255,255,0.08)" stroke="#FFFFFF" stroke-width="3" />
+                                        <path d="M -5 20 A 5.5 5.5 0 0 1 -1 16" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+                                    </g>
+
+                                    <!-- Right Skewer: Sausage with Golden Yellow and Zigzag -->
+                                    <g transform="translate(60, 56) rotate(-45)">
+                                        <!-- Stick bottom -->
+                                        <line x1="0" y1="28" x2="0" y2="46" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" />
+                                        
+                                        <!-- Sausage Body: Golden Yellow -->
+                                        <rect x="-9.5" y="-28" width="19" height="56" rx="9.5" fill="url(#stampGoldGrad-{{ $i }})" stroke="#FFFFFF" stroke-width="3" />
+                                        
+                                        <!-- Zigzag Pattern in White -->
+                                        <path d="M 0 -19 L 4 -13 L -4 -6 L 4 1 L -4 8 L 4 15 L 0 20" 
+                                              fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </g>
+                                </svg>
+                            </div>
+
                             @if($isSlot5)
-                                <!-- Slot 5: Free Stick Reward -->
-                                <div class="text-xl {{ $isStamped ? 'scale-110 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]' : 'opacity-50' }}">🎁</div>
                                 <span class="text-[9px] font-black leading-none mt-1 {{ $isStamped ? 'text-amber-300' : 'text-white/60' }}">
                                     ฟรี 1 ไม้!
                                 </span>
                             @else
-                                <!-- Regular Stamp Slot -->
-                                <div class="text-lg {{ $isStamped ? 'scale-110' : 'opacity-40' }}">🍢</div>
                                 <span class="text-[9px] font-bold leading-none mt-1 {{ $isStamped ? 'text-amber-300' : 'text-white/60' }}">
                                     ไม้ที่ {{ $i }}
                                 </span>
