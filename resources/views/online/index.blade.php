@@ -895,9 +895,7 @@
                         <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
                             <input type="radio" name="opt_spice_level" value="mild" class="text-[#D90012] mb-1.5 focus:ring-0">
                             <div class="h-6 flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
-                                <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M19.3 5.4c-.4-.4-1.1-.4-1.5 0l-1.3 1.3C14.7 5.6 12.3 5 10 5c-4.4 0-8 3.6-8 8 0 4.2 3.1 7.7 7.2 8 .3 0 .6-.1.8-.4.3-.4.3-.9 0-1.3-.9-1.2-1.5-2.7-1.7-4.3 1.6.5 3.3.7 5 .4 3.9-.7 7-3.7 7.8-7.6.2-.8.1-1.6-.2-2.3l1.4-1.4c.4-.4.4-1.1 0-1.5zM12 2a1 1 0 0 1 1 1v1.5a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1z" />
-                                </svg>
+                                <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-5.5 w-auto object-contain shrink-0" alt="เผ็ดน้อย">
                             </div>
                             <span class="font-extrabold text-[#101114] text-[11.5px]">เผ็ดน้อย</span>
                         </label>
@@ -905,13 +903,9 @@
                         <!-- เผ็ดกลาง -->
                         <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
                             <input type="radio" name="opt_spice_level" value="medium" checked class="text-[#D90012] mb-1.5 focus:ring-0">
-                            <div class="h-6 flex items-center justify-center gap-0.5 mb-1 group-hover:scale-110 transition-transform">
-                                <svg class="w-4.5 h-4.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M19.3 5.4c-.4-.4-1.1-.4-1.5 0l-1.3 1.3C14.7 5.6 12.3 5 10 5c-4.4 0-8 3.6-8 8 0 4.2 3.1 7.7 7.2 8 .3 0 .6-.1.8-.4.3-.4.3-.9 0-1.3-.9-1.2-1.5-2.7-1.7-4.3 1.6.5 3.3.7 5 .4 3.9-.7 7-3.7 7.8-7.6.2-.8.1-1.6-.2-2.3l1.4-1.4c.4-.4.4-1.1 0-1.5zM12 2a1 1 0 0 1 1 1v1.5a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1z" />
-                                </svg>
-                                <svg class="w-4.5 h-4.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M19.3 5.4c-.4-.4-1.1-.4-1.5 0l-1.3 1.3C14.7 5.6 12.3 5 10 5c-4.4 0-8 3.6-8 8 0 4.2 3.1 7.7 7.2 8 .3 0 .6-.1.8-.4.3-.4.3-.9 0-1.3-.9-1.2-1.5-2.7-1.7-4.3 1.6.5 3.3.7 5 .4 3.9-.7 7-3.7 7.8-7.6.2-.8.1-1.6-.2-2.3l1.4-1.4c.4-.4.4-1.1 0-1.5zM12 2a1 1 0 0 1 1 1v1.5a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1z" />
-                                </svg>
+                            <div class="h-6 flex items-center justify-center -space-x-1 mb-1 group-hover:scale-110 transition-transform">
+                                <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-5 w-auto object-contain shrink-0" alt="เผ็ดกลาง">
+                                <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-5 w-auto object-contain shrink-0" alt="เผ็ดกลาง">
                             </div>
                             <span class="font-extrabold text-[#101114] text-[11.5px]">เผ็ดกลาง</span>
                         </label>
@@ -919,16 +913,10 @@
                         <!-- เผ็ดมาก -->
                         <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
                             <input type="radio" name="opt_spice_level" value="hot" class="text-[#D90012] mb-1.5 focus:ring-0">
-                            <div class="h-6 flex items-center justify-center -space-x-1 mb-1 group-hover:scale-110 transition-transform">
-                                <svg class="w-4 h-4 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M19.3 5.4c-.4-.4-1.1-.4-1.5 0l-1.3 1.3C14.7 5.6 12.3 5 10 5c-4.4 0-8 3.6-8 8 0 4.2 3.1 7.7 7.2 8 .3 0 .6-.1.8-.4.3-.4.3-.9 0-1.3-.9-1.2-1.5-2.7-1.7-4.3 1.6.5 3.3.7 5 .4 3.9-.7 7-3.7 7.8-7.6.2-.8.1-1.6-.2-2.3l1.4-1.4c.4-.4.4-1.1 0-1.5zM12 2a1 1 0 0 1 1 1v1.5a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1z" />
-                                </svg>
-                                <svg class="w-4 h-4 text-[#D90012] shrink-0 z-10" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M19.3 5.4c-.4-.4-1.1-.4-1.5 0l-1.3 1.3C14.7 5.6 12.3 5 10 5c-4.4 0-8 3.6-8 8 0 4.2 3.1 7.7 7.2 8 .3 0 .6-.1.8-.4.3-.4.3-.9 0-1.3-.9-1.2-1.5-2.7-1.7-4.3 1.6.5 3.3.7 5 .4 3.9-.7 7-3.7 7.8-7.6.2-.8.1-1.6-.2-2.3l1.4-1.4c.4-.4.4-1.1 0-1.5zM12 2a1 1 0 0 1 1 1v1.5a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1z" />
-                                </svg>
-                                <svg class="w-4 h-4 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M19.3 5.4c-.4-.4-1.1-.4-1.5 0l-1.3 1.3C14.7 5.6 12.3 5 10 5c-4.4 0-8 3.6-8 8 0 4.2 3.1 7.7 7.2 8 .3 0 .6-.1.8-.4.3-.4.3-.9 0-1.3-.9-1.2-1.5-2.7-1.7-4.3 1.6.5 3.3.7 5 .4 3.9-.7 7-3.7 7.8-7.6.2-.8.1-1.6-.2-2.3l1.4-1.4c.4-.4.4-1.1 0-1.5zM12 2a1 1 0 0 1 1 1v1.5a1 1 0 0 1-2 0V3a1 1 0 0 1 1-1z" />
-                                </svg>
+                            <div class="h-6 flex items-center justify-center -space-x-1.5 mb-1 group-hover:scale-110 transition-transform">
+                                <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4.5 w-auto object-contain shrink-0" alt="เผ็ดมาก">
+                                <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4.5 w-auto object-contain shrink-0 z-10" alt="เผ็ดมาก">
+                                <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4.5 w-auto object-contain shrink-0" alt="เผ็ดมาก">
                             </div>
                             <span class="font-extrabold text-[#101114] text-[11.5px]">เผ็ดมาก</span>
                         </label>
