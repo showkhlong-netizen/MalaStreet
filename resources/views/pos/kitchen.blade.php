@@ -21,7 +21,7 @@
             </div>
 
             <!-- Stats & Quick Refresh -->
-            <div class="flex items-center space-x-3 text-xs w-full sm:w-auto justify-between sm:justify-end">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 text-xs w-full sm:w-auto justify-between sm:justify-end">
                 <div class="px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 font-medium flex items-center space-x-2">
                     <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                     <span>รอปรุง: <strong class="text-slate-900 font-black text-sm">{{ $activeOrders->count() }}</strong> บิล</span>
@@ -31,12 +31,30 @@
                     <span>เสร็จวันนี้: <strong class="text-slate-900 font-black text-sm">{{ $completedCount }}</strong> บิล</span>
                 </div>
                 <button onclick="window.location.reload()" 
-                    class="py-2 px-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold transition-all shadow-xs flex items-center space-x-1.5" title="รีเฟรชออเดอร์">
+                    class="py-2 px-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer active:scale-95" title="รีเฟรชออเดอร์">
                     <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                     <span>รีเฟรช</span>
                 </button>
+
+                <!-- แถบหน้าต่างแชทลูกค้า (ฝั่งแอดมิน) - ตั้งฝั่งขวาสุดของแถบหน้าจอครัว -->
+                <a href="{{ route('kitchen.chat') }}" 
+                    class="py-2 px-4 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black transition-all shadow-md shadow-rose-950/20 flex items-center space-x-2 shrink-0 group active:scale-95 border border-rose-400/40" 
+                    title="เปิดหน้าต่างแชทลูกค้า (ฝั่งแอดมิน/จอครัว) จับคู่ IP และชื่อออร์เดอร์">
+                    <div class="relative flex items-center justify-center">
+                        <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        <span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 border border-white animate-pulse"></span>
+                    </div>
+                    <span>แชทลูกค้า (แอดมิน)</span>
+                    @if(!empty($unreadChatCount) && $unreadChatCount > 0)
+                        <span class="text-[10px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.2 rounded-full animate-bounce shadow-2xs">
+                            {{ $unreadChatCount }}
+                        </span>
+                    @endif
+                </a>
             </div>
         </div>
 
@@ -97,6 +115,22 @@
                                         @if($order->customer_phone)
                                             <span class="text-slate-400 font-normal">({{ $order->customer_phone }})</span>
                                         @endif
+                                    </div>
+
+                                    <div class="flex items-center gap-1.5 mt-1.5">
+                                        @if($order->ip_address)
+                                            <span class="text-[9.5px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
+                                                🌐 IP: {{ $order->ip_address }}
+                                            </span>
+                                        @endif
+                                        <a href="{{ route('kitchen.chat', ['order_no' => $order->order_no]) }}" 
+                                           class="inline-flex items-center gap-1 text-[10.5px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-lg border border-rose-200 transition active:scale-95" 
+                                           title="เปิดแชทกับลูกค้ารายนี้ (จับคู่ IP และชื่อออร์เดอร์)">
+                                            <svg class="w-3 h-3 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                            </svg>
+                                            <span>แชท</span>
+                                        </a>
                                     </div>
                                 </div>
 

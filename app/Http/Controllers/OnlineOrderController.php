@@ -264,12 +264,15 @@ class OnlineOrderController extends Controller
                 $slipPath = 'uploads/slips/' . $fileName;
             }
 
+            $clientIp = $this->getClientIp($request);
+
             $order = Order::create([
                 'order_no' => $orderNo,
                 'queue_number' => $queueNumber,
                 'order_type' => 'online',
                 'customer_name' => $validated['customer_name'],
                 'customer_phone' => $validated['customer_phone'],
+                'ip_address' => $clientIp,
                 'pickup_time' => $validated['pickup_time'],
                 'status' => 'confirmed',
                 'payment_method' => $paymentMethod,
@@ -444,17 +447,25 @@ class OnlineOrderController extends Controller
             $order = Order::where('order_no', $validated['order_no'])->first();
         }
 
+        $clientIp = $this->getClientIp($request);
+
         $chatMsg = ChatMessage::create([
             'session_id' => $sessionId,
             'order_id' => $order ? $order->id : null,
             'order_no' => $validated['order_no'] ?? ($order ? $order->order_no : null),
             'customer_name' => $validated['customer_name'] ?? ($order ? $order->customer_name : 'ลูกค้า'),
             'customer_phone' => $validated['customer_phone'] ?? ($order ? $order->customer_phone : null),
+            'ip_address' => $clientIp,
             'sender' => 'customer',
             'message' => $validated['message'] ?? null,
             'image_url' => $validated['image_url'] ?? null,
             'is_read' => true,
         ]);
+
+        // If order exists and has no ip_address, save it now
+        if ($order && empty($order->ip_address)) {
+            $order->update(['ip_address' => $clientIp]);
+        }
 
         // Smart AI Auto-Reply (Google Gemini Flash with Intelligent Rule-Based Fallback)
         $botReply = null;
@@ -472,6 +483,7 @@ class OnlineOrderController extends Controller
                 'order_no' => $chatMsg->order_no,
                 'customer_name' => $chatMsg->customer_name,
                 'customer_phone' => $chatMsg->customer_phone,
+                'ip_address' => $clientIp,
                 'sender' => 'shop',
                 'message' => $replyText,
                 'is_read' => false,
@@ -1278,5 +1290,22 @@ class OnlineOrderController extends Controller
             'message' => $show ? 'เปิดการแสดงแถบโปรโมชั่นแล้ว' : 'ปิดการแสดงแถบโปรโมชั่นแล้ว',
             'show' => $show,
         ]);
+    }
+
+    /**
+     * Resolve true client device IP address behind Cloudflare / reverse proxy.
+     */
+    public function getClientIp(Request $request): string
+    {
+        $ip = $request->header('cf-connecting-ip')
+            ?: $request->header('x-real-ip')
+            ?: $request->header('x-forwarded-for')
+            ?: $request->ip();
+
+        if (str_contains($ip, ',')) {
+            $ip = trim(explode(',', $ip)[0]);
+        }
+
+        return $ip ?: '127.0.0.1';
     }
 }

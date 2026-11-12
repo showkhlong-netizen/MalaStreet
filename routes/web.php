@@ -39,7 +39,15 @@ Route::prefix('pos')->name('pos.')->middleware('auth')->group(function () {
     Route::post('/order', [PosController::class, 'storeOrder'])->name('order.store');
     Route::get('/kitchen', [PosController::class, 'kitchen'])->name('kitchen');
     Route::post('/orders/{order}/status', [PosController::class, 'updateStatus'])->name('order.status');
+    Route::get('/kitchen/chat', [PosController::class, 'kitchenChat'])->name('kitchen.chat');
+    Route::post('/kitchen/chat/send', [PosController::class, 'sendAdminChatMessage'])->name('kitchen.chat.send');
+    Route::get('/kitchen/chat/messages', [PosController::class, 'getAdminChatMessages'])->name('kitchen.chat.messages');
 });
+
+// Top-level alias for Kitchen Chat
+Route::get('/kitchen/chat', [PosController::class, 'kitchenChat'])->name('kitchen.chat')->middleware('auth');
+Route::post('/kitchen/chat/send', [PosController::class, 'sendAdminChatMessage'])->name('kitchen.chat.send')->middleware('auth');
+Route::get('/kitchen/chat/messages', [PosController::class, 'getAdminChatMessages'])->name('kitchen.chat.messages')->middleware('auth');
 
 // 2. บริการออนไลน์ สั่งออเดอร์ ชำระในแอปทันที สั่งมารับเองหน้าร้าน (Grab Food 100% Style)
 Route::prefix('order')->name('online.')->group(function () {

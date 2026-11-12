@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use App\Models\Category;
+use App\Models\ChatMessage;
 use App\Models\InventoryDaily;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -229,8 +230,177 @@ class PosController extends Controller
             ->get();
 
         $completedCount = Order::whereDate('created_at', $today)->where('status', 'completed')->count();
+        $unreadChatCount = ChatMessage::where('sender', 'customer')->where('is_read', false)->count();
 
-        return view('pos.kitchen', compact('activeOrders', 'completedCount'));
+        return view('pos.kitchen', compact('activeOrders', 'completedCount', 'unreadChatCount'));
+    }
+
+    /**
+     * Admin Kitchen Chat (Mobile Frame Layout with IP & Order Tracking).
+     */
+    public function kitchenChat(Request $request): View
+    {
+        $orderNo = $request->query('order_no');
+        $activeOrder = null;
+
+        if ($orderNo) {
+            $activeOrder = Order::with('items')->where('order_no', $orderNo)->first();
+        }
+
+        // If no specific order selected, find latest active online order or latest order with messages
+        if (!$activeOrder) {
+            $latestMsg = ChatMessage::whereNotNull('order_no')->latest('id')->first();
+            if ($latestMsg) {
+                $activeOrder = Order::with('items')->where('order_no', $latestMsg->order_no)->first();
+            }
+        }
+        if (!$activeOrder) {
+            $activeOrder = Order::with('items')->where('order_type', 'online')->latest('id')->first();
+        }
+        if (!$activeOrder) {
+            $activeOrder = Order::with('items')->latest('id')->first();
+        }
+
+        // Get recent active orders list for quick switching
+        $recentOrders = Order::with('items')
+            ->latest('id')
+            ->take(15)
+            ->get();
+
+        // Get messages for current active order/customer
+        $messages = collect();
+        $targetIp = '127.0.0.1';
+
+        if ($activeOrder) {
+            $messages = ChatMessage::where(function ($q) use ($activeOrder) {
+                $q->where('order_no', $activeOrder->order_no);
+                if ($activeOrder->customer_phone) {
+                    $q->orWhere('customer_phone', $activeOrder->customer_phone);
+                }
+            })->orderBy('created_at', 'asc')->get();
+
+            // Mark customer messages as read
+            ChatMessage::where('order_no', $activeOrder->order_no)
+                ->where('sender', 'customer')
+                ->where('is_read', false)
+                ->update(['is_read' => true]);
+
+            // Resolve IP
+            $targetIp = $activeOrder->ip_address;
+            if (empty($targetIp)) {
+                $lastMsgWithIp = $messages->whereNotNull('ip_address')->last();
+                $targetIp = $lastMsgWithIp ? $lastMsgWithIp->ip_address : null;
+            }
+        }
+
+        if (empty($targetIp)) {
+            $targetIp = $this->getClientIp($request);
+        }
+
+        // Unread count across all orders
+        $totalUnread = ChatMessage::where('sender', 'customer')->where('is_read', false)->count();
+
+        return view('pos.kitchen_chat', compact('activeOrder', 'recentOrders', 'messages', 'targetIp', 'totalUnread'));
+    }
+
+    /**
+     * Send message from admin / kitchen.
+     */
+    public function sendAdminChatMessage(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'message' => 'nullable|string|max:1000',
+            'image_url' => 'nullable|string|max:500',
+            'order_no' => 'nullable|string|max:100',
+            'customer_name' => 'nullable|string|max:100',
+            'customer_phone' => 'nullable|string|max:50',
+            'ip_address' => 'nullable|string|max:50',
+        ]);
+
+        if (empty($validated['message']) && empty($validated['image_url'])) {
+            return response()->json(['success' => false, 'message' => 'กรุณากรอกข้อความหรือแนบรูปภาพ'], 422);
+        }
+
+        $order = null;
+        if (!empty($validated['order_no'])) {
+            $order = Order::where('order_no', $validated['order_no'])->first();
+        }
+
+        $ipAddress = $validated['ip_address'] ?? ($order ? $order->ip_address : $this->getClientIp($request));
+
+        $chatMsg = ChatMessage::create([
+            'session_id' => session()->getId(),
+            'order_id' => $order ? $order->id : null,
+            'order_no' => $validated['order_no'] ?? ($order ? $order->order_no : null),
+            'customer_name' => $validated['customer_name'] ?? ($order ? $order->customer_name : 'ลูกค้า'),
+            'customer_phone' => $validated['customer_phone'] ?? ($order ? $order->customer_phone : null),
+            'ip_address' => $ipAddress,
+            'sender' => 'shop',
+            'message' => $validated['message'] ?? null,
+            'image_url' => $validated['image_url'] ?? null,
+            'is_read' => false,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $chatMsg,
+        ]);
+    }
+
+    /**
+     * Fetch messages for Admin Kitchen chat via polling.
+     */
+    public function getAdminChatMessages(Request $request): JsonResponse
+    {
+        $orderNo = $request->query('order_no');
+        $phone = $request->query('phone');
+
+        $query = ChatMessage::query();
+        if ($orderNo) {
+            $query->where(function ($q) use ($orderNo, $phone) {
+                $q->where('order_no', $orderNo);
+                if ($phone) {
+                    $q->orWhere('customer_phone', $phone);
+                }
+            });
+        } elseif ($phone) {
+            $query->where('customer_phone', $phone);
+        }
+
+        $messages = $query->orderBy('created_at', 'asc')->get();
+
+        // Mark as read
+        if ($orderNo) {
+            ChatMessage::where('order_no', $orderNo)
+                ->where('sender', 'customer')
+                ->where('is_read', false)
+                ->update(['is_read' => true]);
+        }
+
+        $totalUnread = ChatMessage::where('sender', 'customer')->where('is_read', false)->count();
+
+        return response()->json([
+            'success' => true,
+            'messages' => $messages,
+            'total_unread' => $totalUnread,
+        ]);
+    }
+
+    /**
+     * Resolve true client device IP address behind Cloudflare / reverse proxy.
+     */
+    public function getClientIp(Request $request): string
+    {
+        $ip = $request->header('cf-connecting-ip')
+            ?: $request->header('x-real-ip')
+            ?: $request->header('x-forwarded-for')
+            ?: $request->ip();
+
+        if (str_contains($ip, ',')) {
+            $ip = trim(explode(',', $ip)[0]);
+        }
+
+        return $ip ?: '127.0.0.1';
     }
 
     /**
