@@ -24,6 +24,14 @@ use Illuminate\View\View;
 class OnlineOrderController extends Controller
 {
     /**
+     * Customer 3-in-1 View Hub (สั่งออนไลน์, แชทลูกค้า, แต้มสะสม เรียง 3 จอพร้อมกัน)
+     */
+    public function hub(Request $request): View
+    {
+        return view('online.hub');
+    }
+
+    /**
      * Grab Food 100% Style Online Storefront for Takeaway Pickup.
      */
     public function index(Request $request): View|JsonResponse

@@ -56,44 +56,19 @@
                         <span class="text-[10.5px] font-medium mt-1 leading-none tracking-tight whitespace-nowrap">จอครัว (KDS)</span>
                     </a>
 
-                    <!-- 3. สั่งออนไลน์ (Grab-Style) -->
-                    <a href="{{ route('online.index') }}" target="_blank" 
-                       class="group flex flex-col items-center justify-center px-3.5 py-1.5 rounded-2xl transition-all duration-150 text-amber-300 hover:text-white hover:bg-slate-900/90 border border-amber-500/30">
-                        <svg class="w-6 h-6 text-amber-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                        <div class="flex items-center space-x-1 mt-1 leading-none">
-                            <span class="text-[10.5px] font-medium tracking-tight whitespace-nowrap">สั่งออนไลน์</span>
-                            <span class="text-[8.5px] bg-amber-500 text-slate-950 px-1 py-0.2 rounded font-black tracking-tighter">พรีวิว</span>
-                        </div>
-                    </a>
-
-                    <!-- 3.1 แชทลูกค้า (Shopee-Style Customer Chat) -->
-                    <a href="{{ route('online.chat') }}" target="_blank" 
-                       class="group flex flex-col items-center justify-center px-3.5 py-1.5 rounded-2xl transition-all duration-150 {{ request()->routeIs('online.chat*') ? 'bg-rose-600 text-white shadow-md' : 'text-slate-300 hover:text-white hover:bg-slate-900/90 border border-slate-700/60' }}"
-                       title="เปิดหน้าแชทลูกค้า (Mobile View)">
-                        <div class="relative">
-                            <svg class="w-6 h-6 text-sky-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    <!-- 3. หน้าลูกค้า (Customer Hub: รวมสั่งออนไลน์, แชทลูกค้า, แต้มสะสม เรียง 3 จอพร้อมกัน) -->
+                    <a href="{{ route('online.hub') }}" target="_blank" 
+                       class="group flex flex-col items-center justify-center px-4 py-1.5 rounded-2xl transition-all duration-150 {{ request()->routeIs('online.hub') ? 'bg-amber-500/25 text-amber-300 ring-2 ring-amber-400/50' : 'text-amber-300 hover:text-white hover:bg-slate-900/90 border border-amber-500/40' }}"
+                       title="เปิดหน้าลูกค้า (รวมสั่งออนไลน์, แชทสด, แต้มสะสม เรียง 3 จอพร้อมกัน)">
+                        <div class="relative flex items-center justify-center">
+                            <svg class="w-6 h-6 text-amber-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
-                            <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-slate-950"></span>
+                            <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-slate-950 animate-pulse"></span>
                         </div>
                         <div class="flex items-center space-x-1 mt-1 leading-none">
-                            <span class="text-[10.5px] font-medium tracking-tight whitespace-nowrap">แชทลูกค้า</span>
-                            <span class="text-[8.5px] bg-sky-500 text-slate-950 px-1 py-0.2 rounded font-black tracking-tighter">Live</span>
-                        </div>
-                    </a>
-
-                    <!-- 3.2 แต้มสะสม & รีวิว (Loyalty Points: ครบ 5 ฟรี 1 ไม้) -->
-                    <a href="{{ route('online.rewards') }}" target="_blank" 
-                       class="group flex flex-col items-center justify-center px-3.5 py-1.5 rounded-2xl transition-all duration-150 {{ request()->routeIs('online.rewards*') ? 'bg-rose-600 text-white shadow-md' : 'text-slate-300 hover:text-white hover:bg-slate-900/90 border border-slate-700/60' }}"
-                       title="เปิดหน้าเช็คแต้มสะสม (Mobile View)">
-                        <svg class="w-6 h-6 text-rose-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                        </svg>
-                        <div class="flex items-center space-x-1 mt-1 leading-none">
-                            <span class="text-[10.5px] font-medium tracking-tight whitespace-nowrap">แต้มสะสม</span>
-                            <span class="text-[8.5px] bg-rose-500 text-white px-1 py-0.2 rounded font-black tracking-tighter">5=ฟรี1</span>
+                            <span class="text-[10.5px] font-extrabold tracking-tight whitespace-nowrap">หน้าลูกค้า</span>
+                            <span class="text-[8.5px] bg-gradient-to-r from-amber-500 to-rose-500 text-slate-950 px-1 py-0.2 rounded font-black tracking-tighter">3 in 1</span>
                         </div>
                     </a>
 

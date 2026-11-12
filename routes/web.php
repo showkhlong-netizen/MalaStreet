@@ -44,6 +44,7 @@ Route::prefix('pos')->name('pos.')->middleware('auth')->group(function () {
 // 2. บริการออนไลน์ สั่งออเดอร์ ชำระในแอปทันที สั่งมารับเองหน้าร้าน (Grab Food 100% Style)
 Route::prefix('order')->name('online.')->group(function () {
     Route::get('/', [OnlineOrderController::class, 'index'])->name('index');
+    Route::get('/hub', [OnlineOrderController::class, 'hub'])->name('hub');
     Route::get('/checkout', [OnlineOrderController::class, 'checkout'])->name('checkout');
     Route::post('/submit', [OnlineOrderController::class, 'storeOrder'])->name('submit');
     Route::get('/track/{order_no}', [OnlineOrderController::class, 'track'])->name('track');
