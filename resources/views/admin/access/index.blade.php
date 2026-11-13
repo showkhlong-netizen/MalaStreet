@@ -1251,12 +1251,22 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-0.5">บทบาทระบบ (Role)</label>
-                            <select id="emp-edit-role" class="w-full text-xs sm:text-sm px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium">
-                                <option value="Employee" {{ ($selectedUser['role'] ?? '') === 'Employee' ? 'selected' : '' }}>พนักงาน (Employee)</option>
-                                <option value="Admin" {{ ($selectedUser['role'] ?? '') === 'Admin' ? 'selected' : '' }}>แอดมิน (Admin)</option>
-                                <option value="Customer" {{ ($selectedUser['role'] ?? '') === 'Customer' ? 'selected' : '' }}>ลูกค้า (Customer)</option>
-                            </select>
+                            <label class="block text-xs font-bold text-slate-800 mb-0.5 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-violet-600"></span>
+                                <span>บทบาทระบบ (Role)</span>
+                            </label>
+                            <div class="relative">
+                                <select id="emp-edit-role" class="w-full text-xs sm:text-sm px-3 py-1.5 sm:py-2 pr-8 rounded-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 text-white border-0 shadow-sm shadow-indigo-500/25 focus:outline-none focus:ring-2 focus:ring-violet-400 cursor-pointer appearance-none">
+                                    <option value="Employee" class="bg-slate-900 text-white font-medium" {{ ($selectedUser['role'] ?? '') === 'Employee' ? 'selected' : '' }}>พนักงาน (Employee)</option>
+                                    <option value="Admin" class="bg-slate-900 text-white font-medium" {{ ($selectedUser['role'] ?? '') === 'Admin' ? 'selected' : '' }}>แอดมิน (Admin)</option>
+                                    <option value="Customer" class="bg-slate-900 text-white font-medium" {{ ($selectedUser['role'] ?? '') === 'Customer' ? 'selected' : '' }}>ลูกค้า (Customer)</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-white">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
                         </div>
                         <div class="sm:col-span-2">
                             <label class="block text-xs font-bold text-slate-700 mb-0.5">
