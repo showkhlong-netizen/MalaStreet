@@ -1431,33 +1431,36 @@
                         $kPerRound = ($kRounds > 0) ? round($kAmount / $kRounds) : 0;
                     @endphp
 
-                    <!-- 1. Header & Dropdown -->
-                    <div class="space-y-2">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-6 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z" />
-                            </svg>
-                            <h3 class="text-sm font-bold text-slate-800">ประเภทการจ้างงาน &amp; เงินเดือน</h3>
-                        </div>
-                        <div class="relative">
-                            <select id="wage-employment-type" class="w-full text-xs sm:text-sm font-medium px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-indigo-500 shadow-2xs cursor-pointer appearance-none">
-                                <option value="daily" {{ ($wageKpi['wage_type'] ?? 'daily') === 'daily' ? 'selected' : '' }}>รายวัน (Daily)</option>
-                                <option value="monthly" {{ ($wageKpi['wage_type'] ?? '') === 'monthly' ? 'selected' : '' }}>รายเดือน (Monthly)</option>
-                                <option value="part_time" {{ ($wageKpi['wage_type'] ?? '') === 'part_time' ? 'selected' : '' }}>พาร์ทไทม์ (Part-time)</option>
-                                <option value="hourly" {{ ($wageKpi['wage_type'] ?? '') === 'hourly' ? 'selected' : '' }}>รายชั่วโมง (Hourly)</option>
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-700">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </div>
-                        </div>
+                    <!-- 1. Header -->
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-6 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z" />
+                        </svg>
+                        <h3 class="text-sm font-bold text-slate-800">ประเภทการจ้างงาน &amp; เงินเดือน</h3>
                     </div>
 
-                    <!-- 2. ค่าจ้างต่อวัน (฿) -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-800 mb-1">ค่าจ้างต่อวัน (฿)</label>
-                        <input type="number" id="wage-daily-amount" value="{{ $wageKpi['daily_wage'] ?? 250 }}" oninput="recalcMonthlySalarySummary()" class="w-full text-xs sm:text-sm font-medium px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-indigo-500 shadow-2xs">
+                    <!-- 1.1 ประเภทการจ้างงาน & ค่าจ้างต่อวัน (อยู่บรรทัดเดียวกัน) -->
+                    <div class="grid grid-cols-2 gap-3 items-end">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-800 mb-1">ประเภทการจ้างงาน</label>
+                            <div class="relative">
+                                <select id="wage-employment-type" class="w-full text-xs sm:text-sm font-medium px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-indigo-500 shadow-2xs cursor-pointer appearance-none">
+                                    <option value="daily" {{ ($wageKpi['wage_type'] ?? 'daily') === 'daily' ? 'selected' : '' }}>รายวัน (Daily)</option>
+                                    <option value="monthly" {{ ($wageKpi['wage_type'] ?? '') === 'monthly' ? 'selected' : '' }}>รายเดือน (Monthly)</option>
+                                    <option value="part_time" {{ ($wageKpi['wage_type'] ?? '') === 'part_time' ? 'selected' : '' }}>พาร์ทไทม์ (Part-time)</option>
+                                    <option value="hourly" {{ ($wageKpi['wage_type'] ?? '') === 'hourly' ? 'selected' : '' }}>รายชั่วโมง (Hourly)</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-700">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-800 mb-1">ค่าจ้างต่อวัน (฿)</label>
+                            <input type="number" id="wage-daily-amount" value="{{ $wageKpi['daily_wage'] ?? 250 }}" oninput="recalcMonthlySalarySummary()" class="w-full text-xs sm:text-sm font-medium px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-indigo-500 shadow-2xs">
+                        </div>
                     </div>
 
                     <!-- 2.1 แถบสรุปยอดเงินเดือนรวม (Auto-calculated & Inline Editable) -->
