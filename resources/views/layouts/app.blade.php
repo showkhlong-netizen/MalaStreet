@@ -68,7 +68,7 @@
                         </div>
                         <div class="flex items-center space-x-1 mt-1 leading-none">
                             <span class="text-[10.5px] font-black text-slate-950 tracking-tight whitespace-nowrap">หน้าลูกค้า</span>
-                            <span class="text-[8.5px] bg-gradient-to-r from-amber-500 to-rose-500 text-white px-1 py-0.2 rounded font-black tracking-tighter">3 in 1</span>
+                            <span class="text-[8.5px] bg-gradient-to-r from-amber-500 to-rose-500 text-white px-1.5 py-0.5 rounded font-black tracking-tight whitespace-nowrap shrink-0 inline-block">3 in 1</span>
                         </div>
                     </a>
 
