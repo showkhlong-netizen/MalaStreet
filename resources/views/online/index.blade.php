@@ -19,6 +19,19 @@
             font-family: 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
+        /* ซ่อนแถบเลื่อนขึ้นลงข้างๆ ออกทั้งหมด แต่ยังเลื่อนได้ปกติ (Hide scrollbars while preserving scroll) */
+        html, body {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+        }
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar,
+        *::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            background: transparent !important;
+        }
         .scrollbar-none::-webkit-scrollbar {
             display: none;
         }
@@ -134,7 +147,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-[#111317] flex justify-center items-start selection:bg-[#E60018] selection:text-white font-prompt text-[#101114] antialiased">
+<body class="min-h-screen {{ request()->has('hub') ? 'bg-[#F6F7F9]' : 'bg-[#111317]' }} flex justify-center items-start selection:bg-[#E60018] selection:text-white font-prompt text-[#101114] antialiased">
 
 @php
     $categoryImageMap = [
@@ -165,7 +178,7 @@
     <!-- ========================================================================= -->
     <!-- STANDALONE MOBILE STOREFRONT CONTAINER                                    -->
     <!-- ========================================================================= -->
-    <div class="w-full max-w-[430px] min-h-screen bg-[#F6F7F9] shadow-[0_0_60px_rgba(0,0,0,0.6)] relative pb-28 overflow-x-hidden select-none">
+    <div class="w-full {{ request()->has('hub') ? 'max-w-none shadow-none' : 'max-w-[430px] shadow-[0_0_60px_rgba(0,0,0,0.6)]' }} min-h-screen bg-[#F6F7F9] relative pb-28 overflow-x-hidden select-none">
 
         <!-- ===================================================================== -->
         <!-- 1. HERO RESTAURANT BANNER & FLOATING ACTION BUTTONS                   -->
@@ -796,7 +809,7 @@
         <!-- 9. STICKY BOTTOM CART SUMMARY (Fixed to Bottom of Mobile View)        -->
         <!-- ===================================================================== -->
         <div id="sticky-cart-bar"
-             class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-40 bg-white rounded-t-[22px] shadow-[0_-6px_24px_rgba(0,0,0,0.14)] border-t border-slate-100 px-4 py-2.5 flex items-center justify-between">
+             class="fixed bottom-0 {{ request()->has('hub') ? 'left-0 right-0 w-full' : 'left-1/2 -translate-x-1/2 w-full max-w-[430px]' }} z-40 bg-white rounded-t-[22px] shadow-[0_-6px_24px_rgba(0,0,0,0.14)] border-t border-slate-100 px-4 py-2.5 flex items-center justify-between">
             <!-- Left: Red Circular Cart Icon + Price & Count -->
             <button type="button" onclick="openCheckoutModal()" class="flex items-center gap-3 text-left cursor-pointer group">
                 <div class="relative w-[42px] h-[42px] rounded-full bg-gradient-to-b from-[#E60018] to-[#C20010] text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">

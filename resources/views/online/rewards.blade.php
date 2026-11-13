@@ -18,6 +18,19 @@
 
     <style>
         body { font-family: 'Prompt', sans-serif; }
+        /* ซ่อนแถบเลื่อนขึ้นลงข้างๆ ออกทั้งหมด แต่ยังเลื่อนได้ปกติ (Hide scrollbars while preserving scroll) */
+        html, body {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+        }
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar,
+        *::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            background: transparent !important;
+        }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -35,10 +48,10 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-[#111317] flex justify-center items-start selection:bg-[#E60018] selection:text-white">
+<body class="min-h-screen {{ request()->has('hub') ? 'bg-[#F6F7F9]' : 'bg-[#111317]' }} flex justify-center items-start selection:bg-[#E60018] selection:text-white">
 
     <!-- MOBILE CONTAINER (400 - 430px Frame Layout) -->
-    <div class="w-full max-w-[430px] min-h-screen bg-[#F6F7F9] shadow-[0_0_60px_rgba(0,0,0,0.6)] flex flex-col justify-between relative overflow-hidden pb-16">
+    <div class="w-full {{ request()->has('hub') ? 'max-w-none shadow-none' : 'max-w-[430px] shadow-[0_0_60px_rgba(0,0,0,0.6)]' }} min-h-screen bg-[#F6F7F9] flex flex-col justify-between relative overflow-hidden pb-16">
 
         <!-- ================================================================= -->
         <!-- 1. TOP HEADER                                                     -->
@@ -437,7 +450,7 @@
         <!-- ================================================================= -->
         <!-- 7. BOTTOM MOBILE NAVIGATION BAR (3 Clean Tabs)                    -->
         <!-- ================================================================= -->
-        <nav class="fixed bottom-0 z-30 w-full max-w-[430px] bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-3 py-1.5 shadow-lg">
+        <nav class="fixed bottom-0 z-30 w-full {{ request()->has('hub') ? 'max-w-none' : 'max-w-[430px]' }} bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-3 py-1.5 shadow-lg">
             <a href="{{ route('online.index') }}" class="flex flex-col items-center justify-center text-slate-500 hover:text-slate-900">
                 <span class="text-base">🍢</span>
                 <span class="text-[9.5px] font-medium mt-0.5">สั่งอาหาร</span>

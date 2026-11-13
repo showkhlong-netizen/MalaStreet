@@ -39,6 +39,20 @@
             border: 0;
             display: block;
         }
+
+        /* ซ่อนแถบเลื่อนขึ้นลงข้างๆ ออกทั้งหมด แต่ยังเลื่อนหน้าจอได้ปกติทุกอย่าง */
+        html, body {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+        }
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar,
+        *::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            background: transparent !important;
+        }
     </style>
 </head>
 <body class="bg-[#F4F6F8] text-slate-800 antialiased min-h-screen flex flex-col font-prompt select-none">
@@ -95,30 +109,51 @@
     </header>
 
     <!-- ========================================================================= -->
-    <!-- 3-PANELS SIDE-BY-SIDE GRID (เรียง 3 แถบพร้อมกันตามตัวอย่างภาพที่ 1)       -->
+    <!-- 3-PANELS SIDE-BY-SIDE GRID (เรียง 3 แถบพร้อมกัน ฟิตพอดี เล็กลง 10%)       -->
     <!-- ========================================================================= -->
-    <main class="flex-1 p-3 sm:p-4 max-w-[1880px] w-full mx-auto flex flex-col">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-4 flex-1">
+    <main class="flex-1 p-3 sm:p-4 max-w-[1320px] w-full mx-auto flex flex-col justify-center">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6 flex-1 items-start justify-items-center">
 
             <!-- ================================================================= -->
             <!-- PANEL 1: สั่งออนไลน์ (หน้าสั่งอาหารของลูกค้า)                      -->
             <!-- ================================================================= -->
-            <div class="h-[800px] lg:h-[calc(100vh-6rem)] min-h-[700px] flex flex-col bg-slate-950 rounded-3xl border-2 border-slate-800 shadow-2xl overflow-hidden ring-1 ring-slate-700/60">
-                <iframe id="frame-order" src="{{ route('online.index', ['admin' => 1]) }}" class="w-full h-full border-0 flex-1 bg-white" loading="lazy" title="หน้าสั่งอาหารของลูกค้า"></iframe>
+            <div class="w-full max-w-[387px] flex flex-col items-center">
+                <!-- ชื่อหน้าต่างข้อความสีดำเด่น ใหญ่ -->
+                <h2 class="text-xl sm:text-2xl font-black text-black tracking-tight leading-none mb-2.5 text-center select-none">
+                    1. สั่งออนไลน์
+                </h2>
+                <!-- Phone Frame (ฟิตพอดี เล็กลง 10%) -->
+                <div class="w-full h-[720px] lg:h-[calc((100vh-8.5rem)*0.9)] min-h-[630px] flex flex-col bg-slate-950 rounded-[30px] border-[3px] border-slate-800 shadow-2xl overflow-hidden ring-1 ring-slate-700/60">
+                    <iframe id="frame-order" src="{{ route('online.index', ['admin' => 1, 'hub' => 1]) }}" class="w-full h-full border-0 flex-1 bg-white" loading="lazy" title="หน้าสั่งอาหารของลูกค้า"></iframe>
+                </div>
             </div>
 
             <!-- ================================================================= -->
             <!-- PANEL 2: แชทลูกค้า (หน้าระบบแชทสด)                                -->
             <!-- ================================================================= -->
-            <div class="h-[800px] lg:h-[calc(100vh-6rem)] min-h-[700px] flex flex-col bg-slate-950 rounded-3xl border-2 border-slate-800 shadow-2xl overflow-hidden ring-1 ring-slate-700/60">
-                <iframe id="frame-chat" src="{{ route('online.chat') }}" class="w-full h-full border-0 flex-1 bg-white" loading="lazy" title="หน้าระบบแชทสดลูกค้า"></iframe>
+            <div class="w-full max-w-[387px] flex flex-col items-center">
+                <!-- ชื่อหน้าต่างข้อความสีดำเด่น ใหญ่ -->
+                <h2 class="text-xl sm:text-2xl font-black text-black tracking-tight leading-none mb-2.5 text-center select-none">
+                    2. แชทลูกค้า
+                </h2>
+                <!-- Phone Frame (ฟิตพอดี เล็กลง 10%) -->
+                <div class="w-full h-[720px] lg:h-[calc((100vh-8.5rem)*0.9)] min-h-[630px] flex flex-col bg-slate-950 rounded-[30px] border-[3px] border-slate-800 shadow-2xl overflow-hidden ring-1 ring-slate-700/60">
+                    <iframe id="frame-chat" src="{{ route('online.chat', ['hub' => 1]) }}" class="w-full h-full border-0 flex-1 bg-white" loading="lazy" title="หน้าระบบแชทสดลูกค้า"></iframe>
+                </div>
             </div>
 
             <!-- ================================================================= -->
             <!-- PANEL 3: แต้มสะสม (หน้าระบบสะสมแต้ม/แลกรางวัล)                   -->
             <!-- ================================================================= -->
-            <div class="h-[800px] lg:h-[calc(100vh-6rem)] min-h-[700px] flex flex-col bg-slate-950 rounded-3xl border-2 border-slate-800 shadow-2xl overflow-hidden ring-1 ring-slate-700/60">
-                <iframe id="frame-rewards" src="{{ route('online.rewards') }}" class="w-full h-full border-0 flex-1 bg-white" loading="lazy" title="หน้าระบบสะสมแต้ม"></iframe>
+            <div class="w-full max-w-[387px] flex flex-col items-center">
+                <!-- ชื่อหน้าต่างข้อความสีดำเด่น ใหญ่ -->
+                <h2 class="text-xl sm:text-2xl font-black text-black tracking-tight leading-none mb-2.5 text-center select-none">
+                    3. แต้มสะสม
+                </h2>
+                <!-- Phone Frame (ฟิตพอดี เล็กลง 10%) -->
+                <div class="w-full h-[720px] lg:h-[calc((100vh-8.5rem)*0.9)] min-h-[630px] flex flex-col bg-slate-950 rounded-[30px] border-[3px] border-slate-800 shadow-2xl overflow-hidden ring-1 ring-slate-700/60">
+                    <iframe id="frame-rewards" src="{{ route('online.rewards', ['hub' => 1]) }}" class="w-full h-full border-0 flex-1 bg-white" loading="lazy" title="หน้าระบบสะสมแต้ม"></iframe>
+                </div>
             </div>
 
         </div>
