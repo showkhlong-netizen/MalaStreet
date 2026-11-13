@@ -944,56 +944,41 @@
                     </button>
                 </div>
 
-                <!-- 2. Top Profile Card (Matching Image 2) -->
-                <div class="p-2.5 sm:p-3 rounded-2xl border border-slate-200/80 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-2xs">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <!-- Circle Avatar: Blue background with white Thai letter 'อ' -->
-                        <div id="emp-card-avatar" class="w-11 h-11 rounded-full bg-[#3B82F6] flex items-center justify-center text-white text-xl font-bold shrink-0 shadow-xs">
-                            {{ $selectedUser['initials'] ?? 'อ' }}
-                        </div>
-                        <div class="min-w-0 space-y-0.5">
-                            <h3 id="emp-card-name" class="font-black text-base sm:text-lg text-slate-900 truncate">
+                <!-- 2. Top Profile Card -->
+                <div class="px-3.5 py-2.5 rounded-2xl border border-slate-200/80 bg-white flex items-center gap-3 shadow-2xs">
+                    <!-- Circle Avatar -->
+                    <div id="emp-card-avatar" class="w-11 h-11 rounded-full bg-[#3B82F6] flex items-center justify-center text-white text-xl font-bold shrink-0 shadow-xs">
+                        {{ $selectedUser['initials'] ?? 'อ' }}
+                    </div>
+                    <div class="min-w-0 flex-1 space-y-1">
+                        <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                            <h3 id="emp-card-name" class="font-black text-base text-slate-900 truncate leading-tight">
                                 {{ $selectedUser['name'] ?? 'อารีนา เจ๊ะอามะ' }}
                             </h3>
-                            <div class="flex flex-wrap items-center gap-1.5">
-                                <!-- Purple Badge: พนักงาน -->
-                                <span id="emp-card-badge-role" class="px-2 py-0.5 rounded-full bg-[#FAF5FF] text-[#7E22CE] border border-[#F3E8FF] text-[11px] font-bold flex items-center gap-1 whitespace-nowrap">
-                                    <svg class="w-3 h-3 text-purple-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
-                                    </svg>
-                                    <span id="emp-card-role-text">{{ $selectedUser['role_label'] ?? 'พนักงาน' }}</span>
-                                </span>
-                                <!-- Amber Badge: พนง. บริการประจำ -->
-                                <span id="emp-card-badge-pos" class="px-2 py-0.5 rounded-full bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7] text-[11px] font-bold flex items-center gap-1 whitespace-nowrap">
-                                    <svg class="w-3 h-3 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                                    </svg>
-                                    <span id="emp-card-pos-text">{{ $selectedUser['position'] ?? 'พนง. บริการประจำ' }}</span>
-                                </span>
-                                <!-- Subtitle: • พนักงานบริการประจำ -->
-                                <span id="emp-card-subtitle" class="text-[11px] text-slate-400 font-medium whitespace-nowrap">
-                                    • {{ $selectedUser['position'] ?? 'พนักงานบริการประจำ' }}
-                                </span>
-                            </div>
+                            <span id="emp-card-subtitle" class="text-[11px] text-slate-400 font-medium whitespace-nowrap">
+                                • {{ $selectedUser['position'] ?? 'พนักงานบริการประจำ' }}
+                            </span>
                         </div>
-                    </div>
-
-                    <!-- Quick Switcher Dropdown (To edit any staff member) -->
-                    <div class="flex items-center gap-2 shrink-0">
-                        <label class="text-[11px] font-semibold text-slate-400">เลือกพนักงาน:</label>
-                        <select id="emp-card-user-select"
-                                onchange="switchEmployeeProfile(this.value)"
-                                class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-slate-800 font-bold focus:outline-indigo-500 cursor-pointer">
-                            @foreach($users as $u)
-                                <option value="{{ $u['id'] }}" {{ $u['id'] === ($selectedUser['id'] ?? '') ? 'selected' : '' }}>
-                                    {{ $u['name'] }} ({{ $u['role_label'] ?? $u['role'] }})
-                                </option>
-                            @endforeach
-                        </select>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <!-- Purple Badge: พนักงาน -->
+                            <span id="emp-card-badge-role" class="px-2.5 py-0.5 rounded-full bg-[#FAF5FF] text-[#7E22CE] border border-[#F3E8FF] text-[11px] font-bold inline-flex items-center gap-1 whitespace-nowrap">
+                                <svg class="w-3 h-3 text-purple-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
+                                </svg>
+                                <span id="emp-card-role-text">{{ $selectedUser['role_label'] ?? 'พนักงาน' }}</span>
+                            </span>
+                            <!-- Amber Badge: พนง. บริการประจำ -->
+                            <span id="emp-card-badge-pos" class="px-2.5 py-0.5 rounded-full bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7] text-[11px] font-bold inline-flex items-center gap-1 whitespace-nowrap">
+                                <svg class="w-3 h-3 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                                </svg>
+                                <span id="emp-card-pos-text">{{ $selectedUser['position'] ?? 'พนง. บริการประจำ' }}</span>
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 3. Horizontal Sub-Tabs (Pills / Underline Bar Matching Image 2 - Compact Size) -->
+                <!-- 3. Horizontal Sub-Tabs (Compact Bar) -->
                 <div class="flex items-center gap-1 sm:gap-2 border-b border-slate-200/80 pt-0 pb-0 overflow-x-auto scrollbar-none">
                     <!-- Tab 1: ข้อมูล & บทบาท -->
                     <button type="button"
@@ -1006,7 +991,7 @@
                         <span>ข้อมูล &amp; บทบาท</span>
                     </button>
 
-                    <!-- Tab 2: ตารางงาน (Active by default matching Image 2) -->
+                    <!-- Tab 2: ตารางงาน (Active by default) -->
                     <button type="button"
                             id="emp-tab-btn-schedule"
                             onclick="switchEmpSubTab('schedule')"
@@ -1017,18 +1002,7 @@
                         <span>ตารางงาน</span>
                     </button>
 
-                    <!-- Tab 3: เงินเดือน & KPI -->
-                    <button type="button"
-                            id="emp-tab-btn-payroll"
-                            onclick="switchEmpSubTab('payroll')"
-                            class="emp-tab-nav py-1 px-2 text-xs font-semibold text-slate-500 hover:text-slate-900 border-b-2 border-transparent transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6H2.25m0 0v11.25m0 0h19.5m0 0h.75a.75.75 0 00.75-.75V6a.75.75 0 00-.75-.75H21m0 0V4.5m0 0A2.25 2.25 0 0018.75 2.25h-13.5A2.25 2.25 0 003 4.5m18 0a2.25 2.25 0 01-2.25 2.25h-13.5A2.25 2.25 0 013 4.5m16.5 6.75a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-                        </svg>
-                        <span>เงินเดือน &amp; KPI</span>
-                    </button>
-
-                    <!-- Tab 4: สิทธิลา & มาสาย -->
+                    <!-- Tab 3: สิทธิลา & มาสาย -->
                     <button type="button"
                             id="emp-tab-btn-leave"
                             onclick="switchEmpSubTab('leave')"
@@ -1039,7 +1013,7 @@
                         <span>สิทธิลา &amp; มาสาย</span>
                     </button>
 
-                    <!-- Tab 5: ข้อมูลเพิ่มเติม -->
+                    <!-- Tab 4: ข้อมูลเพิ่มเติม -->
                     <button type="button"
                             id="emp-tab-btn-more"
                             onclick="switchEmpSubTab('more')"
@@ -1321,40 +1295,6 @@
                     </div>
                 </div>
 
-                <!-- 6. TAB CONTENT 3: 💵 เงินเดือน & KPI -->
-                <div id="emp-tab-content-payroll" class="space-y-2.5 pt-0.5 hidden">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-0.5">เงินเดือนพื้นฐาน (บาท/เดือน)</label>
-                            <input type="number" id="emp-edit-salary" value="{{ $activeEmployeeData['payroll']['base_salary'] ?? 15000 }}" class="w-full text-xs sm:text-sm px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-0.5">ค่าล่วงเวลา OT (บาท/ชั่วโมง)</label>
-                            <input type="number" id="emp-edit-ot" value="{{ $activeEmployeeData['payroll']['ot_rate'] ?? 60 }}" class="w-full text-xs sm:text-sm px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-0.5">เบี้ยขยัน / ค่าครองชีพ (บาท)</label>
-                            <input type="number" id="emp-edit-allowance" value="{{ $activeEmployeeData['payroll']['allowance'] ?? 1000 }}" class="w-full text-xs sm:text-sm px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-0.5">รายการหักประกันสังคม / อื่นๆ (บาท)</label>
-                            <input type="number" id="emp-edit-deduction" value="{{ $activeEmployeeData['payroll']['deduction'] ?? 750 }}" class="w-full text-xs sm:text-sm px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-0.5">ธนาคารรับเงินเดือน</label>
-                            <input type="text" id="emp-edit-bank-name" value="{{ $activeEmployeeData['payroll']['bank_name'] ?? 'ธนาคารกสิกรไทย' }}" class="w-full text-xs sm:text-sm px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-0.5">เลขที่บัญชีธนาคาร</label>
-                            <input type="text" id="emp-edit-bank-account" value="{{ $activeEmployeeData['payroll']['bank_account'] ?? '123-4-56789-0' }}" class="w-full text-xs sm:text-sm px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
-                        </div>
-                    </div>
-                    <div class="flex justify-end pt-1.5">
-                        <button type="button" onclick="saveActiveEmployeeData(this)" class="px-4 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs cursor-pointer hover:bg-indigo-700 flex items-center gap-1.5">
-                            <span>บันทึกข้อมูลเงินเดือน</span>
-                        </button>
-                    </div>
-                </div>
 
                 <!-- 7. TAB CONTENT 4: 🛡️ สิทธิลา & มาสาย -->
                 <div id="emp-tab-content-leave" class="space-y-2.5 pt-0.5 hidden">
@@ -3076,9 +3016,9 @@
     // 20. EMPLOYEE DATA & SCHEDULE INTERACTIONS (Matches Image 2 Exactly)
     // =========================================================================
 
-    // A. Switch between the 5 horizontal subtabs (Profile, Schedule, Payroll, Leave, More)
+    // A. Switch between the 4 horizontal subtabs (Profile, Schedule, Leave, More)
     function switchEmpSubTab(tab) {
-        const tabs = ['profile', 'schedule', 'payroll', 'leave', 'more'];
+        const tabs = ['profile', 'schedule', 'leave', 'more'];
         tabs.forEach(t => {
             const btn = document.getElementById(`emp-tab-btn-${t}`);
             const content = document.getElementById(`emp-tab-content-${t}`);
@@ -3159,11 +3099,6 @@
         showToast(`เลือกกะการทำงาน: ${start} - ${end}`);
     }
 
-    // F. Switch Employee Profile
-    function switchEmployeeProfile(userId) {
-        window.location.href = "{{ route('admin.access.index') }}?tab=" + encodeURIComponent(currentTab) + "&user_id=" + encodeURIComponent(userId);
-    }
-
     // KPI Banner Calculation & Toggle
     function recalcKpiBanner() {
         const amountEl = document.getElementById('wage-kpi-amount');
@@ -3194,10 +3129,9 @@
         }
     }
 
-    // G. Save Active Employee Schedule, Profile, Payroll, Leaves & More Info
+    // G. Save Active Employee Schedule, Profile, Leaves & More Info
     async function saveActiveEmployeeData(clickedBtn = null) {
-        const userSelect = document.getElementById('emp-card-user-select');
-        const userId = userSelect ? userSelect.value : currentSelectedUserId;
+        const userId = currentSelectedUserId;
 
         const btnSave = clickedBtn || document.getElementById('btn-save-emp-schedule');
         const originalText = btnSave ? btnSave.innerHTML : '';
@@ -3225,16 +3159,6 @@
             branch: document.getElementById('emp-edit-branch')?.value || 'สาขายะลา',
             role: document.getElementById('emp-edit-role')?.value || 'Employee',
             password: document.getElementById('emp-edit-password')?.value || '',
-        };
-
-        // Payroll fields
-        const payroll = {
-            base_salary: parseFloat(document.getElementById('emp-edit-salary')?.value || 15000),
-            ot_rate: parseFloat(document.getElementById('emp-edit-ot')?.value || 60),
-            allowance: parseFloat(document.getElementById('emp-edit-allowance')?.value || 1000),
-            deduction: parseFloat(document.getElementById('emp-edit-deduction')?.value || 750),
-            bank_name: document.getElementById('emp-edit-bank-name')?.value || 'ธนาคารกสิกรไทย',
-            bank_account: document.getElementById('emp-edit-bank-account')?.value || '123-4-56789-0',
         };
 
         // Leave fields
@@ -3284,7 +3208,6 @@
                         notes: notes
                     },
                     profile: profile,
-                    payroll: payroll,
                     leave: leave,
                     more_info: moreInfo,
                     wage_kpi: wageKpi

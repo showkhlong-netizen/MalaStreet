@@ -737,12 +737,15 @@ class AccessControlController extends Controller
             return response()->json(['success' => false, 'message' => 'ไม่พบรหัสผู้ใช้งาน'], 422);
         }
 
-        $schedule = $request->input('schedule', []);
-        $profile = $request->input('profile', []);
-        $payroll = $request->input('payroll', []);
-        $leave = $request->input('leave', []);
-        $moreInfo = $request->input('more_info', []);
-        $wageKpi = $request->input('wage_kpi', []);
+        $existingRaw = Setting::get("employee_data_{$userId}", '');
+        $existingData = json_decode($existingRaw ?: '{}', true) ?: [];
+
+        $schedule = $request->input('schedule', $existingData['schedule'] ?? []);
+        $profile = $request->input('profile', $existingData['profile'] ?? []);
+        $payroll = $request->has('payroll') ? $request->input('payroll', []) : ($existingData['payroll'] ?? []);
+        $leave = $request->input('leave', $existingData['leave'] ?? []);
+        $moreInfo = $request->input('more_info', $existingData['more_info'] ?? []);
+        $wageKpi = $request->input('wage_kpi', $existingData['wage_kpi'] ?? []);
 
         $employeeData = [
             'schedule' => $schedule,
