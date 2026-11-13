@@ -604,7 +604,7 @@
                     <input type="email"
                            id="login-email"
                            name="email"
-                           value="{{ old('email', request('email', 'salaemaemunib@gmail.com')) }}"
+                           value="{{ old('email') }}"
                            placeholder="กรอกอีเมลเข้าสู่ระบบ"
                            required
                            autofocus
@@ -618,7 +618,6 @@
                         <input type="password"
                                id="login-password"
                                name="password"
-                               value="password123"
                                placeholder="•••••••••"
                                required
                                class="field-input has-toggle">
@@ -639,7 +638,7 @@
                 <!-- Checkbox: จดจำการเข้าสู่ระบบ -->
                 <div class="remember-row">
                     <label class="remember-label">
-                        <input type="checkbox" name="remember" value="1" checked class="remember-checkbox">
+                        <input type="checkbox" id="login-remember" name="remember" value="1" class="remember-checkbox">
                         <span>จดจำการเข้าสู่ระบบ</span>
                     </label>
                 </div>
@@ -906,6 +905,36 @@
                 btn.innerHTML = originalText;
             }
         }
+
+        // Remember email ONLY on this device when "จดจำการเข้าสู่ระบบ" is checked
+        (function () {
+            const STORAGE_KEY = 'malastreet_saved_email';
+            const emailInput = document.getElementById('login-email');
+            const rememberCheckbox = document.getElementById('login-remember');
+            const loginForm = emailInput ? emailInput.closest('form') : null;
+
+            if (emailInput && rememberCheckbox && !emailInput.value) {
+                try {
+                    const savedEmail = localStorage.getItem(STORAGE_KEY);
+                    if (savedEmail) {
+                        emailInput.value = savedEmail;
+                        rememberCheckbox.checked = true;
+                    }
+                } catch (e) {}
+            }
+
+            if (loginForm && emailInput && rememberCheckbox) {
+                loginForm.addEventListener('submit', function () {
+                    try {
+                        if (rememberCheckbox.checked && emailInput.value.trim()) {
+                            localStorage.setItem(STORAGE_KEY, emailInput.value.trim());
+                        } else {
+                            localStorage.removeItem(STORAGE_KEY);
+                        }
+                    } catch (e) {}
+                });
+            }
+        })();
     </script>
 </body>
 </html>

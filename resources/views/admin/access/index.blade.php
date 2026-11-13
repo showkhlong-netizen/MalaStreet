@@ -1390,15 +1390,28 @@
                         </div>
                     </div>
 
-                    <!-- 2. ค่าจ้างต่อวัน & อัตรา OT ปกติ -->
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-800 mb-1">ค่าจ้างต่อวัน (฿)</label>
-                            <input type="number" id="wage-daily-amount" value="{{ $wageKpi['daily_wage'] ?? 250 }}" class="w-full text-xs sm:text-sm font-medium px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-indigo-500 shadow-2xs">
+                    <!-- 2. ค่าจ้างต่อวัน (฿) -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-800 mb-1">ค่าจ้างต่อวัน (฿)</label>
+                        <input type="number" id="wage-daily-amount" value="{{ $wageKpi['daily_wage'] ?? 250 }}" oninput="recalcMonthlySalarySummary()" class="w-full text-xs sm:text-sm font-medium px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-indigo-500 shadow-2xs">
+                    </div>
+
+                    <!-- 2.1 แถบสรุปยอดเงินเดือนรวม (Auto-calculated) -->
+                    @php
+                        $initDailyWage = (float) ($wageKpi['daily_wage'] ?? 250);
+                        $initWorkDays = count($activeEmployeeData['schedule']['days'] ?? ['mon','tue','wed','thu','fri','sat']);
+                        $initMonthlyAvg = round($initDailyWage * $initWorkDays * (30 / 7));
+                    @endphp
+                    <div id="wage-monthly-summary-box" class="p-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md space-y-1">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-bold uppercase tracking-wide text-indigo-100">สรุปยอดเงินเดือนรวม (เฉลี่ย 1 เดือน)</span>
+                            <span class="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold text-white">คำนวณอัตโนมัติ</span>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-800 mb-1">อัตรา OT ปกติ (บาท/ชั่วโมง)</label>
-                            <input type="number" id="wage-regular-ot-rate" value="{{ $wageKpi['regular_ot_rate'] ?? 50 }}" class="w-full text-xs sm:text-sm font-medium px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-indigo-500 shadow-2xs">
+                        <div id="wage-monthly-total" class="text-2xl sm:text-3xl font-black tracking-tight">
+                            ฿{{ number_format($initMonthlyAvg) }} <span class="text-sm font-bold text-indigo-100">/ เดือน</span>
+                        </div>
+                        <div id="wage-monthly-formula" class="text-[11px] font-medium text-indigo-100">
+                            ฿{{ number_format($initDailyWage) }}/วัน × {{ $initWorkDays }} วัน/สัปดาห์ (เฉลี่ย 30 วัน/เดือน)
                         </div>
                     </div>
 
@@ -1414,13 +1427,6 @@
                                 <label class="block text-[11px] font-bold text-slate-700 mb-1">OT ส่งของ (฿/เที่ยว)</label>
                                 <input type="number" id="wage-ot-delivery" value="{{ $wageKpi['ot_delivery'] ?? '' }}" placeholder="เช่น 50" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-indigo-500 shadow-2xs">
                             </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-700 mb-1">OT คอนเทนต์ (฿/งาน)</label>
-                                <input type="text" id="wage-ot-content" value="{{ $wageKpi['ot_content'] ?? '' }}" placeholder="เช่น 0" class="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-indigo-500 shadow-2xs">
-                            </div>
-                            <div></div>
                         </div>
                     </div>
 
@@ -3055,6 +3061,22 @@
             const el = document.getElementById(id);
             if (el) el.innerText = activeCount;
         });
+        recalcMonthlySalarySummary();
+    }
+
+    function recalcMonthlySalarySummary() {
+        const dailyWage = parseFloat(document.getElementById('wage-daily-amount')?.value || 0) || 0;
+        const workDays = document.querySelectorAll('.day-card.bg-\\[\\#0F172A\\]').length;
+        const monthlyAvg = Math.round(dailyWage * workDays * (30 / 7));
+
+        const totalEl = document.getElementById('wage-monthly-total');
+        const formulaEl = document.getElementById('wage-monthly-formula');
+        if (totalEl) {
+            totalEl.innerHTML = `฿${monthlyAvg.toLocaleString()} <span class="text-sm font-bold text-indigo-100">/ เดือน</span>`;
+        }
+        if (formulaEl) {
+            formulaEl.textContent = `฿${dailyWage.toLocaleString()}/วัน × ${workDays} วัน/สัปดาห์ (เฉลี่ย 30 วัน/เดือน)`;
+        }
     }
 
     // C. Filter Weeks (ทั้งหมด, WEEK 1, WEEK 2, WEEK 3, WEEK 4)
@@ -3180,10 +3202,8 @@
         const wageKpi = {
             wage_type: document.getElementById('wage-employment-type')?.value || 'daily',
             daily_wage: parseFloat(document.getElementById('wage-daily-amount')?.value || 250),
-            regular_ot_rate: parseFloat(document.getElementById('wage-regular-ot-rate')?.value || 50),
             ot_per_time: document.getElementById('wage-ot-per-time')?.value || '',
             ot_delivery: document.getElementById('wage-ot-delivery')?.value || '',
-            ot_content: document.getElementById('wage-ot-content')?.value || '',
             kpi_enabled: document.getElementById('wage-enable-kpi')?.checked ?? true,
             kpi_amount: parseFloat(document.getElementById('wage-kpi-amount')?.value || 2000),
             kpi_rounds: parseFloat(document.getElementById('wage-kpi-rounds')?.value || 3),
