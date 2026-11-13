@@ -5,93 +5,578 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>เข้าสู่ระบบการทำงาน - หม่าล่าสตรีท (Mala Street POS)</title>
 
-    <!-- Google Fonts: Prompt & Sarabun -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- Non-blocking async Google Font (Instant first paint using system Thai UI fonts even on slow internet) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Prompt', 'Sarabun', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            50: '#fff1f2',
-                            100: '#ffe4e6',
-                            500: '#f43f5e',
-                            600: '#e11d48',
-                            700: '#be123c',
-                            800: '#9f1239',
-                            900: '#881337',
-                            950: '#4c0519',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap"></noscript>
 
     <style>
-        body {
-            font-family: 'Prompt', 'Sarabun', sans-serif;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body {
+            min-height: 100vh;
+            font-family: 'Prompt', 'Noto Sans Thai', 'Leelawadee UI', 'Tahoma', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
+        body {
+            background: linear-gradient(135deg, #020617 0%, #0f172a 55%, #450a0a 100%);
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            position: relative;
+        }
+        ::selection { background: #dc2626; color: #fff; }
+
+        /* Atmospheric Background */
+        .bg-glows {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .bg-glow-1 {
+            position: absolute;
+            top: -110px;
+            right: -110px;
+            width: 260px;
+            height: 260px;
+            background: rgba(220, 38, 38, 0.15);
+            border-radius: 9999px;
+            filter: blur(55px);
+        }
+        .bg-glow-2 {
+            position: absolute;
+            bottom: -110px;
+            left: -110px;
+            width: 260px;
+            height: 260px;
+            background: rgba(217, 119, 6, 0.10);
+            border-radius: 9999px;
+            filter: blur(55px);
+        }
+
+        /* Main Container (~30% smaller than original 448px -> 314px) */
+        .login-container {
+            width: 100%;
+            max-width: 314px;
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Brand Header (~30% smaller) */
+        .brand-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            color: #ffffff;
+            margin-bottom: 2px;
+        }
+        .brand-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 11px;
+            background: linear-gradient(135deg, #dc2626 0%, #e11d48 55%, #f59e0b 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 14px rgba(127, 29, 29, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 16px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .brand-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            line-height: 1.2;
+        }
+        .brand-subtitle {
+            font-size: 8.5px;
+            color: #fca5a5;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+
+        /* White Login Card (~30% smaller paddings & radii) */
+        .login-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 18px 20px;
+            box-shadow: 0 20px 38px -10px rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .card-title {
+            font-size: 15.5px;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+            text-align: left;
+        }
+
+        /* Alerts */
+        .alert-timeout {
+            padding: 9px 11px;
+            border-radius: 11px;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .alert-timeout-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 6px;
+            background: rgba(253, 230, 138, 0.8);
+            color: #78350f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .alert-timeout p {
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1.45;
+        }
+        .alert-error {
+            padding: 9px 11px;
+            border-radius: 11px;
+            background: #fff1f2;
+            border: 1px solid #fecdd3;
+            color: #9f1239;
+            font-size: 10.5px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .alert-info {
+            padding: 8px 11px;
+            border-radius: 11px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+            font-size: 10.5px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Form Elements (~30% smaller) */
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            text-align: left;
+        }
+        .field-label {
+            display: block;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .field-input-wrap {
+            position: relative;
+        }
+        .field-input {
+            width: 100%;
+            padding: 8px 11px;
+            border-radius: 11px;
+            border: 1.5px solid #e2e8f0;
+            color: #0f172a;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 600;
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            background: #ffffff;
+        }
+        .field-input.has-toggle {
+            padding-right: 34px;
+        }
+        .field-input:focus {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+        }
+        .field-input::placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+        .pwd-toggle-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: 0;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pwd-toggle-btn:hover { color: #334155; }
+
+        .remember-row {
+            display: flex;
+            align-items: center;
+            padding-top: 1px;
+        }
+        .remember-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 10.5px;
+            color: #475569;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+        }
+        .remember-checkbox {
+            width: 13px;
+            height: 13px;
+            accent-color: #dc2626;
+            cursor: pointer;
+        }
+
+        /* Primary Submit Button (~30% smaller) */
+        .btn-submit {
+            width: 100%;
+            padding: 9px 12px;
+            border-radius: 11px;
+            border: 0;
+            background: linear-gradient(90deg, #dc2626 0%, #e11d48 50%, #d97706 100%);
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 11.5px;
+            font-weight: 700;
+            box-shadow: 0 6px 14px rgba(220, 38, 38, 0.28);
+            cursor: pointer;
+            transition: transform 0.1s ease, filter 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn-submit:hover { filter: brightness(0.95); }
+        .btn-submit:active { transform: scale(0.98); }
+        .btn-submit:disabled { opacity: 0.75; cursor: wait; }
+
+        .divider {
+            border-top: 1px solid #f1f5f9;
+            margin-top: 2px;
+        }
+
+        /* Secondary Register Section (~30% smaller) */
+        .register-section {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            text-align: center;
+        }
+        .register-hint {
+            font-size: 10px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .btn-register {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 11px;
+            border: 1px solid rgba(226, 232, 240, 0.95);
+            background: #ffffff;
+            color: #1e293b;
+            font-family: inherit;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+        }
+        .btn-register:hover { background: #f8fafc; border-color: #cbd5e1; }
+        .btn-register:active { transform: scale(0.98); }
+        .btn-register-icon { color: #d97706; font-weight: 700; font-size: 11px; }
+
+        /* Footer (~30% smaller) */
+        .login-footer {
+            text-align: center;
+            font-size: 8.5px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        /* Register Modal Styles (Self-contained, zero external dependencies) */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background: rgba(2, 6, 23, 0.75);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+            overflow-y: auto;
+        }
+        .modal-backdrop.is-open { display: flex; }
+        .modal-card {
+            position: relative;
+            background: #ffffff;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 100%;
+            padding: 18px 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: auto;
+        }
+        .modal-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f1f5f9;
+            gap: 10px;
+        }
+        .modal-header-left { display: flex; align-items: center; gap: 10px; }
+        .modal-header-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: linear-gradient(45deg, #f59e0b, #e11d48);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .modal-title { font-size: 14px; font-weight: 700; color: #0f172a; line-height: 1.25; }
+        .modal-subtitle { font-size: 10.5px; color: #64748b; font-weight: 500; margin-top: 2px; }
+        .modal-close-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 9999px;
+            border: 0;
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .modal-close-btn:hover { background: #e2e8f0; color: #1e293b; }
+
+        .avatar-box {
+            padding: 10px;
+            border-radius: 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .avatar-box-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .avatar-badge-pill {
+            font-size: 9.5px;
+            color: #4f46e5;
+            font-weight: 600;
+            background: #eef2ff;
+            padding: 2px 7px;
+            border-radius: 9999px;
+            border: 1px solid #e0e7ff;
+        }
+        .avatar-row { display: flex; align-items: center; gap: 10px; }
+        .avatar-preview-wrap { position: relative; flex-shrink: 0; }
+        .avatar-preview-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: #ffffff;
+            border: 1.5px dashed #cbd5e1;
+            padding: 2px;
+            display: block;
+        }
+        .avatar-check-badge {
+            position: absolute;
+            bottom: -3px;
+            right: -3px;
+            width: 16px;
+            height: 16px;
+            border-radius: 9999px;
+            background: #10b981;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+        }
+        .btn-pick-photo {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 9px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .btn-pick-photo:hover { background: #f1f5f9; }
+        .avatar-hint { font-size: 9.5px; color: #94a3b8; line-height: 1.3; margin-top: 3px; }
+
+        .modal-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        @media (max-width: 480px) { .modal-grid-2 { grid-template-columns: 1fr; } }
+
+        .modal-input {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            font-family: inherit;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #0f172a;
+            background: #f8fafc;
+            outline: none;
+        }
+        .modal-input:focus { border-color: #3b82f6; background: #ffffff; }
+
+        .modal-security-note {
+            padding: 9px 10px;
+            border-radius: 12px;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            font-size: 10px;
+            color: #78350f;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            line-height: 1.4;
+        }
+        .modal-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding-top: 4px; }
+        .btn-cancel {
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 0;
+            background: #f1f5f9;
+            color: #334155;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .btn-cancel:hover { background: #e2e8f0; }
+        .btn-modal-submit {
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 0;
+            background: linear-gradient(90deg, #dc2626, #e11d48, #d97706);
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .modal-alert { padding: 9px 11px; border-radius: 11px; font-size: 11px; font-weight: 700; }
+        .modal-alert-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .modal-alert-error { background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3; }
+        .hidden { display: none !important; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { display: inline-block; animation: spin 1s linear infinite; }
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-red-950 text-slate-800 flex flex-col items-center justify-center p-4 sm:p-6 relative antialiased selection:bg-red-600 selection:text-white">
+<body>
 
     <!-- Background Atmospheric Elements -->
-    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div class="absolute -top-40 -right-40 w-96 h-96 bg-red-600/15 rounded-full blur-3xl"></div>
-        <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-amber-600/10 rounded-full blur-3xl"></div>
+    <div class="bg-glows" aria-hidden="true">
+        <div class="bg-glow-1"></div>
+        <div class="bg-glow-2"></div>
     </div>
 
-    <!-- Main Container -->
-    <div class="w-full max-w-md relative z-10 space-y-4">
+    <!-- Main Container (30% smaller, original structure preserved) -->
+    <div class="login-container">
 
         <!-- Mala Street Brand Logo & Subtitle -->
-        <div class="flex items-center justify-center gap-3 text-white mb-2">
-            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-red-600 via-rose-600 to-amber-500 flex items-center justify-center shadow-lg shadow-red-900/40 border border-white/20">
-                <span class="text-2xl">🍢</span>
-            </div>
+        <div class="brand-header">
+            <div class="brand-icon">🍢</div>
             <div>
-                <h2 class="text-lg font-black tracking-tight leading-tight">หม่าล่าสตรีท</h2>
-                <p class="text-[11px] text-red-300 font-medium tracking-wide">Mala Street POS &amp; Cloud System</p>
+                <div class="brand-title">หม่าล่าสตรีท</div>
+                <div class="brand-subtitle">Mala Street POS &amp; Cloud System</div>
             </div>
         </div>
 
         <!-- ================================================================= -->
-        <!-- LOGIN CARD (Matches Image 3 Exactly)                              -->
+        <!-- LOGIN CARD                                                        -->
         <!-- ================================================================= -->
-        <div class="bg-white rounded-[28px] sm:rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200/90 animate-in fade-in zoom-in duration-200 space-y-5">
-            
-            <!-- Card Title (Matches Image 3) -->
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight text-left">
-                เข้าสู่ระบบการทำงาน
-            </h1>
+        <div class="login-card">
 
-            <!-- Yellow Warning Banner (Shows on timeout or when redirected from auto-logout) -->
+            <h1 class="card-title">เข้าสู่ระบบการทำงาน</h1>
+
+            <!-- Yellow Warning Banner (Timeout / Auto-Logout) -->
             @if(request('reason') === 'timeout' || session('timeout_alert'))
-                <div class="p-3.5 sm:p-4 rounded-2xl bg-[#FFFBEB] border border-[#FDE68A] text-[#92400E] flex items-start gap-3 shadow-2xs animate-in slide-in-from-top-2 duration-200">
-                    <span class="w-6 h-6 rounded-lg bg-amber-200/80 text-amber-900 flex items-center justify-center shrink-0 mt-0.5">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <div class="alert-timeout">
+                    <span class="alert-timeout-icon">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </span>
-                    <p class="text-xs sm:text-[13px] font-bold leading-relaxed">
-                        คุณถูกออกจากระบบอัตโนมัติเนื่องจากไม่มีการเคลื่อนไหวเกินกำหนด เพื่อความปลอดภัยของข้อมูล
-                    </p>
+                    <p>คุณถูกออกจากระบบอัตโนมัติเนื่องจากไม่มีการเคลื่อนไหวเกินกำหนด เพื่อความปลอดภัยของข้อมูล</p>
                 </div>
             @endif
 
-            <!-- General Error / Status Alert -->
+            <!-- Error Alert -->
             @if(session('error'))
-                <div class="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-semibold flex items-center gap-2">
-                    <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <div class="alert-error">
+                    <svg width="13" height="13" fill="none" stroke="#e11d48" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="8" x2="12" y2="12"></line>
                         <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -100,52 +585,49 @@
                 </div>
             @endif
 
+            <!-- Info Alert -->
             @if(session('info'))
-                <div class="p-3 rounded-2xl bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-2">
+                <div class="alert-info">
                     <span>ℹ️</span>
                     <span>{{ session('info') }}</span>
                 </div>
             @endif
 
-            <!-- Form -->
-            <form action="{{ route('login.submit') }}" method="POST" class="space-y-4">
+            <!-- Login Form -->
+            <form action="{{ route('login.submit') }}" method="POST" class="login-form" id="login-main-form">
                 @csrf
                 <input type="hidden" name="redirect" value="{{ request('redirect', old('redirect')) }}">
 
-                <!-- Field 1: อีเมลผู้ใช้งาน (Matches Image 3) -->
-                <div class="space-y-1.5 text-left">
-                    <label class="block text-xs sm:text-sm font-bold text-slate-800">
-                        อีเมลผู้ใช้งาน
-                    </label>
-                    <input type="email" 
+                <!-- Field 1: อีเมลผู้ใช้งาน -->
+                <div class="field-group">
+                    <label for="login-email" class="field-label">อีเมลผู้ใช้งาน</label>
+                    <input type="email"
                            id="login-email"
-                           name="email" 
-                           value="{{ old('email', request('email', 'salaemaemunib@gmail.com')) }}" 
-                           placeholder="กรอกอีเมลเข้าสู่ระบบ" 
-                           required 
+                           name="email"
+                           value="{{ old('email', request('email', 'salaemaemunib@gmail.com')) }}"
+                           placeholder="กรอกอีเมลเข้าสู่ระบบ"
+                           required
                            autofocus
-                           class="w-full px-4 py-3 sm:py-3.5 rounded-2xl border-2 border-slate-200 focus:border-red-600 focus:ring-4 focus:ring-red-500/10 text-slate-900 text-sm font-semibold transition-all outline-none placeholder:text-slate-400 placeholder:font-normal">
+                           class="field-input">
                 </div>
 
-                <!-- Field 2: รหัสผ่าน (Matches Image 3 with Eye toggle) -->
-                <div class="space-y-1.5 text-left">
-                    <label class="block text-xs sm:text-sm font-bold text-slate-800">
-                        รหัสผ่าน
-                    </label>
-                    <div class="relative">
-                        <input type="password" 
-                               id="login-password" 
-                               name="password" 
+                <!-- Field 2: รหัสผ่าน -->
+                <div class="field-group">
+                    <label for="login-password" class="field-label">รหัสผ่าน</label>
+                    <div class="field-input-wrap">
+                        <input type="password"
+                               id="login-password"
+                               name="password"
                                value="password123"
-                               placeholder="•••••••••" 
-                               required 
-                               class="w-full px-4 py-3 sm:py-3.5 rounded-2xl border-2 border-slate-200 focus:border-red-600 focus:ring-4 focus:ring-red-500/10 text-slate-900 text-sm font-semibold transition-all outline-none placeholder:text-slate-400 pr-12">
-                        <button type="button" 
-                                onclick="togglePasswordVisibility()" 
+                               placeholder="•••••••••"
+                               required
+                               class="field-input has-toggle">
+                        <button type="button"
+                                onclick="togglePasswordVisibility()"
                                 title="แสดง/ซ่อนรหัสผ่าน"
-                                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1 cursor-pointer">
-                            <span id="eye-icon" class="flex items-center justify-center">
-                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                class="pwd-toggle-btn">
+                            <span id="eye-icon" style="display:flex;align-items:center;justify-content:center;">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                 </svg>
@@ -154,85 +636,35 @@
                     </div>
                 </div>
 
-                <!-- Checkbox: จดจำการเข้าสู่ระบบ (Matches Image 3) -->
-                <div class="flex items-center justify-between pt-0.5">
-                    <label class="flex items-center gap-2.5 text-xs sm:text-sm text-slate-600 font-medium cursor-pointer select-none">
-                        <input type="checkbox" 
-                               name="remember" 
-                               value="1"
-                               checked 
-                               class="w-4 h-4 rounded text-red-600 border-slate-300 focus:ring-red-500 cursor-pointer">
+                <!-- Checkbox: จดจำการเข้าสู่ระบบ -->
+                <div class="remember-row">
+                    <label class="remember-label">
+                        <input type="checkbox" name="remember" value="1" checked class="remember-checkbox">
                         <span>จดจำการเข้าสู่ระบบ</span>
                     </label>
                 </div>
 
-                <!-- Primary Submit Button: เข้าสู่ระบบ (Themed with Mala Street brand colors) -->
-                <button type="submit" 
-                        class="w-full py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 hover:from-red-700 hover:to-amber-700 active:scale-[0.98] text-white font-black text-sm sm:text-base shadow-lg shadow-red-600/30 transition-all cursor-pointer flex items-center justify-center gap-2">
+                <!-- Primary Submit Button -->
+                <button type="submit" id="btn-login-submit" class="btn-submit">
                     <span>เข้าสู่ระบบ</span>
                 </button>
 
-                <!-- Divider (Matches Image 3) -->
-                <div class="border-t border-slate-100 pt-3"></div>
+                <!-- Divider -->
+                <div class="divider"></div>
 
-                <!-- Secondary Option (Matches Image 3) -->
-                <div class="space-y-2.5 text-center">
-                    <p class="text-xs sm:text-sm text-slate-500 font-medium">
-                        พนักงานใหม่ที่ยังไม่มีบัญชีเข้าใช้งาน?
-                    </p>
-                    
-                    <button type="button"
-                            onclick="openRegisterModal()" 
-                            class="w-full py-3 sm:py-3.5 px-4 rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 active:scale-[0.98] text-slate-800 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs hover:border-slate-300">
-                        <span class="text-amber-600 font-black text-sm">👤+</span>
+                <!-- Secondary Option -->
+                <div class="register-section">
+                    <p class="register-hint">พนักงานใหม่ที่ยังไม่มีบัญชีเข้าใช้งาน?</p>
+                    <button type="button" onclick="openRegisterModal()" class="btn-register">
+                        <span class="btn-register-icon">👤+</span>
                         <span>กดลงทะเบียน เพื่อสร้างอีเมลพนักงานบัญชีใหม่</span>
                     </button>
                 </div>
-
             </form>
-
         </div>
 
-        <!-- Quick 1-Click Account Switcher for Testing / Convenience -->
-        @if(!empty($quickUsers))
-            <div class="bg-slate-900/80 backdrop-blur-md rounded-2xl p-3 border border-slate-800/80 text-white space-y-2">
-                <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
-                    <span class="font-bold flex items-center gap-1.5">
-                        <span>⚡</span>
-                        <span>เลือกบัญชีที่บันทึกไว้เข้าสู่ระบบทันที:</span>
-                    </span>
-                    <span class="text-[10px] text-slate-500">(รหัสผ่าน: password123)</span>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    @foreach($quickUsers as $qu)
-                        <button type="button" 
-                                onclick="fillQuickUser('{{ $qu['email'] }}')" 
-                                class="flex items-center gap-2 p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700/60 text-left transition-all cursor-pointer group">
-                            @php
-                                $quAvatar = !empty($qu['avatar']) ? preg_replace('#^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?/#', '/', $qu['avatar']) : null;
-                            @endphp
-                            @if(!empty($quAvatar))
-                                <img src="{{ $quAvatar }}" alt="{{ $qu['name'] }}" class="w-6 h-6 rounded-full object-cover shrink-0" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');">
-                                <div class="hidden w-6 h-6 rounded-full {{ $qu['color'] ?? 'bg-rose-600' }} text-white text-[10px] font-bold flex items-center justify-center shrink-0">
-                                    {{ $qu['initials'] ?? 'US' }}
-                                </div>
-                            @else
-                                <div class="w-6 h-6 rounded-full {{ $qu['color'] ?? 'bg-rose-600' }} text-white text-[10px] font-bold flex items-center justify-center shrink-0">
-                                    {{ $qu['initials'] ?? 'US' }}
-                                </div>
-                            @endif
-                            <div class="overflow-hidden">
-                                <p class="text-xs font-bold text-white group-hover:text-amber-300 truncate leading-tight">{{ $qu['name'] }}</p>
-                                <p class="text-[9.5px] text-slate-400 truncate">{{ $qu['role_label'] ?? $qu['role'] }}</p>
-                            </div>
-                        </button>
-                    @endforeach
-                </div>
-            </div>
-        @endif
-
         <!-- Footer Info -->
-        <div class="text-center text-[11px] text-slate-500 font-medium">
+        <div class="login-footer">
             <span>© {{ date('Y') }} หม่าล่าสตรีท ระบบจัดการสิทธิ์และการเข้าถึงที่ปลอดภัย</span>
         </div>
 
@@ -241,144 +673,82 @@
     <!-- ===================================================================== -->
     <!-- ป๊อปอัปขอลงทะเบียนสร้างอีเมลพนักงานบัญชีใหม่ (บีบอัดภาพและรอแอดมินอนุมัติ) -->
     <!-- ===================================================================== -->
-    <div id="modal-register-request" class="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm hidden items-center justify-center p-3.5 sm:p-4 overflow-y-auto">
-        <div class="relative bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-100 space-y-4 my-auto transition-all animate-in fade-in zoom-in-95 duration-200">
-            
+    <div id="modal-register-request" class="modal-backdrop">
+        <div class="modal-card">
+
             <!-- Header -->
-            <div class="flex items-start justify-between pb-3 border-b border-slate-100 gap-3">
-                <div class="flex items-center gap-3">
-                    <span class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-500/25 shrink-0 text-xl font-bold">
-                        👤+
-                    </span>
+            <div class="modal-header">
+                <div class="modal-header-left">
+                    <span class="modal-header-icon">👤+</span>
                     <div>
-                        <h3 class="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                            ลงทะเบียนขอสร้างบัญชีใหม่
-                        </h3>
-                        <p class="text-[11px] text-slate-500 font-medium pt-0.5">
-                            กรอกข้อมูลเพื่อสร้างอีเมลพนักงานบัญชี (รอแอดมินอนุมัติ)
-                        </p>
+                        <h3 class="modal-title">ลงทะเบียนขอสร้างบัญชีใหม่</h3>
+                        <p class="modal-subtitle">กรอกข้อมูลเพื่อสร้างอีเมลพนักงานบัญชี (รอแอดมินอนุมัติ)</p>
                     </div>
                 </div>
-                <button type="button"
-                        onclick="closeRegisterModal()"
-                        class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center text-sm font-bold transition-all cursor-pointer">
-                    ✕
-                </button>
+                <button type="button" onclick="closeRegisterModal()" class="modal-close-btn">✕</button>
             </div>
 
             <!-- Form -->
-            <form id="form-popup-register" onsubmit="submitPopupRegister(event)" class="space-y-3.5">
+            <form id="form-popup-register" onsubmit="submitPopupRegister(event)" class="login-form">
                 @csrf
 
-                <!-- 1. ภาพถ่ายโปรไฟล์ (บีบอัดและแปลงเป็น URL อัตโนมัติ) -->
-                <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                    <label class="block text-xs font-bold text-slate-800 flex items-center justify-between">
-                        <span class="flex items-center gap-1.5">
-                            <span>📷</span>
-                            <span>ภาพถ่ายโปรไฟล์พนักงาน</span>
-                        </span>
-                        <span class="text-[10px] text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
-                            บีบอัดเป็น URL อัตโนมัติ
-                        </span>
-                    </label>
-
-                    <div class="flex items-center gap-3">
-                        <div class="relative shrink-0">
+                <!-- 1. ภาพถ่ายโปรไฟล์ -->
+                <div class="avatar-box">
+                    <div class="avatar-box-top">
+                        <span>📷 ภาพถ่ายโปรไฟล์พนักงาน</span>
+                        <span class="avatar-badge-pill">บีบอัดเป็น URL อัตโนมัติ</span>
+                    </div>
+                    <div class="avatar-row">
+                        <div class="avatar-preview-wrap">
                             <img id="popup-avatar-preview"
                                  src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23CBD5E1'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E"
                                  alt="Avatar Preview"
-                                 class="w-14 h-14 rounded-2xl object-cover bg-white border-2 border-dashed border-slate-300 p-0.5 shadow-xs">
-                            <div id="popup-avatar-badge" class="hidden absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold shadow-xs">
-                                ✓
-                            </div>
+                                 class="avatar-preview-img">
+                            <div id="popup-avatar-badge" class="avatar-check-badge hidden">✓</div>
                         </div>
-
-                        <div class="flex-1 space-y-1">
-                            <label for="popup-avatar-input"
-                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-bold text-xs cursor-pointer shadow-2xs transition-all active:scale-95">
-                                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                </svg>
-                                <span>เลือกรูปภาพ...</span>
+                        <div style="flex:1">
+                            <label for="popup-avatar-input" class="btn-pick-photo">
+                                <span>+ เลือกรูปภาพ...</span>
                             </label>
-                            <input type="file"
-                                   id="popup-avatar-input"
-                                   accept="image/*"
-                                   onchange="compressAndPreviewAvatar(this)"
-                                   class="hidden">
+                            <input type="file" id="popup-avatar-input" accept="image/*" onchange="compressAndPreviewAvatar(this)" class="hidden">
                             <input type="hidden" id="popup-avatar-base64" name="avatar_base64">
-                            <p class="text-[10px] text-slate-400 leading-tight">
-                                ระบบจะบีบอัดภาพให้อัตโนมัติเป็น URL ไม่กินเนื้อที่ และโหลดรวดเร็ว
-                            </p>
+                            <p class="avatar-hint">ระบบจะบีบอัดภาพให้อัตโนมัติเป็น URL ไม่กินเนื้อที่ และโหลดรวดเร็ว</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- 2. ชื่อ-สกุล -->
-                <div class="space-y-1">
-                    <label class="block text-xs font-bold text-slate-700">
-                        ชื่อ-สกุล หรือชื่อเรียก <span class="text-rose-500">*</span>
-                    </label>
-                    <input type="text"
-                           id="popup-reg-name"
-                           name="name"
-                           required
-                           placeholder="เช่น วาสนา บัญชีหน้าร้าน หรือ สมชาย"
-                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-900 focus:outline-blue-500 bg-slate-50/60 focus:bg-white transition-all">
+                <div class="field-group">
+                    <label for="popup-reg-name" class="field-label">ชื่อ-สกุล หรือชื่อเรียก <span style="color:#f43f5e">*</span></label>
+                    <input type="text" id="popup-reg-name" name="name" required placeholder="เช่น วาสนา บัญชีหน้าร้าน หรือ สมชาย" class="modal-input">
                 </div>
 
                 <!-- 3. อีเมลผู้ใช้งาน -->
-                <div class="space-y-1">
-                    <label class="block text-xs font-bold text-slate-700">
-                        อีเมลผู้ใช้งาน (Email) <span class="text-rose-500">*</span>
-                    </label>
-                    <input type="email"
-                           id="popup-reg-email"
-                           name="email"
-                           required
-                           placeholder="เช่น wasana.account@malastreet.com"
-                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-900 focus:outline-blue-500 bg-slate-50/60 focus:bg-white transition-all">
+                <div class="field-group">
+                    <label for="popup-reg-email" class="field-label">อีเมลผู้ใช้งาน (Email) <span style="color:#f43f5e">*</span></label>
+                    <input type="email" id="popup-reg-email" name="email" required placeholder="เช่น wasana.account@malastreet.com" class="modal-input">
                 </div>
 
                 <!-- 4. รหัสผ่านที่จะตั้ง -->
-                <div class="space-y-1">
-                    <label class="block text-xs font-bold text-slate-700">
-                        พาสเวิร์ดที่จะตั้ง (Password) <span class="text-rose-500">*</span>
-                    </label>
-                    <div class="relative">
-                        <input type="password"
-                               id="popup-reg-password"
-                               name="password"
-                               required
-                               placeholder="กำหนดรหัสผ่าน (เช่น password123)"
-                               class="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-900 focus:outline-blue-500 bg-slate-50/60 focus:bg-white transition-all">
-                        <button type="button"
-                                onclick="togglePopupPasswordVisibility()"
-                                class="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition cursor-pointer">
+                <div class="field-group">
+                    <label for="popup-reg-password" class="field-label">พาสเวิร์ดที่จะตั้ง (Password) <span style="color:#f43f5e">*</span></label>
+                    <div class="field-input-wrap">
+                        <input type="password" id="popup-reg-password" name="password" required placeholder="กำหนดรหัสผ่าน (เช่น password123)" class="modal-input" style="padding-right:34px;">
+                        <button type="button" onclick="togglePopupPasswordVisibility()" class="pwd-toggle-btn">
                             <span id="popup-eye-icon">👁️</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- 5. เบอร์โทรศัพท์ & ตำแหน่งงาน -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div class="space-y-1">
-                        <label class="block text-xs font-bold text-slate-700">
-                            เบอร์โทรศัพท์
-                        </label>
-                        <input type="tel"
-                               id="popup-reg-phone"
-                               name="phone"
-                               placeholder="เช่น 081-234-5678"
-                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-semibold text-slate-900 focus:outline-blue-500 bg-slate-50/60 focus:bg-white transition-all">
+                <div class="modal-grid-2">
+                    <div class="field-group">
+                        <label for="popup-reg-phone" class="field-label">เบอร์โทรศัพท์</label>
+                        <input type="tel" id="popup-reg-phone" name="phone" placeholder="เช่น 081-234-5678" class="modal-input">
                     </div>
-                    <div class="space-y-1">
-                        <label class="block text-xs font-bold text-slate-700">
-                            ตำแหน่งงาน / แผนก
-                        </label>
-                        <select id="popup-reg-position"
-                                name="position"
-                                class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 focus:outline-blue-500 bg-slate-50/60 focus:bg-white transition-all cursor-pointer">
+                    <div class="field-group">
+                        <label for="popup-reg-position" class="field-label">ตำแหน่งงาน / แผนก</label>
+                        <select id="popup-reg-position" name="position" class="modal-input" style="cursor:pointer;">
                             <option value="พนักงานบัญชี" selected>พนักงานบัญชี (Accountant)</option>
                             <option value="ผู้ดูแลระบบ (Admin)">ผู้ดูแลระบบ / ผู้ช่วยแอดมิน (Admin)</option>
                             <option value="พนักงานบริการหน้าร้าน">พนักงานบริการหน้าร้าน (Service)</option>
@@ -387,53 +757,57 @@
                     </div>
                 </div>
 
-                <!-- กล่องข้อความแจ้งเตือนเงื่อนไข: แอดมินข้างในต้องกดอนุญาตก่อน -->
-                <div class="p-3 rounded-2xl bg-amber-50/90 border border-amber-200/90 text-[11px] text-amber-900 flex items-start gap-2.5">
-                    <span class="text-base shrink-0 mt-0.5">🛡️</span>
-                    <div class="leading-relaxed">
-                        <strong>เงื่อนไขความปลอดภัย:</strong> เมื่อกดลงทะเบียนแล้ว <strong>ผู้ดูแลระบบ (Admin) ข้างในระบบต้องกดอนุญาตก่อน</strong> จึงจะสามารถใช้อีเมลนี้ล็อกอินเข้าสู่ระบบได้จริง
-                    </div>
+                <!-- กล่องข้อความแจ้งเตือนเงื่อนไข -->
+                <div class="modal-security-note">
+                    <span style="font-size:14px;flex-shrink:0;">🛡️</span>
+                    <div><strong>เงื่อนไขความปลอดภัย:</strong> เมื่อกดลงทะเบียนแล้ว <strong>ผู้ดูแลระบบ (Admin) ข้างในระบบต้องกดอนุญาตก่อน</strong> จึงจะสามารถใช้อีเมลนี้ล็อกอินเข้าสู่ระบบได้จริง</div>
                 </div>
 
                 <!-- Response Alert Area -->
-                <div id="popup-register-alert" class="hidden p-3 rounded-2xl text-xs font-bold"></div>
+                <div id="popup-register-alert" class="modal-alert hidden"></div>
 
                 <!-- Action Buttons -->
-                <div class="pt-2 flex items-center justify-end gap-2">
-                    <button type="button"
-                            onclick="closeRegisterModal()"
-                            class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-xs transition-all cursor-pointer">
-                        ยกเลิก
-                    </button>
-                    <button type="submit"
-                            id="btn-popup-submit-register"
-                            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 hover:from-red-700 hover:to-amber-700 active:scale-95 text-white font-bold text-xs shadow-md shadow-rose-500/25 transition-all flex items-center gap-1.5 cursor-pointer">
+                <div class="modal-actions">
+                    <button type="button" onclick="closeRegisterModal()" class="btn-cancel">ยกเลิก</button>
+                    <button type="submit" id="btn-popup-submit-register" class="btn-modal-submit">
                         <span>✓</span>
                         <span>กดลงทะเบียน เพื่อสร้างอีเมลพนักงานบัญชีใหม่</span>
                     </button>
                 </div>
-
             </form>
         </div>
     </div>
 
-    <!-- Interactive Script -->
     <script>
+        (function () {
+            // Instant submit feedback on slow networks & prevent duplicate submissions
+            const form = document.getElementById('login-main-form');
+            const submitBtn = document.getElementById('btn-login-submit');
+            if (form && submitBtn) {
+                form.addEventListener('submit', function () {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spin">⏳</span><span>กำลังเข้าสู่ระบบ...</span>';
+                });
+            }
+        })();
+
         function togglePasswordVisibility() {
             const pwd = document.getElementById('login-password');
             const icon = document.getElementById('eye-icon');
+            if (!pwd || !icon) return;
             if (pwd.type === 'password') {
                 pwd.type = 'text';
-                icon.innerHTML = `<svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>`;
+                icon.innerHTML = '<svg width="14" height="14" fill="none" stroke="#334155" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>';
             } else {
                 pwd.type = 'password';
-                icon.innerHTML = `<svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>`;
+                icon.innerHTML = '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>';
             }
         }
 
         function togglePopupPasswordVisibility() {
             const pwd = document.getElementById('popup-reg-password');
             const icon = document.getElementById('popup-eye-icon');
+            if (!pwd || !icon) return;
             if (pwd.type === 'password') {
                 pwd.type = 'text';
                 icon.textContent = '🙈';
@@ -443,77 +817,47 @@
             }
         }
 
-        function fillQuickUser(email) {
-            const emailInput = document.getElementById('login-email');
-            const pwdInput = document.getElementById('login-password');
-            if (emailInput) emailInput.value = email;
-            if (pwdInput) pwdInput.value = 'password123';
-        }
-
-        // Popup Registration Modal Functions
         function openRegisterModal() {
             const modal = document.getElementById('modal-register-request');
-            if (modal) {
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-            }
+            if (modal) modal.classList.add('is-open');
         }
 
         function closeRegisterModal() {
             const modal = document.getElementById('modal-register-request');
-            if (modal) {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }
+            if (modal) modal.classList.remove('is-open');
         }
 
-        // Client-side HTML5 Canvas Image Compression (บีบอัดและแปลงเป็น URL อัตโนมัติ)
         function compressAndPreviewAvatar(input) {
             if (!input.files || !input.files[0]) return;
-            const file = input.files[0];
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 const img = new Image();
-                img.onload = function() {
+                img.onload = function () {
                     const canvas = document.createElement('canvas');
-                    const maxDimension = 360; // Max 360px
-                    let width = img.width;
-                    let height = img.height;
-                    if (width > height) {
-                        if (width > maxDimension) {
-                            height = Math.round((height * maxDimension) / width);
-                            width = maxDimension;
-                        }
-                    } else {
-                        if (height > maxDimension) {
-                            width = Math.round((width * maxDimension) / height);
-                            height = maxDimension;
-                        }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    // Compress to lightweight JPEG Data URL (~25-35KB)
-                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
-                    document.getElementById('popup-avatar-preview').src = compressedDataUrl;
-                    document.getElementById('popup-avatar-base64').value = compressedDataUrl;
+                    const maxDim = 360;
+                    let w = img.width, h = img.height;
+                    if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+                    else if (h >= w && h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+                    canvas.width = w;
+                    canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                    document.getElementById('popup-avatar-preview').src = dataUrl;
+                    document.getElementById('popup-avatar-base64').value = dataUrl;
                     document.getElementById('popup-avatar-badge').classList.remove('hidden');
                 };
                 img.src = e.target.result;
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(input.files[0]);
         }
 
-        // Submit Registration Request via AJAX
         async function submitPopupRegister(e) {
             e.preventDefault();
             const btn = document.getElementById('btn-popup-submit-register');
             const alertBox = document.getElementById('popup-register-alert');
             const originalText = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = `<span class="animate-spin text-sm">⏳</span><span>กำลังส่งคำขอลงทะเบียน...</span>`;
+            btn.innerHTML = '<span class="spin">⏳</span><span>กำลังส่งคำขอลงทะเบียน...</span>';
             if (alertBox) alertBox.classList.add('hidden');
 
             const form = document.getElementById('form-popup-register');
@@ -528,20 +872,18 @@
                     },
                     body: formData
                 });
-
                 const json = await res.json();
                 if (json.success) {
                     if (alertBox) {
-                        alertBox.className = 'p-3 rounded-2xl text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200';
-                        alertBox.innerHTML = `✅ ${json.message}`;
-                        alertBox.classList.remove('hidden');
+                        alertBox.className = 'modal-alert modal-alert-success';
+                        alertBox.innerHTML = '✅ ' + json.message;
                     }
-                    btn.innerHTML = `<span>✓ ส่งคำขอสำเร็จแล้ว!</span>`;
+                    btn.innerHTML = '<span>✓ ส่งคำขอสำเร็จแล้ว!</span>';
                     form.reset();
                     document.getElementById('popup-avatar-preview').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23CBD5E1'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
                     document.getElementById('popup-avatar-badge').classList.add('hidden');
 
-                    setTimeout(() => {
+                    setTimeout(function () {
                         closeRegisterModal();
                         btn.disabled = false;
                         btn.innerHTML = originalText;
@@ -549,18 +891,16 @@
                     }, 3500);
                 } else {
                     if (alertBox) {
-                        alertBox.className = 'p-3 rounded-2xl text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200';
-                        alertBox.innerHTML = `⚠️ ${json.message || 'เกิดข้อผิดพลาดในการลงทะเบียน'}`;
-                        alertBox.classList.remove('hidden');
+                        alertBox.className = 'modal-alert modal-alert-error';
+                        alertBox.innerHTML = '⚠️ ' + (json.message || 'เกิดข้อผิดพลาดในการลงทะเบียน');
                     }
                     btn.disabled = false;
                     btn.innerHTML = originalText;
                 }
             } catch (err) {
                 if (alertBox) {
-                    alertBox.className = 'p-3 rounded-2xl text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200';
-                    alertBox.innerHTML = `⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง`;
-                    alertBox.classList.remove('hidden');
+                    alertBox.className = 'modal-alert modal-alert-error';
+                    alertBox.innerHTML = '⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง';
                 }
                 btn.disabled = false;
                 btn.innerHTML = originalText;
@@ -569,4 +909,3 @@
     </script>
 </body>
 </html>
-

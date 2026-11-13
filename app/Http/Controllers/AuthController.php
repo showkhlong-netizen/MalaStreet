@@ -5,18 +5,19 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\LoginLandingResolver;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\View\View;
 
 class AuthController extends Controller
 {
     /**
-     * Show the login page (Matches Image 3 exactly).
+     * Show the lightweight, fast-loading login page.
      */
-    public function showLogin(Request $request): View|RedirectResponse
+    public function showLogin(Request $request): Response|RedirectResponse
     {
         $reason = $request->query('reason');
 
@@ -25,23 +26,20 @@ class AuthController extends Controller
             Auth::logout();
             $request->session()->put('is_logged_out', true);
         } elseif (Auth::check() && !$request->has('force')) {
-            return redirect()->route('pos.index');
+            $user = Auth::user();
+            $profile = LoginLandingResolver::resolveProfile($user, session('auth_user_profile'));
+            return redirect()->to(LoginLandingResolver::resolveLandingUrl($user, $profile));
         }
 
-        $timeoutMinutes = (int) Setting::get('access_auto_logout_minutes', 15);
-
-        // Saved users from access control for quick selection
-        $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true) ?: [];
-
-        return view('auth.login', [
-            'reason' => $reason,
-            'timeoutMinutes' => $timeoutMinutes,
-            'quickUsers' => array_slice($savedUsers, 0, 4),
-        ]);
+        return response()
+            ->view('auth.login', ['reason' => $reason])
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
     }
 
     /**
-     * Handle login authentication.
+     * Handle login authentication with strict role & daily first-login routing.
      */
     public function login(Request $request): RedirectResponse
     {
@@ -54,52 +52,76 @@ class AuthController extends Controller
         $email = strtolower(trim($credentials['email']));
         $password = $credentials['password'];
 
+        $authenticatedUser = null;
+
         // 1. Attempt standard Laravel authentication
         if (Auth::attempt(['email' => $email, 'password' => $password], $remember)) {
-            if ($request->hasSession()) {
-                $request->session()->regenerate();
-                $request->session()->forget('is_logged_out');
+            $authenticatedUser = Auth::user();
+        } else {
+            // 2. Fallback check for users registered via Access Control
+            $userModel = User::whereRaw('LOWER(email) = ?', [$email])->first();
+            if ($userModel && ($password === 'password123' || Hash::check($password, $userModel->password))) {
+                if (!Hash::check($password, $userModel->password)) {
+                    $userModel->password = Hash::make($password);
+                    $userModel->save();
+                }
+                Auth::login($userModel, $remember);
+                $authenticatedUser = $userModel;
             }
-            
-            // Sync user profile from access_users_list
-            $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true) ?: [];
-            $matched = collect($savedUsers)->firstWhere('email', $email);
-            if ($matched && $request->hasSession()) {
-                $request->session()->put('auth_user_profile', $matched);
-            }
-
-            AuditLog::record('auth', 'login', 'เข้าสู่ระบบ', Auth::user()->name, ['email' => $email]);
-
-            $redirectUrl = $request->input('redirect') ?: route('pos.index');
-            return redirect()->intended($redirectUrl)
-                ->with('success', 'เข้าสู่ระบบสำเร็จ ยินดีต้อนรับ ' . Auth::user()->name);
         }
 
-        // 2. Fallback check for users registered via Access Control
-        $userModel = User::where('email', $email)->first();
-        if ($userModel && ($password === 'password123' || Hash::check($password, $userModel->password))) {
-            // Update password hash if needed
-            if (!Hash::check($password, $userModel->password)) {
-                $userModel->password = Hash::make($password);
-                $userModel->save();
-            }
-            Auth::login($userModel, $remember);
+        if ($authenticatedUser) {
             if ($request->hasSession()) {
                 $request->session()->regenerate();
-                $request->session()->forget('is_logged_out');
+                $request->session()->forget([
+                    'is_logged_out',
+                    'url.intended',
+                    'auth_user_profile',
+                    'employee_check_in',
+                    'employee_check_out',
+                    'employee_check_in_photo',
+                    'employee_check_out_photo',
+                    'employee_check_in_location',
+                    'employee_check_out_location',
+                    'employee_status',
+                    'employee_work_hours',
+                    'employee_active_emp_id',
+                ]);
             }
 
-            $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true) ?: [];
-            $matched = collect($savedUsers)->firstWhere('email', $email);
-            if ($matched && $request->hasSession()) {
-                $request->session()->put('auth_user_profile', $matched);
+            // Strictly resolve user profile by authenticated user's email
+            $profile = LoginLandingResolver::resolveProfile($authenticatedUser);
+            if ($profile && $request->hasSession()) {
+                $request->session()->put('auth_user_profile', $profile);
             }
 
-            AuditLog::record('auth', 'login', 'เข้าสู่ระบบ', $userModel->name, ['email' => $email]);
+            $isAdmin = LoginLandingResolver::isAdmin($authenticatedUser, $profile);
+            $isEmployeeFirstToday = !$isAdmin && LoginLandingResolver::needsEmployeeDailyFirstLoginRedirect($authenticatedUser, $profile, false);
 
-            $redirectUrl = $request->input('redirect') ?: route('pos.index');
-            return redirect()->intended($redirectUrl)
-                ->with('success', 'เข้าสู่ระบบสำเร็จ ยินดีต้อนรับ ' . $userModel->name);
+            AuditLog::record(
+                'auth',
+                'login',
+                $isEmployeeFirstToday ? 'เข้าสู่ระบบครั้งแรกของวัน (พนักงาน)' : 'เข้าสู่ระบบ',
+                $profile['name'] ?? $authenticatedUser->name,
+                [
+                    'email' => $email,
+                    'role' => $profile['role'] ?? ($isAdmin ? 'Admin' : 'Employee'),
+                    'first_login_today' => $isEmployeeFirstToday,
+                ]
+            );
+
+            $redirectUrl = LoginLandingResolver::resolveLandingUrl(
+                $authenticatedUser,
+                $profile,
+                $request->input('redirect'),
+                true
+            );
+
+            $welcomeMsg = $isEmployeeFirstToday
+                ? 'เข้าสู่ระบบครั้งแรกของวันสำเร็จ ยินดีต้อนรับ ' . ($profile['name'] ?? $authenticatedUser->name) . ' กรุณาสแกนหน้าเข้างานประจำวัน'
+                : 'เข้าสู่ระบบสำเร็จ ยินดีต้อนรับ ' . ($profile['name'] ?? $authenticatedUser->name);
+
+            return redirect()->to($redirectUrl)->with('success', $welcomeMsg);
         }
 
         return back()
@@ -155,7 +177,18 @@ class AuthController extends Controller
 
             Auth::login($userModel, true);
             $request->session()->regenerate();
-            $request->session()->forget('is_logged_out');
+            $request->session()->forget([
+                'is_logged_out',
+                'employee_check_in',
+                'employee_check_out',
+                'employee_check_in_photo',
+                'employee_check_out_photo',
+                'employee_check_in_location',
+                'employee_check_out_location',
+                'employee_status',
+                'employee_work_hours',
+                'employee_active_emp_id',
+            ]);
             $request->session()->put('auth_user_profile', $targetUser);
 
             AuditLog::record('auth', 'switch_user', 'สลับบัญชีผู้ใช้งาน', $targetUser['name'] ?? $userModel->name, [

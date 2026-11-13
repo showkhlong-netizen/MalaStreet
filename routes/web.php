@@ -10,6 +10,8 @@ use App\Http\Controllers\OnlineOrderController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\SystemSyncController;
+use App\Http\Middleware\EnforceDailyEmployeeLanding;
+use App\Support\LoginLandingResolver;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -17,10 +19,12 @@ use Illuminate\Support\Facades\Route;
 Route::get('/system/sync-state', [SystemSyncController::class, 'syncState'])->name('system.sync_state');
 Route::get('/system/audit-logs', [SystemSyncController::class, 'auditLogs'])->name('system.audit_logs')->middleware('auth');
 
-// Landing redirect to POS or Login
+// Landing redirect: Admin -> Store Overview (admin.dashboard), Employee (1st login of day) -> Employees Face Scan, Employee (later) -> POS
 Route::get('/', function () {
-    if (Auth::check()) {
-        return redirect()->route('pos.index');
+    if (Auth::check() && !session('is_logged_out', false)) {
+        $user = Auth::user();
+        $profile = LoginLandingResolver::resolveProfile($user, session('auth_user_profile'));
+        return redirect()->to(LoginLandingResolver::resolveLandingUrl($user, $profile));
     }
     return redirect()->route('login');
 });
@@ -34,7 +38,7 @@ Route::match(['get', 'post'], '/switch-user/{userId}', [AuthController::class, '
 Route::post('/register-request', [AccessControlController::class, 'submitRegistrationRequest'])->name('register.request');
 
 // 1. บริการหน้าร้าน (In-Store POS & Kitchen Display) - ต้องเข้าสู่ระบบ (Requires Auth)
-Route::prefix('pos')->name('pos.')->middleware('auth')->group(function () {
+Route::prefix('pos')->name('pos.')->middleware(['auth', EnforceDailyEmployeeLanding::class])->group(function () {
     Route::get('/', [PosController::class, 'index'])->name('index');
     Route::post('/order', [PosController::class, 'storeOrder'])->name('order.store');
     Route::get('/kitchen', [PosController::class, 'kitchen'])->name('kitchen');
@@ -83,7 +87,7 @@ Route::prefix('order')->name('online.')->group(function () {
 });
 
 // 3. ระบบหลังบ้าน (Backend Admin & Financial / Inventory Systems) - ต้องเข้าสู่ระบบ (Requires Auth)
-Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', EnforceDailyEmployeeLanding::class])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/settings/toggle-online-mode', [DashboardController::class, 'toggleOnlineMode'])->name('settings.toggle_online');
 
@@ -144,7 +148,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 // Shortcut alias for employees & access - ต้องเข้าสู่ระบบ (Requires Auth)
 Route::get('/employees', function () {
     return redirect()->route('admin.employees.index');
-})->middleware('auth');
+})->middleware(['auth', EnforceDailyEmployeeLanding::class]);
 Route::get('/access', function () {
     return redirect()->route('admin.access.index');
-})->middleware('auth');
+})->middleware(['auth', EnforceDailyEmployeeLanding::class]);
