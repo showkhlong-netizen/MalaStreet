@@ -1396,19 +1396,32 @@
                         <input type="number" id="wage-daily-amount" value="{{ $wageKpi['daily_wage'] ?? 250 }}" oninput="recalcMonthlySalarySummary()" class="w-full text-xs sm:text-sm font-medium px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-indigo-500 shadow-2xs">
                     </div>
 
-                    <!-- 2.1 แถบสรุปยอดเงินเดือนรวม (Auto-calculated) -->
+                    <!-- 2.1 แถบสรุปยอดเงินเดือนรวม (Auto-calculated & Inline Editable) -->
                     @php
                         $initDailyWage = (float) ($wageKpi['daily_wage'] ?? 250);
                         $initWorkDays = count($activeEmployeeData['schedule']['days'] ?? ['mon','tue','wed','thu','fri','sat']);
                         $initMonthlyAvg = round($initDailyWage * $initWorkDays * (30 / 7));
+                        $savedMonthlyWage = isset($wageKpi['monthly_wage']) && $wageKpi['monthly_wage'] !== '' 
+                            ? (float)$wageKpi['monthly_wage'] 
+                            : $initMonthlyAvg;
                     @endphp
                     <div id="wage-monthly-summary-box" class="p-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md space-y-1">
                         <div class="flex items-center justify-between gap-2">
                             <span class="text-xs font-bold uppercase tracking-wide text-indigo-100">สรุปยอดเงินเดือนรวม (เฉลี่ย 1 เดือน)</span>
-                            <span class="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold text-white">คำนวณอัตโนมัติ</span>
+                            <span id="wage-monthly-badge" class="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-bold text-white select-none">
+                                {{ isset($wageKpi['monthly_wage']) && $wageKpi['monthly_wage'] !== '' ? 'แก้ไขด้วยตนเอง' : 'คำนวณอัตโนมัติ' }}
+                            </span>
                         </div>
-                        <div id="wage-monthly-total" class="text-2xl sm:text-3xl font-black tracking-tight">
-                            ฿{{ number_format($initMonthlyAvg) }} <span class="text-sm font-bold text-indigo-100">/ เดือน</span>
+                        <div class="flex items-baseline gap-1 py-0.5">
+                            <span class="text-2xl sm:text-3xl font-black text-white select-none">฿</span>
+                            <input type="number"
+                                   id="wage-monthly-total-input"
+                                   value="{{ $savedMonthlyWage }}"
+                                   oninput="markMonthlyWageManual(this.value)"
+                                   placeholder="{{ $initMonthlyAvg }}"
+                                   class="w-full text-2xl sm:text-3xl font-black tracking-tight text-white bg-transparent border-0 border-b border-transparent hover:border-white/40 focus:border-white focus:outline-none p-0 focus:ring-0 leading-none cursor-text transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                   title="คลิกที่ตัวเลขเพื่อพิมพ์แก้ไขยอดเงินเดือนได้ทันที">
+                            <span class="text-sm font-bold text-indigo-100 shrink-0 select-none">/ เดือน</span>
                         </div>
                         <div id="wage-monthly-formula" class="text-[11px] font-medium text-indigo-100">
                             ฿{{ number_format($initDailyWage) }}/วัน × {{ $initWorkDays }} วัน/สัปดาห์ (เฉลี่ย 30 วัน/เดือน)
@@ -3064,15 +3077,31 @@
         recalcMonthlySalarySummary();
     }
 
-    function recalcMonthlySalarySummary() {
+    let isMonthlyWageManuallyEdited = {{ isset($wageKpi['monthly_wage']) && $wageKpi['monthly_wage'] !== '' ? 'true' : 'false' }};
+
+    function markMonthlyWageManual(val) {
+        if (val !== undefined && val !== null && String(val).trim() !== '') {
+            isMonthlyWageManuallyEdited = true;
+            const badge = document.getElementById('wage-monthly-badge');
+            if (badge) badge.innerText = 'แก้ไขด้วยตนเอง';
+        } else {
+            isMonthlyWageManuallyEdited = false;
+            recalcMonthlySalarySummary(true);
+        }
+    }
+
+    function recalcMonthlySalarySummary(force = false) {
         const dailyWage = parseFloat(document.getElementById('wage-daily-amount')?.value || 0) || 0;
         const workDays = document.querySelectorAll('.day-card.bg-\\[\\#0F172A\\]').length;
         const monthlyAvg = Math.round(dailyWage * workDays * (30 / 7));
 
-        const totalEl = document.getElementById('wage-monthly-total');
+        const inputEl = document.getElementById('wage-monthly-total-input');
+        const badge = document.getElementById('wage-monthly-badge');
         const formulaEl = document.getElementById('wage-monthly-formula');
-        if (totalEl) {
-            totalEl.innerHTML = `฿${monthlyAvg.toLocaleString()} <span class="text-sm font-bold text-indigo-100">/ เดือน</span>`;
+
+        if (inputEl && (!isMonthlyWageManuallyEdited || force)) {
+            inputEl.value = monthlyAvg;
+            if (badge) badge.innerText = 'คำนวณอัตโนมัติ';
         }
         if (formulaEl) {
             formulaEl.textContent = `฿${dailyWage.toLocaleString()}/วัน × ${workDays} วัน/สัปดาห์ (เฉลี่ย 30 วัน/เดือน)`;
@@ -3202,6 +3231,7 @@
         const wageKpi = {
             wage_type: document.getElementById('wage-employment-type')?.value || 'daily',
             daily_wage: parseFloat(document.getElementById('wage-daily-amount')?.value || 250),
+            monthly_wage: parseFloat(document.getElementById('wage-monthly-total-input')?.value || 0),
             ot_per_time: document.getElementById('wage-ot-per-time')?.value || '',
             ot_delivery: document.getElementById('wage-ot-delivery')?.value || '',
             kpi_enabled: document.getElementById('wage-enable-kpi')?.checked ?? true,
