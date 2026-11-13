@@ -316,10 +316,10 @@
         </div> <!-- End of LEFT: KITCHEN DISPLAY (จอคุมเตาย่าง & หม้อซุป) -->
 
         <!-- RIGHT: PERMANENTLY OPEN ADMIN CHAT (ฝั่งขวามือสุด เปิดค้างอยู่ตลอด) -->
-        <aside class="w-full xl:w-[420px] 2xl:w-[430px] shrink-0 xl:sticky xl:top-4 h-[calc(100vh-2rem)] min-h-[720px] max-h-[960px] flex flex-col bg-slate-950 rounded-3xl border-2 border-slate-800 shadow-2xl overflow-hidden transition-all ring-1 ring-slate-700/60" id="kitchen-side-chat-panel">
+        <aside class="w-full xl:w-[420px] 2xl:w-[430px] shrink-0 xl:sticky xl:top-4 h-[calc(100vh-2rem)] min-h-[720px] max-h-[960px] flex flex-col bg-white rounded-3xl border-2 border-slate-200/90 shadow-xl overflow-hidden transition-all ring-1 ring-slate-200/60" id="kitchen-side-chat-panel">
             <iframe id="kitchen-side-chat-frame" 
                     src="{{ route('kitchen.chat', array_filter(['order_no' => request('chat_order') ?: request('order_no')])) }}" 
-                    class="w-full h-full border-0 flex-1 bg-slate-950"
+                    class="w-full h-full border-0 flex-1 bg-white"
                     title="แชทลูกค้า (ฝั่งแอดมิน / จอครัว) เปิดค้างตลอดเวลา">
             </iframe>
         </aside>

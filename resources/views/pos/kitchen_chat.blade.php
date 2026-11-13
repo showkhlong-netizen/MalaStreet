@@ -41,10 +41,10 @@
         }
     </style>
 </head>
-<body class="h-full min-h-screen bg-[#111317] flex justify-center items-stretch selection:bg-[#E60018] selection:text-white">
+<body class="h-full min-h-screen bg-[#F1F5F9] flex justify-center items-stretch selection:bg-[#E60018] selection:text-white">
 
     <!-- MOBILE CONTAINER (400 - 430px Frame Layout ตรงกลางจอคอมพิวเตอร์ / ฝั่งขวาของจอครัว) -->
-    <div class="w-full max-w-[430px] h-full min-h-screen bg-[#F6F7F9] shadow-[0_0_60px_rgba(0,0,0,0.6)] flex flex-col justify-between relative overflow-hidden">
+    <div class="w-full max-w-[430px] h-full min-h-screen bg-white shadow-xl border-x border-slate-200/80 flex flex-col justify-between relative overflow-hidden">
 
         <!-- ========================================================================= -->
         <!-- VIEW 1: CHAT INBOX LIST (หน้าต่างแรก แสดงเป็นแชทเลย เหมือน LINE / Messenger) -->
@@ -52,21 +52,21 @@
         <div id="view-chat-inbox" class="{{ !empty($orderNo) && $activeOrder ? 'hidden' : 'flex' }} flex-col flex-1 h-full min-h-0">
 
             <!-- 1.1 TOP BAR (MESSENGER / LINE STYLE HEADER) -->
-            <header class="bg-slate-950 text-white px-3.5 pt-3 pb-2.5 shadow-md border-b border-slate-800 shrink-0">
+            <header class="bg-white text-slate-900 px-3.5 pt-3 pb-2.5 shadow-2xs border-b border-slate-200 shrink-0">
                 <div class="flex items-center justify-between gap-2">
                     <div class="flex items-center gap-2.5 min-w-0">
                         <div class="relative shrink-0">
-                            <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-rose-600 to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-xs border border-rose-400/40">
+                            <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-rose-600 to-amber-500 flex items-center justify-center text-white font-bold text-sm shadow-xs border border-rose-300/60">
                                 💬
                             </div>
-                            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-950 animate-pulse"></span>
+                            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white animate-pulse"></span>
                         </div>
                         <div class="min-w-0 leading-tight">
                             <div class="flex items-center gap-1.5">
-                                <h1 class="text-sm font-extrabold text-white truncate">กล่องข้อความลูกค้า</h1>
-                                <span class="text-[9px] bg-rose-900/90 text-rose-200 border border-rose-700/60 font-extrabold px-1.5 py-0.2 rounded-full shrink-0">สด</span>
+                                <h1 class="text-sm font-extrabold text-slate-900 truncate">กล่องข้อความลูกค้า</h1>
+                                <span class="text-[9px] bg-rose-50 text-rose-600 border border-rose-200 font-extrabold px-1.5 py-0.2 rounded-full shrink-0">สด</span>
                             </div>
-                            <p class="text-[10.5px] text-slate-400 truncate mt-0.5">จับคู่เลขคิว + ชื่อ + เลขไอพีเครื่อง</p>
+                            <p class="text-[10.5px] text-slate-500 truncate mt-0.5">จับคู่เลขคิว + ชื่อ + เลขไอพีเครื่อง</p>
                         </div>
                     </div>
 
@@ -74,14 +74,14 @@
                     <div class="flex items-center gap-1 shrink-0">
                         <button type="button"
                                 onclick="window.location.reload()"
-                                class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                                class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200/80 flex items-center justify-center transition-all cursor-pointer active:scale-95"
                                 title="รีเฟรชรายการแชท">
                             <svg class="w-3.5 h-3.5 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                             </svg>
                         </button>
                         <a href="{{ route('kitchen.chat') }}" target="_blank"
-                           class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-all active:scale-95"
+                           class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200/80 flex items-center justify-center transition-all active:scale-95"
                            title="เปิดเต็มหน้าต่างใหม่">
                             <svg class="w-3.5 h-3.5 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -96,11 +96,11 @@
                            id="inbox-search-input"
                            oninput="filterInboxItems(this.value)"
                            placeholder="🔍 ค้นหาชื่อลูกค้า, เลขคิว, หรือ IP..."
-                           class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-rose-500 transition font-prompt">
+                           class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition font-prompt">
                 </div>
 
                 <!-- 1.3 TOP BAR TABS: ONLINE vs OFFLINE (ตามคำสั่ง) -->
-                <div class="mt-2.5 flex items-center gap-1.5 p-1 bg-slate-900/90 rounded-2xl border border-slate-800 text-xs font-bold">
+                <div class="mt-2.5 flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200/90 text-xs font-bold">
                     <!-- Tab: Online -->
                     <button type="button"
                             onclick="setInboxFilter('online')"
@@ -115,17 +115,17 @@
                     <button type="button"
                             onclick="setInboxFilter('offline')"
                             id="tab-btn-offline"
-                            class="flex-1 py-1.5 px-2 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 text-slate-400 hover:text-white hover:bg-slate-800">
-                        <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+                            class="flex-1 py-1.5 px-2 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 hover:bg-white/80">
+                        <span class="w-2 h-2 rounded-full bg-slate-400"></span>
                         <span>Offline</span>
-                        <span class="text-[10px] bg-slate-800 px-1.5 py-0.2 rounded-full font-mono text-slate-400">{{ $offlineOrders->count() }}</span>
+                        <span class="text-[10px] bg-slate-200/80 px-1.5 py-0.2 rounded-full font-mono text-slate-600">{{ $offlineOrders->count() }}</span>
                     </button>
 
                     <!-- Tab: All -->
                     <button type="button"
                             onclick="setInboxFilter('all')"
                             id="tab-btn-all"
-                            class="py-1.5 px-2.5 rounded-xl text-center transition-all text-slate-400 hover:text-white hover:bg-slate-800 text-[11px]">
+                            class="py-1.5 px-2.5 rounded-xl text-center transition-all text-slate-600 hover:text-slate-900 hover:bg-white/80 text-[11px]">
                         <span>ทั้งหมด ({{ $recentOrders->count() }})</span>
                     </button>
                 </div>
@@ -238,13 +238,13 @@
         <div id="view-chat-room" class="{{ !empty($orderNo) && $activeOrder ? 'flex' : 'hidden' }} flex-col flex-1 h-full min-h-0">
 
             <!-- 2.1 ROOM TOP HEADER -->
-            <header class="sticky top-0 z-30 bg-slate-950 text-white px-3 py-2 shadow-md border-b border-slate-800 shrink-0">
+            <header class="sticky top-0 z-30 bg-white text-slate-900 px-3 py-2 shadow-2xs border-b border-slate-200 shrink-0">
                 <div class="flex items-center justify-between gap-2">
                     <!-- Back Button to LINE/Messenger Inbox List -->
                     <div class="flex items-center gap-2 min-w-0">
                         <button type="button"
                                 onclick="backToInboxView()"
-                                class="py-1 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 flex items-center gap-1 transition-all shrink-0 active:scale-95 text-xs font-bold border border-slate-700"
+                                class="py-1 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center gap-1 transition-all shrink-0 active:scale-95 text-xs font-bold border border-slate-200"
                                 title="กลับหน้ารวมแชท (Chat List)">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
@@ -257,22 +257,22 @@
                             <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-rose-600 to-amber-500 flex items-center justify-center text-white font-bold text-xs shadow-xs">
                                 👤
                             </div>
-                            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full {{ $activeOrder && $activeOrder->is_online ? 'bg-emerald-400' : 'bg-slate-400' }} border-2 border-slate-950"></span>
+                            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full {{ $activeOrder && $activeOrder->is_online ? 'bg-emerald-500' : 'bg-slate-400' }} border-2 border-white"></span>
                         </div>
 
                         <!-- Customer Name & Status -->
                         <div class="min-w-0 leading-tight">
                             <div class="flex items-center gap-1.5">
-                                <h1 class="text-[13px] font-bold text-white truncate" id="room-header-name">
+                                <h1 class="text-[13px] font-bold text-slate-900 truncate" id="room-header-name">
                                     {{ $activeOrder ? ($activeOrder->customer_name ?: 'ลูกค้า') : 'ลูกค้า' }}
                                 </h1>
                                 @if($activeOrder)
-                                    <span class="text-[9px] {{ $activeOrder->is_online ? 'bg-emerald-950 text-emerald-300 border-emerald-700' : 'bg-slate-800 text-slate-400 border-slate-700' }} border font-extrabold px-1.5 py-0.2 rounded-full shrink-0">
+                                    <span class="text-[9px] {{ $activeOrder->is_online ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200' }} border font-extrabold px-1.5 py-0.2 rounded-full shrink-0">
                                         {{ $activeOrder->is_online ? 'Online' : 'Offline' }}
                                     </span>
                                 @endif
                             </div>
-                            <div class="text-[10px] text-amber-300 font-mono truncate" id="room-header-order-no">
+                            <div class="text-[10px] text-slate-500 font-mono truncate" id="room-header-order-no">
                                 {{ $activeOrder ? $activeOrder->order_no : '' }}
                             </div>
                         </div>
@@ -289,21 +289,21 @@
 
             <!-- 2.2 ORDER + IP ADDRESS BINDING CARD -->
             @if($activeOrder)
-            <div class="bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 text-white px-3.5 py-2 border-b border-slate-800 shrink-0 shadow-sm">
+            <div class="bg-slate-50 text-slate-800 px-3.5 py-2 border-b border-slate-200 shrink-0">
                 <div class="flex items-center justify-between text-[10.5px]">
-                    <div class="flex items-center gap-1.5 text-amber-300 font-mono font-semibold">
-                        <svg class="w-3.5 h-3.5 text-amber-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <div class="flex items-center gap-1.5 text-amber-700 font-mono font-semibold">
+                        <svg class="w-3.5 h-3.5 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="10" stroke-width="1.8"/>
                             <path stroke-linecap="round" stroke-linejoin="round" d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
                         </svg>
                         <span>IP เครื่องลูกค้า:</span>
-                        <span class="text-white bg-slate-800 px-1.5 py-0.2 rounded font-black tracking-tight" id="active-device-ip">
+                        <span class="text-slate-900 bg-white border border-slate-200 px-1.5 py-0.2 rounded font-black tracking-tight" id="active-device-ip">
                             {{ $targetIp }}
                         </span>
                     </div>
 
-                    <div class="flex items-center gap-1 text-[10px] text-emerald-400">
-                        <svg class="w-3 h-3 text-emerald-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <div class="flex items-center gap-1 text-[10px] text-emerald-600 font-semibold">
+                        <svg class="w-3 h-3 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                         </svg>
                         <span>จับคู่ IP เครื่องถูกต้อง</span>
@@ -312,17 +312,17 @@
 
                 <!-- Order items summary -->
                 @if($activeOrder->items && $activeOrder->items->count() > 0)
-                <div class="mt-1.5 text-[10.5px] text-slate-300 truncate bg-slate-900/90 px-2 py-0.5 rounded-lg border border-slate-800 flex items-center justify-between">
+                <div class="mt-1.5 text-[10.5px] text-slate-700 truncate bg-white px-2 py-1 rounded-lg border border-slate-200/90 flex items-center justify-between">
                     <span class="truncate">
-                        <strong class="text-amber-400">🍢 เมนู ({{ $activeOrder->items->count() }}):</strong>
+                        <strong class="text-rose-600">🍢 เมนู ({{ $activeOrder->items->count() }}):</strong>
                         @foreach($activeOrder->items->take(2) as $it)
                             <span>{{ $it->product_name }} ({{ $it->quantity }}x)@if(!$loop->last), @endif</span>
                         @endforeach
                         @if($activeOrder->items->count() > 2)
-                            <span class="text-slate-400">+{{ $activeOrder->items->count() - 2 }}</span>
+                            <span class="text-slate-500">+{{ $activeOrder->items->count() - 2 }}</span>
                         @endif
                     </span>
-                    <span class="text-amber-300 font-bold font-mono shrink-0 pl-1">฿{{ number_format($activeOrder->total_amount, 0) }}</span>
+                    <span class="text-rose-600 font-bold font-mono shrink-0 pl-1">฿{{ number_format($activeOrder->total_amount, 0) }}</span>
                 </div>
                 @endif
             </div>
@@ -502,16 +502,16 @@
             const btnAll = document.getElementById('tab-btn-all');
 
             // Reset tab styles
-            [btnOnline, btnOffline, btnAll].forEach(btn => {
-                btn.className = "flex-1 py-1.5 px-2 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 text-slate-400 hover:text-white hover:bg-slate-800 text-xs font-bold";
-            });
+            btnOnline.className = "flex-1 py-1.5 px-2 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 hover:bg-white/80 text-xs font-bold";
+            btnOffline.className = "flex-1 py-1.5 px-2 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 hover:bg-white/80 text-xs font-bold";
+            btnAll.className = "py-1.5 px-2.5 rounded-xl text-center transition-all text-slate-600 hover:text-slate-900 hover:bg-white/80 text-[11px] font-bold";
 
             if (filter === 'online') {
                 btnOnline.className = "flex-1 py-1.5 px-2 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 bg-rose-600 text-white shadow-xs text-xs font-bold";
             } else if (filter === 'offline') {
-                btnOffline.className = "flex-1 py-1.5 px-2 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 bg-slate-800 text-white shadow-xs text-xs font-bold";
+                btnOffline.className = "flex-1 py-1.5 px-2 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 border border-slate-200/80 shadow-xs text-xs font-bold";
             } else {
-                btnAll.className = "py-1.5 px-2.5 rounded-xl text-center transition-all bg-slate-800 text-white shadow-xs text-[11px] font-bold";
+                btnAll.className = "py-1.5 px-2.5 rounded-xl text-center transition-all bg-white text-slate-900 border border-slate-200/80 shadow-xs text-[11px] font-bold";
             }
 
             applyInboxFilter();
