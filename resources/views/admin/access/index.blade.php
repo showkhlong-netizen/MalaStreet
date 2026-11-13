@@ -1307,27 +1307,81 @@
 
 
                 <!-- 7. TAB CONTENT 4: 🛡️ สิทธิลา & มาสาย -->
-                <div id="emp-tab-content-leave" class="space-y-2.5 pt-0.5 hidden">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-0.5">สิทธิลาป่วย (วัน/ปี)</label>
-                            <input type="number" id="emp-edit-sick" value="{{ $activeEmployeeData['leave']['sick_leave'] ?? 30 }}" class="w-full text-xs sm:text-sm px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
+                <div id="emp-tab-content-leave" class="space-y-3 pt-0.5 hidden">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- 1. สิทธิลากิจ (รายเดือน & รายปี) -->
+                        <div class="p-3 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
+                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-800">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                <span>1. สิทธิลากิจ</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">รายเดือน (วัน/เดือน)</label>
+                                    <input type="number" step="0.5" id="emp-edit-personal-month" value="{{ $activeEmployeeData['leave']['personal_leave_month'] ?? 1 }}" class="w-full text-xs px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">รายปี (วัน/ปี)</label>
+                                    <input type="number" step="0.5" id="emp-edit-personal-year" value="{{ $activeEmployeeData['leave']['personal_leave_year'] ?? $activeEmployeeData['leave']['personal_leave'] ?? 6 }}" class="w-full text-xs px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-0.5">สิทธิลากิจ (วัน/ปี)</label>
-                            <input type="number" id="emp-edit-personal" value="{{ $activeEmployeeData['leave']['personal_leave'] ?? 6 }}" class="w-full text-xs sm:text-sm px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
+
+                        <!-- 2. สิทธิลาป่วย (รายเดือน & รายปี) -->
+                        <div class="p-3 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
+                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-800">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                <span>2. สิทธิลาป่วย</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">รายเดือน (วัน/เดือน)</label>
+                                    <input type="number" step="0.5" id="emp-edit-sick-month" value="{{ $activeEmployeeData['leave']['sick_leave_month'] ?? 1 }}" class="w-full text-xs px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">รายปี (วัน/ปี)</label>
+                                    <input type="number" step="0.5" id="emp-edit-sick-year" value="{{ $activeEmployeeData['leave']['sick_leave_year'] ?? $activeEmployeeData['leave']['sick_leave'] ?? 30 }}" class="w-full text-xs px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-0.5">สิทธิลาพักร้อน (วัน/ปี)</label>
-                            <input type="number" id="emp-edit-annual" value="{{ $activeEmployeeData['leave']['annual_leave'] ?? 6 }}" class="w-full text-xs sm:text-sm px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
+
+                        <!-- 3. อนุโลมเข้าสาย (ครั้ง/เดือน & กี่นาที) -->
+                        <div class="p-3 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
+                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-800">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                <span>3. อนุโลมเข้าสาย</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">กี่ครั้ง (ครั้ง/เดือน)</label>
+                                    <input type="number" id="emp-edit-grace-times" value="{{ $activeEmployeeData['leave']['late_grace_times_month'] ?? 3 }}" class="w-full text-xs px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">กี่นาที (นาที/ครั้ง)</label>
+                                    <input type="number" id="emp-edit-grace-minutes" value="{{ $activeEmployeeData['leave']['late_grace_minutes'] ?? 15 }}" class="w-full text-xs px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-0.5">ระยะเวลาอนุโลมมาสาย (นาที)</label>
-                            <input type="number" id="emp-edit-grace" value="{{ $activeEmployeeData['leave']['late_grace_minutes'] ?? 15 }}" class="w-full text-xs sm:text-sm px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
+
+                        <!-- 4. สิทธิ์ลาพักร้อนรายปี -->
+                        <div class="p-3 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
+                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-800">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                <span>4. สิทธิ์ลาพักร้อนรายปี</span>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">จำนวนวัน (วัน/ปี)</label>
+                                <input type="number" step="0.5" id="emp-edit-annual" value="{{ $activeEmployeeData['leave']['annual_leave'] ?? 6 }}" class="w-full text-xs px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
+                            </div>
                         </div>
                     </div>
                     <div class="flex justify-end pt-1.5">
-                        <button type="button" onclick="saveActiveEmployeeData()" class="px-4 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs cursor-pointer hover:bg-indigo-700">บันทึกสิทธิลา</button>
+                        <button type="button" onclick="saveActiveEmployeeData(this)" class="px-4 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs cursor-pointer hover:bg-indigo-700 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            <span>บันทึกสิทธิลา &amp; มาสาย</span>
+                        </button>
                     </div>
                 </div>
 
@@ -3223,11 +3277,24 @@
         };
 
         // Leave fields
+        const personalMonth = parseFloat(document.getElementById('emp-edit-personal-month')?.value || 1);
+        const personalYear = parseFloat(document.getElementById('emp-edit-personal-year')?.value || 6);
+        const sickMonth = parseFloat(document.getElementById('emp-edit-sick-month')?.value || 1);
+        const sickYear = parseFloat(document.getElementById('emp-edit-sick-year')?.value || 30);
+        const graceTimes = parseInt(document.getElementById('emp-edit-grace-times')?.value || 3);
+        const graceMinutes = parseInt(document.getElementById('emp-edit-grace-minutes')?.value || 15);
+        const annualLeave = parseFloat(document.getElementById('emp-edit-annual')?.value || 6);
+
         const leave = {
-            sick_leave: parseInt(document.getElementById('emp-edit-sick')?.value || 30),
-            personal_leave: parseInt(document.getElementById('emp-edit-personal')?.value || 6),
-            annual_leave: parseInt(document.getElementById('emp-edit-annual')?.value || 6),
-            late_grace_minutes: parseInt(document.getElementById('emp-edit-grace')?.value || 15),
+            personal_leave_month: personalMonth,
+            personal_leave_year: personalYear,
+            personal_leave: personalYear,
+            sick_leave_month: sickMonth,
+            sick_leave_year: sickYear,
+            sick_leave: sickYear,
+            late_grace_times_month: graceTimes,
+            late_grace_minutes: graceMinutes,
+            annual_leave: annualLeave
         };
 
         // More Info

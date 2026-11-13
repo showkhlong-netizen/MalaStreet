@@ -614,9 +614,14 @@ class AccessControlController extends Controller
                     'bank_account' => $isEmpAdmin ? '-' : '123-4-56789-0',
                 ],
                 'leave' => [
-                    'sick_leave' => 30,
+                    'personal_leave_month' => 1,
+                    'personal_leave_year' => 6,
                     'personal_leave' => 6,
+                    'sick_leave_month' => 1,
+                    'sick_leave_year' => 30,
+                    'sick_leave' => 30,
                     'annual_leave' => 6,
+                    'late_grace_times_month' => 3,
                     'late_grace_minutes' => 15,
                 ],
                 'more_info' => [
@@ -936,9 +941,14 @@ class AccessControlController extends Controller
                 'bank_account' => $isNewUserAdmin ? '-' : '123-4-56789-0',
             ],
             'leave' => [
-                'sick_leave' => 30,
+                'personal_leave_month' => 1,
+                'personal_leave_year' => 6,
                 'personal_leave' => 6,
+                'sick_leave_month' => 1,
+                'sick_leave_year' => 30,
+                'sick_leave' => 30,
                 'annual_leave' => 6,
+                'late_grace_times_month' => 3,
                 'late_grace_minutes' => 15,
             ],
             'more_info' => [
