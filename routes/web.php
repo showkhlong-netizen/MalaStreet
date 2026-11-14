@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccessControlController;
+use App\Http\Controllers\AccessManagementController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
@@ -150,6 +151,35 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', EnforceDailyEmployee
 Route::get('/employees', function () {
     return redirect()->route('admin.employees.index');
 })->middleware(['auth', EnforceDailyEmployeeLanding::class]);
-Route::get('/access', function () {
-    return redirect()->route('admin.access.index');
-})->middleware(['auth', EnforceDailyEmployeeLanding::class]);
+Route::get('/access', function (\Illuminate\Http\Request $request) {
+    return redirect()->route('admin.access.index', $request->query());
+})->name('access.index')->middleware(['auth', EnforceDailyEmployeeLanding::class]);
+
+// 4. ระบบจัดการสิทธิ์การเข้าถึงแยกสาขา & ระบบรีเซ็ทข้อมูล (ถังสำรอง 30 วัน)
+Route::middleware(['auth', 'access.enforce'])->group(function () {
+    Route::get('/access/kit', [AccessManagementController::class, 'index'])->name('access.kit.index');
+    Route::get('/access/live-status', [AccessManagementController::class, 'getLiveActiveStatus'])->name('access.live-status');
+
+    // จัดการสิทธิ์พนักงาน & ผูกสาขา
+    Route::post('/access/users/{user}/permissions', [AccessManagementController::class, 'savePermissions'])->name('access.permissions.save');
+    Route::post('/access/users/{user}/permissions/reset', [AccessManagementController::class, 'resetPermissions'])->name('access.permissions.reset');
+    Route::post('/access/users/{user}/permissions/copy', [AccessManagementController::class, 'copyPermissions'])->name('access.permissions.copy');
+
+    // เพิ่ม / แก้ไข / เปิด-ระงับ / ลบพนักงาน
+    Route::post('/access/users', [AccessManagementController::class, 'storeUser'])->name('access.users.store');
+    Route::put('/access/users/{user}', [AccessManagementController::class, 'updateUser'])->name('access.users.update');
+    Route::post('/access/users/{user}/status', [AccessManagementController::class, 'toggleUserStatus'])->name('access.users.status');
+    Route::delete('/access/users/{user}', [AccessManagementController::class, 'deleteUser'])->name('access.users.delete');
+
+    // อนุมัติ / ปฏิเสธ คำขอสมัครใช้งานพนักงานใหม่
+    Route::post('/access/requests/{accessRequest}/approve', [AccessManagementController::class, 'approveAccessRequest'])->name('access.requests.approve');
+    Route::post('/access/requests/{accessRequest}/reject', [AccessManagementController::class, 'rejectAccessRequest'])->name('access.requests.reject');
+
+    // ระบบรีเซ็ทข้อมูล & ถังสำรองฉุกเฉิน 30 วัน (Data Reset Hub)
+    Route::get('/access/reset/stats', [AccessManagementController::class, 'getResetStats'])->name('access.reset.stats');
+    Route::get('/access/reset/export-customers', [AccessManagementController::class, 'exportCustomersBackupCsv'])->name('access.reset.export-customers');
+    Route::post('/access/reset/execute', [AccessManagementController::class, 'executeDataReset'])->name('access.reset.execute');
+    Route::post('/access/reset/{snapshot}/restore', [AccessManagementController::class, 'restoreDataResetSnapshot'])->name('access.reset.restore');
+    Route::post('/access/reset/restore-all', [AccessManagementController::class, 'restoreAllDataResetSnapshots'])->name('access.reset.restore-all');
+    Route::delete('/access/reset/{snapshot}/purge', [AccessManagementController::class, 'purgeDataResetSnapshot'])->name('access.reset.purge');
+});

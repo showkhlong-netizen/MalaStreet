@@ -14,10 +14,15 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
 
+        $middleware->alias([
+            'access.enforce' => \App\Http\Middleware\EnforceModuleAccess::class,
+        ]);
+
         $middleware->validateCsrfTokens(except: [
             'admin/employees/clock-in',
             'admin/employees/store-location',
             'admin/access/*',
+            'access/*',
             'admin/price-tracker/*',
             'admin/receipts/*',
             'pos/order',

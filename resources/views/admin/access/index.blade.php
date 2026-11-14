@@ -127,6 +127,18 @@
                 <span>ประวัติการทำงาน (Audit Log)</span>
                 <span id="subtab-audit-count-badge" class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">{{ isset($auditLogs) ? count($auditLogs) : 0 }} รายการ</span>
             </button>
+
+            <!-- 6. ระบบรีเซ็ทข้อมูล (ถังสำรอง 30 วัน) -->
+            <button type="button"
+                    id="subtab-btn-reset"
+                    onclick="switchSubTab('reset')"
+                    class="subtab-btn shrink-0 py-2 px-3.5 rounded-xl text-xs font-semibold {{ $currentTab === 'reset' ? 'text-[#2563EB] bg-[#EFF6FF] border border-[#BFDBFE] shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent' }} flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap">
+                <svg class="w-4 h-4 {{ $currentTab === 'reset' ? 'text-[#2563EB]' : 'text-rose-500' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>ระบบรีเซ็ทข้อมูล</span>
+                <span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 text-[10px] font-bold">สำรอง 30 วัน</span>
+            </button>
         </div>
 
         <!-- ========================================================================= -->
@@ -139,8 +151,8 @@
             <!-- การ์ดผู้ใช้งานลอยตามเมื่อเลื่อนหน้าต่างสิทธิ์การเข้าถึง (Sticky Floating Card) -->
             <!-- --------------------------------------------------------------------- -->
             <div id="col-users-list" 
-                 class="{{ in_array($currentTab, ['autologout', 'audit', 'register']) ? 'hidden ' : '' }}lg:col-span-4 xl:col-span-3 lg:sticky lg:top-[88px] self-start bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-sm space-y-3.5 z-20 transition-all"
-                 style="{{ in_array($currentTab, ['autologout', 'audit', 'register']) ? 'display: none;' : '' }}">
+                 class="{{ in_array($currentTab, ['autologout', 'audit', 'register', 'reset']) ? 'hidden ' : '' }}lg:col-span-4 xl:col-span-3 lg:sticky lg:top-[88px] self-start bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-sm space-y-3.5 z-20 transition-all"
+                 style="{{ in_array($currentTab, ['autologout', 'audit', 'register', 'reset']) ? 'display: none;' : '' }}">
                 <!-- Header with count badge and quick actions -->
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
@@ -280,8 +292,8 @@
             <!-- RIGHT COLUMN: สิทธิ์การเข้าถึง & หน้าต่างจัดการ (Col-span-8 หรือ Col-span-12) -->
             <!-- --------------------------------------------------------------------- -->
             <div id="col-main-content" 
-                 class="{{ in_array($currentTab, ['autologout', 'audit', 'register']) ? 'w-full ' : 'lg:col-span-8 xl:col-span-9 w-full ' }}space-y-4"
-                 style="{{ in_array($currentTab, ['autologout', 'audit', 'register']) ? 'grid-column: 1 / -1; width: 100%;' : '' }}">
+                 class="{{ in_array($currentTab, ['autologout', 'audit', 'register', 'reset']) ? 'w-full ' : 'lg:col-span-8 xl:col-span-9 w-full ' }}space-y-4"
+                 style="{{ in_array($currentTab, ['autologout', 'audit', 'register', 'reset']) ? 'grid-column: 1 / -1; width: 100%;' : '' }}">
 
                 <!-- ================================================================= -->
                 <!-- PANEL 1: สิทธิ์การเข้าถึง (Permission Matrix)                       -->
@@ -2236,6 +2248,14 @@
             </div>
             <!-- END PANEL 5: ประวัติการทำงานของระบบ -->
 
+            <!-- ================================================================= -->
+            <!-- PANEL 6: ระบบรีเซ็ทข้อมูล & ถังสำรอง 30 วัน (Data Reset Hub)        -->
+            <!-- ================================================================= -->
+            <div id="panel-reset" class="w-full max-w-full bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-sm space-y-4 {{ $currentTab === 'reset' ? '' : 'hidden' }}">
+                @include('access.partials.reset_tab', ['resetBranches' => $resetBranches ?? collect()])
+            </div>
+            <!-- END PANEL 6: ระบบรีเซ็ทข้อมูล -->
+
         </div>
         <!-- END RIGHT COLUMN -->
     </div>
@@ -2681,6 +2701,7 @@
         const pUsers = document.getElementById('panel-users');
         const pAutoLogout = document.getElementById('panel-autologout');
         const pAudit = document.getElementById('panel-audit');
+        const pReset = document.getElementById('panel-reset');
 
         const colUsersList = document.getElementById('col-users-list');
         const colMainContent = document.getElementById('col-main-content');
@@ -2690,6 +2711,7 @@
         const btnRegister = document.getElementById('subtab-btn-register');
         const btnAutoLogout = document.getElementById('subtab-btn-autologout');
         const btnAudit = document.getElementById('subtab-btn-audit');
+        const btnReset = document.getElementById('subtab-btn-reset');
 
         const activeClasses = "subtab-btn shrink-0 py-2 px-3.5 rounded-xl text-xs font-bold text-[#2563EB] bg-[#EFF6FF] border border-[#BFDBFE] shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap";
         const inactiveClasses = "subtab-btn shrink-0 py-2 px-3.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap border-transparent";
@@ -2699,9 +2721,9 @@
         if (btnRegister) btnRegister.className = inactiveClasses;
         if (btnAutoLogout) btnAutoLogout.className = inactiveClasses;
         if (btnAudit) btnAudit.className = inactiveClasses;
+        if (btnReset) btnReset.className = inactiveClasses;
 
-        if (tab === 'autologout' || tab === 'audit' || tab === 'register') {
-            // ระบบเช็คเอาท์อัตโนมัติ, ประวัติการทำงาน, และ ลงทะเบียนขอสิทธิ์ (2 แถบ): ซ่อนคอลัมน์เลือกบัญชีผู้ใช้งานทางซ้ายออก และขยายเต็มหน้าจอ
+        if (tab === 'autologout' || tab === 'audit' || tab === 'register' || tab === 'reset') {
             if (colUsersList) {
                 colUsersList.classList.add('hidden');
                 colUsersList.style.display = 'none';
@@ -2718,6 +2740,7 @@
             if (tab === 'audit') {
                 if (pAutoLogout) pAutoLogout.classList.add('hidden');
                 if (pRegister) pRegister.classList.add('hidden');
+                if (pReset) pReset.classList.add('hidden');
                 if (pAudit) {
                     pAudit.classList.remove('hidden');
                     pAudit.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2725,9 +2748,23 @@
                 if (btnAudit) btnAudit.className = activeClasses;
                 loadAuditLogsLive();
                 showToast("เปิดหน้าต่าง: ประวัติการทำงานของระบบ (Audit Trail)");
+            } else if (tab === 'reset') {
+                if (pAutoLogout) pAutoLogout.classList.add('hidden');
+                if (pRegister) pRegister.classList.add('hidden');
+                if (pAudit) pAudit.classList.add('hidden');
+                if (pReset) {
+                    pReset.classList.remove('hidden');
+                    pReset.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                if (btnReset) btnReset.className = activeClasses;
+                if (window.MalaResetHub && typeof window.MalaResetHub.loadStats === 'function') {
+                    window.MalaResetHub.loadStats();
+                }
+                showToast("เปิดหน้าต่าง: ระบบรีเซ็ทข้อมูล & ถังสำรอง 30 วัน");
             } else if (tab === 'register') {
                 if (pAutoLogout) pAutoLogout.classList.add('hidden');
                 if (pAudit) pAudit.classList.add('hidden');
+                if (pReset) pReset.classList.add('hidden');
                 if (pRegister) {
                     pRegister.classList.remove('hidden');
                     pRegister.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2737,6 +2774,7 @@
             } else {
                 if (pAudit) pAudit.classList.add('hidden');
                 if (pRegister) pRegister.classList.add('hidden');
+                if (pReset) pReset.classList.add('hidden');
                 if (pAutoLogout) {
                     pAutoLogout.classList.remove('hidden');
                     pAutoLogout.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2745,7 +2783,6 @@
                 showToast("เปิดหน้าต่าง: ระบบเช็คเอาท์อัตโนมัติ (การตั้งค่าความปลอดภัยส่วนกลาง)");
             }
         } else {
-            // แท็บอื่นๆ แสดงคอลัมน์เลือกผู้ใช้งานทางซ้ายตามปกติ
             if (colUsersList) {
                 colUsersList.classList.remove('hidden');
                 colUsersList.style.display = '';
@@ -2758,6 +2795,7 @@
             if (pAudit) pAudit.classList.add('hidden');
             if (pRegister) pRegister.classList.add('hidden');
             if (pAutoLogout) pAutoLogout.classList.add('hidden');
+            if (pReset) pReset.classList.add('hidden');
 
             if (tab === 'users') {
                 if (pPermissions) pPermissions.classList.add('hidden');
@@ -3685,6 +3723,8 @@
             switchSubTab('autologout');
         } else if (tab === 'audit') {
             switchSubTab('audit');
+        } else if (tab === 'reset') {
+            switchSubTab('reset');
         }
     });
 </script>

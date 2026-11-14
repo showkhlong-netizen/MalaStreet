@@ -682,6 +682,15 @@ class AccessControlController extends Controller
 
         $pendingRegistrations = json_decode(Setting::get('pending_register_requests', '[]'), true) ?: [];
 
+        $resetBranches = collect();
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('branches')) {
+                $resetBranches = \App\Models\Branch::orderByDesc('is_main')->orderBy('status')->orderBy('name')->get();
+            }
+        } catch (\Throwable $e) {
+            $resetBranches = collect();
+        }
+
         return view('admin.access.index', compact(
             'currentTab',
             'users',
@@ -693,7 +702,8 @@ class AccessControlController extends Controller
             'activeEmployeeData',
             'autoLogoutSettings',
             'auditLogs',
-            'pendingRegistrations'
+            'pendingRegistrations',
+            'resetBranches'
         ));
     }
 
