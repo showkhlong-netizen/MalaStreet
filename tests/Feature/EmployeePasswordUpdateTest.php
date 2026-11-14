@@ -14,11 +14,13 @@ class EmployeePasswordUpdateTest extends TestCase
 
     public function test_admin_can_set_short_four_char_employee_password_persist_across_revisit_and_login(): void
     {
-        $admin = User::create([
-            'name' => 'Admin',
-            'email' => 'salaemaemunib@gmail.com',
-            'password' => Hash::make('password123'),
-        ]);
+        $admin = User::firstOrCreate(
+            ['email' => 'salaemaemunib@gmail.com'],
+            [
+                'name' => 'Admin',
+                'password' => Hash::make('password123'),
+            ]
+        );
 
         // Ensure test accounts cleared state with no User row yet for Arena
         Setting::set('access_test_accounts_cleared', '1', 'access');
@@ -77,4 +79,28 @@ class EmployeePasswordUpdateTest extends TestCase
         $this->assertAuthenticated();
         $this->assertSame('arena@malastreet.com', auth()->user()->email);
     }
+
+    public function test_popup_registration_creates_active_account_and_allows_immediate_login(): void
+    {
+        $res = $this->postJson('/register-request', [
+            'name' => 'วาสนา บัญชี',
+            'email' => 'wasana@malastreet.com',
+            'password' => '4567',
+            'phone' => '081-234-5678',
+            'position' => 'พนักงานบัญชี',
+        ]);
+
+        $res->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('email', 'wasana@malastreet.com');
+
+        $loginRes = $this->post('/login', [
+            'email' => 'wasana@malastreet.com',
+            'password' => '4567',
+        ]);
+        $loginRes->assertRedirect();
+        $this->assertAuthenticated();
+        $this->assertSame('wasana@malastreet.com', auth()->user()->email);
+    }
 }
+

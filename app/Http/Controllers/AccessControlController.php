@@ -1307,8 +1307,8 @@ class AccessControlController extends Controller
     }
 
     /**
-     * Submit a registration request from Login Popup.
-     * Public endpoint: saves to pending queue waiting for admin approval.
+     * Submit a registration from Login Popup.
+     * Public endpoint: creates real User, access_users_list entry, employee_data, and permissions for immediate login.
      */
     public function submitRegistrationRequest(Request $request): JsonResponse
     {
@@ -1325,24 +1325,22 @@ class AccessControlController extends Controller
         $name = trim($request->input('name'));
         $email = strtolower(trim($request->input('email')));
         $phone = trim($request->input('phone') ?? '-');
-        $password = $request->input('password');
+        $password = trim((string) $request->input('password'));
         $position = trim($request->input('position') ?: 'พนักงานบัญชี');
         $role = $request->input('role') ?: (str_contains($position, 'Admin') || str_contains($position, 'แอดมิน') ? 'Admin' : 'Employee');
         $avatarBase64 = $request->input('avatar_base64');
 
-        // Check if email already registered in real users
-        if (User::where('email', $email)->exists()) {
+        // Load existing users list first to check duplicates cleanly
+        $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true) ?: [];
+        $existsInList = collect($savedUsers)->contains(function ($u) use ($email) {
+            return strtolower(trim((string) ($u['email'] ?? ''))) === $email;
+        });
+
+        // Check if email already registered in real users or access list
+        if (User::whereRaw('LOWER(email) = ?', [$email])->exists() || $existsInList) {
             return response()->json([
                 'success' => false,
                 'message' => "อีเมล '{$email}' มีอยู่ในระบบแล้ว กรุณาเข้าสู่ระบบ หรือใช้อีเมลอื่น"
-            ], 422);
-        }
-
-        $pending = json_decode(Setting::get('pending_register_requests', '[]'), true) ?: [];
-        if (collect($pending)->firstWhere('email', $email)) {
-            return response()->json([
-                'success' => false,
-                'message' => "อีเมล '{$email}' ได้ส่งคำขอลงทะเบียนไว้แล้ว อยู่ระหว่างรอผู้ดูแลระบบ (Admin) กดอนุมัติ"
             ], 422);
         }
 
@@ -1378,38 +1376,187 @@ class AccessControlController extends Controller
             } catch (\Throwable $e) {}
         }
 
-        $reqId = 'req_' . time() . '_' . Str::lower(Str::random(4));
-        $newReq = [
-            'id' => $reqId,
+        // 1. Create real User record in Laravel users table immediately
+        User::updateOrCreate(
+            ['email' => $email],
+            [
+                'name' => $name,
+                'password' => Hash::make($password),
+            ]
+        );
+
+        // 2. Seed primary accounts if access_users_list was empty while test accounts are cleared
+        $isTestCleared = (bool) Setting::get('access_test_accounts_cleared', false);
+        if (empty($savedUsers) && $isTestCleared) {
+            $savedUsers = [
+                [
+                    'id' => 'usr_arena_employee',
+                    'name' => 'อารีนา เจ๊ะอามะ',
+                    'full_name' => 'อารีนา เจ๊ะอามะ',
+                    'email' => 'arena@malastreet.com',
+                    'phone' => '082-345-6789',
+                    'role' => 'Employee',
+                    'role_label' => 'พนักงาน',
+                    'position' => 'พนง. บริการประจำ',
+                    'initials' => 'อ',
+                    'color' => 'bg-[#2563EB]',
+                    'avatar' => null,
+                    'status' => 'online',
+                    'status_label' => 'ใช้งานอยู่',
+                    'branch' => 'สาขายะลา',
+                    'is_test' => false,
+                    'created_at' => now()->toDateTimeString(),
+                ],
+                [
+                    'id' => 'usr_main_admin',
+                    'name' => 'Admin (เจ้าของร้าน)',
+                    'full_name' => 'ผู้ดูแลระบบสูงสุด ร้านหม่าล่าสตรีท',
+                    'email' => 'admin@malastreet.com',
+                    'phone' => '081-999-9999',
+                    'role' => 'Admin',
+                    'role_label' => 'ผู้ดูแลระบบ (Admin)',
+                    'position' => 'ผู้จัดการร้าน',
+                    'initials' => 'AD',
+                    'color' => 'bg-rose-600',
+                    'avatar' => null,
+                    'status' => 'online',
+                    'status_label' => 'ใช้งานอยู่',
+                    'branch' => 'ทุกสาขา',
+                    'is_test' => false,
+                    'created_at' => now()->toDateTimeString(),
+                ],
+            ];
+        }
+
+        $roleLabels = [
+            'Admin' => 'ผู้ดูแลระบบ (Admin)',
+            'Employee' => 'พนักงานร้าน (Employee)',
+            'Customer' => 'ลูกค้า (Customer)',
+        ];
+        $roleColors = [
+            'Admin' => 'bg-rose-600',
+            'Employee' => 'bg-blue-600',
+            'Customer' => 'bg-emerald-600',
+        ];
+        $isNewUserAdmin = ($role === 'Admin');
+
+        $userId = 'usr_' . time() . '_' . Str::lower(Str::random(4));
+        $newUser = [
+            'id' => $userId,
             'name' => $name,
+            'full_name' => $name,
             'email' => $email,
-            'phone' => $phone,
-            'password' => $password,
+            'phone' => $phone !== '' ? $phone : '-',
             'role' => $role,
+            'role_label' => $roleLabels[$role] ?? $role,
             'position' => $position,
+            'initials' => mb_substr($name, 0, 2),
+            'color' => $roleColors[$role] ?? 'bg-blue-600',
             'avatar' => $avatarUrl,
-            'status' => 'pending',
-            'status_label' => 'รอแอดมินอนุมัติ',
-            'created_at' => now()->format('d/m/Y H:i'),
-            'timestamp' => time(),
+            'status' => 'offline',
+            'status_label' => 'ออฟไลน์',
+            'branch' => 'ทุกสาขา',
+            'is_test' => false,
+            'created_at' => now()->toDateTimeString(),
         ];
 
-        array_unshift($pending, $newReq);
-        Setting::set('pending_register_requests', json_encode($pending), 'access');
+        array_unshift($savedUsers, $newUser);
+        Setting::set('access_users_list', json_encode($savedUsers), 'access');
+
+        // 3. Grant default permissions immediately
+        $permissions = $this->getDefaultPermissionsForRole($role);
+        Setting::set('permissions_user_' . $userId, json_encode($permissions), 'access');
+
+        // 4. Save employee_data profile & password so admin/access shows everything immediately
+        $employeeData = [
+            'schedule' => [
+                'days' => ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์'],
+                'week_filter' => 'all',
+                'time_mode' => 'same',
+                'start_time' => '09:00 AM',
+                'end_time' => '07:00 PM',
+                'notes' => '',
+            ],
+            'profile' => [
+                'name' => $name,
+                'full_name' => $name,
+                'nickname' => $name,
+                'position' => $position,
+                'job_title' => $position,
+                'phone' => $phone !== '' ? $phone : '-',
+                'email' => $email,
+                'branch' => 'ทุกสาขา',
+                'role' => $role,
+                'password' => $password,
+                'has_custom_password' => true,
+                'password_updated_at' => now()->toDateTimeString(),
+            ],
+            'payroll' => [
+                'base_salary' => $isNewUserAdmin ? 0 : 15000,
+                'ot_rate' => $isNewUserAdmin ? 0 : 60,
+                'ot_amount' => 0,
+                'allowance' => $isNewUserAdmin ? 0 : 1000,
+                'deduction' => $isNewUserAdmin ? 0 : 750,
+                'bank_name' => 'ธนาคารกสิกรไทย',
+                'bank_account' => $isNewUserAdmin ? '-' : '',
+            ],
+            'leave' => [
+                'personal_leave_month' => 1,
+                'personal_leave_year' => 6,
+                'personal_leave' => 6,
+                'sick_leave_month' => 1,
+                'sick_leave_year' => 30,
+                'sick_leave' => 30,
+                'annual_leave' => 6,
+                'late_grace_times_month' => 3,
+                'late_grace_minutes' => 15,
+            ],
+            'more_info' => [
+                'id_card' => '',
+                'start_date' => now()->format('Y-m-d'),
+                'emergency_contact' => '',
+                'notes' => $position,
+            ],
+            'wage_kpi' => [
+                'wage_type' => 'daily',
+                'daily_wage' => $isNewUserAdmin ? 0 : 250,
+                'regular_ot_rate' => $isNewUserAdmin ? 0 : 50,
+                'ot_per_time' => '',
+                'ot_delivery' => '',
+                'ot_content' => '',
+                'kpi_enabled' => true,
+                'kpi_amount' => $isNewUserAdmin ? 0 : 2000,
+                'kpi_rounds' => 3,
+                'kpi_period_name' => 'สัปดาห์',
+                'show_in_evaluation' => false,
+            ],
+            'updated_at' => now()->toDateTimeString(),
+        ];
+        Setting::set("employee_data_{$userId}", json_encode($employeeData), 'employees');
+
+        // Clean any legacy pending request for this email if present
+        $pending = json_decode(Setting::get('pending_register_requests', '[]'), true) ?: [];
+        if (!empty($pending)) {
+            $filteredPending = array_values(array_filter($pending, fn($r) => strtolower(trim((string) ($r['email'] ?? ''))) !== $email));
+            if (count($filteredPending) !== count($pending)) {
+                Setting::set('pending_register_requests', json_encode($filteredPending), 'access');
+            }
+        }
 
         AuditLog::record(
             'access',
-            'register_request',
-            "ส่งคำขอลงทะเบียนบัญชีใหม่: {$name} ({$position})",
+            'register_instant',
+            "สร้างบัญชีและเปิดใช้งานทันที: {$name} ({$position})",
             $name,
-            'pending_registration',
-            $reqId
+            'user',
+            (string) $userId
         );
 
         return response()->json([
             'success' => true,
-            'message' => "ส่งคำขอลงทะเบียนสร้างบัญชี '{$name}' เรียบร้อยแล้ว! กรุณาแจ้งผู้ดูแลระบบ (Admin) เพื่อกดอนุมัติการใช้งาน",
-            'request' => $newReq,
+            'message' => "สร้างบัญชี '{$name}' และบันทึกรหัสผ่านเรียบร้อยแล้ว! สามารถใช้อีเมลและรหัสผ่านนี้เข้าสู่ระบบได้ทันที",
+            'user' => $newUser,
+            'email' => $email,
         ]);
     }
 

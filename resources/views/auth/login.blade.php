@@ -680,8 +680,8 @@
                 <div class="modal-header-left">
                     <span class="modal-header-icon">👤+</span>
                     <div>
-                        <h3 class="modal-title">ลงทะเบียนขอสร้างบัญชีใหม่</h3>
-                        <p class="modal-subtitle">กรอกข้อมูลเพื่อสร้างอีเมลพนักงานบัญชี (รอแอดมินอนุมัติ)</p>
+                        <h3 class="modal-title">ลงทะเบียนสร้างบัญชีใหม่</h3>
+                        <p class="modal-subtitle">กรอกข้อมูลเพื่อสร้างบัญชีและรหัสผ่าน (พร้อมเข้าใช้งานได้ทันที)</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeRegisterModal()" class="modal-close-btn">✕</button>
@@ -732,7 +732,7 @@
                 <div class="field-group">
                     <label for="popup-reg-password" class="field-label">พาสเวิร์ดที่จะตั้ง (Password) <span style="color:#f43f5e">*</span></label>
                     <div class="field-input-wrap">
-                        <input type="password" id="popup-reg-password" name="password" required placeholder="กำหนดรหัสผ่าน (เช่น password123)" class="modal-input" style="padding-right:34px;">
+                        <input type="password" id="popup-reg-password" name="password" required placeholder="กำหนดรหัสผ่าน / PIN ได้ง่ายๆ (เช่น 1122, 1234)" class="modal-input" style="padding-right:34px;">
                         <button type="button" onclick="togglePopupPasswordVisibility()" class="pwd-toggle-btn">
                             <span id="popup-eye-icon">👁️</span>
                         </button>
@@ -759,7 +759,7 @@
                 <!-- กล่องข้อความแจ้งเตือนเงื่อนไข -->
                 <div class="modal-security-note">
                     <span style="font-size:14px;flex-shrink:0;">🛡️</span>
-                    <div><strong>เงื่อนไขความปลอดภัย:</strong> เมื่อกดลงทะเบียนแล้ว <strong>ผู้ดูแลระบบ (Admin) ข้างในระบบต้องกดอนุญาตก่อน</strong> จึงจะสามารถใช้อีเมลนี้ล็อกอินเข้าสู่ระบบได้จริง</div>
+                    <div><strong>สร้างและใช้งานได้ทันที:</strong> เมื่อกดลงทะเบียนแล้ว <strong>ระบบจะบันทึกข้อมูลและรหัสผ่านทันที</strong> สามารถใช้อีเมลและรหัสผ่านนี้เข้าสู่ระบบได้เลย</div>
                 </div>
 
                 <!-- Response Alert Area -->
@@ -770,7 +770,7 @@
                     <button type="button" onclick="closeRegisterModal()" class="btn-cancel">ยกเลิก</button>
                     <button type="submit" id="btn-popup-submit-register" class="btn-modal-submit">
                         <span>✓</span>
-                        <span>กดลงทะเบียน เพื่อสร้างอีเมลพนักงานบัญชีใหม่</span>
+                        <span>กดลงทะเบียน และสร้างบัญชีใช้งานทันที</span>
                     </button>
                 </div>
             </form>
@@ -877,7 +877,13 @@
                         alertBox.className = 'modal-alert modal-alert-success';
                         alertBox.innerHTML = '✅ ' + json.message;
                     }
-                    btn.innerHTML = '<span>✓ ส่งคำขอสำเร็จแล้ว!</span>';
+                    btn.innerHTML = '<span>✓ สร้างบัญชีสำเร็จ พร้อมเข้าใช้งานทันที!</span>';
+                    if (json.email) {
+                        const loginEmail = document.getElementById('login-email');
+                        const loginPwd = document.getElementById('login-password');
+                        if (loginEmail) loginEmail.value = json.email;
+                        if (loginPwd) loginPwd.value = '';
+                    }
                     form.reset();
                     document.getElementById('popup-avatar-preview').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23CBD5E1'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
                     document.getElementById('popup-avatar-badge').classList.add('hidden');
@@ -887,7 +893,8 @@
                         btn.disabled = false;
                         btn.innerHTML = originalText;
                         if (alertBox) alertBox.classList.add('hidden');
-                    }, 3500);
+                        document.getElementById('login-password')?.focus();
+                    }, 1800);
                 } else {
                     if (alertBox) {
                         alertBox.className = 'modal-alert modal-alert-error';
