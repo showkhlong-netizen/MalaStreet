@@ -124,5 +124,31 @@ class MalaStreetAccessAndResetKitTest extends TestCase
         $page->assertOk();
         $page->assertSee('ระบบรีเซ็ทข้อมูลร้านหม่าล่าสตรีท', false);
         $page->assertSee('ถังสำรองข้อมูล 30 วัน', false);
+
+        // 9. Verify POST /admin/access/save purges legacy permissions_user_* and enforces page access
+        \App\Models\Setting::set("permissions_user_{$staff->id}", json_encode(['legacy' => true]));
+        $saveRes = $this->actingAs($admin)->postJson('/admin/access/save', [
+            'user_id' => (string) $staff->id,
+            'permissions' => [
+                'pos.orders' => ['view' => true, 'create' => true],
+                'employees.attendance' => ['view' => true, 'create' => true],
+            ],
+            'branch_ids' => [$branchId],
+        ]);
+        $saveRes->assertOk()->assertJsonPath('success', true);
+        $this->assertNull(\App\Models\Setting::where('key', "permissions_user_{$staff->id}")->first());
+        $this->assertTrue($staff->fresh()->hasPermission('pos.orders.view'));
+        $this->assertFalse($staff->fresh()->hasPermission('finance.daily.view'));
+
+        // Staff has pos.orders.view + employees.attendance.view -> first visit redirects to /admin/employees (200 OK), then /pos is 200 OK, and /admin/expenses is 403
+        \App\Support\LoginLandingResolver::markEmployeeDailyFirstLoginDone($staff->fresh());
+
+        $this->actingAs($staff->fresh())
+            ->get('/pos')
+            ->assertOk();
+
+        $this->actingAs($staff->fresh())
+            ->getJson('/admin/expenses')
+            ->assertStatus(403);
     }
 }

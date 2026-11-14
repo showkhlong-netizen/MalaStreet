@@ -38,8 +38,8 @@ Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
 Route::match(['get', 'post'], '/switch-user/{userId}', [AuthController::class, 'switchUser'])->name('switch_user')->middleware('auth');
 Route::post('/register-request', [AccessControlController::class, 'submitRegistrationRequest'])->name('register.request');
 
-// 1. บริการหน้าร้าน (In-Store POS & Kitchen Display) - ต้องเข้าสู่ระบบ (Requires Auth)
-Route::prefix('pos')->name('pos.')->middleware(['auth', EnforceDailyEmployeeLanding::class])->group(function () {
+// 1. บริการหน้าร้าน (In-Store POS & Kitchen Display) - ต้องเข้าสู่ระบบ (Requires Auth + RBAC Enforcement)
+Route::prefix('pos')->name('pos.')->middleware(['auth', EnforceDailyEmployeeLanding::class, 'access.enforce'])->group(function () {
     Route::get('/', [PosController::class, 'index'])->name('index');
     Route::post('/order', [PosController::class, 'storeOrder'])->name('order.store');
     Route::get('/kitchen', [PosController::class, 'kitchen'])->name('kitchen');
@@ -87,8 +87,8 @@ Route::prefix('order')->name('online.')->group(function () {
     Route::post('/toggle-promo-banner', [OnlineOrderController::class, 'togglePromoBanner'])->name('toggle_promo_banner');
 });
 
-// 3. ระบบหลังบ้าน (Backend Admin & Financial / Inventory Systems) - ต้องเข้าสู่ระบบ (Requires Auth)
-Route::prefix('admin')->name('admin.')->middleware(['auth', EnforceDailyEmployeeLanding::class])->group(function () {
+// 3. ระบบหลังบ้าน (Backend Admin & Financial / Inventory Systems) - ต้องเข้าสู่ระบบ (Requires Auth + RBAC Enforcement)
+Route::prefix('admin')->name('admin.')->middleware(['auth', EnforceDailyEmployeeLanding::class, 'access.enforce'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/settings/toggle-online-mode', [DashboardController::class, 'toggleOnlineMode'])->name('settings.toggle_online');
 

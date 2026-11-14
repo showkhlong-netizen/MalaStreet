@@ -35,8 +35,20 @@
                     </a>
                 </div>
 
-                <!-- Navigation Tabs: Icons Prominent, Text Underneath -->
+                <!-- Navigation Tabs: Icons Prominent, Text Underneath (Filtered by Effective Permissions) -->
+                @php
+                    $navPerms = $currentUserPermissions ?? [];
+                    $hasNavRestriction = !empty($currentUser) && !empty($navPerms);
+                    $canNavPos = !$hasNavRestriction || in_array('pos.orders.view', $navPerms, true);
+                    $canNavKitchen = !$hasNavRestriction || in_array('kitchen.queue.view', $navPerms, true);
+                    $canNavCustomer = !$hasNavRestriction || in_array('customers.members.view', $navPerms, true) || in_array('pos.orders.view', $navPerms, true);
+                    $canNavDashboard = !$hasNavRestriction || in_array('dashboard.overview.view', $navPerms, true) || in_array('finance.daily.view', $navPerms, true);
+                    $canNavInventory = !$hasNavRestriction || in_array('inventory.stock.view', $navPerms, true) || in_array('inventory.waste.view', $navPerms, true);
+                    $canNavEmployees = !$hasNavRestriction || in_array('employees.attendance.view', $navPerms, true) || in_array('employees.payroll.view', $navPerms, true);
+                    $canNavAccess = !$hasNavRestriction || in_array('access.users.view', $navPerms, true) || in_array('access.permissions.view', $navPerms, true);
+                @endphp
                 <nav class="hidden lg:flex items-center space-x-1.5 xl:space-x-2.5">
+                    @if($canNavPos)
                     <!-- 1. แคชเชียร์หน้าร้าน -->
                     <a href="{{ route('pos.index') }}" 
                        class="group flex flex-col items-center justify-center px-3.5 py-1.5 rounded-2xl transition-all duration-150 {{ request()->routeIs('pos.index') ? 'bg-rose-600 text-white shadow-md shadow-rose-900/40 ring-1 ring-rose-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-900/90' }}">
@@ -45,7 +57,9 @@
                         </svg>
                         <span class="text-[10.5px] font-medium mt-1 leading-none tracking-tight whitespace-nowrap">แคชเชียร์หน้าร้าน</span>
                     </a>
+                    @endif
 
+                    @if($canNavKitchen)
                     <!-- 2. จอครัว (KDS) -->
                     <a href="{{ route('pos.kitchen') }}" 
                        class="group flex flex-col items-center justify-center px-3.5 py-1.5 rounded-2xl transition-all duration-150 {{ request()->routeIs('pos.kitchen') ? 'bg-rose-600 text-white shadow-md shadow-rose-900/40 ring-1 ring-rose-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-900/90' }}">
@@ -55,7 +69,9 @@
                         </svg>
                         <span class="text-[10.5px] font-medium mt-1 leading-none tracking-tight whitespace-nowrap">จอครัว (KDS)</span>
                     </a>
+                    @endif
 
+                    @if($canNavCustomer)
                     <!-- 3. หน้าลูกค้า (Customer Hub: รวมสั่งออนไลน์, แชทลูกค้า, แต้มสะสม เรียง 3 จอพร้อมกัน) -->
                     <a href="{{ route('online.hub') }}" target="_blank" 
                        class="group flex flex-col items-center justify-center px-4 py-1.5 rounded-2xl transition-all duration-150 {{ request()->routeIs('online.hub') ? 'bg-white text-slate-950 ring-2 ring-amber-400' : 'bg-white hover:bg-slate-100 text-slate-950 shadow-md shadow-white/10 border-2 border-white' }}"
@@ -71,9 +87,11 @@
                             <span class="text-[8.5px] bg-gradient-to-r from-amber-500 to-rose-500 text-white px-1.5 py-0.5 rounded font-black tracking-tight whitespace-nowrap shrink-0 inline-block">3 in 1</span>
                         </div>
                     </a>
+                    @endif
 
                     <div class="h-8 w-px bg-slate-800/80 mx-1"></div>
 
+                    @if($canNavDashboard)
                     <!-- 4. ภาพรวมร้าน (มีปุ่ม GO LIVE และ ฟิกคอส & กำไร ด้านใน) -->
                     <a href="{{ route('admin.dashboard') }}" 
                        class="group flex flex-col items-center justify-center px-3.5 py-1.5 rounded-2xl transition-all duration-150 {{ request()->routeIs('admin.dashboard') || request()->routeIs('admin.expenses.*') ? 'bg-slate-900 text-amber-400 border border-amber-500/40 shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-900/90' }}">
@@ -82,7 +100,9 @@
                         </svg>
                         <span class="text-[10.5px] font-medium mt-1 leading-none tracking-tight whitespace-nowrap">ภาพรวมร้าน</span>
                     </a>
+                    @endif
 
+                    @if($canNavInventory)
                     <!-- 5. สต๊อกสินค้า (มีปุ่ม แสกนใบเสร็จเพิ่ม & สต็อกไม้คงเหลือ ด้านใน) -->
                     <a href="{{ route('admin.receipts.price_tracker') }}" 
                        class="group flex flex-col items-center justify-center px-3.5 py-1.5 rounded-2xl transition-all duration-150 {{ request()->routeIs('admin.receipts.*') || request()->routeIs('admin.inventory.*') ? 'bg-slate-900 text-amber-400 border border-amber-500/40 shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-900/90' }}">
@@ -91,7 +111,9 @@
                         </svg>
                         <span class="text-[10.5px] font-medium mt-1 leading-none tracking-tight whitespace-nowrap">สต๊อกสินค้า</span>
                     </a>
+                    @endif
 
+                    @if($canNavEmployees)
                     <!-- 9. พนักงาน (สแกนหน้าเข้างาน & สรุปเงินเดือน) -->
                     <a href="{{ route('admin.employees.index') }}" 
                        class="group flex flex-col items-center justify-center px-3.5 py-1.5 rounded-2xl transition-all duration-150 {{ request()->routeIs('admin.employees.*') ? 'bg-slate-900 text-rose-400 border border-rose-500/40 shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-900/90' }}">
@@ -100,7 +122,9 @@
                         </svg>
                         <span class="text-[10.5px] font-medium mt-1 leading-none tracking-tight whitespace-nowrap">พนักงาน</span>
                     </a>
+                    @endif
 
+                    @if($canNavAccess)
                     <!-- 10. การเข้าถึง (จัดการพนักงาน แอดมิน และสิทธิ์การใช้งาน) -->
                     <a href="{{ route('admin.access.index') }}" 
                        class="group flex flex-col items-center justify-center px-3.5 py-1.5 rounded-2xl transition-all duration-150 {{ request()->routeIs('admin.access.*') ? 'bg-slate-900 text-blue-400 border border-blue-500/40 shadow-xs' : 'text-slate-400 hover:text-white hover:bg-slate-900/90' }}">
@@ -109,6 +133,7 @@
                         </svg>
                         <span class="text-[10.5px] font-medium mt-1 leading-none tracking-tight whitespace-nowrap">การเข้าถึง</span>
                     </a>
+                    @endif
                 </nav>
 
                 <!-- Right Area: Live Thai Buddhist Era Clock + User Profile Pill -->
@@ -265,16 +290,46 @@
 
         <!-- Mobile sub-navigation bar -->
         <div class="lg:hidden flex overflow-x-auto py-2 px-3 space-x-2 border-t border-slate-800 bg-slate-950 text-xs scrollbar-none">
-            <a href="{{ route('pos.index') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('pos.index') ? 'bg-rose-600 text-white font-bold' : 'text-slate-400' }}">แคชเชียร์</a>
-            <a href="{{ route('pos.kitchen') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('pos.kitchen') ? 'bg-rose-600 text-white font-bold' : 'text-slate-400' }}">จอครัว</a>
-            <a href="{{ route('online.index') }}" class="shrink-0 px-3 py-1.5 rounded-xl text-amber-400 border border-amber-500/30">สั่งออนไลน์</a>
-            <a href="{{ route('admin.dashboard') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('admin.dashboard') ? 'bg-slate-800 text-white font-bold' : 'text-slate-400' }}">ภาพรวม</a>
-            <a href="{{ route('admin.receipts.price_tracker') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('admin.receipts.*') ? 'bg-slate-800 text-white font-bold' : 'text-slate-400' }}">สต๊อกสินค้า</a>
-            <a href="{{ route('admin.inventory.index') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('admin.inventory.*') ? 'bg-slate-800 text-white font-bold' : 'text-slate-400' }}">สต็อกไม้</a>
-            <a href="{{ route('admin.employees.index') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('admin.employees.*') ? 'bg-slate-800 text-white font-bold' : 'text-slate-400' }}">พนักงาน</a>
-            <a href="{{ route('admin.access.index') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('admin.access.*') ? 'bg-blue-600 text-white font-bold' : 'text-slate-400' }}">การเข้าถึง</a>
+            @if($canNavPos ?? true)
+                <a href="{{ route('pos.index') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('pos.index') ? 'bg-rose-600 text-white font-bold' : 'text-slate-400' }}">แคชเชียร์</a>
+            @endif
+            @if($canNavKitchen ?? true)
+                <a href="{{ route('pos.kitchen') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('pos.kitchen') ? 'bg-rose-600 text-white font-bold' : 'text-slate-400' }}">จอครัว</a>
+            @endif
+            @if($canNavCustomer ?? true)
+                <a href="{{ route('online.index') }}" class="shrink-0 px-3 py-1.5 rounded-xl text-amber-400 border border-amber-500/30">สั่งออนไลน์</a>
+            @endif
+            @if($canNavDashboard ?? true)
+                <a href="{{ route('admin.dashboard') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('admin.dashboard') ? 'bg-slate-800 text-white font-bold' : 'text-slate-400' }}">ภาพรวม</a>
+            @endif
+            @if($canNavInventory ?? true)
+                <a href="{{ route('admin.receipts.price_tracker') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('admin.receipts.*') ? 'bg-slate-800 text-white font-bold' : 'text-slate-400' }}">สต๊อกสินค้า</a>
+                <a href="{{ route('admin.inventory.index') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('admin.inventory.*') ? 'bg-slate-800 text-white font-bold' : 'text-slate-400' }}">สต็อกไม้</a>
+            @endif
+            @if($canNavEmployees ?? true)
+                <a href="{{ route('admin.employees.index') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('admin.employees.*') ? 'bg-slate-800 text-white font-bold' : 'text-slate-400' }}">พนักงาน</a>
+            @endif
+            @if($canNavAccess ?? true)
+                <a href="{{ route('admin.access.index') }}" class="shrink-0 px-3 py-1.5 rounded-xl {{ request()->routeIs('admin.access.*') ? 'bg-blue-600 text-white font-bold' : 'text-slate-400' }}">การเข้าถึง</a>
+            @endif
         </div>
     </header>
+
+    @if(session('access_denied_popup'))
+        @php $denied = session('access_denied_popup'); @endphp
+        <div id="access-denied-popup-banner" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+            <div class="p-4 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-900 flex items-center justify-between shadow-md">
+                <div class="flex items-center space-x-3">
+                    <span class="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center font-black shrink-0">🔒</span>
+                    <div>
+                        <div class="text-sm font-black text-rose-900">{{ $denied['title'] ?? 'ไม่มีสิทธิ์เข้าถึงส่วนนี้' }}</div>
+                        <div class="text-xs font-medium text-rose-700">{{ $denied['message'] ?? 'บัญชีของคุณไม่มีสิทธิ์เข้าถึงหน้านี้ กรุณาติดต่อผู้ดูแลระบบ' }}</div>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('access-denied-popup-banner')?.remove()" class="text-rose-500 hover:text-rose-800 text-lg font-bold px-2 cursor-pointer">&times;</button>
+            </div>
+        </div>
+    @endif
 
     <!-- Flash message alerts -->
     @if(session('success'))

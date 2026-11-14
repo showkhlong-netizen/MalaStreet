@@ -332,12 +332,55 @@
                             <span>รีเซ็ตเป็นค่าเริ่มต้น</span>
                         </button>
 
-                        <!-- Branch selector pill (Matches Image 2) -->
-                        <div class="px-3 py-1 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer hover:bg-amber-100 transition-all whitespace-nowrap">
-                            <span>🏢 สาขาที่อนุญาต (2 สาขา - สลับได้)</span>
-                            <svg class="w-3.5 h-3.5 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                            </svg>
+                        <!-- Branch selector pill with live dropdown (Matches Image 2) -->
+                        <div class="relative" id="branch-selector-dropdown-root">
+                            <button type="button"
+                                    onclick="toggleAllowedBranchesDropdown(event)"
+                                    class="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer hover:bg-amber-100 transition-all whitespace-nowrap">
+                                <span id="allowed-branches-pill-label">🏢 สาขาที่อนุญาต ({{ count($selectedUserBranchIds ?? []) ?: max(1, count($allBranches ?? [])) }} สาขา - สลับได้)</span>
+                                <svg class="w-3.5 h-3.5 text-amber-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            <div id="allowed-branches-dropdown-menu" class="hidden absolute right-0 mt-2 w-72 rounded-2xl bg-white shadow-2xl border border-slate-200 p-3 z-40 space-y-2 text-left">
+                                <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                                    <span class="text-xs font-black text-slate-800">🏢 เลือกสาขาที่อนุญาตให้เข้าถึง</span>
+                                    <span class="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">สลับสาขาได้</span>
+                                </div>
+                                <div class="space-y-1.5 max-h-56 overflow-y-auto">
+                                    @forelse($allBranches ?? [] as $branchObj)
+                                        @php
+                                            $isBranchChecked = in_array((int) $branchObj->id, $selectedUserBranchIds ?? [], true);
+                                        @endphp
+                                        <label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 border border-slate-100 cursor-pointer transition-colors">
+                                            <input type="checkbox"
+                                                   class="allowed-branch-chk mt-0.5 w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-300 cursor-pointer"
+                                                   value="{{ $branchObj->id }}"
+                                                   {{ $isBranchChecked ? 'checked' : '' }}
+                                                   onchange="updateAllowedBranchesLabel()">
+                                            <div class="min-w-0 flex-1">
+                                                <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                                    <span>{{ $branchObj->name }}</span>
+                                                    @if($branchObj->is_main)
+                                                        <span class="px-1.5 py-0.2 rounded bg-rose-50 text-rose-600 border border-rose-200 text-[9px] font-bold">สาขาหลัก</span>
+                                                    @endif
+                                                </div>
+                                                <div class="text-[10px] text-slate-400 truncate">{{ $branchObj->code }} • {{ $branchObj->address ?: 'หม่าล่าสตรีท' }}</div>
+                                            </div>
+                                        </label>
+                                    @empty
+                                        <div class="text-xs text-slate-400 py-2 text-center">ยังไม่มีข้อมูลสาขาในระบบ</div>
+                                    @endforelse
+                                </div>
+                                <div class="pt-2 border-t border-slate-100 flex justify-end">
+                                    <button type="button"
+                                            onclick="saveAllPermissions(); document.getElementById('allowed-branches-dropdown-menu').classList.add('hidden');"
+                                            class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] cursor-pointer shadow-2xs">
+                                        ✓ บันทึกสาขาที่เลือก
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -454,9 +497,10 @@
                                                     $isActActive = !empty($itemPerm[$act]);
                                                     $actLabel = match($act) {
                                                         'view' => 'ดู',
-                                                        'add' => 'เพิ่ม',
+                                                        'create', 'add' => 'เพิ่ม',
                                                         'edit' => 'แก้ไข',
                                                         'delete' => 'ลบ',
+                                                        'approve' => 'อนุมัติ',
                                                         'switch' => 'สลับสาขา',
                                                         'export' => 'ส่งออก',
                                                         default => $act
@@ -2562,7 +2606,7 @@
 
     // 8. Reset Permissions to Default based on User Role
     const defaultRolePerms = @json($defaultRolePermissions ?? []);
-    function resetPermissionsDefault() {
+    async function resetPermissionsDefault() {
         document.querySelectorAll('.item-checkbox').forEach(chk => {
             const itemId = chk.dataset.itemId;
             const hasPerm = Boolean(defaultRolePerms[itemId]);
@@ -2582,13 +2626,36 @@
             const anyChecked = Array.from(document.querySelectorAll(`.mod-${modId}-chk`)).some(c => c.checked);
             modChk.checked = anyChecked;
         });
-        showToast("รีเซ็ตสิทธิ์เป็นค่ามาตรฐานของ " + "{{ $selectedUser['role_label'] ?? $selectedUser['role'] ?? 'พนักงาน' }}" + " เรียบร้อย");
+        await saveAllPermissions();
+        showToast("รีเซ็ตสิทธิ์เป็นค่ามาตรฐานของ " + "{{ $selectedUser['role_label'] ?? $selectedUser['role'] ?? 'พนักงาน' }}" + " และบันทึกเรียบร้อย");
     }
 
-    // 9. Save All Permissions via AJAX
+    function toggleAllowedBranchesDropdown(e) {
+        if (e) e.stopPropagation();
+        const menu = document.getElementById('allowed-branches-dropdown-menu');
+        if (menu) menu.classList.toggle('hidden');
+    }
+
+    function updateAllowedBranchesLabel() {
+        const checkedCount = document.querySelectorAll('.allowed-branch-chk:checked').length;
+        const labelEl = document.getElementById('allowed-branches-pill-label');
+        if (labelEl) {
+            labelEl.textContent = `🏢 สาขาที่อนุญาต (${checkedCount} สาขา - สลับได้)`;
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        const root = document.getElementById('branch-selector-dropdown-root');
+        const menu = document.getElementById('allowed-branches-dropdown-menu');
+        if (root && menu && !root.contains(e.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+
+    // 9. Save All Permissions & Allowed Branches via AJAX
     async function saveAllPermissions() {
         const btn = document.getElementById('btn-save-permissions');
-        btn.innerHTML = `<span class="animate-spin">⏳</span><span>กำลังบันทึก...</span>`;
+        if (btn) btn.innerHTML = `<span class="animate-spin">⏳</span><span>กำลังบันทึก...</span>`;
 
         const permissions = {};
         document.querySelectorAll('.item-checkbox:checked').forEach(chk => {
@@ -2604,6 +2671,10 @@
             }
         });
 
+        const branchIds = Array.from(document.querySelectorAll('.allowed-branch-chk:checked'))
+            .map(chk => parseInt(chk.value, 10))
+            .filter(n => !isNaN(n));
+
         try {
             const res = await fetch("{{ route('admin.access.save') }}", {
                 method: 'POST',
@@ -2613,16 +2684,17 @@
                 },
                 body: JSON.stringify({
                     user_id: currentSelectedUserId,
-                    permissions: permissions
+                    permissions: permissions,
+                    branch_ids: branchIds
                 })
             });
             const json = await res.json();
             setTimeout(() => {
-                btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg><span>บันทึกการเปลี่ยนแปลง</span>`;
-                showToast("บันทึกสิทธิ์ของ " + currentSelectedUserName + " เรียบร้อยแล้ว!");
-            }, 400);
+                if (btn) btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg><span>บันทึกการเปลี่ยนแปลง</span>`;
+                showToast(json.message || ("บันทึกสิทธิ์ของ " + currentSelectedUserName + " เรียบร้อยแล้ว!"));
+            }, 300);
         } catch (e) {
-            btn.innerHTML = `<span>บันทึกการเปลี่ยนแปลง</span>`;
+            if (btn) btn.innerHTML = `<span>บันทึกการเปลี่ยนแปลง</span>`;
             showToast("บันทึกการเปลี่ยนแปลงเรียบร้อย");
         }
     }

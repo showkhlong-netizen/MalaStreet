@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\Branch;
+use App\Models\Setting;
+use App\Models\StaffProfile;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -13,12 +16,12 @@ use Illuminate\Support\Facades\Schema;
 class AccessControlService
 {
     public const ACTIONS = [
-        'view'    => 'ดูข้อมูล',
-        'create'  => 'สร้าง/เพิ่ม',
+        'view'    => 'ดู',
+        'create'  => 'เพิ่ม',
         'edit'    => 'แก้ไข',
-        'delete'  => 'ลบ/ยกเลิกบิล',
+        'delete'  => 'ลบ',
         'approve' => 'อนุมัติ',
-        'export'  => 'ส่งออกรายงาน',
+        'export'  => 'ส่งออก',
     ];
 
     /**
@@ -28,110 +31,141 @@ class AccessControlService
     {
         return [
             'dashboard' => [
-                'label' => 'แดชบอร์ดยอดขายหม่าล่า',
-                'icon'  => 'layout-dashboard',
+                'label' => 'ภาพรวม (Dashboard)',
+                'icon'  => '📊',
                 'children' => [
                     'overview' => [
-                        'label'   => 'ภาพรวมยอดขายแยกสาขา / ประเภทซุป-ปิ้งย่าง',
-                        'actions' => ['view', 'export'],
+                        'label'       => 'ภาพรวมยอดขายแยกสาขา / ประเภทซุป-ปิ้งย่าง',
+                        'description' => 'ดูสรุปยอดขาย ต้นทุน กำไรสุทธิ และสถิติรายวัน-รายเดือน',
+                        'actions'     => ['view', 'export'],
                     ],
                 ],
             ],
             'pos' => [
-                'label' => 'ขายหน้าร้าน (POS หม่าล่า)',
-                'icon'  => 'shopping-bag',
+                'label' => 'POS (ขายหน้าร้าน, ชั่งน้ำหนัก/นับไม้ & คิดเงิน)',
+                'icon'  => '🛒',
                 'children' => [
                     'orders' => [
-                        'label'   => 'เปิดโต๊ะ / ชั่งกรัม-นับไม้ / คิดเงิน / ยกเลิกบิล (Void)',
-                        'actions' => ['view', 'create', 'edit', 'delete'],
+                        'label'       => 'เปิดโต๊ะ / ชั่งกรัม-นับไม้ / คิดเงิน / ยกเลิกบิล (Void)',
+                        'description' => 'รับออเดอร์หน้าร้าน ชำระเงินสด/โอน QR และยกเลิกบิล',
+                        'actions'     => ['view', 'create', 'edit', 'delete'],
                     ],
                     'tables' => [
-                        'label'   => 'จัดการโต๊ะอาหารและคิวลูกค้า',
-                        'actions' => ['view', 'create', 'edit', 'delete'],
+                        'label'       => 'จัดการโต๊ะอาหารและคิวลูกค้า',
+                        'description' => 'เปิด-ปิดโต๊ะ ย้ายโต๊ะ และจัดการคิวลูกค้าหน้าร้าน',
+                        'actions'     => ['view', 'create', 'edit', 'delete'],
                     ],
                     'menu' => [
-                        'label'   => 'จัดการเมนูหม่าล่า / ราคาต่อขีด-ต่อไม้ / เปิด-ปิดของหมด',
-                        'actions' => ['view', 'create', 'edit', 'delete'],
+                        'label'       => 'จัดการเมนูหม่าล่า / ราคาต่อขีด-ต่อไม้ / เปิด-ปิดของหมด',
+                        'description' => 'แก้ไขราคาไม้หม่าล่า น้ำซุป และตั้งค่าวัตถุดิบหมดชั่วคราว',
+                        'actions'     => ['view', 'create', 'edit', 'delete'],
                     ],
                 ],
             ],
             'kitchen' => [
                 'label' => 'จอคิวครัว & ปิ้งย่าง-ต้มหม่าล่า (KDS)',
-                'icon'  => 'flame',
+                'icon'  => '🍳',
                 'children' => [
                     'queue' => [
-                        'label'   => 'ดูคิวออเดอร์ครัว / กดรับออเดอร์ / อัปเดตสถานะเสิร์ฟ',
-                        'actions' => ['view', 'edit'],
+                        'label'       => 'ดูคิวออเดอร์ครัว / กดรับออเดอร์ / อัปเดตสถานะเสิร์ฟ',
+                        'description' => 'หน้าจอแสดงคิวอาหารระดับความเผ็ดและแจ้งเตือนเสิร์ฟเรียลไทม์',
+                        'actions'     => ['view', 'edit'],
                     ],
                 ],
             ],
             'inventory' => [
-                'label' => 'คลังสต็อกวัตถุดิบ & ของเสีย',
-                'icon'  => 'package',
+                'label' => 'คลังสต็อกสินค้า, สแกนใบเสร็จ OCR & สต็อกไม้คงเหลือ',
+                'icon'  => '🍢',
                 'children' => [
                     'stock' => [
-                        'label'   => 'รับเข้า-เบิกใช้วัตถุดิบ (เนื้อสัตว์/ผัก/ลูกชิ้น/น้ำซุป)',
-                        'actions' => ['view', 'create', 'edit', 'delete', 'export'],
+                        'label'       => 'รับเข้า-เบิกใช้วัตถุดิบ & สแกนใบเสร็จตรวจจับราคาขึ้น-ลง',
+                        'description' => 'สแกนบิลแม็คโคร/ตลาดสด เช็คดัชนีราคาวัตถุดิบ และนับสต็อกไม้คงเหลือ',
+                        'actions'     => ['view', 'create', 'edit', 'delete', 'export'],
                     ],
                     'waste' => [
-                        'label'   => 'บันทึกตัดของเสีย / วัตถุดิบหมดอายุรายวัน',
-                        'actions' => ['view', 'create', 'edit', 'delete', 'approve'],
+                        'label'       => 'บันทึกตัดของเสีย / ไม้ชำรุด / กระทบยอดสต็อกรายวัน',
+                        'description' => 'ปรับปรุงยอดไม้คงเหลือจริงและตัดสต็อกของเสียรายวัน',
+                        'actions'     => ['view', 'create', 'edit', 'delete', 'approve'],
                     ],
                 ],
             ],
             'customers' => [
-                'label' => 'สมาชิก & สะสมแต้ม',
-                'icon'  => 'users',
+                'label' => 'ลูกค้าออนไลน์ & สะสมแต้ม (Customer Hub)',
+                'icon'  => '👥',
                 'children' => [
                     'members' => [
-                        'label'   => 'ทะเบียนลูกค้าสมาชิก / สะสมแต้ม / แลกส่วนลด',
-                        'actions' => ['view', 'create', 'edit', 'delete', 'export'],
+                        'label'       => 'ทะเบียนลูกค้าสมาชิก / ออเดอร์ออนไลน์ / สะสมแต้มแลกฟรี',
+                        'description' => 'จัดการออเดอร์สั่งออนไลน์ แชทลูกค้า และระบบสะสมแต้ม',
+                        'actions'     => ['view', 'create', 'edit', 'delete', 'export'],
                     ],
                 ],
             ],
             'finance' => [
-                'label' => 'รายรับ-รายจ่าย & กระเป๋าเงินร้าน',
-                'icon'  => 'wallet',
+                'label' => 'การเงิน, ฟิกคอส & รายรับ-รายจ่าย (Finance & Profit)',
+                'icon'  => '💰',
                 'children' => [
                     'daily' => [
-                        'label'   => 'บันทึกรายจ่ายหน้าร้าน (ค่าวัตถุดิบสด/น้ำแข็ง/แก๊ส) & รายรับอื่น',
-                        'actions' => ['view', 'create', 'edit', 'delete', 'export'],
+                        'label'       => 'บันทึกรายจ่ายหน้าร้าน & ฟิกคอส (ค่าวัตถุดิบสด/ค่าเช่า/น้ำไฟ)',
+                        'description' => 'บันทึกรายรับ-รายจ่ายประจำวัน และคำนวณกำไรสุทธิ',
+                        'actions'     => ['view', 'create', 'edit', 'delete', 'export'],
                     ],
                     'drawer' => [
-                        'label'   => 'ลิ้นชักเงินทอนแคชเชียร์ (ตั้งวงเงินเช้า / เบิกเงินทอนเพิ่ม)',
-                        'actions' => ['view', 'create', 'edit', 'approve'],
+                        'label'       => 'ลิ้นชักเงินทอนแคชเชียร์ (ตั้งวงเงินเช้า / เบิกเงินทอนเพิ่ม)',
+                        'description' => 'ตรวจสอบยอดเงินสดในลิ้นชักหน้าร้านและเบิกโอนระหว่างกะ',
+                        'actions'     => ['view', 'create', 'edit', 'approve'],
                     ],
                     'vault' => [
-                        'label'   => 'กระเป๋าเงินหลักประจำสาขา / ปิดยอดรายวัน / โอนเข้าบัญชีร้าน',
-                        'actions' => ['view', 'create', 'edit', 'approve', 'export'],
+                        'label'       => 'กระเป๋าเงินหลักประจำสาขา / ปิดยอดรายวัน / โอนเข้าบัญชีร้าน',
+                        'description' => 'สรุปยอดปิดกะประจำวันและโอนเงินเข้าบัญชีหลักของร้าน',
+                        'actions'     => ['view', 'create', 'edit', 'approve', 'export'],
+                    ],
+                ],
+            ],
+            'employees' => [
+                'label' => 'พนักงาน, สแกนหน้าเข้างาน & เงินเดือน (HR & Payroll)',
+                'icon'  => '🪪',
+                'children' => [
+                    'attendance' => [
+                        'label'       => 'สแกนใบหน้าเข้า-ออกงาน & ตรวจสอบพิกัด GPS ร้าน',
+                        'description' => 'ลงเวลาเข้า-ออกงานด้วยกล้อง AI และดูภาพหลักฐานย้อนหลัง',
+                        'actions'     => ['view', 'create', 'edit'],
+                    ],
+                    'payroll' => [
+                        'label'       => 'สรุปยอดเงินเดือน, ค่าแรง, OT, KPI & สลิปเงินเดือน',
+                        'description' => 'ดูสรุปรายบุคคล คำนวณขาด/ลา/มาสาย และออกใบจ่ายเงินเดือน',
+                        'actions'     => ['view', 'edit', 'export'],
                     ],
                 ],
             ],
             'branches' => [
                 'label' => 'จัดการสาขาหม่าล่าสตรีท',
-                'icon'  => 'git-branch',
+                'icon'  => '🏢',
                 'children' => [
                     'manage' => [
-                        'label'   => 'เพิ่ม/แก้ไขสาขา (สาขาหลัก, สาขาย่อย, บูธ/ฟู้ดทรัค)',
-                        'actions' => ['view', 'create', 'edit', 'delete'],
+                        'label'       => 'เพิ่ม/แก้ไขสาขา & สลับสาขาที่อนุญาต',
+                        'description' => 'จัดการข้อมูลสาขาหลัก สาขาย่อย และกำหนดสิทธิ์ประจำสาขา',
+                        'actions'     => ['view', 'create', 'edit', 'delete'],
                     ],
                 ],
             ],
             'access' => [
-                'label' => 'จัดการสิทธิ์พนักงาน & ระบบรีเซ็ทข้อมูล',
-                'icon'  => 'shield-check',
+                'label' => 'การเข้าถึง, สิทธิ์พนักงาน & ระบบรีเซ็ทข้อมูล',
+                'icon'  => '🛡️',
                 'children' => [
                     'users' => [
-                        'label'   => 'จัดการบัญชีพนักงานและผูกสาขา',
-                        'actions' => ['view', 'create', 'edit', 'delete'],
+                        'label'       => 'จัดการบัญชีพนักงาน ตารางงาน และผูกสาขา',
+                        'description' => 'เพิ่ม/แก้ไข/ลบบัญชีพนักงาน ตั้งค่ากะเวลาทำงานและค่าจ้าง',
+                        'actions'     => ['view', 'create', 'edit', 'delete'],
                     ],
                     'permissions' => [
-                        'label'   => 'กำหนดสิทธิ์รายบุคคลและอนุมัติพนักงานใหม่',
-                        'actions' => ['view', 'create', 'edit', 'approve'],
+                        'label'       => 'กำหนดสิทธิ์การเข้าถึงรายบุคคล & อนุมัติพนักงานใหม่',
+                        'description' => 'เปิด-ปิดสิทธิ์การเข้าถึงแต่ละหน้าและอนุมัติคำขอลงทะเบียน',
+                        'actions'     => ['view', 'create', 'edit', 'approve'],
                     ],
                     'reset' => [
-                        'label'   => 'ระบบรีเซ็ทข้อมูลและกู้คืนจากถังสำรอง 30 วัน',
-                        'actions' => ['view', 'create', 'delete', 'approve'],
+                        'label'       => 'ระบบรีเซ็ทข้อมูลและกู้คืนจากถังสำรอง 30 วัน',
+                        'description' => 'ล้างข้อมูลทดสอบและกู้คืนข้อมูลย้อนหลังภายใน 30 วัน',
+                        'actions'     => ['view', 'create', 'delete', 'approve'],
                     ],
                 ],
             ],
@@ -159,9 +193,24 @@ class AccessControlService
      */
     public static function getDefaultPermissionsForRole(string $roleName): array
     {
+        $normRole = strtolower(trim($roleName));
+        if (str_contains($normRole, 'super') || $normRole === 'admin') {
+            $normRole = 'admin';
+        } elseif (str_contains($normRole, 'manager')) {
+            $normRole = 'manager';
+        } elseif (str_contains($normRole, 'kitchen') || str_contains($normRole, 'chef')) {
+            $normRole = 'kitchen';
+        } elseif (str_contains($normRole, 'stock')) {
+            $normRole = 'stock';
+        } elseif (str_contains($normRole, 'finance') || str_contains($normRole, 'account')) {
+            $normRole = 'finance';
+        } else {
+            $normRole = 'cashier';
+        }
+
         $all = self::getAllPermissionKeys();
 
-        return match ($roleName) {
+        return match ($normRole) {
             'admin' => $all,
 
             'manager' => array_values(array_filter($all, function (string $key) {
@@ -179,10 +228,13 @@ class AccessControlService
                 'pos.orders.view', 'pos.orders.create', 'pos.orders.edit',
                 'pos.tables.view', 'pos.tables.create', 'pos.tables.edit',
                 'pos.menu.view',
-                'kitchen.queue.view',
+                'kitchen.queue.view', 'kitchen.queue.edit',
+                'inventory.stock.view',
                 'customers.members.view', 'customers.members.create', 'customers.members.edit',
                 'finance.daily.view', 'finance.daily.create',
                 'finance.drawer.view', 'finance.drawer.create',
+                'employees.attendance.view', 'employees.attendance.create',
+                'employees.payroll.view',
             ],
 
             'kitchen' => [
@@ -190,12 +242,14 @@ class AccessControlService
                 'pos.menu.view', 'pos.menu.edit',
                 'inventory.stock.view',
                 'inventory.waste.view', 'inventory.waste.create',
+                'employees.attendance.view', 'employees.attendance.create',
             ],
 
             'stock' => [
                 'inventory.stock.view', 'inventory.stock.create', 'inventory.stock.edit', 'inventory.stock.export',
                 'inventory.waste.view', 'inventory.waste.create', 'inventory.waste.edit',
                 'pos.menu.view', 'pos.menu.edit',
+                'employees.attendance.view', 'employees.attendance.create',
             ],
 
             'finance' => [
@@ -206,13 +260,79 @@ class AccessControlService
                 'finance.daily.view', 'finance.daily.create', 'finance.daily.edit', 'finance.daily.export',
                 'finance.drawer.view', 'finance.drawer.create', 'finance.drawer.edit', 'finance.drawer.approve',
                 'finance.vault.view', 'finance.vault.create', 'finance.vault.edit', 'finance.vault.approve', 'finance.vault.export',
+                'employees.attendance.view', 'employees.attendance.create',
+                'employees.payroll.view', 'employees.payroll.export',
             ],
 
             default => [
                 'pos.orders.view',
                 'pos.orders.create',
+                'kitchen.queue.view',
+                'employees.attendance.view',
+                'employees.attendance.create',
             ],
         };
+    }
+
+    /**
+     * ค้นหาหรือสร้าง User Model จริงจากรหัสพนักงาน/อีเมลในระบบ
+     */
+    public static function resolveUserModel(User|array|string|int|null $identifier): ?User
+    {
+        if ($identifier instanceof User) {
+            return $identifier;
+        }
+
+        if (is_int($identifier) || (is_string($identifier) && ctype_digit($identifier))) {
+            return User::find((int) $identifier);
+        }
+
+        $email = '';
+        $name = 'พนักงาน';
+        if (is_array($identifier)) {
+            $email = strtolower(trim((string) ($identifier['email'] ?? '')));
+            $name = trim((string) ($identifier['name'] ?? 'พนักงาน'));
+            if (!$email && !empty($identifier['id']) && is_numeric($identifier['id'])) {
+                return User::find((int) $identifier['id']);
+            }
+        } elseif (is_string($identifier) && $identifier !== '') {
+            if (str_contains($identifier, '@')) {
+                $email = strtolower(trim($identifier));
+            } else {
+                $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true) ?: [];
+                $matched = collect($savedUsers)->firstWhere('id', $identifier);
+                if ($matched) {
+                    $email = strtolower(trim((string) ($matched['email'] ?? '')));
+                    $name = trim((string) ($matched['name'] ?? 'พนักงาน'));
+                } elseif ($identifier === 'usr_arena_employee') {
+                    $email = 'arena@malastreet.com';
+                    $name = 'อารีนา เจ๊ะอามะ';
+                } elseif ($identifier === 'usr_main_admin') {
+                    $email = 'admin@malastreet.com';
+                    $name = 'Admin (เจ้าของร้าน)';
+                } elseif (str_starts_with($identifier, 'usr_') && ctype_digit(substr($identifier, 4))) {
+                    return User::find((int) substr($identifier, 4));
+                }
+            }
+        }
+
+        if ($email !== '') {
+            $user = User::whereRaw('LOWER(email) = ?', [$email])->first();
+            if (!$user && Schema::hasTable('users')) {
+                try {
+                    $user = User::create([
+                        'name'     => $name ?: 'พนักงาน',
+                        'email'    => $email,
+                        'password' => bcrypt('password123'),
+                    ]);
+                } catch (\Throwable $e) {
+                    $user = User::whereRaw('LOWER(email) = ?', [$email])->first();
+                }
+            }
+            return $user;
+        }
+
+        return null;
     }
 
     /**
@@ -224,7 +344,7 @@ class AccessControlService
             return [];
         }
 
-        $profile = Schema::hasTable('staff_profiles') ? $user->staffProfile : null;
+        $profile = Schema::hasTable('staff_profiles') ? $user->staffProfile()->first() : null;
         if ($profile && !$profile->is_active) {
             return [];
         }
@@ -246,7 +366,7 @@ class AccessControlService
             return $defaults;
         }
 
-        if ($hasCustomFlag && !empty($overrides)) {
+        if ($hasCustomFlag) {
             $allowed = [];
             foreach ($overrides as $key => $isAllowed) {
                 if ($isAllowed) {
@@ -266,6 +386,82 @@ class AccessControlService
         }
 
         return array_keys($effective);
+    }
+
+    /**
+     * บันทึกสิทธิ์รายบุคคลและสาขาที่อนุญาตลงฐานข้อมูลจริง (user_permission_overrides + staff_profiles + branch_user)
+     */
+    public static function saveUserPermissionsAndBranches(User $user, array $permissionKeys, ?array $branchIds = null, ?int $actorId = null): array
+    {
+        $validAllKeys = self::getAllPermissionKeys();
+        $newPermissions = array_values(array_intersect($permissionKeys, $validAllKeys));
+
+        if ($user->getRoleName() === 'admin' && self::isLastSuperAdmin($user->id)) {
+            $newPermissions = array_values(array_unique(array_merge($newPermissions, [
+                'access.users.view', 'access.users.create', 'access.users.edit',
+                'access.permissions.view', 'access.permissions.create', 'access.permissions.edit',
+            ])));
+        }
+
+        DB::transaction(function () use ($user, $newPermissions, $branchIds, $actorId) {
+            if (Schema::hasTable('user_permission_overrides')) {
+                DB::table('user_permission_overrides')->where('user_id', $user->id)->delete();
+
+                $now = now();
+                $rows = [];
+                foreach ($newPermissions as $permKey) {
+                    $rows[] = [
+                        'user_id'        => $user->id,
+                        'permission_key' => $permKey,
+                        'is_allowed'     => true,
+                        'updated_by'     => $actorId,
+                        'created_at'     => $now,
+                        'updated_at'     => $now,
+                    ];
+                }
+                if (!empty($rows)) {
+                    DB::table('user_permission_overrides')->insert($rows);
+                }
+            }
+
+            if (Schema::hasTable('staff_profiles')) {
+                StaffProfile::updateOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'employee_code'          => sprintf('MALA-%03d', $user->id),
+                        'has_custom_permissions' => true,
+                        'permissions_updated_at' => now(),
+                    ]
+                );
+            }
+
+            if ($branchIds !== null && Schema::hasTable('branch_user')) {
+                $cleanBranchIds = collect($branchIds)->map(fn($id) => (int) $id)->filter()->values()->toArray();
+                $user->branches()->sync($cleanBranchIds);
+            }
+        });
+
+        return self::getEffectivePermissions($user->fresh());
+    }
+
+    /**
+     * ล้างแคชสิทธิ์เก่าทั้งหมดจากตาราง settings (permissions_user_*)
+     */
+    public static function purgeLegacyPermissionCache(?string $specificUserId = null): void
+    {
+        if (!Schema::hasTable('settings')) {
+            return;
+        }
+
+        try {
+            if ($specificUserId) {
+                DB::table('settings')->where('key', "permissions_user_{$specificUserId}")->delete();
+            } else {
+                DB::table('settings')->where('key', 'like', 'permissions_user_%')->delete();
+            }
+        } catch (\Throwable $e) {
+            // Ignore if settings table is locked
+        }
     }
 
     public static function userHasPermission(?User $user, string $permissionKey): bool
@@ -367,37 +563,74 @@ class AccessControlService
         }
 
         $map = [
-            // แดชบอร์ด
-            'dashboard'         => ['key' => 'dashboard.overview.view', 'label' => 'แดชบอร์ดยอดขาย'],
-            'admin.dashboard'   => ['key' => 'dashboard.overview.view', 'label' => 'แดชบอร์ดยอดขาย'],
-            // หน้าขาย POS หม่าล่า
-            'pos.index'         => ['key' => 'pos.orders.view',         'label' => 'หน้าขาย POS หม่าล่า'],
-            'pos.store'         => ['key' => 'pos.orders.create',       'label' => 'เปิดบิลขายหม่าล่า'],
-            'pos.order.store'   => ['key' => 'pos.orders.create',       'label' => 'เปิดบิลขายหม่าล่า'],
-            'pos.void'          => ['key' => 'pos.orders.delete',       'label' => 'ยกเลิกบิลขาย (Void)'],
-            'pos.menu.index'    => ['key' => 'pos.menu.view',           'label' => 'จัดการเมนูหม่าล่า'],
-            // จอคิวครัว (KDS)
-            'pos.kitchen'       => ['key' => 'kitchen.queue.view',      'label' => 'จอคิวออเดอร์ครัว'],
-            'kitchen.index'     => ['key' => 'kitchen.queue.view',      'label' => 'จอคิวออเดอร์ครัว'],
-            'kitchen.update'    => ['key' => 'kitchen.queue.edit',      'label' => 'อัปเดตสถานะอาหาร'],
-            // สต็อกวัตถุดิบ
-            'admin.inventory.index' => ['key' => 'inventory.stock.view', 'label' => 'คลังสต็อกวัตถุดิบ'],
-            'inventory.index'   => ['key' => 'inventory.stock.view',    'label' => 'คลังสต็อกวัตถุดิบ'],
-            'inventory.waste'   => ['key' => 'inventory.waste.view',    'label' => 'บันทึกของเสีย'],
-            // สมาชิก
-            'customers.index'   => ['key' => 'customers.members.view',  'label' => 'ทะเบียนสมาชิก'],
-            // การเงินและลิ้นชัก
-            'admin.expenses.index' => ['key' => 'finance.daily.view',   'alt_key' => 'finance.drawer.view', 'label' => 'รายรับ-รายจ่ายร้าน'],
-            'finance.index'     => ['key' => 'finance.daily.view',      'alt_key' => 'finance.drawer.view', 'label' => 'รายรับ-รายจ่ายร้าน'],
-            'treasury.index'    => ['key' => 'finance.vault.view',      'alt_key' => 'finance.drawer.view', 'label' => 'กระเป๋าเงิน & ลิ้นชัก'],
-            // สาขาและสิทธิ์การเข้าถึง
-            'branches.index'    => ['key' => 'branches.manage.view',    'label' => 'จัดการสาขา'],
-            'access.index'      => ['key' => 'access.users.view',       'alt_key' => 'access.permissions.view', 'label' => 'จัดการสิทธิ์การเข้าถึง'],
-            'access.reset.stats'       => ['key' => 'access.reset.view',   'label' => 'ดูสถิติรีเซ็ทข้อมูล'],
-            'access.reset.execute'     => ['key' => 'access.reset.delete', 'label' => 'สั่งรีเซ็ทข้อมูล'],
-            'access.reset.restore'     => ['key' => 'access.reset.approve','label' => 'กู้คืนข้อมูลสำรอง'],
-            'access.reset.restore-all' => ['key' => 'access.reset.approve','label' => 'กู้คืนข้อมูลทั้งหมด'],
-            'access.reset.purge'       => ['key' => 'access.reset.delete', 'label' => 'ลบถาวรจากถังสำรอง'],
+            // 1. แดชบอร์ดภาพรวมร้าน
+            'dashboard'                        => ['key' => 'dashboard.overview.view', 'label' => 'ภาพรวมร้าน (Dashboard)'],
+            'admin.dashboard'                  => ['key' => 'dashboard.overview.view', 'label' => 'ภาพรวมร้าน (Dashboard)'],
+            'admin.settings.toggle_online'     => ['key' => 'pos.menu.edit',           'alt_key' => 'dashboard.overview.view', 'label' => 'เปิด-ปิดรับออเดอร์ออนไลน์'],
+
+            // 2. หน้าขาย POS หม่าล่า
+            'pos.index'                        => ['key' => 'pos.orders.view',         'label' => 'แคชเชียร์หน้าร้าน (POS)'],
+            'pos.store'                        => ['key' => 'pos.orders.create',       'label' => 'เปิดบิลขายหม่าล่า'],
+            'pos.order.store'                  => ['key' => 'pos.orders.create',       'label' => 'เปิดบิลขายหม่าล่า'],
+            'pos.order.status'                 => ['key' => 'pos.orders.edit',         'alt_key' => 'kitchen.queue.edit', 'label' => 'อัปเดตสถานะออเดอร์'],
+            'pos.void'                         => ['key' => 'pos.orders.delete',       'label' => 'ยกเลิกบิลขาย (Void)'],
+            'pos.menu.index'                   => ['key' => 'pos.menu.view',           'label' => 'จัดการเมนูหม่าล่า'],
+
+            // 3. จอคิวครัว (KDS)
+            'pos.kitchen'                      => ['key' => 'kitchen.queue.view',      'label' => 'จอครัว (KDS)'],
+            'pos.kitchen.chat'                 => ['key' => 'kitchen.queue.view',      'alt_key' => 'pos.orders.view', 'label' => 'แชทครัว & หน้าร้าน'],
+            'pos.kitchen.chat.send'            => ['key' => 'kitchen.queue.view',      'alt_key' => 'pos.orders.view', 'label' => 'ส่งข้อความแชทครัว'],
+            'pos.kitchen.chat.messages'        => ['key' => 'kitchen.queue.view',      'alt_key' => 'pos.orders.view', 'label' => 'ข้อความแชทครัว'],
+            'kitchen.index'                    => ['key' => 'kitchen.queue.view',      'label' => 'จอครัว (KDS)'],
+            'kitchen.update'                   => ['key' => 'kitchen.queue.edit',      'label' => 'อัปเดตสถานะอาหาร'],
+
+            // 4. สต็อกสินค้า, สแกนใบเสร็จ OCR & สต็อกไม้คงเหลือ
+            'admin.receipts.index'             => ['key' => 'inventory.stock.view',    'label' => 'สแกนใบเสร็จ & คลังสต็อกสินค้า'],
+            'admin.receipts.store'             => ['key' => 'inventory.stock.create',  'label' => 'บันทึกใบเสร็จวัตถุดิบ'],
+            'admin.receipts.destroy'           => ['key' => 'inventory.stock.delete',  'label' => 'ลบใบเสร็จวัตถุดิบ'],
+            'admin.receipts.upload_image'      => ['key' => 'inventory.stock.create',  'label' => 'อัปโหลดรูปใบเสร็จ'],
+            'admin.receipts.scan_ocr'          => ['key' => 'inventory.stock.create',  'label' => 'สแกนใบเสร็จ AI OCR'],
+            'admin.receipts.price_tracker'     => ['key' => 'inventory.stock.view',    'label' => 'สต๊อกสินค้า & ตรวจจับราคา'],
+            'admin.receipts.price_tracker.store_material'   => ['key' => 'inventory.stock.create', 'label' => 'เพิ่มรายการวัตถุดิบ'],
+            'admin.receipts.price_tracker.update_material'  => ['key' => 'inventory.stock.edit',   'label' => 'แก้ไขรายการวัตถุดิบ'],
+            'admin.receipts.price_tracker.destroy_material' => ['key' => 'inventory.stock.delete', 'label' => 'ลบรายการวัตถุดิบ'],
+            'admin.receipts.price_tracker.batch_delete'     => ['key' => 'inventory.stock.delete', 'label' => 'ลบรายการวัตถุดิบ'],
+            'admin.receipts.price_tracker.destroy_materials'=> ['key' => 'inventory.stock.delete', 'label' => 'ลบรายการวัตถุดิบ'],
+            'admin.inventory.index'            => ['key' => 'inventory.stock.view',    'alt_key' => 'inventory.waste.view', 'label' => 'สต็อกไม้คงเหลือ'],
+            'admin.inventory.adjust'           => ['key' => 'inventory.stock.edit',    'alt_key' => 'inventory.stock.create', 'label' => 'ปรับยอดสต็อกไม้'],
+            'admin.inventory.reconcile'        => ['key' => 'inventory.waste.edit',    'alt_key' => 'inventory.stock.edit', 'label' => 'กระทบยอดสต็อกไม้'],
+            'inventory.index'                  => ['key' => 'inventory.stock.view',    'label' => 'คลังสต็อกวัตถุดิบ'],
+            'inventory.waste'                  => ['key' => 'inventory.waste.view',    'label' => 'บันทึกของเสีย'],
+
+            // 5. ลูกค้า & สมาชิก
+            'customers.index'                  => ['key' => 'customers.members.view',  'label' => 'ทะเบียนสมาชิก'],
+
+            // 6. การเงิน, ฟิกคอส & รายรับ-รายจ่าย
+            'admin.expenses.index'             => ['key' => 'finance.daily.view',      'alt_key' => 'finance.drawer.view', 'label' => 'ฟิกคอส & รายรับ-รายจ่าย'],
+            'admin.expenses.store'             => ['key' => 'finance.daily.create',    'alt_key' => 'finance.daily.edit', 'label' => 'บันทึกรายจ่าย'],
+            'admin.expenses.destroy'           => ['key' => 'finance.daily.delete',    'label' => 'ลบรายจ่าย'],
+            'finance.index'                    => ['key' => 'finance.daily.view',      'alt_key' => 'finance.drawer.view', 'label' => 'รายรับ-รายจ่ายร้าน'],
+            'treasury.index'                   => ['key' => 'finance.vault.view',      'alt_key' => 'finance.drawer.view', 'label' => 'กระเป๋าเงิน & ลิ้นชัก'],
+
+            // 7. พนักงาน, สแกนหน้าเข้างาน & เงินเดือน
+            'admin.employees.index'            => ['key' => 'employees.attendance.view', 'alt_key' => 'employees.payroll.view', 'label' => 'พนักงาน & ลงเวลาทำงาน'],
+            'admin.employees.clock_in'         => ['key' => 'employees.attendance.create', 'alt_key' => 'employees.attendance.view', 'label' => 'สแกนหน้าเข้า-ออกงาน'],
+            'admin.employees.update_location'  => ['key' => 'employees.attendance.edit', 'label' => 'ตั้งค่าพิกัดร้าน'],
+            'admin.employees.payslip'          => ['key' => 'employees.payroll.view',  'alt_key' => 'employees.attendance.view', 'label' => 'ดูสลิปเงินเดือน'],
+
+            // 8. สาขาและสิทธิ์การเข้าถึง
+            'branches.index'                   => ['key' => 'branches.manage.view',    'label' => 'จัดการสาขา'],
+            'access.index'                     => ['key' => 'access.users.view',       'alt_key' => 'access.permissions.view', 'label' => 'การเข้าถึง & สิทธิ์การใช้งาน'],
+            'admin.access.index'               => ['key' => 'access.users.view',       'alt_key' => 'access.permissions.view', 'label' => 'การเข้าถึง & สิทธิ์การใช้งาน'],
+            'admin.access.save'                => ['key' => 'access.permissions.edit', 'label' => 'บันทึกสิทธิ์การเข้าถึง'],
+            'admin.access.save_employee'       => ['key' => 'access.users.edit',       'alt_key' => 'access.permissions.edit', 'label' => 'บันทึกข้อมูลพนักงาน'],
+            'admin.access.store_user'          => ['key' => 'access.users.create',     'alt_key' => 'access.permissions.create', 'label' => 'เพิ่มพนักงานใหม่'],
+            'admin.access.delete_user'         => ['key' => 'access.users.delete',     'label' => 'ลบบัญชีพนักงาน'],
+            'access.reset.stats'               => ['key' => 'access.reset.view',       'label' => 'ดูสถิติรีเซ็ทข้อมูล'],
+            'access.reset.execute'             => ['key' => 'access.reset.delete',     'label' => 'สั่งรีเซ็ทข้อมูล'],
+            'access.reset.restore'             => ['key' => 'access.reset.approve',    'label' => 'กู้คืนข้อมูลสำรอง'],
+            'access.reset.restore-all'         => ['key' => 'access.reset.approve',    'label' => 'กู้คืนข้อมูลทั้งหมด'],
+            'access.reset.purge'               => ['key' => 'access.reset.delete',     'label' => 'ลบถาวรจากถังสำรอง'],
         ];
 
         return $map[$routeName] ?? null;
@@ -409,11 +642,13 @@ class AccessControlService
     public static function getFirstAccessibleRoute(User $user): string
     {
         $candidates = [
-            'pos.orders.view'         => 'pos.index',
-            'kitchen.queue.view'      => 'pos.kitchen',
-            'dashboard.overview.view' => 'admin.dashboard',
-            'inventory.stock.view'    => 'admin.inventory.index',
-            'finance.daily.view'      => 'admin.expenses.index',
+            'pos.orders.view'           => 'pos.index',
+            'kitchen.queue.view'        => 'pos.kitchen',
+            'employees.attendance.view' => 'admin.employees.index',
+            'dashboard.overview.view'   => 'admin.dashboard',
+            'inventory.stock.view'      => 'admin.receipts.price_tracker',
+            'finance.daily.view'        => 'admin.expenses.index',
+            'access.permissions.view'   => 'admin.access.index',
         ];
 
         foreach ($candidates as $perm => $routeName) {
@@ -422,6 +657,6 @@ class AccessControlService
             }
         }
 
-        return url('/');
+        return route('login');
     }
 }

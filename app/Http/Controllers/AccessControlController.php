@@ -3,12 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
+use App\Models\Branch;
 use App\Models\Setting;
+use App\Models\StaffProfile;
 use App\Models\User;
+use App\Services\AccessControlService;
 use App\Support\ThaiDate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -268,312 +274,63 @@ class AccessControlController extends Controller
             }) ?? ($users[0] ?? null);
         }
 
-        // Modules & Granular Permission Capabilities for Mala Street System
-        $permissionModules = [
-            [
-                'id' => 'branches',
-                'name' => 'สาขาที่อนุญาต (Allowed Branches)',
-                'badge' => '2 สาขา (สลับได้)',
-                'icon' => '🏢',
-                'items' => [
-                    [
-                        'id' => 'branch_yala',
-                        'name' => 'สาขายะลา',
-                        'description' => '123 ถ.สุขยางค์ ต.สะเตง อ.เมือง จ.ยะลา • ศูนย์บริการหลัก & คลังสต็อกสินค้า',
-                        'icon' => '📍',
-                        'actions' => ['view' => true, 'add' => true, 'edit' => true, 'delete' => true, 'switch' => true],
-                        'available_actions' => ['view', 'add', 'edit', 'delete', 'switch']
-                    ],
-                    [
-                        'id' => 'branch_pattani',
-                        'name' => 'สาขาปัตตานี',
-                        'description' => '456 ถ.นาเกลือ ต.สะบารัง อ.เมือง จ.ปัตตานี • ศูนย์บริการและจุดรับคืนอุปกรณ์',
-                        'icon' => '📍',
-                        'actions' => ['view' => true, 'add' => true, 'edit' => true, 'delete' => true, 'switch' => true],
-                        'available_actions' => ['view', 'add', 'edit', 'delete', 'switch']
-                    ],
-                ],
-                'alert_card' => '🛡️ ทดสอบการแจ้งเตือนสิทธิ์สาขา (Test Popup Alert)'
-            ],
-            [
-                'id' => 'dashboard',
-                'name' => 'ภาพรวม (Dashboard)',
-                'badge' => '4 หน้าต่างย่อย',
-                'icon' => '📊',
-                'items' => [
-                    [
-                        'id' => 'dash_kpi',
-                        'name' => 'สรุปสถิติยอดจอง & รายได้ประจำวัน (KPI Cards)',
-                        'description' => 'การ์ดแสดงตัวเลขรายได้, ออเดอร์รออนุมัติ, คิวงานวันนี้',
-                        'icon' => '📈',
-                        'actions' => ['view' => true],
-                        'available_actions' => ['view']
-                    ],
-                    [
-                        'id' => 'dash_charts',
-                        'name' => 'กราฟแนวโน้มยอดขาย & การเช่า (Sales Trend Charts)',
-                        'description' => 'กราฟวิเคราะห์ยอดเช่าตามช่วงเวลาและหมวดหมู่',
-                        'icon' => '📉',
-                        'actions' => ['view' => true, 'export' => true],
-                        'available_actions' => ['view', 'export']
-                    ],
-                    [
-                        'id' => 'dash_recent_orders',
-                        'name' => 'รายการคิวจองล่าสุด & สถิติอุปกรณ์ยอดนิยม',
-                        'description' => 'ตารางแสดงออเดอร์เรียลไทม์ และอุปกรณ์ที่ถูกเช่าบ่อยที่สุด',
-                        'icon' => '📋',
-                        'actions' => ['view' => true],
-                        'available_actions' => ['view']
-                    ],
-                    [
-                        'id' => 'dash_branch_filter',
-                        'name' => 'ตัวกรองสถิติแยกตามสาขา (Branch Filter Control)',
-                        'description' => 'สลับดูกราฟและตัวเลขของแต่ละสาขา',
-                        'icon' => '🎛️',
-                        'actions' => ['view' => true, 'switch' => true],
-                        'available_actions' => ['view', 'switch']
-                    ],
-                ]
-            ],
-            [
-                'id' => 'pos',
-                'name' => 'แคชเชียร์หน้าร้าน & ขายสินค้า (POS Cashier)',
-                'badge' => '4 ระบบย่อย',
-                'icon' => '🛒',
-                'items' => [
-                    [
-                        'id' => 'pos_sale',
-                        'name' => 'เปิดหน้าขาย POS & จิ้มเลือกเมนูอาหาร',
-                        'description' => 'สร้างออเดอร์ใหม่, สแกนสินค้า, คำนวณยอดเงินรวม',
-                        'icon' => '⚡',
-                        'actions' => ['view' => true, 'add' => true],
-                        'available_actions' => ['view', 'add']
-                    ],
-                    [
-                        'id' => 'pos_payment',
-                        'name' => 'คิดเงิน & รับชำระ & พิมพ์ใบเสร็จ',
-                        'description' => 'รับเงินสด, โอนเงินผ่าน QR, ปริ้นท์ใบเสร็จให้ลูกค้า',
-                        'icon' => '💳',
-                        'actions' => ['view' => true, 'edit' => true],
-                        'available_actions' => ['view', 'edit']
-                    ],
-                    [
-                        'id' => 'pos_void',
-                        'name' => 'ยกเลิกบิล & คืนเงิน (Void / Refund)',
-                        'description' => 'ยกเลิกออเดอร์ที่ชำระแล้ว และคืนยอดเงิน',
-                        'icon' => '↩️',
-                        'actions' => ['edit' => true, 'delete' => true],
-                        'available_actions' => ['edit', 'delete']
-                    ],
-                    [
-                        'id' => 'pos_discount',
-                        'name' => 'ปรับปรุงส่วนลด & ราคาพิเศษหน้าร้าน',
-                        'description' => 'ให้ส่วนลดพิเศษหรือตัดราคาพิเศษสำหรับลูกค้าประจำ',
-                        'icon' => '🏷️',
-                        'actions' => ['edit' => true],
-                        'available_actions' => ['edit']
-                    ],
-                ]
-            ],
-            [
-                'id' => 'kitchen',
-                'name' => 'จอทำอาหารในครัว (Kitchen Display / KDS)',
-                'badge' => '3 ระบบย่อย',
-                'icon' => '🍳',
-                'items' => [
-                    [
-                        'id' => 'kitchen_queue',
-                        'name' => 'ดูคิวออเดอร์ปิ้งย่างในครัว',
-                        'description' => 'แสดงรายการอาหารและระดับความเผ็ดแบบเรียลไทม์',
-                        'icon' => '🍢',
-                        'actions' => ['view' => true],
-                        'available_actions' => ['view']
-                    ],
-                    [
-                        'id' => 'kitchen_status',
-                        'name' => 'อัปเดตสถานะ กำลังทำ / เสร็จแล้ว',
-                        'description' => 'เปลี่ยนสถานะคิวอาหารและแจ้งเตือนพนักงานเสิร์ฟ',
-                        'icon' => '✅',
-                        'actions' => ['edit' => true],
-                        'available_actions' => ['edit']
-                    ],
-                    [
-                        'id' => 'kitchen_cancel',
-                        'name' => 'ยกเลิกคิวอาหาร / แจ้งวัตถุดิบหมด',
-                        'description' => 'ยกเลิกรายการเมื่อวัตถุดิบหมดระหว่างปรุง',
-                        'icon' => '❌',
-                        'actions' => ['delete' => true],
-                        'available_actions' => ['delete']
-                    ],
-                ]
-            ],
-            [
-                'id' => 'online_orders',
-                'name' => 'สั่งออนไลน์ลูกค้า (Online Orders)',
-                'badge' => '3 ระบบย่อย',
-                'icon' => '📱',
-                'items' => [
-                    [
-                        'id' => 'online_view',
-                        'name' => 'ดูรายการออเดอร์ออนไลน์จากลูกค้า',
-                        'description' => 'ออเดอร์ที่สั่งผ่านหน้าเว็บ หรือสแกน QR โต๊ะอาหาร',
-                        'icon' => '🛵',
-                        'actions' => ['view' => true],
-                        'available_actions' => ['view']
-                    ],
-                    [
-                        'id' => 'online_accept',
-                        'name' => 'กดยืนยันรับออเดอร์ / ปฏิเสธออเดอร์',
-                        'description' => 'รับออเดอร์เข้าครัวและแจ้งเตือนสถานะลูกค้า',
-                        'icon' => '🔔',
-                        'actions' => ['edit' => true],
-                        'available_actions' => ['edit']
-                    ],
-                    [
-                        'id' => 'online_toggle',
-                        'name' => 'ควบคุมเปิด-ปิดรับออเดอร์ (GO LIVE Mode)',
-                        'description' => 'เปิดรับออเดอร์จริง หรือสลับกลับเป็นโหมดพรีวิว',
-                        'icon' => '🚀',
-                        'actions' => ['edit' => true],
-                        'available_actions' => ['edit']
-                    ],
-                ]
-            ],
-            [
-                'id' => 'price_tracker',
-                'name' => 'ระบบตรวจจับราคาขึ้น-ลง & ใบเสร็จ OCR',
-                'badge' => '3 ระบบย่อย',
-                'icon' => '📈',
-                'items' => [
-                    [
-                        'id' => 'pt_ocr',
-                        'name' => 'สแกนใบเสร็จด้วย AI OCR อัตโนมัติ',
-                        'description' => 'ถ่ายภาพบิลวัตถุดิบจากแม็คโคร/ตลาดสด เพื่อดึงราคาอัตโนมัติ',
-                        'icon' => '🧾',
-                        'actions' => ['view' => true, 'add' => true],
-                        'available_actions' => ['view', 'add']
-                    ],
-                    [
-                        'id' => 'pt_trends',
-                        'name' => 'ดูกราฟและดัชนีราคาขึ้น-ลงวัตถุดิบ',
-                        'description' => 'ตรวจจับความผันผวนของราคาเนื้อวัว, ผักสด, ลูกชิ้น',
-                        'icon' => '📊',
-                        'actions' => ['view' => true, 'export' => true],
-                        'available_actions' => ['view', 'export']
-                    ],
-                    [
-                        'id' => 'pt_manage',
-                        'name' => 'แก้ไข / ลบ ประวัติราคาและใบเสร็จ',
-                        'description' => 'ปรับปรุงข้อมูลใบเสร็จที่บันทึกผิดพลาด',
-                        'icon' => '✏️',
-                        'actions' => ['edit' => true, 'delete' => true],
-                        'available_actions' => ['edit', 'delete']
-                    ],
-                ]
-            ],
-            [
-                'id' => 'inventory',
-                'name' => 'สต็อกไม้คงเหลือ (Inventory Control)',
-                'badge' => '3 ระบบย่อย',
-                'icon' => '🍢',
-                'items' => [
-                    [
-                        'id' => 'inv_view',
-                        'name' => 'ดูยอดไม้คงเหลือ ยกมา บวกวันนี้ หักยอดขาย',
-                        'description' => 'สรุปจำนวนไม้คงเหลือและมูลค่าสต็อกประจำวัน',
-                        'icon' => '📦',
-                        'actions' => ['view' => true],
-                        'available_actions' => ['view']
-                    ],
-                    [
-                        'id' => 'inv_adjust',
-                        'name' => 'ปรับยอดสต็อกไม้ / เติมไม้เข้าหน้าร้าน',
-                        'description' => 'บันทึกรับไม้เสียบใหม่เข้าตู้แช่หน้าร้าน',
-                        'icon' => '➕',
-                        'actions' => ['add' => true, 'edit' => true],
-                        'available_actions' => ['add', 'edit']
-                    ],
-                    [
-                        'id' => 'inv_loss',
-                        'name' => 'บันทึกไม้ชำรุด / เสียหาย / ไม้หัก',
-                        'description' => 'ตัดสต็อกไม้ที่ตกพื้น เสียหาย หรือทิ้ง',
-                        'icon' => '🗑️',
-                        'actions' => ['edit' => true, 'delete' => true],
-                        'available_actions' => ['edit', 'delete']
-                    ],
-                ]
-            ],
-            [
-                'id' => 'expenses',
-                'name' => 'ฟิกคอส & กำไร (Fixed Costs & Profit)',
-                'badge' => '2 ระบบย่อย',
-                'icon' => '💰',
-                'items' => [
-                    [
-                        'id' => 'exp_view',
-                        'name' => 'ดูสรุปผลกำไรสุทธิ & ต้นทุนคงที่',
-                        'description' => 'รายงานผลประกอบการ รายรับ รายจ่าย กำไรสุทธิ',
-                        'icon' => '🪙',
-                        'actions' => ['view' => true, 'export' => true],
-                        'available_actions' => ['view', 'export']
-                    ],
-                    [
-                        'id' => 'exp_manage',
-                        'name' => 'บันทึกรายจ่ายฟิกคอส (ค่าเช่า, น้ำไฟ, เงินเดือน)',
-                        'description' => 'จัดการรายการค่าใช้จ่ายคงที่ของร้านประจำเดือน',
-                        'icon' => '📝',
-                        'actions' => ['view' => true, 'add' => true, 'edit' => true, 'delete' => true],
-                        'available_actions' => ['view', 'add', 'edit', 'delete']
-                    ],
-                ]
-            ],
-            [
-                'id' => 'employees',
-                'name' => 'ระบบจัดการพนักงาน (Employees & Attendance)',
-                'badge' => '4 ระบบย่อย',
-                'icon' => '👥',
-                'items' => [
-                    [
-                        'id' => 'emp_clock',
-                        'name' => 'สแกนใบหน้าเข้า-ออกงาน & บันทึกภาพถ่าย',
-                        'description' => 'ลงเวลาทำงานด้วยกล้อง AI และตรวจสอบพิกัด GPS',
-                        'icon' => '📸',
-                        'actions' => ['view' => true, 'add' => true],
-                        'available_actions' => ['view', 'add']
-                    ],
-                    [
-                        'id' => 'emp_photos',
-                        'name' => 'ดูและเปิด URL ภาพถ่ายสแกนหน้า',
-                        'description' => 'เปิดดูภาพหลักฐานการลงเวลาย้อนหลังและแชร์ URL',
-                        'icon' => '🔗',
-                        'actions' => ['view' => true, 'export' => true],
-                        'available_actions' => ['view', 'export']
-                    ],
-                    [
-                        'id' => 'emp_payroll',
-                        'name' => 'สรุปยอดเงินเดือน & ใบจ่ายเงินเดือน (Payslip)',
-                        'description' => 'ดูรายละเอียดเงินเดือน ค่าล่วงเวลา OT รายการหัก',
-                        'icon' => '🧾',
-                        'actions' => ['view' => true, 'export' => true, 'edit' => true],
-                        'available_actions' => ['view', 'export', 'edit']
-                    ],
-                    [
-                        'id' => 'emp_geofence',
-                        'name' => 'ปักหมุดพิกัดร้าน & ตั้งค่ารัศมี Geofence',
-                        'description' => 'เลือกหมุดแผนที่และกำหนดขอบเขตระยะการเช็คอิน',
-                        'icon' => '📍',
-                        'actions' => ['view' => true, 'edit' => true],
-                        'available_actions' => ['view', 'edit']
-                    ],
-                ]
-            ],
-        ];
+        // Purge legacy Setting-based permission cache so everything uses the new AccessControlService & DB overrides
+        AccessControlService::purgeLegacyPermissionCache();
 
-        // Retrieve saved user permissions
-        $savedPermissionsKey = "permissions_user_" . ($selectedUser['id'] ?? 'default');
-        $userPermissions = json_decode(Setting::get($savedPermissionsKey, '{}'), true);
-        if (empty($userPermissions) && !empty($selectedUser['role'])) {
-            $userPermissions = $this->getDefaultPermissionsForRole($selectedUser['role']);
+        // Build Permission Modules directly from AccessControlService::getPermissionTree()
+        $permissionModules = [];
+        foreach (AccessControlService::getPermissionTree() as $modKey => $mod) {
+            $items = [];
+            foreach ($mod['children'] as $childKey => $child) {
+                $itemId = "{$modKey}.{$childKey}";
+                $actionsMap = [];
+                foreach ($child['actions'] as $act) {
+                    $actionsMap[$act] = true;
+                }
+                $items[] = [
+                    'id'                => $itemId,
+                    'name'              => $child['label'],
+                    'description'       => $child['description'] ?? $child['label'],
+                    'icon'              => '🔹',
+                    'actions'           => $actionsMap,
+                    'available_actions' => $child['actions'],
+                ];
+            }
+            $permissionModules[] = [
+                'id'    => $modKey,
+                'name'  => $mod['label'],
+                'badge' => count($items) . ' ระบบย่อย',
+                'icon'  => $mod['icon'] ?? '🛡️',
+                'items' => $items,
+            ];
+        }
+
+        // Resolve real User model for selectedUser & load Effective Permissions from DB (user_permission_overrides + role defaults)
+        $selectedUserModel = AccessControlService::resolveUserModel($selectedUser);
+        $effectiveFlatKeys = $selectedUserModel
+            ? AccessControlService::getEffectivePermissions($selectedUserModel)
+            : AccessControlService::getDefaultPermissionsForRole($selectedUser['role'] ?? 'Employee');
+
+        $userPermissions = $this->formatFlatKeysToMatrix($effectiveFlatKeys);
+        $defaultRolePermissions = $this->formatFlatKeysToMatrix(
+            AccessControlService::getDefaultPermissionsForRole($selectedUser['role'] ?? 'Employee')
+        );
+
+        // Load branches & selected user's allowed branch IDs
+        $allBranches = collect();
+        $selectedUserBranchIds = [];
+        try {
+            if (Schema::hasTable('branches')) {
+                $allBranches = Branch::where('status', 'ACTIVE')->orderByDesc('is_main')->orderBy('id')->get();
+                if ($selectedUserModel && Schema::hasTable('branch_user')) {
+                    $selectedUserBranchIds = $selectedUserModel->branches()->pluck('branches.id')->map(fn($id) => (int) $id)->toArray();
+                }
+                if (empty($selectedUserBranchIds) && $allBranches->isNotEmpty()) {
+                    $selectedUserBranchIds = $allBranches->pluck('id')->map(fn($id) => (int) $id)->toArray();
+                }
+            }
+        } catch (\Throwable $e) {
+            $allBranches = collect();
         }
 
         // Retrieve Employee Extended Data (Schedule, Profile, Payroll, Leaves - Matching Image 2)
@@ -660,8 +417,6 @@ class AccessControlController extends Controller
             'audit_log' => true,
         ], $savedSettings);
 
-        $defaultRolePermissions = $this->getDefaultPermissionsForRole($selectedUser['role'] ?? 'Employee');
-
         // Fetch Audit Logs (seed initial system audit logs if empty so Audit tab is immediately populated)
         $auditLogs = collect();
         try {
@@ -684,8 +439,8 @@ class AccessControlController extends Controller
 
         $resetBranches = collect();
         try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('branches')) {
-                $resetBranches = \App\Models\Branch::orderByDesc('is_main')->orderBy('status')->orderBy('name')->get();
+            if (Schema::hasTable('branches')) {
+                $resetBranches = Branch::orderByDesc('is_main')->orderBy('status')->orderBy('name')->get();
             }
         } catch (\Throwable $e) {
             $resetBranches = collect();
@@ -703,44 +458,103 @@ class AccessControlController extends Controller
             'autoLogoutSettings',
             'auditLogs',
             'pendingRegistrations',
-            'resetBranches'
+            'resetBranches',
+            'allBranches',
+            'selectedUserBranchIds'
         ));
     }
 
     /**
-     * Save updated permissions matrix for a user.
+     * Save updated permissions matrix and allowed branches for a user directly into user_permission_overrides & branch_user.
      */
     public function save(Request $request): JsonResponse
     {
         $userId = $request->input('user_id');
         $permissions = $request->input('permissions', []);
+        $branchIds = $request->has('branch_ids') ? (array) $request->input('branch_ids', []) : null;
 
         if (empty($userId)) {
             return response()->json(['success' => false, 'message' => 'ไม่พบรหัสผู้ใช้งาน'], 422);
         }
 
-        $key = "permissions_user_{$userId}";
-        Setting::set($key, json_encode($permissions), 'permissions');
+        // Purge legacy Setting permission cache
+        AccessControlService::purgeLegacyPermissionCache((string) $userId);
 
-        $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true);
+        $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true) ?: [];
         $targetUser = collect($savedUsers)->firstWhere('id', $userId);
         $targetUserName = $targetUser['name'] ?? $userId;
+
+        $flatKeys = $this->flattenMatrixToKeys(is_array($permissions) ? $permissions : []);
+        $userModel = AccessControlService::resolveUserModel($targetUser ?: $userId);
+
+        if ($userModel) {
+            $effective = AccessControlService::saveUserPermissionsAndBranches(
+                $userModel,
+                $flatKeys,
+                $branchIds,
+                Auth::id()
+            );
+        } else {
+            $effective = $flatKeys;
+        }
 
         AuditLog::record(
             'access',
             'update',
-            "อัปเดตสิทธิ์การเข้าถึงของ {$targetUserName} (" . count($permissions) . " โมดูล)",
+            "อัปเดตสิทธิ์การเข้าถึงของ {$targetUserName} (" . count($effective) . " สิทธิ์ย่อย)",
             $targetUserName,
             'permission',
             (string) $userId
         );
 
         return response()->json([
-            'success' => true,
-            'message' => 'บันทึกการเปลี่ยนแปลงสิทธิ์การเข้าถึงเรียบร้อยแล้ว!',
-            'user_id' => $userId,
-            'permissions_count' => count($permissions)
+            'success'           => true,
+            'message'           => "บันทึกสิทธิ์การเข้าถึงและสาขาของ {$targetUserName} เรียบร้อยแล้ว!",
+            'user_id'           => $userId,
+            'permissions_count' => count($effective),
+            'permissions'       => $effective,
         ]);
+    }
+
+    /**
+     * แปลง Flat Permission Keys (เช่น ['pos.orders.view', 'pos.orders.create']) เป็น Matrix สำหรับหน้า UI
+     */
+    protected function formatFlatKeysToMatrix(array $flatKeys): array
+    {
+        $matrix = [];
+        foreach ($flatKeys as $key) {
+            if (!is_string($key)) {
+                continue;
+            }
+            $parts = explode('.', $key);
+            if (count($parts) === 3) {
+                $itemId = "{$parts[0]}.{$parts[1]}";
+                $act = $parts[2];
+                $matrix[$itemId][$act] = true;
+            }
+        }
+        return $matrix;
+    }
+
+    /**
+     * แปลงข้อมูลจากหน้า UI (รองรับทั้งแบบ Flat Array และแบบ Matrix Object) เป็นรายการ Permission Keys มาตรฐาน
+     */
+    protected function flattenMatrixToKeys(array $permissions): array
+    {
+        $keys = [];
+        foreach ($permissions as $k => $v) {
+            if (is_int($k) && is_string($v) && substr_count($v, '.') === 2) {
+                $keys[] = $v;
+            } elseif (is_string($k) && is_array($v)) {
+                foreach ($v as $act => $enabled) {
+                    if ($enabled) {
+                        $normAct = ($act === 'add') ? 'create' : $act;
+                        $keys[] = "{$k}.{$normAct}";
+                    }
+                }
+            }
+        }
+        return array_values(array_unique($keys));
     }
 
     /**
@@ -1024,9 +838,8 @@ class AccessControlController extends Controller
 
         Setting::set('access_users_list', json_encode($savedUsers), 'access');
 
-        // 4. Set initial preset permissions according to role
-        $initialPermissions = $this->getDefaultPermissionsForRole($role);
-        Setting::set('permissions_user_' . $userId, json_encode($initialPermissions), 'access');
+        // 4. Set initial preset permissions in AccessControlService
+        AccessControlService::purgeLegacyPermissionCache($userId);
 
         // 5. Initialize employee extended data (Schedule, Profile, Payroll, Leaves)
         $isNewUserAdmin = ($role === 'Admin');
@@ -1258,64 +1071,11 @@ class AccessControlController extends Controller
     }
 
     /**
-     * Generate default permission preset based on role.
+     * Generate default permission preset based on role using AccessControlService.
      */
     protected function getDefaultPermissionsForRole(string $role): array
     {
-        if ($role === 'Admin') {
-            return [
-                'branch_yala' => ['view' => true, 'add' => true, 'edit' => true, 'delete' => true, 'switch' => true],
-                'branch_pattani' => ['view' => true, 'add' => true, 'edit' => true, 'delete' => true, 'switch' => true],
-                'dash_kpi' => ['view' => true],
-                'dash_charts' => ['view' => true, 'export' => true],
-                'dash_recent_orders' => ['view' => true],
-                'dash_branch_filter' => ['view' => true, 'switch' => true],
-                'pos_sale' => ['view' => true, 'add' => true],
-                'pos_payment' => ['view' => true, 'edit' => true],
-                'pos_void' => ['edit' => true, 'delete' => true],
-                'pos_discount' => ['edit' => true],
-                'kitchen_queue' => ['view' => true],
-                'kitchen_status' => ['edit' => true],
-                'kitchen_history' => ['view' => true],
-                'online_orders' => ['view' => true, 'edit' => true],
-                'online_cancel' => ['delete' => true],
-                'online_menu' => ['edit' => true],
-                'price_tracker_dash' => ['view' => true],
-                'price_tracker_scan' => ['add' => true],
-                'price_tracker_edit' => ['edit' => true],
-                'price_tracker_history' => ['view' => true, 'export' => true],
-                'inv_stock_list' => ['view' => true],
-                'inv_stock_adjust' => ['add' => true, 'edit' => true],
-                'inv_stock_reconcile' => ['edit' => true],
-                'exp_fixed_cost' => ['view' => true],
-                'exp_daily_record' => ['add' => true, 'edit' => true],
-                'exp_delete' => ['delete' => true],
-                'emp_clock_in' => ['view' => true, 'add' => true],
-                'emp_payroll' => ['view' => true, 'export' => true, 'edit' => true],
-                'emp_geofence' => ['view' => true, 'edit' => true],
-            ];
-        }
-
-        if ($role === 'Employee') {
-            return [
-                'branch_yala' => ['view' => true, 'switch' => true],
-                'branch_pattani' => ['view' => true, 'switch' => true],
-                'dash_kpi' => ['view' => true],
-                'pos_sale' => ['view' => true, 'add' => true],
-                'pos_payment' => ['view' => true],
-                'kitchen_queue' => ['view' => true],
-                'kitchen_status' => ['edit' => true],
-                'online_orders' => ['view' => true],
-                'inv_stock_list' => ['view' => true],
-                'emp_clock_in' => ['view' => true, 'add' => true],
-                'emp_payroll' => ['view' => true],
-            ];
-        }
-
-        // Customer
-        return [
-            'online_orders' => ['view' => true, 'add' => true],
-        ];
+        return $this->formatFlatKeysToMatrix(AccessControlService::getDefaultPermissionsForRole($role));
     }
 
     /**
@@ -1475,9 +1235,8 @@ class AccessControlController extends Controller
         array_unshift($savedUsers, $newUser);
         Setting::set('access_users_list', json_encode($savedUsers), 'access');
 
-        // 3. Grant default permissions immediately
-        $permissions = $this->getDefaultPermissionsForRole($role);
-        Setting::set('permissions_user_' . $userId, json_encode($permissions), 'access');
+        // 3. Grant default permissions immediately via AccessControlService
+        AccessControlService::purgeLegacyPermissionCache($userId);
 
         // 4. Save employee_data profile & password so admin/access shows everything immediately
         $employeeData = [
@@ -1649,9 +1408,8 @@ class AccessControlController extends Controller
         array_unshift($savedUsers, $newUser);
         Setting::set('access_users_list', json_encode($savedUsers), 'access');
 
-        // 3. Grant default role permissions
-        $permissions = $this->getDefaultPermissionsForRole($role);
-        Setting::set('permissions_user_' . $userId, json_encode($permissions), 'access');
+        // 3. Grant default role permissions via AccessControlService
+        AccessControlService::purgeLegacyPermissionCache($userId);
 
         // 4. Remove from pending list
         array_splice($pending, $targetIndex, 1);

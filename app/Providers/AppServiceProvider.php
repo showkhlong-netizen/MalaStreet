@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\MasterSummary;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\AccessControlService;
 use App\Support\LoginLandingResolver;
 use App\Support\ThaiDate;
 use Carbon\Carbon;
@@ -86,7 +87,14 @@ class AppServiceProvider extends ServiceProvider
                 ], $savedSettings);
             }
 
+            // 5. Resolve current user effective permissions (cached per user in request)
+            $currentUserPermissions = [];
+            if ($user && !$isLoggedOut) {
+                $currentUserPermissions = AccessControlService::getEffectivePermissions($user);
+            }
+
             $view->with('currentUser', $profile);
+            $view->with('currentUserPermissions', $currentUserPermissions);
             $view->with('allSystemUsers', $savedUsers);
             $view->with('globalAutoLogoutSettings', $cachedAutoLogoutSettings);
             $view->with('thaiServerNow', ThaiDate::now());
