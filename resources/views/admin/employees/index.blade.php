@@ -565,7 +565,7 @@
                                     onclick="togglePayrollMonthPopover(event)"
                                     class="h-8 px-3 rounded-xl bg-white hover:bg-slate-50 active:scale-95 border-2 border-slate-900 text-slate-800 flex items-center gap-1.5 text-xs font-bold cursor-pointer transition-all shadow-2xs">
                                 <span>📅</span>
-                                <span id="label-payroll-selected">งวด ธ.ค. 2567</span>
+                                <span id="label-payroll-selected">งวด {{ $currentPayroll['period_short'] ?? '' }}</span>
                                 <svg id="chevron-payroll-popover" class="w-3.5 h-3.5 text-slate-500 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                                 </svg>
@@ -581,43 +581,33 @@
 
                         <!-- Quick Month Pills -->
                         <div class="inline-flex flex-wrap items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200/80 shadow-2xs">
-                            <button type="button" onclick="selectPayrollMonth('2024-12')" id="pill-payroll-2024-12" class="payroll-pill px-3 py-1 rounded-xl text-xs font-bold bg-[#0F172A] text-white shadow-xs transition-all cursor-pointer">ธ.ค. 2567</button>
-                            <button type="button" onclick="selectPayrollMonth('2024-11')" id="pill-payroll-2024-11" class="payroll-pill px-3 py-1 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer">พ.ย. 2567</button>
-                            <button type="button" onclick="selectPayrollMonth('2024-10')" id="pill-payroll-2024-10" class="payroll-pill px-3 py-1 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer">ต.ค. 2567</button>
-                            <button type="button" onclick="selectPayrollMonth('2024-09')" id="pill-payroll-2024-09" class="payroll-pill px-3 py-1 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer">ก.ย. 2567</button>
+                            @foreach(array_slice($payrollPeriods, 0, 4, true) as $mKey => $mData)
+                                <button type="button" onclick="selectPayrollMonth('{{ $mKey }}')" id="pill-payroll-{{ $mKey }}" class="payroll-pill px-3 py-1 rounded-xl text-xs {{ $mKey === $selectedMonth ? 'font-bold bg-[#0F172A] text-white shadow-xs' : 'font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50' }} transition-all cursor-pointer">{{ $mData['period_short'] }}</button>
+                            @endforeach
                         </div>
 
-                        <!-- Monthly Calendar Popover (ปฏิทินรายเดือน - ลบรายวันออก เป็นปฏิทินรายเดือนสลับงวด) -->
+                        <!-- Monthly Calendar Popover -->
                         <div id="popover-payroll-calendar"
                              class="absolute right-0 top-full mt-2 z-50 w-72 bg-white rounded-3xl p-4 shadow-2xl border border-slate-200 hidden animate-in fade-in zoom-in-95 duration-150">
                             <!-- Popover Header -->
                             <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-slate-100">
                                 <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                                     <span>🗓️</span>
-                                    <span>ปฏิทินงวดเงินเดือน: ปี 2567 (2024)</span>
+                                    <span>ปฏิทินงวดเงินเดือน: ปี {{ \Carbon\Carbon::now('Asia/Bangkok')->year + 543 }}</span>
                                 </span>
                                 <span class="text-[10px] text-slate-400">งวด 12 เดือน</span>
                             </div>
 
                             <!-- 12 Months Grid -->
                             <div class="grid grid-cols-3 gap-1.5 text-xs">
-                                <button type="button" onclick="selectPayrollMonth('2024-01')" id="btn-month-2024-01" class="cal-month-btn py-2 rounded-xl border border-slate-100 hover:border-rose-400 font-semibold text-slate-700 hover:bg-rose-50 transition-all cursor-pointer">ม.ค. 2567</button>
-                                <button type="button" onclick="selectPayrollMonth('2024-02')" id="btn-month-2024-02" class="cal-month-btn py-2 rounded-xl border border-slate-100 hover:border-rose-400 font-semibold text-slate-700 hover:bg-rose-50 transition-all cursor-pointer">ก.พ. 2567</button>
-                                <button type="button" onclick="selectPayrollMonth('2024-03')" id="btn-month-2024-03" class="cal-month-btn py-2 rounded-xl border border-slate-100 hover:border-rose-400 font-semibold text-slate-700 hover:bg-rose-50 transition-all cursor-pointer">มี.ค. 2567</button>
-                                <button type="button" onclick="selectPayrollMonth('2024-04')" id="btn-month-2024-04" class="cal-month-btn py-2 rounded-xl border border-slate-100 hover:border-rose-400 font-semibold text-slate-700 hover:bg-rose-50 transition-all cursor-pointer">เม.ย. 2567</button>
-                                <button type="button" onclick="selectPayrollMonth('2024-05')" id="btn-month-2024-05" class="cal-month-btn py-2 rounded-xl border border-slate-100 hover:border-rose-400 font-semibold text-slate-700 hover:bg-rose-50 transition-all cursor-pointer">พ.ค. 2567</button>
-                                <button type="button" onclick="selectPayrollMonth('2024-06')" id="btn-month-2024-06" class="cal-month-btn py-2 rounded-xl border border-slate-100 hover:border-rose-400 font-semibold text-slate-700 hover:bg-rose-50 transition-all cursor-pointer">มิ.ย. 2567</button>
-                                <button type="button" onclick="selectPayrollMonth('2024-07')" id="btn-month-2024-07" class="cal-month-btn py-2 rounded-xl border border-slate-100 hover:border-rose-400 font-semibold text-slate-700 hover:bg-rose-50 transition-all cursor-pointer">ก.ค. 2567</button>
-                                <button type="button" onclick="selectPayrollMonth('2024-08')" id="btn-month-2024-08" class="cal-month-btn py-2 rounded-xl border border-slate-100 hover:border-rose-400 font-semibold text-slate-700 hover:bg-rose-50 transition-all cursor-pointer">ส.ค. 2567</button>
-                                <button type="button" onclick="selectPayrollMonth('2024-09')" id="btn-month-2024-09" class="cal-month-btn py-2 rounded-xl border border-slate-100 hover:border-rose-400 font-semibold text-slate-700 hover:bg-rose-50 transition-all cursor-pointer">ก.ย. 2567</button>
-                                <button type="button" onclick="selectPayrollMonth('2024-10')" id="btn-month-2024-10" class="cal-month-btn py-2 rounded-xl border border-slate-100 hover:border-rose-400 font-semibold text-slate-700 hover:bg-rose-50 transition-all cursor-pointer">ต.ค. 2567</button>
-                                <button type="button" onclick="selectPayrollMonth('2024-11')" id="btn-month-2024-11" class="cal-month-btn py-2 rounded-xl border border-slate-100 hover:border-rose-400 font-semibold text-slate-700 hover:bg-rose-50 transition-all cursor-pointer">พ.ย. 2567</button>
-                                <button type="button" onclick="selectPayrollMonth('2024-12')" id="btn-month-2024-12" class="cal-month-btn py-2 rounded-xl bg-slate-900 text-white font-bold shadow-xs transition-all cursor-pointer">ธ.ค. 2567</button>
+                                @foreach(array_reverse($payrollPeriods, true) as $mKey => $mData)
+                                    <button type="button" onclick="selectPayrollMonth('{{ $mKey }}')" id="btn-month-{{ $mKey }}" class="cal-month-btn py-2 rounded-xl {{ $mKey === $selectedMonth ? 'bg-slate-900 text-white font-bold shadow-xs' : 'border border-slate-100 hover:border-rose-400 font-semibold text-slate-700 hover:bg-rose-50' }} transition-all cursor-pointer">{{ $mData['period_short'] }}</button>
+                                @endforeach
                             </div>
 
                             <!-- Popover Footer -->
                             <div class="flex items-center justify-between pt-2.5 mt-3 border-t border-slate-100 text-xs">
-                                <button type="button" onclick="selectPayrollMonth('2024-12')" class="text-blue-600 hover:text-blue-800 font-bold cursor-pointer">งวดล่าสุด</button>
+                                <button type="button" onclick="selectPayrollMonth('{{ $currentMonthKey }}')" class="text-blue-600 hover:text-blue-800 font-bold cursor-pointer">งวดล่าสุด</button>
                                 <button type="button" onclick="closePayrollMonthPopover()" class="text-slate-400 hover:text-slate-700 cursor-pointer">ปิด</button>
                             </div>
                         </div>
@@ -634,7 +624,7 @@
                             </svg>
                         </div>
                         <span class="text-[11px] sm:text-xs text-slate-500 font-medium">เงินเดือนพื้นฐาน</span>
-                        <span id="box-base-salary" class="font-extrabold text-sm sm:text-base text-slate-800 mt-0.5">฿{{ number_format($currentPayroll['base_salary'] ?? 15000) }}</span>
+                        <span id="box-base-salary" class="font-extrabold text-sm sm:text-base text-slate-800 mt-0.5">฿{{ number_format($currentPayroll['base_salary'] ?? 0) }}</span>
                     </div>
 
                     <!-- 2. ค่าล่วงเวลา (OT) -->
@@ -646,7 +636,7 @@
                             </svg>
                         </div>
                         <span class="text-[11px] sm:text-xs text-slate-500 font-medium">ค่าล่วงเวลา (OT)</span>
-                        <span id="box-ot-amount" class="font-extrabold text-sm sm:text-base text-emerald-600 mt-0.5">฿{{ number_format($currentPayroll['ot_amount'] ?? 2250) }}</span>
+                        <span id="box-ot-amount" class="font-extrabold text-sm sm:text-base text-emerald-600 mt-0.5">฿{{ number_format($currentPayroll['ot_amount'] ?? 0) }}</span>
                     </div>
 
                     <!-- 3. โบนัส / เบี้ยขยัน -->
@@ -657,7 +647,7 @@
                             </svg>
                         </div>
                         <span class="text-[11px] sm:text-xs text-slate-500 font-medium">โบนัส / เบี้ยขยัน</span>
-                        <span id="box-bonus-amount" class="font-extrabold text-sm sm:text-base text-emerald-600 mt-0.5">฿{{ number_format($currentPayroll['bonus'] ?? 1000) }}</span>
+                        <span id="box-bonus-amount" class="font-extrabold text-sm sm:text-base text-emerald-600 mt-0.5">฿{{ number_format($currentPayroll['bonus'] ?? 0) }}</span>
                     </div>
 
                     <!-- 4. รายการหัก -->
@@ -669,7 +659,8 @@
                             </svg>
                         </div>
                         <span class="text-[11px] sm:text-xs text-slate-500 font-medium">รายการหัก</span>
-                        <span id="box-deductions-amount" class="font-extrabold text-sm sm:text-base text-rose-600 mt-0.5">-฿{{ number_format($currentPayroll['deductions_total'] ?? 750) }}</span>
+                        @php $heroDed = (float) ($currentPayroll['deductions_total'] ?? 0); @endphp
+                        <span id="box-deductions-amount" class="font-extrabold text-sm sm:text-base text-rose-600 mt-0.5">{{ $heroDed > 0 ? '-฿' : '฿' }}{{ number_format($heroDed) }}</span>
                     </div>
 
                     <!-- 5. รับสุทธิ (Large Red Card matching Image 3) -->
@@ -682,7 +673,7 @@
                             </svg>
                         </div>
                         <span class="text-xs font-bold text-rose-100">รับสุทธิ</span>
-                        <span id="box-net-salary" class="font-black text-lg sm:text-xl text-white mt-0.5">฿{{ number_format($currentPayroll['net_salary'] ?? 16500) }}</span>
+                        <span id="box-net-salary" class="font-black text-lg sm:text-xl text-white mt-0.5">฿{{ number_format($currentPayroll['net_salary'] ?? 0) }}</span>
                     </div>
                 </div>
             </div>
@@ -761,7 +752,7 @@
                                     <div class="flex items-center gap-1.5">
                                         <span class="font-extrabold text-slate-900 text-sm sm:text-base leading-tight truncate" @if($loop->first) id="card-emp-name" @endif>{{ $card['name'] }}</span>
                                         <button type="button"
-                                                onclick="location.reload()"
+                                                onclick="event.stopPropagation(); syncEmployeesData(true)"
                                                 class="w-5 h-5 rounded-md border border-slate-200/90 bg-white hover:bg-slate-50 active:scale-95 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-all cursor-pointer shadow-2xs shrink-0"
                                                 title="รีเฟรชข้อมูล">
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
@@ -788,9 +779,16 @@
                             </div>
 
                             <!-- Right: 'เข้างาน' label + Grade badge -->
+                            @php
+                                $gradeColor = match($card['grade'] ?? 'A') {
+                                    'A', 'B' => 'bg-[#DCFCE7] text-[#16A34A]',
+                                    'C' => 'bg-amber-50 text-amber-600',
+                                    default => 'bg-rose-50 text-rose-600',
+                                };
+                            @endphp
                             <div class="flex flex-col items-center shrink-0">
                                 <span class="text-[10px] font-semibold text-slate-400 mb-0.5">เข้างาน</span>
-                                <div class="w-7 h-7 rounded-full bg-[#DCFCE7] text-[#16A34A] font-black text-xs flex items-center justify-center shadow-2xs">
+                                <div class="w-7 h-7 rounded-full {{ $gradeColor }} font-black text-xs flex items-center justify-center shadow-2xs">
                                     {{ $card['grade'] }}
                                 </div>
                             </div>
@@ -835,16 +833,25 @@
                         </div>
 
                         <!-- อัตราเข้างาน -->
+                        @php
+                            $rateNum = (int) ($card['rate_num'] ?? 0);
+                            $rateTextColor = $rateNum >= 80 ? 'text-[#16A34A]' : ($rateNum >= 50 ? 'text-amber-600' : 'text-rose-600');
+                            $rateBarColor = $rateNum >= 80 ? 'bg-[#16A34A]' : ($rateNum >= 50 ? 'bg-amber-500' : 'bg-rose-500');
+                            $lateTextColor = (($card['late_days'] ?? 0) > 0) ? 'text-amber-600' : 'text-[#16A34A]';
+                            $absentTextColor = (($card['absent_days'] ?? 0) > 0) ? 'text-rose-600' : 'text-[#16A34A]';
+                        @endphp
                         <div class="pt-2.5 pb-2.5 border-t border-slate-100">
                             <div class="flex items-center justify-between text-xs">
                                 <span class="font-extrabold text-slate-800 text-[11px] sm:text-xs">อัตราเข้างาน</span>
                                 <div class="flex items-center gap-1">
-                                    <span class="text-emerald-500 font-bold text-[10px]">{{ $card['rate_delta'] }}</span>
-                                    <span class="font-black text-[#16A34A] text-xs sm:text-sm">{{ $card['rate_percent'] }}</span>
+                                    @if(!empty($card['rate_delta']))
+                                        <span class="{{ $rateTextColor }} font-bold text-[10px]">{{ $card['rate_delta'] }}</span>
+                                    @endif
+                                    <span class="font-black {{ $rateTextColor }} text-xs sm:text-sm">{{ $card['rate_percent'] }}</span>
                                 </div>
                             </div>
                             <div class="w-full bg-slate-100 rounded-full h-1.5 mt-1.5 overflow-hidden">
-                                <div class="bg-[#16A34A] h-full rounded-full transition-all duration-300" style="width: {{ $card['progress_width'] }};"></div>
+                                <div class="{{ $rateBarColor }} h-full rounded-full transition-all duration-300" style="width: {{ $card['progress_width'] }};"></div>
                             </div>
                         </div>
 
@@ -869,7 +876,7 @@
                                     </svg>
                                     <span>มาสาย</span>
                                 </div>
-                                <span class="font-bold text-[#16A34A]">{{ $card['late_text'] }}</span>
+                                <span class="font-bold {{ $lateTextColor }}">{{ $card['late_text'] }}</span>
                             </div>
 
                             <div class="py-2 flex items-center justify-between">
@@ -879,7 +886,7 @@
                                     </svg>
                                     <span>ขาดงาน</span>
                                 </div>
-                                <span class="font-bold text-[#16A34A]">{{ $card['absent_text'] }}</span>
+                                <span class="font-bold {{ $absentTextColor }}">{{ $card['absent_text'] }}</span>
                             </div>
                         </div>
 
@@ -1365,7 +1372,7 @@
                         <span class="text-base">📊</span>
                         <span>สรุปภาพรวมเวลาการทำงานรายเดือน (พนักงานทุกคน)</span>
                     </div>
-                    <span class="text-xs font-bold text-slate-400">ประจำเดือน พฤศจิกายน 2567</span>
+                    <span class="text-xs font-bold text-slate-400" id="overview-monthly-period-label">ประจำเดือน {{ $currentPayroll['period_label'] ?? '' }}</span>
                 </div>
 
                 <div class="overflow-x-auto rounded-2xl border border-slate-100">
@@ -1809,35 +1816,39 @@
                 </div>
                 <div class="text-right">
                     <span class="text-slate-500 block text-xs">งวดเงินเดือน:</span>
-                    <span id="ps-period" class="font-bold text-rose-600 text-sm">ธันวาคม 2567</span>
-                    <span class="text-[11px] text-slate-400 block">จ่ายเมื่อ: 30 ธ.ค. 2567</span>
+                    <span id="ps-period" class="font-bold text-rose-600 text-sm">{{ $currentPayroll['period_label'] ?? '' }}</span>
+                    <span id="ps-pay-date" class="text-[11px] text-slate-400 block">จ่ายเมื่อ: {{ $currentPayroll['payment_date'] ?? '' }}</span>
                 </div>
             </div>
 
             <div class="border border-slate-200/90 rounded-2xl p-4 divide-y divide-slate-100">
                 <div class="py-2 flex justify-between font-medium">
                     <span class="text-slate-600">เงินเดือนพื้นฐาน (Base Salary)</span>
-                    <span class="font-bold text-slate-800">฿15,000.00</span>
+                    <span id="ps-base-salary" class="font-bold text-slate-800">฿{{ number_format($currentPayroll['base_salary'] ?? 0, 2) }}</span>
                 </div>
                 <div class="py-2 flex justify-between font-medium">
-                    <span class="text-slate-600">ค่าล่วงเวลา (Overtime 8 ชม. 34 นาที)</span>
-                    <span class="font-bold text-emerald-600">+฿2,250.00</span>
+                    <span id="ps-ot-label" class="text-slate-600">ค่าล่วงเวลา (Overtime {{ $currentPayroll['ot_hours'] ?? '0 ชม.' }})</span>
+                    <span id="ps-ot-amount" class="font-bold text-emerald-600">+฿{{ number_format($currentPayroll['ot_amount'] ?? 0, 2) }}</span>
                 </div>
                 <div class="py-2 flex justify-between font-medium">
                     <span class="text-slate-600">โบนัส / เบี้ยขยัน (Incentive)</span>
-                    <span class="font-bold text-emerald-600">+฿1,000.00</span>
+                    <span id="ps-bonus-amount" class="font-bold text-emerald-600">+฿{{ number_format($currentPayroll['bonus'] ?? 0, 2) }}</span>
                 </div>
-                <div class="py-2 flex justify-between font-medium">
+                <div id="ps-late-row" class="py-2 flex justify-between font-medium {{ ($currentPayroll['deduction_late'] ?? 0) > 0 ? '' : 'hidden' }}">
                     <span class="text-slate-600">หักจากการมาสาย</span>
-                    <span class="font-bold text-rose-600">-฿250.00</span>
+                    <span id="ps-deduction-late" class="font-bold text-rose-600">-฿{{ number_format($currentPayroll['deduction_late'] ?? 0, 2) }}</span>
+                </div>
+                <div id="ps-ss-row" class="py-2 flex justify-between font-medium {{ ($currentPayroll['deduction_social_security'] ?? 0) > 0 ? '' : 'hidden' }}">
+                    <span class="text-slate-600">หักเงินสมทบประกันสังคม</span>
+                    <span id="ps-deduction-ss" class="font-bold text-rose-600">-฿{{ number_format($currentPayroll['deduction_social_security'] ?? 0, 2) }}</span>
                 </div>
                 <div class="py-2 flex justify-between font-medium">
-                    <span class="text-slate-600">หักเงินสมทบประกันสังคม</span>
-                    <span class="font-bold text-rose-600">-฿500.00</span>
+                    <span class="text-slate-600">รวมรายการหักทั้งหมด</span>
+                    <span id="ps-deductions-total" class="font-bold text-rose-600">{{ ($currentPayroll['deductions_total'] ?? 0) > 0 ? '-฿' : '฿' }}{{ number_format($currentPayroll['deductions_total'] ?? 0, 2) }}</span>
                 </div>
                 <div class="pt-3 flex justify-between items-baseline font-black">
                     <span class="text-slate-800 text-base">ยอดรับสุทธิ (Net Pay)</span>
-                    <span class="text-2xl text-[#E50914]">฿16,500.00</span>
+                    <span id="ps-net-salary" class="text-2xl text-[#E50914]">฿{{ number_format($currentPayroll['net_salary'] ?? 0, 2) }}</span>
                 </div>
             </div>
 
@@ -1865,7 +1876,10 @@
 
 <script>
     // Payroll data dataset
-    const payrollData = @json($payrollPeriods);
+    let payrollData = @json($payrollPeriods);
+    let payrollCardsData = @json($payrollCards ?? []);
+    let selectedHeroEmployeeId = @json($employee['id'] ?? null);
+    const serverTodayDateKey = @json($todayDateKey ?? \Carbon\Carbon::now('Asia/Bangkok')->format('Y-m-d'));
 
     // 1. Tab Switching Function
     function switchEmployeeTab(tab) {
@@ -1908,8 +1922,8 @@
         window.history.replaceState({}, '', url);
     }
 
-    // 2. Change Payroll Month & Monthly Calendar Popover (Matches Image 1 style for Payroll)
-    let currentPayrollMonth = '2024-12';
+    // 2. Change Payroll Month & Monthly Calendar Popover
+    let currentPayrollMonth = @json($selectedMonth ?? \Carbon\Carbon::now('Asia/Bangkok')->format('Y-m'));
 
     function togglePayrollMonthPopover(event) {
         event.stopPropagation();
@@ -1965,6 +1979,9 @@
         changePayrollMonth(monthKey);
         closePayrollMonthPopover();
         showToast('เปลี่ยนงวดเงินเดือน: ' + data.period_label);
+        if (typeof syncEmployeesData === 'function') {
+            syncEmployeesData(false, monthKey);
+        }
     }
 
     function navigatePayrollMonth(delta) {
@@ -2028,6 +2045,7 @@
 
     function selectHeroEmployee(card) {
         if (!card) return;
+        selectedHeroEmployeeId = card.id;
         const heroName = document.getElementById('hero-payroll-emp-name');
         if (heroName) heroName.innerText = card.name;
         const heroSub = document.getElementById('hero-payroll-emp-subtitle');
@@ -2685,7 +2703,7 @@
                     // Dynamically update overview logs for this employee
                     if (typeof allAttendanceLogs !== 'undefined' && Array.isArray(allAttendanceLogs)) {
                         allAttendanceLogs.forEach(item => {
-                            if ((item.date === '2026-11-08' || item.date === '{{ date("Y-m-d") }}') && (item.name === json.employee_name || item.employee_id === json.employee_id)) {
+                            if (item.date === serverTodayDateKey && (item.name === json.employee_name || item.employee_id === json.employee_id)) {
                                 item.check_in_time = json.check_in || '—';
                                 item.check_out_time = json.check_out || '—';
                                 item.total_hours = json.work_hours || '—';
@@ -2702,6 +2720,9 @@
                         if (currentFiltered.length > 0) {
                             renderOverviewAttendanceRows(currentFiltered);
                         }
+                    }
+                    if (typeof syncEmployeesData === 'function') {
+                        syncEmployeesData(false);
                     }
                 } else {
                     alert(json.message || 'เกิดข้อผิดพลาดในการบันทึกเวลา');
@@ -2747,19 +2768,42 @@
         if (card) {
             const empNameEl = document.getElementById('ps-emp-name');
             const empRoleEl = document.getElementById('ps-emp-role');
+            const periodEl = document.getElementById('ps-period');
+            const payDateEl = document.getElementById('ps-pay-date');
             const baseSalaryEl = document.getElementById('ps-base-salary');
+            const otLabelEl = document.getElementById('ps-ot-label');
             const otAmountEl = document.getElementById('ps-ot-amount');
             const bonusAmountEl = document.getElementById('ps-bonus-amount');
+            const lateRowEl = document.getElementById('ps-late-row');
+            const lateEl = document.getElementById('ps-deduction-late');
+            const ssRowEl = document.getElementById('ps-ss-row');
+            const ssEl = document.getElementById('ps-deduction-ss');
             const deductionsTotalEl = document.getElementById('ps-deductions-total');
             const netSalaryEl = document.getElementById('ps-net-salary');
 
+            const periodInfo = (payrollData && payrollData[currentPayrollMonth]) ? payrollData[currentPayrollMonth] : null;
+            if (periodEl && periodInfo) periodEl.innerText = periodInfo.period_label;
+            if (payDateEl && periodInfo) payDateEl.innerText = 'จ่ายเมื่อ: ' + periodInfo.payment_date;
+
+            const fmt2 = (val) => Number(val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             if (empNameEl) empNameEl.innerText = card.name;
             if (empRoleEl) empRoleEl.innerText = `รหัส: ${card.id} • ${card.role_label} • ${card.branch}`;
-            if (baseSalaryEl) baseSalaryEl.innerText = '฿' + Number(card.base_salary).toLocaleString();
-            if (otAmountEl) otAmountEl.innerText = '฿' + Number(card.ot_amount).toLocaleString();
-            if (bonusAmountEl) bonusAmountEl.innerText = '฿' + Number(card.bonus).toLocaleString();
-            if (deductionsTotalEl) deductionsTotalEl.innerText = (card.deductions > 0 ? '-฿' : '฿') + Number(card.deductions).toLocaleString();
-            if (netSalaryEl) netSalaryEl.innerText = '฿' + Number(card.net_salary).toLocaleString();
+            if (baseSalaryEl) baseSalaryEl.innerText = '฿' + fmt2(card.base_salary);
+            if (otLabelEl) otLabelEl.innerText = `ค่าล่วงเวลา (Overtime ${card.ot_hours || '0 ชม.'})`;
+            if (otAmountEl) otAmountEl.innerText = '+฿' + fmt2(card.ot_amount);
+            if (bonusAmountEl) bonusAmountEl.innerText = '+฿' + fmt2(card.bonus);
+
+            const lateAmt = Number(card.deduction_late || 0);
+            if (lateRowEl) lateRowEl.classList.toggle('hidden', lateAmt <= 0);
+            if (lateEl) lateEl.innerText = '-฿' + fmt2(lateAmt);
+
+            const ssAmt = Number(card.deduction_ss || 0);
+            if (ssRowEl) ssRowEl.classList.toggle('hidden', ssAmt <= 0);
+            if (ssEl) ssEl.innerText = '-฿' + fmt2(ssAmt);
+
+            const totalDed = Number(card.deductions || 0);
+            if (deductionsTotalEl) deductionsTotalEl.innerText = (totalDed > 0 ? '-฿' : '฿') + fmt2(totalDed);
+            if (netSalaryEl) netSalaryEl.innerText = '฿' + fmt2(card.net_salary);
         }
         document.getElementById('modal-payslip-viewer').classList.remove('hidden');
     }
@@ -2803,20 +2847,27 @@
     function refreshOverview() {
         const btn = document.getElementById('btn-refresh-overview');
         if (btn) btn.innerHTML = `<span class="animate-spin text-sm">⏳</span><span>กำลังโหลด...</span>`;
-        setTimeout(() => {
+        Promise.resolve(typeof syncEmployeesData === 'function' ? syncEmployeesData(false) : null).finally(() => {
             if (btn) btn.innerHTML = `<svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg><span>รีเฟรช</span>`;
             setOverviewPresetFilter(currentOverviewPreset);
             showToast('รีเฟรชข้อมูลเวลาการเข้างานของพนักงานล่าสุดเรียบร้อย');
-        }, 400);
+        });
     }
 
-    // 10. Multi-Day Dataset & Interactive Calendar Popover for Overview (Image 1)
-    const allAttendanceLogs = @json($allAttendanceLogs ?? []);
+    function shiftIsoDateKey(baseIso, deltaDays) {
+        const [y, m, d] = baseIso.split('-').map(Number);
+        const dt = new Date(y, m - 1, d + deltaDays);
+        return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+    }
+
+    // 10. Multi-Day Dataset & Interactive Calendar Popover for Overview
+    let allAttendanceLogs = @json($allAttendanceLogs ?? []);
     let currentOverviewPreset = 'today';
     let overviewCalMode = 'daily'; // 'daily' or 'range'
-    let overviewCalYear = 2026;
-    let overviewCalMonth = 10; // 0-indexed: 10 = November
-    let overviewSelectedDate = '2026-11-08';
+    const [initOvYear, initOvMonth] = serverTodayDateKey.split('-').map(Number);
+    let overviewCalYear = initOvYear;
+    let overviewCalMonth = initOvMonth - 1; // 0-indexed
+    let overviewSelectedDate = serverTodayDateKey;
     let overviewRangeStart = null;
     let overviewRangeEnd = null;
 
@@ -2976,9 +3027,10 @@
     }
 
     function onOverviewCalToday() {
-        overviewSelectedDate = '2026-11-08';
-        overviewCalYear = 2026;
-        overviewCalMonth = 10;
+        const [y, m] = serverTodayDateKey.split('-').map(Number);
+        overviewSelectedDate = serverTodayDateKey;
+        overviewCalYear = y;
+        overviewCalMonth = m - 1;
         setOverviewPresetFilter('today');
         closeOverviewDatePopover();
     }
@@ -3004,23 +3056,28 @@
 
         if (preset === 'today') {
             label = 'วันนี้';
-            overviewSelectedDate = '2026-11-08';
-            filtered = allAttendanceLogs.filter(log => log.date === '2026-11-08');
+            overviewSelectedDate = serverTodayDateKey;
+            filtered = allAttendanceLogs.filter(log => log.date === serverTodayDateKey);
         } else if (preset === '3days') {
             label = '3 วันล่าสุด';
-            filtered = allAttendanceLogs.filter(log => log.date >= '2026-11-06' && log.date <= '2026-11-08');
+            const from3 = shiftIsoDateKey(serverTodayDateKey, -2);
+            filtered = allAttendanceLogs.filter(log => log.date >= from3 && log.date <= serverTodayDateKey);
         } else if (preset === '7days') {
             label = '7 วันล่าสุด';
-            filtered = allAttendanceLogs.filter(log => log.date >= '2026-11-02' && log.date <= '2026-11-08');
+            const from7 = shiftIsoDateKey(serverTodayDateKey, -6);
+            filtered = allAttendanceLogs.filter(log => log.date >= from7 && log.date <= serverTodayDateKey);
         } else if (preset === '15days') {
             label = '15 วันล่าสุด';
-            filtered = allAttendanceLogs.filter(log => log.date >= '2026-10-25' && log.date <= '2026-11-08');
+            const from15 = shiftIsoDateKey(serverTodayDateKey, -14);
+            filtered = allAttendanceLogs.filter(log => log.date >= from15 && log.date <= serverTodayDateKey);
         } else if (preset === '30days') {
             label = '30 วันล่าสุด';
-            filtered = allAttendanceLogs.filter(log => log.date >= '2026-10-10' && log.date <= '2026-11-08');
+            const from30 = shiftIsoDateKey(serverTodayDateKey, -29);
+            filtered = allAttendanceLogs.filter(log => log.date >= from30 && log.date <= serverTodayDateKey);
         } else if (preset === 'month') {
             label = 'ทั้งเดือน';
-            filtered = allAttendanceLogs.filter(log => log.date.startsWith('2026-11'));
+            const monthPrefix = serverTodayDateKey.slice(0, 7);
+            filtered = allAttendanceLogs.filter(log => log.date.startsWith(monthPrefix));
         } else {
             label = 'ทั้งหมด';
             filtered = [...allAttendanceLogs];
@@ -3218,6 +3275,268 @@
         }
     });
 
+    // 11. Real-Time Auto-Sync from Access Control & Attendance Logs
+    let lastSyncSignature = JSON.stringify({ cards: payrollCardsData, monthly: @json($monthlyAttendanceSummary ?? []), logs: allAttendanceLogs });
+    let isSyncInFlight = false;
+
+    function escapeHtmlText(str) {
+        return String(str ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function renderPayrollCardsGrid(cards) {
+        const grid = document.getElementById('payroll-cards-grid');
+        if (!grid) return;
+
+        if (!cards || cards.length === 0) {
+            grid.innerHTML = `<div class="col-span-full bg-white rounded-3xl p-8 border border-slate-100 text-center text-slate-400 text-sm font-semibold">ยังไม่มีข้อมูลพนักงานในระบบการเข้าถึง</div>`;
+            return;
+        }
+
+        const activeId = selectedHeroEmployeeId || cards[0].id;
+        grid.innerHTML = cards.map((card, idx) => {
+            const isSelected = card.id === activeId;
+            const rateNum = Number(card.rate_num || 0);
+            const rateTextColor = rateNum >= 80 ? 'text-[#16A34A]' : (rateNum >= 50 ? 'text-amber-600' : 'text-rose-600');
+            const rateBarColor = rateNum >= 80 ? 'bg-[#16A34A]' : (rateNum >= 50 ? 'bg-amber-500' : 'bg-rose-500');
+            const lateTextColor = Number(card.late_days || 0) > 0 ? 'text-amber-600' : 'text-[#16A34A]';
+            const absentTextColor = Number(card.absent_days || 0) > 0 ? 'text-rose-600' : 'text-[#16A34A]';
+            const gradeColor = (card.grade === 'A' || card.grade === 'B')
+                ? 'bg-[#DCFCE7] text-[#16A34A]'
+                : (card.grade === 'C' ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600');
+
+            const avatarHtml = card.avatar
+                ? `<img src="${escapeHtmlText(card.avatar)}" alt="${escapeHtmlText(card.name)}" class="w-10 h-10 rounded-xl object-cover shrink-0 shadow-2xs border border-slate-200">`
+                : `<div class="w-10 h-10 rounded-xl ${escapeHtmlText(card.color)} text-white flex items-center justify-center shrink-0 shadow-2xs font-black text-xl leading-none">${escapeHtmlText(card.initials)}</div>`;
+
+            const otSubHtml = Number(card.ot_amount || 0) > 0
+                ? `<span ${idx === 0 ? 'id="dtl-ot-rate"' : ''} class="text-[10px] text-slate-400">${escapeHtmlText(card.ot_hours)} × ฿${Number(card.ot_rate || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/ชม.</span>`
+                : '';
+
+            const dedVal = Number(card.deductions || 0);
+            const dedDetailHtml = dedVal > 0
+                ? `<div class="pl-2 mt-1 space-y-0.5 text-slate-500 text-[10.5px]">
+                    ${Number(card.deduction_late || 0) > 0 ? `<div class="flex justify-between"><span>• หักจากการมาสาย</span><span ${idx === 0 ? 'id="dtl-late"' : ''} class="text-rose-500 font-semibold">-฿${Number(card.deduction_late).toLocaleString()}</span></div>` : ''}
+                    ${Number(card.deduction_ss || 0) > 0 ? `<div class="flex justify-between"><span>• ประกันสังคม</span><span ${idx === 0 ? 'id="dtl-ss"' : ''} class="text-rose-500 font-semibold">-฿${Number(card.deduction_ss).toLocaleString()}</span></div>` : ''}
+                   </div>`
+                : '';
+
+            return `
+                <div class="payroll-card bg-white rounded-3xl p-3.5 sm:p-4 border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-all cursor-pointer hover:border-rose-300 ${isSelected ? 'ring-2 ring-[#E50914]' : ''}"
+                     id="payroll-card-${escapeHtmlText(card.id)}"
+                     data-card-index="${idx}"
+                     onclick="selectHeroEmployee(payrollCardsData[${idx}])"
+                     data-search-text="${escapeHtmlText(card.search_text)}">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 pb-3">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                ${avatarHtml}
+                                <div class="space-y-0.5 min-w-0">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="font-extrabold text-slate-900 text-sm sm:text-base leading-tight truncate" ${idx === 0 ? 'id="card-emp-name"' : ''}>${escapeHtmlText(card.name)}</span>
+                                        <button type="button" onclick="event.stopPropagation(); syncEmployeesData(true)" class="w-5 h-5 rounded-md border border-slate-200/90 bg-white hover:bg-slate-50 active:scale-95 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-all cursor-pointer shadow-2xs shrink-0" title="รีเฟรชข้อมูล">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                        </button>
+                                    </div>
+                                    <div class="flex items-center flex-wrap gap-1 text-[10px] sm:text-[11px]">
+                                        <span class="inline-flex items-center gap-0.5 text-slate-400 font-medium">
+                                            <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                            <span>${escapeHtmlText(card.branch)}</span>
+                                        </span>
+                                        <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md ${escapeHtmlText(card.role_badge_class)} font-bold text-[10px]">
+                                            <span>${escapeHtmlText(card.role_badge_icon)}</span>
+                                            <span>${escapeHtmlText(card.role_badge_text)}</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-center shrink-0">
+                                <span class="text-[10px] font-semibold text-slate-400 mb-0.5">เข้างาน</span>
+                                <div class="w-7 h-7 rounded-full ${gradeColor} font-black text-xs flex items-center justify-center shadow-2xs">${escapeHtmlText(card.grade)}</div>
+                            </div>
+                        </div>
+                        <div class="pt-2.5 pb-2.5 border-t border-slate-100">
+                            <div class="flex items-center gap-1.5 pb-1.5 text-slate-800 font-bold text-xs"><span class="text-[#E50914]">📊</span><span>สรุปการทำงาน</span></div>
+                            <div class="grid grid-cols-4 gap-1 pt-0.5 text-center">
+                                <div class="p-1 sm:p-1.5 rounded-xl bg-rose-50/50 border border-rose-100/60 flex flex-col items-center">
+                                    <span class="text-[#E50914] text-xs mb-0.5">📅</span>
+                                    <span ${idx === 0 ? 'id="stat-work-days"' : ''} class="font-black text-[11px] sm:text-xs text-emerald-600 leading-tight">${card.work_days} วัน</span>
+                                    <span class="text-[8.5px] sm:text-[9.5px] text-slate-500 mt-0.5 leading-tight truncate">วันทำงาน</span>
+                                </div>
+                                <div class="p-1 sm:p-1.5 rounded-xl bg-rose-50/50 border border-rose-100/60 flex flex-col items-center">
+                                    <span class="text-[#E50914] text-xs mb-0.5">🕒</span>
+                                    <span ${idx === 0 ? 'id="stat-total-hours"' : ''} class="font-black text-[11px] sm:text-xs text-emerald-600 leading-tight">${escapeHtmlText(card.work_hours)}</span>
+                                    <span class="text-[8.5px] sm:text-[9.5px] text-slate-500 mt-0.5 leading-tight truncate">ชั่วโมงรวม</span>
+                                </div>
+                                <div class="p-1 sm:p-1.5 rounded-xl bg-rose-50/50 border border-rose-100/60 flex flex-col items-center">
+                                    <span class="text-[#E50914] text-xs mb-0.5">⏱️</span>
+                                    <span ${idx === 0 ? 'id="stat-ot-hours"' : ''} class="font-black text-[11px] sm:text-xs text-emerald-600 leading-tight">${escapeHtmlText(card.ot_hours)}</span>
+                                    <span class="text-[8.5px] sm:text-[9.5px] text-slate-500 mt-0.5 leading-tight truncate">OT รวม</span>
+                                </div>
+                                <div class="p-1 sm:p-1.5 rounded-xl bg-rose-50/50 border border-rose-100/60 flex flex-col items-center">
+                                    <span class="text-[#E50914] text-xs mb-0.5">☂️</span>
+                                    <span ${idx === 0 ? 'id="stat-leave-days"' : ''} class="font-black text-[11px] sm:text-xs text-emerald-600 leading-tight">${card.leave_days} วัน</span>
+                                    <span class="text-[8.5px] sm:text-[9.5px] text-slate-500 mt-0.5 leading-tight truncate">วันลา</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pt-2.5 pb-2.5 border-t border-slate-100">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="font-extrabold text-slate-800 text-[11px] sm:text-xs">อัตราเข้างาน</span>
+                                <div class="flex items-center gap-1">
+                                    ${card.rate_delta ? `<span class="${rateTextColor} font-bold text-[10px]">${escapeHtmlText(card.rate_delta)}</span>` : ''}
+                                    <span class="font-black ${rateTextColor} text-xs sm:text-sm">${escapeHtmlText(card.rate_percent)}</span>
+                                </div>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-1.5 mt-1.5 overflow-hidden">
+                                <div class="${rateBarColor} h-full rounded-full transition-all duration-300" style="width: ${escapeHtmlText(card.progress_width)};"></div>
+                            </div>
+                        </div>
+                        <div class="divide-y divide-slate-100 text-[11px] sm:text-xs border-t border-slate-100">
+                            <div class="py-2 flex items-center justify-between">
+                                <div class="flex items-center gap-1.5 text-slate-600 font-medium">
+                                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" /><path stroke-linecap="round" stroke-linejoin="round" d="M8 12l2.5 2.5L16 9" /></svg>
+                                    <span>มาทำงาน</span>
+                                </div>
+                                <span class="font-black text-slate-800">${escapeHtmlText(card.attendance_ratio)}</span>
+                            </div>
+                            <div class="py-2 flex items-center justify-between">
+                                <div class="flex items-center gap-1.5 text-slate-600 font-medium">
+                                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path stroke-linecap="round" d="M12 7v5l3 2" /></svg>
+                                    <span>มาสาย</span>
+                                </div>
+                                <span class="font-bold ${lateTextColor}">${escapeHtmlText(card.late_text)}</span>
+                            </div>
+                            <div class="py-2 flex items-center justify-between">
+                                <div class="flex items-center gap-1.5 text-slate-600 font-medium">
+                                    <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 9l-6 6m0-6l6 6" /></svg>
+                                    <span>ขาดงาน</span>
+                                </div>
+                                <span class="font-bold ${absentTextColor}">${escapeHtmlText(card.absent_text)}</span>
+                            </div>
+                        </div>
+                        <div class="border-t-2 border-slate-100 my-2.5"></div>
+                        <div class="flex items-center gap-1.5 pb-2 border-b border-slate-100 text-slate-800 font-bold text-xs sm:text-[13px]"><span class="text-[#E50914]">📑</span><span>รายละเอียดเงินเดือน</span></div>
+                        <div class="divide-y divide-slate-100 text-[11px] sm:text-xs pt-1">
+                            <div class="py-1.5 flex justify-between items-center">
+                                <span class="text-slate-600">เงินเดือนพื้นฐาน</span>
+                                <span ${idx === 0 ? 'id="dtl-base-salary"' : ''} class="font-bold text-slate-800">฿${Number(card.base_salary || 0).toLocaleString()}</span>
+                            </div>
+                            <div class="py-1.5 flex justify-between items-start">
+                                <div><span class="text-slate-600 block">ค่าล่วงเวลา (OT)</span>${otSubHtml}</div>
+                                <span ${idx === 0 ? 'id="dtl-ot-amount"' : ''} class="font-bold text-emerald-600">฿${Number(card.ot_amount || 0).toLocaleString()}</span>
+                            </div>
+                            <div class="py-1.5 flex justify-between items-center">
+                                <span class="text-slate-600">โบนัส / เบี้ยขยัน</span>
+                                <span ${idx === 0 ? 'id="dtl-bonus-amount"' : ''} class="font-bold text-emerald-600">฿${Number(card.bonus || 0).toLocaleString()}</span>
+                            </div>
+                            <div class="py-1.5">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-600">รายการหัก</span>
+                                    <span ${idx === 0 ? 'id="dtl-deductions-total"' : ''} class="font-bold text-rose-600">${dedVal > 0 ? '-฿' + dedVal.toLocaleString() : '฿0'}</span>
+                                </div>
+                                ${dedDetailHtml}
+                            </div>
+                        </div>
+                        <div class="pt-2.5 border-t-2 border-slate-100 flex justify-between items-baseline mt-1.5">
+                            <span class="font-bold text-rose-700 text-xs sm:text-sm">รับสุทธิ</span>
+                            <span ${idx === 0 ? 'id="dtl-net-salary"' : ''} class="font-black text-xl sm:text-2xl text-[#E50914]">฿${Number(card.net_salary || 0).toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <button type="button" onclick="event.stopPropagation(); openPayslipModal(payrollCardsData[${idx}])" class="w-full py-2.5 px-4 rounded-full bg-gradient-to-r from-[#B80A17] via-[#E50914] to-[#B80A17] hover:brightness-110 active:scale-98 text-white font-bold text-xs shadow-md shadow-rose-900/25 flex items-center justify-center gap-1.5 transition-all cursor-pointer mt-3">
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        <span>ดูสลิปเงินเดือน</span>
+                    </button>
+                </div>`;
+        }).join('');
+
+        if (typeof filterPayrollCards === 'function') {
+            filterPayrollCards();
+        }
+    }
+
+    function renderMonthlySummaryTable(summary) {
+        const tbody = document.getElementById('overview-monthly-tbody');
+        if (!tbody || !Array.isArray(summary)) return;
+        tbody.innerHTML = summary.map(m => `
+            <tr class="hover:bg-slate-50/60 transition-colors">
+                <td class="py-3.5 px-4 font-bold text-slate-900">${escapeHtmlText(m.name)}</td>
+                <td class="py-3.5 px-3 text-slate-600">${escapeHtmlText(m.role)} (${escapeHtmlText(m.branch)})</td>
+                <td class="py-3.5 px-3 font-bold text-slate-800">${m.work_days} วัน</td>
+                <td class="py-3.5 px-3 ${Number(m.late_days) > 0 ? 'text-amber-600 font-bold' : 'text-slate-400'}">${m.late_days} วัน</td>
+                <td class="py-3.5 px-3 text-slate-400">${m.offsite_days || 0} ครั้ง</td>
+                <td class="py-3.5 px-3 font-bold text-slate-800">${escapeHtmlText(m.total_hours)}</td>
+                <td class="py-3.5 px-3 font-bold text-orange-600">${escapeHtmlText(m.ot_hours)}</td>
+                <td class="py-3.5 px-3"><span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">${escapeHtmlText(m.attendance_rate)}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    async function syncEmployeesData(showFeedback = false, monthOverride = null) {
+        if (isSyncInFlight) return;
+        isSyncInFlight = true;
+        try {
+            const month = monthOverride || currentPayrollMonth;
+            const url = `{{ route('admin.employees.sync_data') }}?month=${encodeURIComponent(month)}${selectedHeroEmployeeId ? '&employee_id=' + encodeURIComponent(selectedHeroEmployeeId) : ''}`;
+            const res = await fetch(url, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+            if (!res.ok) return;
+            const json = await res.json();
+            if (!json.success) return;
+
+            const newSignature = JSON.stringify({ cards: json.payrollCards, monthly: json.monthlyAttendanceSummary, logs: json.allAttendanceLogs });
+            if (newSignature !== lastSyncSignature || monthOverride) {
+                lastSyncSignature = newSignature;
+                payrollCardsData = json.payrollCards || [];
+                payrollData = json.payrollPeriods || payrollData;
+                allAttendanceLogs = json.allAttendanceLogs || [];
+
+                renderPayrollCardsGrid(payrollCardsData);
+                renderMonthlySummaryTable(json.monthlyAttendanceSummary);
+
+                const periodLbl = document.getElementById('overview-monthly-period-label');
+                if (periodLbl && payrollData[month]) {
+                    periodLbl.innerText = 'ประจำเดือน ' + payrollData[month].period_label;
+                }
+
+                // Update Hero boxes cleanly for the active selected employee
+                const heroCard = payrollCardsData.find(c => c.id === selectedHeroEmployeeId) || payrollCardsData[0];
+                if (heroCard) {
+                    selectedHeroEmployeeId = heroCard.id;
+                    const heroName = document.getElementById('hero-payroll-emp-name');
+                    if (heroName) heroName.innerText = heroCard.name;
+                    const heroSub = document.getElementById('hero-payroll-emp-subtitle');
+                    if (heroSub) heroSub.innerText = `${heroCard.role_label || heroCard.role} • ${heroCard.branch}`;
+                    const boxBase = document.getElementById('box-base-salary');
+                    if (boxBase) boxBase.innerText = '฿' + Number(heroCard.base_salary).toLocaleString();
+                    const boxOt = document.getElementById('box-ot-amount');
+                    if (boxOt) boxOt.innerText = '฿' + Number(heroCard.ot_amount).toLocaleString();
+                    const boxBonus = document.getElementById('box-bonus-amount');
+                    if (boxBonus) boxBonus.innerText = '฿' + Number(heroCard.bonus).toLocaleString();
+                    const boxDed = document.getElementById('box-deductions-amount');
+                    if (boxDed) boxDed.innerText = (heroCard.deductions > 0 ? '-฿' : '฿') + Number(heroCard.deductions).toLocaleString();
+                    const boxNet = document.getElementById('box-net-salary');
+                    if (boxNet) boxNet.innerText = '฿' + Number(heroCard.net_salary).toLocaleString();
+                }
+
+                // Keep Overview daily/range view fresh without extra toast
+                if (currentOverviewPreset === 'today') {
+                    renderOverviewAttendanceRows(allAttendanceLogs.filter(log => log.date === serverTodayDateKey));
+                }
+            }
+            if (showFeedback) {
+                showToast('ซิงค์ข้อมูลพนักงานและเงินเดือนเรียลไทม์เรียบร้อยแล้ว');
+            }
+        } catch (e) {
+            // Silent ignore network transient error
+        } finally {
+            isSyncInFlight = false;
+        }
+    }
+
     // Initial check on page load
     document.addEventListener('DOMContentLoaded', () => {
         verifyShopLocation();
@@ -3228,8 +3547,15 @@
             switchEmployeeTab('payroll');
         } else if (tab === 'overview') {
             switchEmployeeTab('overview');
-            setOverviewPresetFilter('3days');
+            setOverviewPresetFilter('today');
         }
+
+        // Auto-sync live every 12 seconds and whenever returning to this tab
+        setInterval(() => syncEmployeesData(false), 12000);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) syncEmployeesData(false);
+        });
+        window.addEventListener('focus', () => syncEmployeesData(false));
     });
 </script>
 @endsection

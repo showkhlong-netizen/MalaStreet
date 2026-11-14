@@ -131,6 +131,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', EnforceDailyEmployee
     Route::post('/employees/clock-in', [EmployeeController::class, 'clockIn'])->name('employees.clock_in');
     Route::post('/employees/store-location', [EmployeeController::class, 'updateStoreLocation'])->name('employees.update_location');
     Route::get('/employees/payslip/{month?}', [EmployeeController::class, 'payslip'])->name('employees.payslip');
+    Route::get('/employees/sync-data', [EmployeeController::class, 'syncData'])->name('employees.sync_data');
 
     // 3.5 ระบบการเข้าถึง & สิทธิ์การใช้งาน (Access Control & Permissions)
     Route::get('/access', [AccessControlController::class, 'index'])->name('access.index');

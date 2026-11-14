@@ -19,18 +19,63 @@ class EmployeeController extends Controller
      */
     public function index(Request $request): View
     {
-        $currentTab = $request->query('tab', 'attendance'); // 'attendance' or 'payroll'
+        $currentTab = $request->query('tab', 'attendance'); // 'attendance', 'payroll', or 'overview'
+        $selectedEmployeeId = $request->query('employee_id');
+        $selectedMonth = $request->query('month');
+        $overviewDate = $request->query('date');
+
+        $payload = $this->buildSyncedPayload($selectedEmployeeId, $selectedMonth, $overviewDate);
+
+        return view('admin.employees.index', array_merge($payload, [
+            'currentTab' => $currentTab,
+        ]));
+    }
+
+    /**
+     * Real-time auto-sync JSON endpoint for /admin/employees (cards, payroll, overview).
+     */
+    public function syncData(Request $request): JsonResponse
+    {
+        $payload = $this->buildSyncedPayload(
+            $request->query('employee_id'),
+            $request->query('month'),
+            $request->query('date')
+        );
+
+        return response()->json([
+            'success' => true,
+            'today_date_key' => $payload['todayDateKey'],
+            'selected_month' => $payload['selectedMonth'],
+            'employee' => $payload['employee'],
+            'payrollCards' => $payload['payrollCards'],
+            'payrollPeriods' => $payload['payrollPeriods'],
+            'payrollHistory' => $payload['payrollHistory'],
+            'allAttendanceLogs' => $payload['allAttendanceLogs'],
+            'monthlyAttendanceSummary' => $payload['monthlyAttendanceSummary'],
+            'overviewStats' => $payload['overviewStats'],
+        ]);
+    }
+
+    /**
+     * Build complete real-time data payload synced from Access Control & Setting attendance logs.
+     */
+    protected function buildSyncedPayload(?string $selectedEmployeeId = null, ?string $selectedMonth = null, ?string $overviewDate = null): array
+    {
+        $nowBangkok = Carbon::now('Asia/Bangkok');
+        $todayDateKey = $nowBangkok->format('Y-m-d');
+        $currentMonthKey = $nowBangkok->format('Y-m');
+        $selectedMonth = $selectedMonth ?: $currentMonthKey;
+        $overviewDate = $overviewDate ?: $todayDateKey;
 
         // Retrieve real active employees synced from Access Control (Setting: access_users_list)
         $realEmployees = $this->getRealEmployeesList();
-        $selectedEmployeeId = $request->query('employee_id');
+        $loggedActor = AuditLog::resolveCurrentUserActor();
+
         $activeEmployee = null;
         if ($selectedEmployeeId) {
             $activeEmployee = collect($realEmployees)->firstWhere('id', $selectedEmployeeId);
         }
         if (!$activeEmployee) {
-            // Default to currently logged-in user account so it stays 100% synced!
-            $loggedActor = AuditLog::resolveCurrentUserActor();
             $activeEmployee = collect($realEmployees)->first(function ($emp) use ($loggedActor) {
                 return ($emp['id'] ?? '') === ($loggedActor['id'] ?? '')
                     || (!empty($loggedActor['email']) && strtolower($emp['email'] ?? '') === strtolower($loggedActor['email']))
@@ -39,13 +84,13 @@ class EmployeeController extends Controller
         }
         if (!$activeEmployee) {
             $activeEmployee = $realEmployees[0] ?? [
-                'id' => 'EMP-001',
-                'name' => 'Munib Salaemae',
-                'role_label' => 'ผู้ดูแลระบบ (Admin)',
+                'id' => $loggedActor['id'] ?? 'EMP-001',
+                'name' => $loggedActor['name'] ?? 'ผู้ใช้งาน',
+                'role_label' => $loggedActor['role'] ?? 'พนักงานร้าน',
                 'branch' => 'ทุกสาขา',
-                'avatar' => asset('uploads/users/user_1794212895_aCeDLF.png'),
-                'email' => 'salaemaemunib@gmail.com',
-                'phone' => '0930077705',
+                'avatar' => null,
+                'email' => $loggedActor['email'] ?? '',
+                'phone' => '',
             ];
         }
 
@@ -54,7 +99,7 @@ class EmployeeController extends Controller
             'id' => $activeEmployee['id'] ?? 'EMP-001',
             'name' => $activeEmployee['name'] ?? $activeEmployee['full_name'] ?? 'พนักงาน',
             'role' => $activeEmployee['role_label'] ?? $activeEmployee['role'] ?? 'พนักงานร้าน',
-            'department' => $activeEmployee['branch'] ?? 'สาขายะลา',
+            'department' => $activeEmployee['branch'] ?? 'ทุกสาขา',
             'avatar' => $this->normalizeAvatarUrl($activeEmployee['avatar'] ?? null),
             'initials' => !empty($activeEmployee['initials']) ? $activeEmployee['initials'] : mb_substr($activeEmployee['name'] ?? 'พ', 0, 2),
             'color' => $activeEmployee['color'] ?? 'bg-blue-600',
@@ -79,14 +124,11 @@ class EmployeeController extends Controller
         ];
 
         // Persistent & Synced Today's Attendance Record for Active Employee
-        $empId = $activeEmployee['id'] ?? 'EMP-001';
-        $todayAttendanceKey = 'attendance_today_' . $empId . '_' . date('Ymd');
+        $empId = $employee['id'];
+        $todayAttendanceKey = 'attendance_today_' . $empId . '_' . $nowBangkok->format('Ymd');
         $savedToday = json_decode(Setting::get($todayAttendanceKey, 'null'), true);
-        if (!$savedToday) {
-            $savedToday = json_decode(Setting::get('attendance_today_' . $empId . '_20261108', 'null'), true);
-        }
 
-        // Fallbacks checking saved setting, session, or default
+        // Fallbacks checking saved setting or current session
         $todayCheckIn = $savedToday['check_in'] ?? session('employee_check_in');
         $todayCheckOut = $savedToday['check_out'] ?? session('employee_check_out');
         $todayStatus = $savedToday['status'] ?? session('employee_status');
@@ -107,7 +149,7 @@ class EmployeeController extends Controller
         $checkOutPhoto = $savedToday['check_out_photo'] ?? session('employee_check_out_photo', '/uploads/attendance/sample_check_out.jpg');
 
         $todayAttendance = [
-            'date_formatted' => $this->getThaiDateFormatted(),
+            'date_formatted' => $this->getThaiDateFormatted($nowBangkok),
             'check_in' => $todayCheckIn,
             'check_out' => $todayCheckOut,
             'work_hours' => $todayWorkHours,
@@ -120,260 +162,38 @@ class EmployeeController extends Controller
             'check_out_location' => $savedToday['check_out_location'] ?? session('employee_check_out_location', 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)'),
         ];
 
-        // Monthly Payroll Records
-        $payrollPeriods = [
-            '2024-12' => [
-                'period_label' => 'ธันวาคม 2567',
-                'period_short' => 'ธ.ค. 2567',
-                'base_salary' => 15000,
-                'ot_amount' => 2250,
-                'ot_hours' => '8 ชม. 34 นาที',
-                'ot_rate' => '262.50',
-                'bonus' => 1000,
-                'deductions_total' => 750,
-                'deduction_late' => 250,
-                'deduction_social_security' => 500,
-                'net_salary' => 16500,
-                'work_days' => 26,
-                'total_hours' => '208 ชม. 00 นาที',
-                'total_ot_hours' => '8 ชม. 34 นาที',
-                'leave_days' => 1,
-                'payment_status' => 'จ่ายแล้ว',
-                'payment_date' => '30 ธ.ค. 2567',
-            ],
-            '2024-11' => [
-                'period_label' => 'พฤศจิกายน 2567',
-                'period_short' => 'พ.ย. 2567',
-                'base_salary' => 15000,
-                'ot_amount' => 2000,
-                'ot_hours' => '7 ชม. 30 นาที',
-                'ot_rate' => '262.50',
-                'bonus' => 750,
-                'deductions_total' => 1500,
-                'deduction_late' => 1000,
-                'deduction_social_security' => 500,
-                'net_salary' => 16250,
-                'work_days' => 25,
-                'total_hours' => '200 ชม. 00 นาที',
-                'total_ot_hours' => '7 ชม. 30 นาที',
-                'leave_days' => 2,
-                'payment_status' => 'จ่ายแล้ว',
-                'payment_date' => '30 พ.ย. 2567',
-            ],
-            '2024-10' => [
-                'period_label' => 'ตุลาคม 2567',
-                'period_short' => 'ต.ค. 2567',
-                'base_salary' => 15000,
-                'ot_amount' => 1500,
-                'ot_hours' => '5 ชม. 40 นาที',
-                'ot_rate' => '262.50',
-                'bonus' => 500,
-                'deductions_total' => 1000,
-                'deduction_late' => 500,
-                'deduction_social_security' => 500,
-                'net_salary' => 16000,
-                'work_days' => 26,
-                'total_hours' => '208 ชม. 00 นาที',
-                'total_ot_hours' => '5 ชม. 40 นาที',
-                'leave_days' => 0,
-                'payment_status' => 'จ่ายแล้ว',
-                'payment_date' => '31 ต.ค. 2567',
-            ],
-            '2024-09' => [
-                'period_label' => 'กันยายน 2567',
-                'period_short' => 'ก.ย. 2567',
-                'base_salary' => 15000,
-                'ot_amount' => 1250,
-                'ot_hours' => '4 ชม. 45 นาที',
-                'ot_rate' => '262.50',
-                'bonus' => 500,
-                'deductions_total' => 1000,
-                'deduction_late' => 500,
-                'deduction_social_security' => 500,
-                'net_salary' => 15750,
-                'work_days' => 25,
-                'total_hours' => '200 ชม. 00 นาที',
-                'total_ot_hours' => '4 ชม. 45 นาที',
-                'leave_days' => 1,
-                'payment_status' => 'จ่ายแล้ว',
-                'payment_date' => '30 ก.ย. 2567',
-            ],
-            '2024-08' => [
-                'period_label' => 'สิงหาคม 2567',
-                'period_short' => 'ส.ค. 2567',
-                'base_salary' => 15000,
-                'ot_amount' => 1750,
-                'ot_hours' => '6 ชม. 40 นาที',
-                'ot_rate' => '262.50',
-                'bonus' => 500,
-                'deductions_total' => 800,
-                'deduction_late' => 300,
-                'deduction_social_security' => 500,
-                'net_salary' => 16450,
-                'work_days' => 26,
-                'total_hours' => '208 ชม. 00 นาที',
-                'total_ot_hours' => '6 ชม. 40 นาที',
-                'leave_days' => 1,
-                'payment_status' => 'จ่ายแล้ว',
-                'payment_date' => '30 ส.ค. 2567',
-            ],
-            '2024-07' => [
-                'period_label' => 'กรกฎาคม 2567',
-                'period_short' => 'ก.ค. 2567',
-                'base_salary' => 15000,
-                'ot_amount' => 1500,
-                'ot_hours' => '5 ชม. 40 นาที',
-                'ot_rate' => '262.50',
-                'bonus' => 500,
-                'deductions_total' => 750,
-                'deduction_late' => 250,
-                'deduction_social_security' => 500,
-                'net_salary' => 16250,
-                'work_days' => 26,
-                'total_hours' => '208 ชม. 00 นาที',
-                'total_ot_hours' => '5 ชม. 40 นาที',
-                'leave_days' => 0,
-                'payment_status' => 'จ่ายแล้ว',
-                'payment_date' => '31 ก.ค. 2567',
-            ],
-            '2024-06' => [
-                'period_label' => 'มิถุนายน 2567',
-                'period_short' => 'มิ.ย. 2567',
-                'base_salary' => 15000,
-                'ot_amount' => 1800,
-                'ot_hours' => '6 ชม. 50 นาที',
-                'ot_rate' => '262.50',
-                'bonus' => 500,
-                'deductions_total' => 500,
-                'deduction_late' => 0,
-                'deduction_social_security' => 500,
-                'net_salary' => 16800,
-                'work_days' => 25,
-                'total_hours' => '200 ชม. 00 นาที',
-                'total_ot_hours' => '6 ชม. 50 นาที',
-                'leave_days' => 1,
-                'payment_status' => 'จ่ายแล้ว',
-                'payment_date' => '28 มิ.ย. 2567',
-            ],
-            '2024-05' => [
-                'period_label' => 'พฤษภาคม 2567',
-                'period_short' => 'พ.ค. 2567',
-                'base_salary' => 15000,
-                'ot_amount' => 2000,
-                'ot_hours' => '7 ชม. 30 นาที',
-                'ot_rate' => '262.50',
-                'bonus' => 1000,
-                'deductions_total' => 500,
-                'deduction_late' => 0,
-                'deduction_social_security' => 500,
-                'net_salary' => 17500,
-                'work_days' => 26,
-                'total_hours' => '208 ชม. 00 นาที',
-                'total_ot_hours' => '7 ชม. 30 นาที',
-                'leave_days' => 0,
-                'payment_status' => 'จ่ายแล้ว',
-                'payment_date' => '31 พ.ค. 2567',
-            ],
-            '2024-04' => [
-                'period_label' => 'เมษายน 2567',
-                'period_short' => 'เม.ย. 2567',
-                'base_salary' => 15000,
-                'ot_amount' => 1200,
-                'ot_hours' => '4 ชม. 30 นาที',
-                'ot_rate' => '262.50',
-                'bonus' => 500,
-                'deductions_total' => 500,
-                'deduction_late' => 0,
-                'deduction_social_security' => 500,
-                'net_salary' => 16200,
-                'work_days' => 24,
-                'total_hours' => '192 ชม. 00 นาที',
-                'total_ot_hours' => '4 ชม. 30 นาที',
-                'leave_days' => 2,
-                'payment_status' => 'จ่ายแล้ว',
-                'payment_date' => '30 เม.ย. 2567',
-            ],
-            '2024-03' => [
-                'period_label' => 'มีนาคม 2567',
-                'period_short' => 'มี.ค. 2567',
-                'base_salary' => 15000,
-                'ot_amount' => 1500,
-                'ot_hours' => '5 ชม. 40 นาที',
-                'ot_rate' => '262.50',
-                'bonus' => 500,
-                'deductions_total' => 500,
-                'deduction_late' => 0,
-                'deduction_social_security' => 500,
-                'net_salary' => 16500,
-                'work_days' => 26,
-                'total_hours' => '208 ชม. 00 นาที',
-                'total_ot_hours' => '5 ชม. 40 นาที',
-                'leave_days' => 0,
-                'payment_status' => 'จ่ายแล้ว',
-                'payment_date' => '29 มี.ค. 2567',
-            ],
-            '2024-02' => [
-                'period_label' => 'กุมภาพันธ์ 2567',
-                'period_short' => 'ก.พ. 2567',
-                'base_salary' => 15000,
-                'ot_amount' => 1000,
-                'ot_hours' => '3 ชม. 50 นาที',
-                'ot_rate' => '262.50',
-                'bonus' => 500,
-                'deductions_total' => 750,
-                'deduction_late' => 250,
-                'deduction_social_security' => 500,
-                'net_salary' => 15750,
-                'work_days' => 24,
-                'total_hours' => '192 ชม. 00 นาที',
-                'total_ot_hours' => '3 ชม. 50 นาที',
-                'leave_days' => 1,
-                'payment_status' => 'จ่ายแล้ว',
-                'payment_date' => '29 ก.พ. 2567',
-            ],
-            '2024-01' => [
-                'period_label' => 'มกราคม 2567',
-                'period_short' => 'ม.ค. 2567',
-                'base_salary' => 15000,
-                'ot_amount' => 1400,
-                'ot_hours' => '5 ชม. 20 นาที',
-                'ot_rate' => '262.50',
-                'bonus' => 500,
-                'deductions_total' => 500,
-                'deduction_late' => 0,
-                'deduction_social_security' => 500,
-                'net_salary' => 16400,
-                'work_days' => 26,
-                'total_hours' => '208 ชม. 00 นาที',
-                'total_ot_hours' => '5 ชม. 20 นาที',
-                'leave_days' => 0,
-                'payment_status' => 'จ่ายแล้ว',
-                'payment_date' => '31 ม.ค. 2567',
-            ],
-        ];
+        // Load Access Control extended data & real attendance logs once
+        $empDataMap = $this->loadEmployeeDataMap($realEmployees);
+        $attendanceByEmpDate = $this->loadAttendanceByEmpDate($realEmployees, $nowBangkok);
 
-        $selectedMonth = $request->query('month', '2024-12');
-        $currentPayroll = $payrollPeriods[$selectedMonth] ?? $payrollPeriods['2024-12'];
+        // Dynamic Monthly Payroll Periods for Active Employee (12 months of current Bangkok year, newest first)
+        $payrollPeriods = $this->buildEmployeePayrollPeriods($activeEmployee, $empDataMap[$empId] ?? null, $attendanceByEmpDate, $nowBangkok);
+        if (!isset($payrollPeriods[$selectedMonth])) {
+            $selectedMonth = $currentMonthKey;
+        }
+        $currentPayroll = $payrollPeriods[$selectedMonth] ?? reset($payrollPeriods);
 
-        $payrollHistory = [
-            ['month' => 'พฤศจิกายน 2567', 'net' => 16250, 'status' => 'จ่ายแล้ว'],
-            ['month' => 'ตุลาคม 2567', 'net' => 16000, 'status' => 'จ่ายแล้ว'],
-            ['month' => 'กันยายน 2567', 'net' => 15750, 'status' => 'จ่ายแล้ว'],
-        ];
+        // Recent 3 months history derived strictly from real periods (no hardcoded 2024 mock numbers)
+        $payrollHistory = [];
+        foreach ($payrollPeriods as $pKey => $pVal) {
+            if ($pKey === $currentMonthKey || $pKey > $currentMonthKey) {
+                continue;
+            }
+            $payrollHistory[] = [
+                'month' => $pVal['period_label'],
+                'net' => $pVal['net_salary'],
+                'status' => $pVal['payment_status'],
+            ];
+            if (count($payrollHistory) >= 3) {
+                break;
+            }
+        }
 
-        // =========================================================================
-        // 3. TAB 3: ภาพรวมพนักงาน (Employees Attendance Overview - Matches Image 2)
-        // =========================================================================
-        $overviewDate = $request->query('date', '2026-11-08');
+        // TAB 3: Attendance Overview synced with real employees & Access Control schedules/late grace rules
+        $allAttendanceLogs = $this->buildRealAttendanceLogs($realEmployees, $empDataMap, $attendanceByEmpDate, $nowBangkok);
+        $attendanceLogs = array_values(array_filter($allAttendanceLogs, fn($log) => $log['date'] === $overviewDate));
 
-        // Multi-day Attendance Log Dataset Synced with Real Employees from Access Control (Matches Image 2)
-        $allAttendanceLogs = $this->buildRealAttendanceLogs($realEmployees);
-
-        // Default initial logs (Today)
-        $attendanceLogs = array_values(array_filter($allAttendanceLogs, fn($log) => $log['date'] === '2026-11-08'));
-
-        // Dynamic Overview Stats matching Image 2
-        $workingCount = count(array_filter($attendanceLogs, fn($log) => !$log['is_offday'] && ($log['status'] ?? '') !== 'pending'));
+        $workingCount = count(array_filter($attendanceLogs, fn($log) => empty($log['is_offday']) && ($log['status'] ?? '') !== 'pending'));
         $overviewStats = [
             'total_working' => $workingCount,
             'late_count' => count(array_filter($attendanceLogs, fn($log) => ($log['status'] ?? '') === 'late')),
@@ -382,18 +202,40 @@ class EmployeeController extends Controller
             'ot_count' => count(array_filter($attendanceLogs, fn($log) => !empty($log['ot_hours']) && $log['ot_hours'] !== '—')),
         ];
 
-        // Monthly Summary Synced with Real Employees from Access Control
-        $monthlyAttendanceSummary = $this->buildRealMonthlySummary($realEmployees);
+        // Monthly Summary & Individual Cards synced with real Access Control settings & real monthly attendance
+        $monthlyAttendanceSummary = $this->buildRealMonthlySummary($realEmployees, $empDataMap, $attendanceByEmpDate, $nowBangkok, $selectedMonth);
+        $payrollCards = $this->buildRealPayrollCards($realEmployees, $empDataMap, $attendanceByEmpDate, $nowBangkok, $selectedMonth);
 
-        // Build dynamic payroll cards for individual employees (Matches Image 1 & 2)
-        $payrollCards = $this->buildRealPayrollCards($realEmployees);
+        // Ensure Hero summary defaults cleanly to the active/first displayed employee card when selected month is current month
+        if (!empty($payrollCards) && $selectedMonth === $currentMonthKey) {
+            $heroEmpCard = collect($payrollCards)->firstWhere('id', $empId) ?? $payrollCards[0];
+            $employee['id'] = $heroEmpCard['id'];
+            $employee['name'] = $heroEmpCard['name'];
+            $employee['role'] = $heroEmpCard['role_label'];
+            $employee['department'] = $heroEmpCard['branch'];
+            $currentPayroll['base_salary'] = $heroEmpCard['base_salary'];
+            $currentPayroll['ot_amount'] = $heroEmpCard['ot_amount'];
+            $currentPayroll['ot_hours'] = $heroEmpCard['ot_hours'];
+            $currentPayroll['ot_rate'] = number_format((float) $heroEmpCard['ot_rate'], 2, '.', '');
+            $currentPayroll['bonus'] = $heroEmpCard['bonus'];
+            $currentPayroll['deductions_total'] = $heroEmpCard['deductions'];
+            $currentPayroll['deduction_late'] = $heroEmpCard['deduction_late'];
+            $currentPayroll['deduction_social_security'] = $heroEmpCard['deduction_ss'];
+            $currentPayroll['net_salary'] = $heroEmpCard['net_salary'];
+            $currentPayroll['work_days'] = $heroEmpCard['work_days'];
+            $currentPayroll['total_hours'] = $heroEmpCard['work_hours'];
+            $currentPayroll['total_ot_hours'] = $heroEmpCard['ot_hours'];
+            $currentPayroll['leave_days'] = $heroEmpCard['leave_days'];
+            $payrollPeriods[$currentMonthKey] = $currentPayroll;
+        }
 
-        return view('admin.employees.index', compact(
-            'currentTab',
+        return compact(
             'employee',
             'realEmployees',
             'payrollCards',
             'todayAttendance',
+            'todayDateKey',
+            'currentMonthKey',
             'storeLocation',
             'currentPayroll',
             'payrollPeriods',
@@ -404,7 +246,7 @@ class EmployeeController extends Controller
             'allAttendanceLogs',
             'overviewStats',
             'monthlyAttendanceSummary'
-        ));
+        );
     }
 
     /**
@@ -414,7 +256,7 @@ class EmployeeController extends Controller
      */
     public function clockIn(Request $request): JsonResponse
     {
-        $now = Carbon::now();
+        $now = Carbon::now('Asia/Bangkok');
         $formattedTime = $now->format('H:i') . ' น.';
         $action = $request->input('action', 'toggle'); // 'check_in', 'check_out', 'toggle'
         $base64Photo = $request->input('photo');
@@ -452,7 +294,7 @@ class EmployeeController extends Controller
             }
         }
 
-        $todayKey = 'attendance_scan_count_' . date('Ymd');
+        $todayKey = 'attendance_scan_count_' . $now->format('Ymd');
         $currentStatus = session('employee_status', 'ออกงานแล้ว');
 
         // เงื่อนไขอัตโนมัติ: ถ่ายครั้งแรกของวัน = เข้างาน (check_in), ครั้งที่ 2 ของวัน = ออกงาน (check_out)
@@ -496,10 +338,10 @@ class EmployeeController extends Controller
                 || strtolower($emp['name'] ?? '') === strtolower($loggedActor['name'] ?? '');
         }) ?: ($realEmps[0] ?? null);
 
-        $empName = $activeEmp['name'] ?? $loggedActor['name'] ?? 'Munib Salaemae';
+        $empName = $activeEmp['name'] ?? $loggedActor['name'] ?? 'พนักงาน';
         $empId = $activeEmp['id'] ?? $loggedActor['id'] ?? 'EMP-001';
 
-        $attendanceSettingKey = 'attendance_today_' . $empId . '_' . date('Ymd');
+        $attendanceSettingKey = 'attendance_today_' . $empId . '_' . $now->format('Ymd');
         $savedAttendance = json_decode(Setting::get($attendanceSettingKey, 'null'), true) ?: [];
 
         if ($actionType === 'check_in') {
@@ -528,7 +370,6 @@ class EmployeeController extends Controller
                 $todayKey => 1,
             ]);
             Setting::set($attendanceSettingKey, json_encode($savedAttendance));
-            Setting::set('attendance_today_' . $empId . '_20261108', json_encode($savedAttendance));
 
             $message = "สแกนใบหน้าสำเร็จ! เช็คอินเข้างานเวลา {$formattedTime} (บันทึกภาพและพิกัดร้านแล้ว)";
         } else {
@@ -561,7 +402,6 @@ class EmployeeController extends Controller
                 $todayKey => 2,
             ]);
             Setting::set($attendanceSettingKey, json_encode($savedAttendance));
-            Setting::set('attendance_today_' . $empId . '_20261108', json_encode($savedAttendance));
 
             $message = "สแกนใบหน้าสำเร็จ! เช็คเอาท์ออกงานเวลา {$formattedTime} (บันทึกภาพและพิกัดร้านแล้ว)";
         }
@@ -589,7 +429,7 @@ class EmployeeController extends Controller
             'check_in_photo' => $this->normalizeAvatarUrl($savedAttendance['check_in_photo'] ?? session('employee_check_in_photo', $photoUrl)),
             'check_out_photo' => $this->normalizeAvatarUrl($savedAttendance['check_out_photo'] ?? session('employee_check_out_photo', $photoUrl)),
             'work_hours' => $workHours,
-            'date_formatted' => $this->getThaiDateFormatted(),
+            'date_formatted' => $this->getThaiDateFormatted($now),
             'distance' => $distance,
             'geofence_status' => 'อยู่ในเขตร้าน (ยืนยันแล้ว)',
         ]);
@@ -661,29 +501,34 @@ class EmployeeController extends Controller
      */
     public function payslip(Request $request, ?string $month = null): JsonResponse|View
     {
-        $month = $month ?: '2024-12';
-        
-        $activeEmp = $this->getRealEmployeesList()[0] ?? null;
-        $empName = $activeEmp['name'] ?? 'Munib Salaemae';
-        $empId = $activeEmp['id'] ?? 'EMP-001';
-        $empRole = ($activeEmp['role_label'] ?? $activeEmp['role'] ?? 'ผู้ดูแลระบบ (Admin)') . ' • ' . ($activeEmp['branch'] ?? 'ทุกสาขา');
+        $nowBangkok = Carbon::now('Asia/Bangkok');
+        $month = $month ?: $nowBangkok->format('Y-m');
+        $payload = $this->buildSyncedPayload($request->query('employee_id'), $month);
+
+        $activeCard = collect($payload['payrollCards'])->firstWhere('id', $payload['employee']['id'])
+            ?? ($payload['payrollCards'][0] ?? null);
+        $period = $payload['payrollPeriods'][$month] ?? $payload['currentPayroll'];
+
+        $empName = $activeCard['name'] ?? $payload['employee']['name'];
+        $empId = $activeCard['id'] ?? $payload['employee']['id'];
+        $empRole = ($activeCard['role_label'] ?? $payload['employee']['role']) . ' • ' . ($activeCard['branch'] ?? $payload['employee']['department']);
 
         $payrollData = [
-            'period_label' => 'ธันวาคม 2567',
+            'period_label' => $period['period_label'],
             'employee_name' => $empName,
             'employee_id' => $empId,
             'role' => $empRole,
-            'base_salary' => 15000,
-            'ot_amount' => 2250,
-            'bonus' => 1000,
-            'deduction_late' => 250,
-            'deduction_social_security' => 500,
-            'deductions_total' => 750,
-            'net_salary' => 16500,
-            'work_days' => 26,
-            'work_hours' => '208 ชม. 00 นาที',
-            'ot_hours' => '8 ชม. 34 นาที',
-            'payment_date' => '30 ธ.ค. 2567',
+            'base_salary' => $activeCard['base_salary'] ?? $period['base_salary'],
+            'ot_amount' => $activeCard['ot_amount'] ?? $period['ot_amount'],
+            'bonus' => $activeCard['bonus'] ?? $period['bonus'],
+            'deduction_late' => $activeCard['deduction_late'] ?? $period['deduction_late'],
+            'deduction_social_security' => $activeCard['deduction_ss'] ?? $period['deduction_social_security'],
+            'deductions_total' => $activeCard['deductions'] ?? $period['deductions_total'],
+            'net_salary' => $activeCard['net_salary'] ?? $period['net_salary'],
+            'work_days' => $activeCard['work_days'] ?? $period['work_days'],
+            'work_hours' => $activeCard['work_hours'] ?? $period['total_hours'],
+            'ot_hours' => $activeCard['ot_hours'] ?? $period['total_ot_hours'],
+            'payment_date' => $period['payment_date'],
         ];
 
         if ($request->wantsJson()) {
@@ -739,38 +584,203 @@ class EmployeeController extends Controller
 
     /**
      * Retrieve real active employees synced from Access Control (Setting: access_users_list).
+     * Excludes any test/mock entries and overlays updated Access Control profile fields.
      */
     protected function getRealEmployeesList(): array
     {
         $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true);
-        if (!empty($savedUsers)) {
-            $realUsers = array_values(array_filter($savedUsers, fn($u) => empty($u['is_test'])));
-            $targetUsers = !empty($realUsers) ? $realUsers : $savedUsers;
-            foreach ($targetUsers as &$u) {
-                $u['avatar'] = $this->normalizeAvatarUrl($u['avatar'] ?? null);
-            }
-            unset($u);
-            return $targetUsers;
+        if (!is_array($savedUsers) || empty($savedUsers)) {
+            return [];
         }
 
-        return [
-            [
-                'id' => 'usr_1794212896_nlis',
-                'name' => 'Munib Salaemae',
-                'full_name' => 'Munib Salaemae',
-                'email' => 'salaemaemunib@gmail.com',
-                'phone' => '0930077705',
-                'role' => 'Admin',
-                'role_label' => 'ผู้ดูแลระบบ (Admin)',
-                'initials' => 'Mu',
-                'color' => 'bg-rose-600',
-                'avatar' => '/uploads/users/user_1794212895_aCeDLF.png',
-                'status' => 'online',
-                'status_label' => 'ใช้งานอยู่',
-                'branch' => 'ทุกสาขา',
-                'is_test' => false,
-            ]
+        $realUsers = array_values(array_filter($savedUsers, fn($u) => is_array($u) && empty($u['is_test'])));
+        foreach ($realUsers as &$u) {
+            $empId = $u['id'] ?? '';
+            if ($empId !== '') {
+                $empData = json_decode(Setting::get("employee_data_{$empId}", 'null'), true);
+                if (is_array($empData) && !empty($empData['profile']) && is_array($empData['profile'])) {
+                    $prof = $empData['profile'];
+                    if (!empty($prof['name'])) {
+                        $u['name'] = $prof['name'];
+                    }
+                    if (!empty($prof['position'])) {
+                        $u['position'] = $prof['position'];
+                    }
+                    if (!empty($prof['branch'])) {
+                        $u['branch'] = $prof['branch'];
+                    }
+                    if (!empty($prof['role'])) {
+                        $u['role'] = $prof['role'];
+                    }
+                    if (!empty($prof['email'])) {
+                        $u['email'] = $prof['email'];
+                    }
+                    if (array_key_exists('phone', $prof) && $prof['phone'] !== '') {
+                        $u['phone'] = $prof['phone'];
+                    }
+                }
+            }
+            $u['avatar'] = $this->normalizeAvatarUrl($u['avatar'] ?? null);
+        }
+        unset($u);
+
+        return $realUsers;
+    }
+
+    /**
+     * Load extended employee_data_{id} records from Access Control once per request.
+     */
+    protected function loadEmployeeDataMap(array $realEmployees): array
+    {
+        $map = [];
+        $keys = array_filter(array_map(fn($e) => !empty($e['id']) ? "employee_data_{$e['id']}" : null, $realEmployees));
+        if (empty($keys)) {
+            return $map;
+        }
+
+        try {
+            $rows = Setting::whereIn('key', array_values($keys))->get();
+            foreach ($rows as $row) {
+                if (str_starts_with($row->key, 'employee_data_')) {
+                    $id = substr($row->key, strlen('employee_data_'));
+                    $decoded = json_decode($row->value, true);
+                    if (is_array($decoded)) {
+                        $map[$id] = $decoded;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            foreach ($realEmployees as $emp) {
+                $empId = $emp['id'] ?? '';
+                if ($empId !== '') {
+                    $decoded = json_decode(Setting::get("employee_data_{$empId}", 'null'), true);
+                    if (is_array($decoded)) {
+                        $map[$empId] = $decoded;
+                    }
+                }
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * Load all real attendance scan settings indexed by [empId][Y-m-d].
+     * Ignores mock stubs (empty check_in or legacy _20261108 sample rows).
+     */
+    protected function loadAttendanceByEmpDate(array $realEmployees, Carbon $nowBangkok): array
+    {
+        $map = [];
+        try {
+            $savedSettings = Setting::where('key', 'like', 'attendance_today_%')->get();
+            foreach ($savedSettings as $settingRow) {
+                if (preg_match('/^attendance_today_(.+)_(\d{8})$/', $settingRow->key, $matches)) {
+                    $recEmpId = $matches[1];
+                    $rawDate = $matches[2];
+                    $dateKey = substr($rawDate, 0, 4) . '-' . substr($rawDate, 4, 2) . '-' . substr($rawDate, 6, 2);
+
+                    $data = json_decode($settingRow->value, true);
+                    if (!is_array($data) || empty($data['check_in']) || $data['check_in'] === '—') {
+                        continue;
+                    }
+                    // Exclude legacy mock duplicate date records if using sample placeholder photo
+                    if ($rawDate === '20261108' && (empty($data['check_in_photo']) || $data['check_in_photo'] === '/uploads/attendance/sample_check_in.jpg')) {
+                        continue;
+                    }
+
+                    $map[$recEmpId][$dateKey] = $data;
+                }
+            }
+        } catch (\Throwable $e) {
+            // graceful fallback
+        }
+
+        // Merge live session attendance for today if not yet persisted for session actor
+        $todayDateKey = $nowBangkok->format('Y-m-d');
+        $sessionEmpId = session('employee_active_emp_id');
+        if ($sessionEmpId && session()->has('employee_check_in') && session('employee_check_in') !== '—') {
+            if (!isset($map[$sessionEmpId][$todayDateKey])) {
+                $map[$sessionEmpId][$todayDateKey] = [
+                    'check_in' => session('employee_check_in'),
+                    'check_out' => session('employee_check_out', '—'),
+                    'status' => session('employee_status', 'เข้างานแล้ว'),
+                    'check_in_photo' => session('employee_check_in_photo'),
+                    'check_out_photo' => session('employee_check_out_photo'),
+                    'check_in_location' => session('employee_check_in_location'),
+                    'check_out_location' => session('employee_check_out_location'),
+                    'work_hours' => session('employee_work_hours'),
+                ];
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * Convert Thai or English weekday names into Carbon dayOfWeek integers (0=Sun..6=Sat).
+     */
+    protected function parseThaiWeekdays(array $days): array
+    {
+        $dayMap = [
+            'อาทิตย์' => 0, 'อา.' => 0, 'อา' => 0, 'sun' => 0, 'sunday' => 0,
+            'จันทร์' => 1, 'จ.' => 1, 'จ' => 1, 'mon' => 1, 'monday' => 1,
+            'อังคาร' => 2, 'อ.' => 2, 'อ' => 2, 'tue' => 2, 'tuesday' => 2,
+            'พุธ' => 3, 'พ.' => 3, 'พ' => 3, 'wed' => 3, 'wednesday' => 3,
+            'พฤหัส' => 4, 'พฤหัสบดี' => 4, 'พฤ.' => 4, 'พฤ' => 4, 'thu' => 4, 'thursday' => 4,
+            'ศุกร์' => 5, 'ศ.' => 5, 'ศ' => 5, 'fri' => 5, 'friday' => 5,
+            'เสาร์' => 6, 'ส.' => 6, 'ส' => 6, 'sat' => 6, 'saturday' => 6,
         ];
+
+        $result = [];
+        foreach ($days as $day) {
+            $key = mb_strtolower(trim((string) $day));
+            if (isset($dayMap[$key])) {
+                $result[] = $dayMap[$key];
+            }
+        }
+
+        return array_values(array_unique($result));
+    }
+
+    /**
+     * Parse time strings ("09:00 AM", "07:00 PM", "09:15 น.", "18:30") into minutes from midnight.
+     */
+    protected function parseTimeToMinutes(?string $timeStr): ?int
+    {
+        if (empty($timeStr) || $timeStr === '—') {
+            return null;
+        }
+        $clean = trim(str_replace(['น.', 'น'], '', $timeStr));
+        if (preg_match('/^(\d{1,2})[:.](\d{2})(?:\s*(AM|PM))?$/i', $clean, $m)) {
+            $hour = (int) $m[1];
+            $min = (int) $m[2];
+            $ampm = isset($m[3]) ? strtoupper($m[3]) : null;
+            if ($ampm === 'PM' && $hour < 12) {
+                $hour += 12;
+            } elseif ($ampm === 'AM' && $hour === 12) {
+                $hour = 0;
+            }
+            if ($hour >= 0 && $hour <= 23 && $min >= 0 && $min <= 59) {
+                return ($hour * 60) + $min;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Format total minutes into Thai human-readable duration (e.g. "0 ชม." or "8 ชม. 30 นาที").
+     */
+    protected function formatMinutesAsThaiDuration(int $minutes): string
+    {
+        if ($minutes <= 0) {
+            return '0 ชม.';
+        }
+        $h = intdiv($minutes, 60);
+        $m = $minutes % 60;
+        if ($m === 0) {
+            return "{$h} ชม.";
+        }
+        return $h > 0 ? "{$h} ชม. {$m} นาที" : "{$m} นาที";
     }
 
     /**
@@ -792,7 +802,7 @@ class EmployeeController extends Controller
      */
     protected function getThaiDateFormatted(?Carbon $date = null): string
     {
-        $date = $date ?: Carbon::now();
+        $date = $date ?: Carbon::now('Asia/Bangkok');
         $days = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
         $months = [
             1 => 'ม.ค.', 2 => 'ก.พ.', 3 => 'มี.ค.', 4 => 'เม.ย.',
@@ -860,223 +870,491 @@ class EmployeeController extends Controller
 
     /**
      * Build attendance logs for real employees based on actual saved/scanned records.
-     * All mock/test entries from historical sample dates are removed.
+     * Evaluates real late status and OT from Access Control schedules & late grace rules.
      */
-    protected function buildRealAttendanceLogs(array $realEmployees): array
-    {
-        $loggedActor = AuditLog::resolveCurrentUserActor();
-        $sessionEmpId = session('employee_active_emp_id');
-        $todayDateKey = '2026-11-08';
-        $todayDateFormatted = '08/11/2569';
+    protected function buildRealAttendanceLogs(
+        array $realEmployees,
+        ?array $empDataMap = null,
+        ?array $attendanceByEmpDate = null,
+        ?Carbon $nowBangkok = null
+    ): array {
+        $nowBangkok = $nowBangkok ?: Carbon::now('Asia/Bangkok');
+        $empDataMap = $empDataMap ?? $this->loadEmployeeDataMap($realEmployees);
+        $attendanceByEmpDate = $attendanceByEmpDate ?? $this->loadAttendanceByEmpDate($realEmployees, $nowBangkok);
 
-        $logs = [];
-        $processedRecords = []; // track [empId_dateKey] to prevent duplicates
+        $todayDateKey = $nowBangkok->format('Y-m-d');
+        $todayDateFormatted = $nowBangkok->format('d/m/') . ($nowBangkok->year + 543);
 
-        // 1. Load actual saved attendance records from Setting
-        try {
-            $savedSettings = Setting::where('key', 'like', 'attendance_today_%')->get();
-            foreach ($savedSettings as $settingRow) {
-                if (preg_match('/^attendance_today_(.+)_(\d{8})$/', $settingRow->key, $matches)) {
-                    $recEmpId = $matches[1];
-                    $rawDate = $matches[2]; // e.g. 20261108
-                    $dateKey = substr($rawDate, 0, 4) . '-' . substr($rawDate, 4, 2) . '-' . substr($rawDate, 6, 2);
-                    $yearBuddhist = (int)substr($rawDate, 0, 4) + 543;
-                    $dateFormatted = substr($rawDate, 6, 2) . '/' . substr($rawDate, 4, 2) . '/' . $yearBuddhist;
-
-                    $data = json_decode($settingRow->value, true);
-                    if (empty($data) || empty($data['check_in']) || $data['check_in'] === '—') {
-                        continue;
-                    }
-
-                    $recordKey = "{$recEmpId}_{$dateKey}";
-                    if (isset($processedRecords[$recordKey])) {
-                        continue;
-                    }
-                    $processedRecords[$recordKey] = true;
-
-                    // Match with employee from access list
-                    $emp = collect($realEmployees)->firstWhere('id', $recEmpId);
-                    $empName = $emp['name'] ?? $emp['full_name'] ?? $data['employee_name'] ?? 'พนักงาน';
-                    $roleLabel = $emp['role_label'] ?? $emp['role'] ?? 'พนักงานร้าน (Employee)';
-                    $branch = $emp['branch'] ?? 'ทุกสาขา';
-                    $isAdmin = (str_contains(strtolower($roleLabel), 'admin') || str_contains(strtolower($emp['role'] ?? ''), 'admin'));
-
-                    $checkIn = $data['check_in'];
-                    $checkOut = $data['check_out'] ?? '—';
-                    $st = $data['status'] ?? 'เข้างานแล้ว';
-                    $hours = $data['work_hours'] ?? $this->calculateWorkHours($checkIn, $checkOut, $st);
-
-                    $logs[] = [
-                        'id' => 'att_' . str_replace('-', '', $dateKey) . '_' . $recEmpId,
-                        'employee_id' => $recEmpId,
-                        'date' => $dateKey,
-                        'date_formatted' => $dateFormatted,
-                        'name' => $empName,
-                        'roles' => [
-                            [
-                                'label' => $roleLabel,
-                                'color' => $isAdmin ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-blue-50 text-blue-700 border-blue-200',
-                                'icon' => $isAdmin ? '🛡️' : '💼'
-                            ]
-                        ],
-                        'branch' => $branch,
-                        'is_offday' => false,
-                        'status_label' => ($st === 'ออกงานแล้ว') ? 'ออกงานแล้ว' : ($st === 'เข้างานแล้ว' ? 'เช็คอินตรงเวลา' : 'ยังไม่เข้างาน'),
-                        'status_badge' => ($st === 'ออกงานแล้ว') ? 'ออกงานแล้ว 🟢' : ($st === 'เข้างานแล้ว' ? 'ปกติ 🟢' : 'ยังไม่เข้างาน ⚪'),
-                        'check_in_time' => $checkIn,
-                        'check_in_photo' => $this->normalizeAvatarUrl($data['check_in_photo'] ?? null),
-                        'check_in_distance' => '0ม.',
-                        'check_in_location' => $data['check_in_location'] ?? 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)',
-                        'check_out_time' => $checkOut,
-                        'check_out_photo' => $this->normalizeAvatarUrl($data['check_out_photo'] ?? null),
-                        'check_out_distance' => ($checkOut !== '—') ? '0ม.' : null,
-                        'check_out_location' => $data['check_out_location'] ?? 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)',
-                        'total_hours' => $hours,
-                        'status' => ($st === 'ออกงานแล้ว' || $st === 'เข้างานแล้ว') ? 'present' : 'pending',
-                        'ot_start' => '—',
-                        'ot_end' => '—',
-                        'ot_hours' => '—',
-                    ];
-                }
+        $employeesById = [];
+        foreach ($realEmployees as $emp) {
+            if (!empty($emp['id'])) {
+                $employeesById[$emp['id']] = $emp;
             }
-        } catch (\Throwable $e) {
-            // gracefully fallback if table query issues
         }
 
-        // 2. Build TODAY's records (date: 2026-11-08) for all registered employees
-        foreach ($realEmployees as $idx => $emp) {
-            $empId = $emp['id'] ?? (string)$idx;
-            $recordKey = "{$empId}_{$todayDateKey}";
+        $logs = [];
+        $processedRecords = [];
 
-            // If already processed from Setting, do not duplicate
+        // 1. All saved scan records belonging to active real employees
+        foreach ($attendanceByEmpDate as $recEmpId => $dateMap) {
+            if (!isset($employeesById[$recEmpId])) {
+                continue;
+            }
+            $emp = $employeesById[$recEmpId];
+            $empData = $empDataMap[$recEmpId] ?? null;
+
+            $empName = $emp['name'] ?? $emp['full_name'] ?? 'พนักงาน';
+            $roleLabel = $emp['role_label'] ?? $emp['role'] ?? 'พนักงานร้าน (Employee)';
+            $branch = $emp['branch'] ?? 'ทุกสาขา';
+            $isAdmin = (str_contains(strtolower($roleLabel), 'admin') || str_contains(strtolower($emp['role'] ?? ''), 'admin'));
+
+            $shiftStartMin = $this->parseTimeToMinutes($empData['schedule']['start_time'] ?? '09:00 AM') ?? (9 * 60);
+            $shiftEndMin = $this->parseTimeToMinutes($empData['schedule']['end_time'] ?? '07:00 PM') ?? (19 * 60);
+            $graceMinutes = max(0, (int) ($empData['leave']['late_grace_minutes'] ?? 15));
+
+            foreach ($dateMap as $dateKey => $data) {
+                $recordKey = "{$recEmpId}_{$dateKey}";
+                if (isset($processedRecords[$recordKey])) {
+                    continue;
+                }
+                $processedRecords[$recordKey] = true;
+
+                $parts = explode('-', $dateKey);
+                $dateFormatted = count($parts) === 3
+                    ? ($parts[2] . '/' . $parts[1] . '/' . ((int) $parts[0] + 543))
+                    : $dateKey;
+
+                $checkIn = $data['check_in'];
+                $checkOut = $data['check_out'] ?? '—';
+                $st = $data['status'] ?? 'เข้างานแล้ว';
+                $hours = $data['work_hours'] ?? $this->calculateWorkHours($checkIn, $checkOut, $st);
+
+                $checkInMin = $this->parseTimeToMinutes($checkIn);
+                $checkOutMin = $this->parseTimeToMinutes($checkOut);
+                $isLate = ($checkInMin !== null && $checkInMin > ($shiftStartMin + $graceMinutes));
+
+                $otStart = '—';
+                $otEnd = '—';
+                $otHours = '—';
+                if ($checkOutMin !== null && $checkOutMin > $shiftEndMin) {
+                    $otMin = $checkOutMin - $shiftEndMin;
+                    $otStart = sprintf('%02d:%02d น.', intdiv($shiftEndMin, 60), $shiftEndMin % 60);
+                    $otEnd = $checkOut;
+                    $otHours = $this->formatMinutesAsThaiDuration($otMin);
+                }
+
+                $rowStatus = ($st === 'ออกงานแล้ว' || $st === 'เข้างานแล้ว')
+                    ? ($isLate ? 'late' : 'present')
+                    : 'pending';
+                $statusLabel = $isLate
+                    ? 'เข้าสาย'
+                    : ($st === 'ออกงานแล้ว' ? 'ออกงานแล้ว' : ($st === 'เข้างานแล้ว' ? 'เช็คอินตรงเวลา' : 'ยังไม่เข้างาน'));
+                $statusBadge = $isLate
+                    ? 'สาย 🟡'
+                    : ($st === 'ออกงานแล้ว' ? 'ออกงานแล้ว 🟢' : ($st === 'เข้างานแล้ว' ? 'ปกติ 🟢' : 'ยังไม่เข้างาน ⚪'));
+
+                $logs[] = [
+                    'id' => 'att_' . str_replace('-', '', $dateKey) . '_' . $recEmpId,
+                    'employee_id' => $recEmpId,
+                    'date' => $dateKey,
+                    'date_formatted' => $dateFormatted,
+                    'name' => $empName,
+                    'roles' => [
+                        [
+                            'label' => $roleLabel,
+                            'color' => $isAdmin ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-blue-50 text-blue-700 border-blue-200',
+                            'icon' => $isAdmin ? '🛡️' : '💼'
+                        ]
+                    ],
+                    'branch' => $branch,
+                    'is_offday' => false,
+                    'status_label' => $statusLabel,
+                    'status_badge' => $statusBadge,
+                    'check_in_time' => $checkIn,
+                    'check_in_photo' => $this->normalizeAvatarUrl($data['check_in_photo'] ?? null),
+                    'check_in_distance' => '0ม.',
+                    'check_in_location' => $data['check_in_location'] ?? 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)',
+                    'check_out_time' => $checkOut,
+                    'check_out_photo' => $this->normalizeAvatarUrl($data['check_out_photo'] ?? null),
+                    'check_out_distance' => ($checkOut !== '—') ? '0ม.' : null,
+                    'check_out_location' => $data['check_out_location'] ?? 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)',
+                    'total_hours' => $hours,
+                    'status' => $rowStatus,
+                    'ot_start' => $otStart,
+                    'ot_end' => $otEnd,
+                    'ot_hours' => $otHours,
+                ];
+            }
+        }
+
+        // 2. Build TODAY's entry (offday or pending scan) for registered employees with no scan yet today
+        foreach ($realEmployees as $idx => $emp) {
+            $empId = $emp['id'] ?? (string) $idx;
+            $recordKey = "{$empId}_{$todayDateKey}";
             if (isset($processedRecords[$recordKey])) {
                 continue;
             }
 
+            $empData = $empDataMap[$empId] ?? null;
             $roleLabel = $emp['role_label'] ?? $emp['role'] ?? 'พนักงานร้าน (Employee)';
             $isAdmin = (str_contains(strtolower($roleLabel), 'admin') || str_contains(strtolower($emp['role'] ?? ''), 'admin'));
 
-            // Check if this employee is the session actor who scanned
-            $isSessionActor = false;
-            if (!empty($sessionEmpId) && $sessionEmpId === $empId) {
-                $isSessionActor = true;
-            } elseif (!empty($loggedActor['id']) && $empId === $loggedActor['id']) {
-                $isSessionActor = true;
-            } elseif (!empty($loggedActor['email']) && strtolower($emp['email'] ?? '') === strtolower($loggedActor['email'])) {
-                $isSessionActor = true;
-            } elseif (!empty($loggedActor['name']) && strtolower($emp['name'] ?? '') === strtolower($loggedActor['name'])) {
-                $isSessionActor = true;
-            }
+            $scheduledDays = isset($empData['schedule']['days'])
+                ? $this->parseThaiWeekdays((array) $empData['schedule']['days'])
+                : [1, 2, 3, 4, 5];
+            $isScheduledToday = in_array($nowBangkok->dayOfWeek, $scheduledDays, true);
 
-            if ($isSessionActor && session()->has('employee_check_in') && session('employee_check_in') !== '—') {
-                $checkIn = session('employee_check_in');
-                $checkOut = session('employee_check_out') ?: '—';
-                $st = session('employee_status', 'ออกงานแล้ว');
-                $hours = session('employee_work_hours');
-                if (empty($hours) || $hours === '8 ชม. 34 นาที') {
-                    $hours = $this->calculateWorkHours($checkIn, $checkOut, $st);
-                }
-                $photoIn = $this->normalizeAvatarUrl(session('employee_check_in_photo'));
-                $photoOut = $this->normalizeAvatarUrl(session('employee_check_out_photo'));
-
-                $logs[] = [
-                    'id' => 'att_' . str_replace('-', '', $todayDateKey) . '_' . $empId,
-                    'employee_id' => $empId,
-                    'date' => $todayDateKey,
-                    'date_formatted' => $todayDateFormatted,
-                    'name' => $emp['name'] ?? 'พนักงาน',
-                    'roles' => [
-                        [
-                            'label' => $roleLabel,
-                            'color' => $isAdmin ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-blue-50 text-blue-700 border-blue-200',
-                            'icon' => $isAdmin ? '🛡️' : '💼'
-                        ]
-                    ],
-                    'branch' => $emp['branch'] ?? 'ทุกสาขา',
-                    'is_offday' => false,
-                    'status_label' => ($st === 'ออกงานแล้ว') ? 'ออกงานแล้ว' : 'เช็คอินตรงเวลา',
-                    'status_badge' => ($st === 'ออกงานแล้ว') ? 'ออกงานแล้ว 🟢' : 'ปกติ 🟢',
-                    'check_in_time' => $checkIn,
-                    'check_in_photo' => $photoIn,
-                    'check_in_distance' => '0ม.',
-                    'check_in_location' => session('employee_check_in_location', 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)'),
-                    'check_out_time' => $checkOut,
-                    'check_out_photo' => $photoOut,
-                    'check_out_distance' => ($checkOut !== '—') ? '0ม.' : null,
-                    'check_out_location' => session('employee_check_out_location', 'พิกัดร้านหม่าล่า: 6.5500, 101.2944 • ห่าง 0 ม. (อยู่ในเขตร้าน)'),
-                    'total_hours' => $hours ?: '—',
-                    'status' => 'present',
-                    'ot_start' => '—',
-                    'ot_end' => '—',
-                    'ot_hours' => '—',
-                ];
-            } else {
-                // Employee has NOT scanned today -> display pending with NO PHOTO and NO FAKE TIMES
-                $logs[] = [
-                    'id' => 'att_' . str_replace('-', '', $todayDateKey) . '_' . $empId,
-                    'employee_id' => $empId,
-                    'date' => $todayDateKey,
-                    'date_formatted' => $todayDateFormatted,
-                    'name' => $emp['name'] ?? 'พนักงาน',
-                    'roles' => [
-                        [
-                            'label' => $roleLabel,
-                            'color' => $isAdmin ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-blue-50 text-blue-700 border-blue-200',
-                            'icon' => $isAdmin ? '🛡️' : '💼'
-                        ]
-                    ],
-                    'branch' => $emp['branch'] ?? 'ทุกสาขา',
-                    'is_offday' => false,
-                    'status_label' => 'ยังไม่เข้างาน',
-                    'status_badge' => 'ยังไม่เข้างาน ⚪',
-                    'check_in_time' => '—',
-                    'check_in_photo' => null,
-                    'check_in_distance' => null,
-                    'check_in_location' => null,
-                    'check_out_time' => '—',
-                    'check_out_photo' => null,
-                    'check_out_distance' => null,
-                    'check_out_location' => null,
-                    'total_hours' => '—',
-                    'status' => 'pending',
-                    'ot_start' => '—',
-                    'ot_end' => '—',
-                    'ot_hours' => '—',
-                ];
-            }
+            $logs[] = [
+                'id' => 'att_' . str_replace('-', '', $todayDateKey) . '_' . $empId,
+                'employee_id' => $empId,
+                'date' => $todayDateKey,
+                'date_formatted' => $todayDateFormatted,
+                'name' => $emp['name'] ?? 'พนักงาน',
+                'roles' => [
+                    [
+                        'label' => $roleLabel,
+                        'color' => $isAdmin ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-blue-50 text-blue-700 border-blue-200',
+                        'icon' => $isAdmin ? '🛡️' : '💼'
+                    ]
+                ],
+                'branch' => $emp['branch'] ?? 'ทุกสาขา',
+                'is_offday' => !$isScheduledToday,
+                'status_label' => $isScheduledToday ? 'ยังไม่เข้างาน' : 'วันหยุดประจำสัปดาห์',
+                'status_badge' => $isScheduledToday ? 'ยังไม่เข้างาน ⚪' : 'วันหยุด ⚪',
+                'check_in_time' => '—',
+                'check_in_photo' => null,
+                'check_in_distance' => null,
+                'check_in_location' => null,
+                'check_out_time' => '—',
+                'check_out_photo' => null,
+                'check_out_distance' => null,
+                'check_out_location' => null,
+                'total_hours' => '—',
+                'status' => $isScheduledToday ? 'pending' : 'offday',
+                'ot_start' => '—',
+                'ot_end' => '—',
+                'ot_hours' => '—',
+            ];
         }
+
+        usort($logs, fn($a, $b) => strcmp($b['date'] ?? '', $a['date'] ?? ''));
 
         return $logs;
     }
 
     /**
-     * Build monthly attendance summary for real employees.
+     * Compute real monthly attendance, lateness, absence, OT, and payroll metrics
+     * directly from Access Control employee_data_{id} and Setting attendance records.
      */
-    protected function buildRealMonthlySummary(array $realEmployees): array
-    {
-        $summary = [];
-        foreach ($realEmployees as $emp) {
-            $summary[] = [
-                'name' => $emp['name'] ?? 'Munib Salaemae',
-                'role' => $emp['role_label'] ?? $emp['role'] ?? 'ผู้ดูแลระบบ (Admin)',
-                'branch' => $emp['branch'] ?? 'ทุกสาขา',
-                'work_days' => 26,
-                'late_days' => 1,
-                'offsite_days' => 0,
-                'total_hours' => '208.5 ชม.',
-                'ot_hours' => '14.5 ชม.',
-                'attendance_rate' => '98.5%',
+    protected function computeEmployeeMonthMetrics(
+        array $emp,
+        ?array $empData,
+        string $monthKey,
+        array $attendanceByEmpDate,
+        Carbon $nowBangkok
+    ): array {
+        $empId = $emp['id'] ?? '';
+        $roleLabel = $emp['role_label'] ?? $emp['role'] ?? 'พนักงานร้าน';
+        $isAdmin = (str_contains(strtolower($roleLabel), 'admin') || str_contains(strtolower($emp['role'] ?? ''), 'admin'));
+
+        $monthStart = Carbon::createFromFormat('Y-m-d', $monthKey . '-01', 'Asia/Bangkok')->startOfDay();
+        $monthEnd = $monthStart->copy()->endOfMonth()->startOfDay();
+        $todayStr = $nowBangkok->format('Y-m-d');
+        $currentMonthKey = $nowBangkok->format('Y-m');
+
+        // 1. Work schedule & shift bounds from ข้อมูล & สิทธิการทำงานพนักงาน
+        $schedule = $empData['schedule'] ?? [];
+        if (isset($schedule['days']) && is_array($schedule['days'])) {
+            $scheduledDayNums = $this->parseThaiWeekdays($schedule['days']);
+        } else {
+            $scheduledDayNums = [1, 2, 3, 4, 5]; // Default Mon-Fri
+        }
+
+        $shiftStartMin = $this->parseTimeToMinutes($schedule['start_time'] ?? '09:00 AM') ?? (9 * 60);
+        $shiftEndMin = $this->parseTimeToMinutes($schedule['end_time'] ?? '07:00 PM') ?? (19 * 60);
+
+        // 2. Leave & late rules (อนุโลมเข้าสาย & ค่าปรับเข้าสาย)
+        $leaveSection = $empData['leave'] ?? [];
+        $graceTimesMonth = max(0, (int) ($leaveSection['late_grace_times_month'] ?? 3));
+        $graceMinutes = max(0, (int) ($leaveSection['late_grace_minutes'] ?? 15));
+        $lateFineAmount = max(0.0, (float) ($leaveSection['late_fine_amount'] ?? 0));
+
+        // 3. Real attendance scans during target month (up to today)
+        $empScans = $attendanceByEmpDate[$empId] ?? [];
+        $workDays = 0;
+        $lateDays = 0;
+        $totalWorkMinutes = 0;
+        $totalOtMinutes = 0;
+        $scannedDates = [];
+
+        foreach ($empScans as $dKey => $scan) {
+            if (!str_starts_with($dKey, $monthKey . '-') || $dKey > $todayStr) {
+                continue;
+            }
+            $checkInMin = $this->parseTimeToMinutes($scan['check_in'] ?? null);
+            if ($checkInMin === null) {
+                continue;
+            }
+
+            $scannedDates[$dKey] = true;
+            $workDays++;
+
+            if ($checkInMin > ($shiftStartMin + $graceMinutes)) {
+                $lateDays++;
+            }
+
+            $checkOutMin = $this->parseTimeToMinutes($scan['check_out'] ?? null);
+            if ($checkOutMin !== null) {
+                $dur = $checkOutMin >= $checkInMin
+                    ? ($checkOutMin - $checkInMin)
+                    : ((24 * 60 - $checkInMin) + $checkOutMin);
+                $totalWorkMinutes += $dur;
+                if ($checkOutMin > $shiftEndMin) {
+                    $totalOtMinutes += ($checkOutMin - $shiftEndMin);
+                }
+            } elseif ($dKey === $todayStr) {
+                $nowMin = ($nowBangkok->hour * 60) + $nowBangkok->minute;
+                if ($nowMin >= $checkInMin) {
+                    $totalWorkMinutes += ($nowMin - $checkInMin);
+                }
+            }
+        }
+
+        // 4. Scheduled workdays in month & real absent days elapsed in target month
+        $scheduledDaysInMonth = 0;
+        for ($cur = $monthStart->copy(); $cur->lte($monthEnd); $cur->addDay()) {
+            if (in_array($cur->dayOfWeek, $scheduledDayNums, true)) {
+                $scheduledDaysInMonth++;
+            }
+        }
+
+        $effectiveStart = $monthStart->copy();
+        $rawJoinDate = $empData['more_info']['start_date'] ?? ($emp['created_at'] ?? null);
+        if (!empty($rawJoinDate)) {
+            try {
+                $joinParsed = Carbon::parse($rawJoinDate, 'Asia/Bangkok')->startOfDay();
+                if ($joinParsed->gt($effectiveStart)) {
+                    $effectiveStart = $joinParsed;
+                }
+            } catch (\Throwable $e) {
+                // Keep month start if unparseable
+            }
+        }
+
+        if ($monthKey < $currentMonthKey) {
+            $evalEnd = $monthEnd->copy();
+        } elseif ($monthKey > $currentMonthKey) {
+            $evalEnd = $monthStart->copy()->subDay();
+        } else {
+            // Count completed past days + today if employee already scanned or shift end passed
+            $yesterday = $nowBangkok->copy()->subDay()->startOfDay();
+            $todayStart = $nowBangkok->copy()->startOfDay();
+            $nowMin = ($nowBangkok->hour * 60) + $nowBangkok->minute;
+            $evalEnd = (isset($scannedDates[$todayStr]) || $nowMin > $shiftEndMin) ? $todayStart : $yesterday;
+        }
+
+        $expectedElapsedDays = 0;
+        $absentDays = 0;
+        if ($effectiveStart->lte($evalEnd)) {
+            for ($cur = $effectiveStart->copy(); $cur->lte($evalEnd); $cur->addDay()) {
+                if (in_array($cur->dayOfWeek, $scheduledDayNums, true)) {
+                    $expectedElapsedDays++;
+                    $dKey = $cur->format('Y-m-d');
+                    if (!isset($scannedDates[$dKey])) {
+                        $absentDays++;
+                    }
+                }
+            }
+        }
+
+        $denominator = max($expectedElapsedDays, $workDays);
+        $rateNum = $denominator > 0
+            ? min(100, (int) round(($workDays / $denominator) * 100))
+            : 0;
+
+        // 5. Real Wage, OT, KPI, Late Fine from ประเภทการจ้างงาน & เงินเดือน + อนุโลมเข้าสาย
+        $wageKpi = $empData['wage_kpi'] ?? [];
+        $wageType = $wageKpi['wage_type'] ?? ($isAdmin ? 'monthly' : 'daily');
+        $dailyWage = (float) ($wageKpi['daily_wage'] ?? 0);
+        $monthlyWage = (float) ($wageKpi['monthly_wage'] ?? 0);
+        $otRate = (float) ($wageKpi['regular_ot_rate'] ?? ($empData['payroll']['ot_rate'] ?? 0));
+
+        if (!empty($wageKpi)) {
+            if ($wageType === 'daily' || $wageType === 'part_time') {
+                $baseSalary = round($dailyWage * $workDays, 2);
+            } elseif ($wageType === 'hourly') {
+                $hourlyRate = $dailyWage > 0 ? ($dailyWage / 8) : 0;
+                $baseSalary = round($hourlyRate * ($totalWorkMinutes / 60), 2);
+            } else {
+                // Monthly fixed wage
+                $baseSalary = $monthlyWage > 0
+                    ? round($monthlyWage, 2)
+                    : round((float) ($empData['payroll']['base_salary'] ?? 0), 2);
+            }
+        } else {
+            $baseSalary = round((float) ($empData['payroll']['base_salary'] ?? 0), 2);
+        }
+
+        $otAmount = ($totalOtMinutes > 0 && $otRate > 0)
+            ? round(($totalOtMinutes / 60) * $otRate, 2)
+            : 0.0;
+
+        $kpiEnabled = !empty($wageKpi['kpi_enabled']);
+        $kpiAmount = (float) ($wageKpi['kpi_amount'] ?? 0);
+        $bonus = ($kpiEnabled && $kpiAmount > 0 && ($workDays > 0 || ($wageType === 'monthly' && $baseSalary > 0)))
+            ? round($kpiAmount, 2)
+            : 0.0;
+
+        $billableLateCount = max(0, $lateDays - $graceTimesMonth);
+        $deductionLate = ($billableLateCount > 0 && $lateFineAmount > 0)
+            ? round($billableLateCount * $lateFineAmount, 2)
+            : 0.0;
+        $deductionSs = 0.0;
+        $deductions = $deductionLate;
+
+        $netSalary = max(0.0, round($baseSalary + $otAmount + $bonus - $deductions, 2));
+
+        $leaveDays = (int) ($empData['attendance']['leave_days'] ?? 0);
+        $grade = $expectedElapsedDays === 0
+            ? 'A'
+            : ($rateNum >= 90 ? 'A' : ($rateNum >= 75 ? 'B' : ($rateNum >= 50 ? 'C' : 'D')));
+
+        return [
+            'work_days' => $workDays,
+            'late_days' => $lateDays,
+            'absent_days' => $absentDays,
+            'leave_days' => $leaveDays,
+            'expected_elapsed_days' => $expectedElapsedDays,
+            'scheduled_days_in_month' => $scheduledDaysInMonth,
+            'total_work_minutes' => $totalWorkMinutes,
+            'total_ot_minutes' => $totalOtMinutes,
+            'work_hours' => $this->formatMinutesAsThaiDuration($totalWorkMinutes),
+            'ot_hours' => $this->formatMinutesAsThaiDuration($totalOtMinutes),
+            'rate_num' => $rateNum,
+            'rate_percent' => "{$rateNum}%",
+            'grade' => $grade,
+            'base_salary' => $baseSalary,
+            'ot_rate' => $otRate,
+            'ot_amount' => $otAmount,
+            'bonus' => $bonus,
+            'deduction_late' => $deductionLate,
+            'deduction_ss' => $deductionSs,
+            'deductions' => $deductions,
+            'net_salary' => $netSalary,
+        ];
+    }
+
+    /**
+     * Build dynamic 12-month payroll periods for the active employee (current Bangkok year).
+     */
+    protected function buildEmployeePayrollPeriods(
+        array $activeEmployee,
+        ?array $empData,
+        array $attendanceByEmpDate,
+        Carbon $nowBangkok
+    ): array {
+        $thaiMonths = [
+            1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม', 4 => 'เมษายน',
+            5 => 'พฤษภาคม', 6 => 'มิถุนายน', 7 => 'กรกฎาคม', 8 => 'สิงหาคม',
+            9 => 'กันยายน', 10 => 'ตุลาคม', 11 => 'พฤศจิกายน', 12 => 'ธันวาคม',
+        ];
+        $thaiShortMonths = [
+            1 => 'ม.ค.', 2 => 'ก.พ.', 3 => 'มี.ค.', 4 => 'เม.ย.',
+            5 => 'พ.ค.', 6 => 'มิ.ย.', 7 => 'ก.ค.', 8 => 'ส.ค.',
+            9 => 'ก.ย.', 10 => 'ต.ค.', 11 => 'พ.ย.', 12 => 'ธ.ค.',
+        ];
+
+        $year = $nowBangkok->year;
+        $thaiYear = $year + 543;
+        $currentMonthKey = $nowBangkok->format('Y-m');
+        $periods = [];
+
+        for ($m = 12; $m >= 1; $m--) {
+            $mKey = sprintf('%04d-%02d', $year, $m);
+            $monthEndDay = Carbon::create($year, $m, 1, 0, 0, 0, 'Asia/Bangkok')->endOfMonth()->day;
+            $metrics = $this->computeEmployeeMonthMetrics($activeEmployee, $empData, $mKey, $attendanceByEmpDate, $nowBangkok);
+
+            $paymentStatus = $mKey === $currentMonthKey
+                ? 'งวดปัจจุบัน'
+                : ($mKey < $currentMonthKey ? 'ปิดงวดแล้ว' : 'ยังไม่ถึงงวด');
+
+            $periods[$mKey] = [
+                'period_label' => "{$thaiMonths[$m]} {$thaiYear}",
+                'period_short' => "{$thaiShortMonths[$m]} {$thaiYear}",
+                'base_salary' => $metrics['base_salary'],
+                'ot_amount' => $metrics['ot_amount'],
+                'ot_hours' => $metrics['ot_hours'],
+                'ot_rate' => number_format((float) $metrics['ot_rate'], 2, '.', ''),
+                'bonus' => $metrics['bonus'],
+                'deductions_total' => $metrics['deductions'],
+                'deduction_late' => $metrics['deduction_late'],
+                'deduction_social_security' => $metrics['deduction_ss'],
+                'net_salary' => $metrics['net_salary'],
+                'work_days' => $metrics['work_days'],
+                'total_hours' => $metrics['work_hours'],
+                'total_ot_hours' => $metrics['ot_hours'],
+                'leave_days' => $metrics['leave_days'],
+                'payment_status' => $paymentStatus,
+                'payment_date' => "{$monthEndDay} {$thaiShortMonths[$m]} {$thaiYear}",
             ];
         }
+
+        return $periods;
+    }
+
+    /**
+     * Build monthly attendance summary for real employees.
+     */
+    protected function buildRealMonthlySummary(
+        array $realEmployees,
+        ?array $empDataMap = null,
+        ?array $attendanceByEmpDate = null,
+        ?Carbon $nowBangkok = null,
+        ?string $monthKey = null
+    ): array {
+        $nowBangkok = $nowBangkok ?: Carbon::now('Asia/Bangkok');
+        $monthKey = $monthKey ?: $nowBangkok->format('Y-m');
+        $empDataMap = $empDataMap ?? $this->loadEmployeeDataMap($realEmployees);
+        $attendanceByEmpDate = $attendanceByEmpDate ?? $this->loadAttendanceByEmpDate($realEmployees, $nowBangkok);
+
+        $summary = [];
+        foreach ($realEmployees as $emp) {
+            $empId = $emp['id'] ?? '';
+            $empData = $empDataMap[$empId] ?? null;
+            $metrics = $this->computeEmployeeMonthMetrics($emp, $empData, $monthKey, $attendanceByEmpDate, $nowBangkok);
+
+            $summary[] = [
+                'name' => $emp['name'] ?? $emp['full_name'] ?? 'พนักงาน',
+                'role' => $emp['role_label'] ?? $emp['role'] ?? 'พนักงานร้าน',
+                'branch' => $emp['branch'] ?? 'ทุกสาขา',
+                'work_days' => $metrics['work_days'],
+                'late_days' => $metrics['late_days'],
+                'absent_days' => $metrics['absent_days'],
+                'offsite_days' => 0,
+                'total_hours' => $metrics['work_hours'],
+                'ot_hours' => $metrics['ot_hours'],
+                'attendance_rate' => $metrics['rate_percent'],
+            ];
+        }
+
         return $summary;
     }
 
     /**
-     * Build dynamic individual payroll cards for real employees matching Image 1 & Image 2.
-     * Unconfigured items default to 0 as requested by user.
+     * Build dynamic individual payroll & attendance cards synced 100% with Access Control.
      */
-    protected function buildRealPayrollCards(array $realEmployees): array
-    {
+    protected function buildRealPayrollCards(
+        array $realEmployees,
+        ?array $empDataMap = null,
+        ?array $attendanceByEmpDate = null,
+        ?Carbon $nowBangkok = null,
+        ?string $monthKey = null
+    ): array {
+        $nowBangkok = $nowBangkok ?: Carbon::now('Asia/Bangkok');
+        $monthKey = $monthKey ?: $nowBangkok->format('Y-m');
+        $empDataMap = $empDataMap ?? $this->loadEmployeeDataMap($realEmployees);
+        $attendanceByEmpDate = $attendanceByEmpDate ?? $this->loadAttendanceByEmpDate($realEmployees, $nowBangkok);
+
         $cards = [];
 
         foreach ($realEmployees as $idx => $emp) {
@@ -1087,89 +1365,30 @@ class EmployeeController extends Controller
             $email = $emp['email'] ?? '';
             $avatar = !empty($emp['avatar']) ? $emp['avatar'] : null;
             $initials = !empty($emp['initials']) ? $emp['initials'] : mb_substr($empName, 0, 2);
-            $color = $emp['color'] ?? ($emp['role'] === 'Admin' ? 'bg-rose-600' : 'bg-blue-600');
+            $color = $emp['color'] ?? (($emp['role'] ?? '') === 'Admin' ? 'bg-rose-600' : 'bg-blue-600');
 
-            // Role Badge styling
             $isAdmin = (str_contains(strtolower($roleLabel), 'admin') || str_contains(strtolower($emp['role'] ?? ''), 'admin'));
+            $savedData = $empDataMap[$empId] ?? null;
 
-            // Check if there is saved employee data in Setting (from ข้อมูล & สิทธิการทำงานพนักงาน)
-            $savedData = json_decode(Setting::get("employee_data_{$empId}", 'null'), true);
+            $metrics = $this->computeEmployeeMonthMetrics($emp, $savedData, $monthKey, $attendanceByEmpDate, $nowBangkok);
 
-            if ($savedData && (isset($savedData['payroll']) || isset($savedData['wage_kpi']))) {
-                $wageKpi = $savedData['wage_kpi'] ?? [];
-                $payrollSection = $savedData['payroll'] ?? [];
-
-                $workDays = (int)($savedData['attendance']['work_days'] ?? 26);
-                $wageType = $wageKpi['wage_type'] ?? 'monthly';
-
-                if ($wageType === 'daily' && !empty($wageKpi['daily_wage']) && empty($payrollSection['base_salary'])) {
-                    $baseSalary = (float)$wageKpi['daily_wage'] * $workDays;
-                } else {
-                    $baseSalary = (float)($payrollSection['base_salary'] ?? 0);
-                }
-
-                $otRate = (float)($wageKpi['regular_ot_rate'] ?? $payrollSection['ot_rate'] ?? 0);
-                $otAmount = (float)($payrollSection['ot_amount'] ?? ($empName === 'meemee' ? 2250 : 0));
-                $bonus = (float)($payrollSection['allowance'] ?? $payrollSection['bonus'] ?? 0);
-                if ($bonus == 0 && !empty($wageKpi['kpi_enabled']) && !empty($wageKpi['kpi_amount'])) {
-                    $bonus = (float)$wageKpi['kpi_amount'];
-                }
-                if ($empName === 'meemee' && $bonus == 0) {
-                    $bonus = 1000;
-                }
-
-                $deductions = (float)($payrollSection['deduction'] ?? $payrollSection['deductions_total'] ?? ($empName === 'meemee' ? 750 : 0));
-                $deductionLate = (float)($payrollSection['deduction_late'] ?? ($deductions > 500 ? $deductions - 500 : 0));
-                $deductionSs = (float)($payrollSection['deduction_social_security'] ?? ($deductions >= 500 ? 500 : $deductions));
-                $netSalary = max(0, $baseSalary + $otAmount + $bonus - $deductions);
-
-                $workDays = (int)($savedData['attendance']['work_days'] ?? ($baseSalary > 0 ? 26 : 0));
-                $workHours = $savedData['attendance']['work_hours'] ?? ($workDays > 0 ? ($workDays * 8) . ' ชม.' : '0 ชม.');
-                $otHours = $savedData['attendance']['ot_hours'] ?? ($otAmount > 0 ? '8 ชม. 34 นาที' : '0 ชม.');
-                $leaveDays = (int)($savedData['attendance']['leave_days'] ?? 0);
-                $ratePercent = $savedData['attendance']['rate'] ?? ($workDays > 0 ? '100%' : '0%');
-                $grade = $savedData['attendance']['grade'] ?? 'A';
-                $roleBadgeText = $isAdmin ? 'Admin' : ($savedData['profile']['position'] ?? $emp['position'] ?? 'พนักงานร้าน');
-            } elseif (!$isAdmin) {
-                // Regular Employee default matching Image 1, 2, 3 (ข้อมูล & สิทธิการทำงานพนักงาน)
-                $baseSalary = 15000.0;
-                $otRate = 60.0;
-                $otAmount = 0.0;
-                $bonus = 1000.0; // เบี้ยขยัน / ค่าครองชีพ
-                $deductions = 750.0; // รายการหักประกันสังคม / อื่นๆ
-                $deductionLate = 0.0;
-                $deductionSs = 750.0;
-                $netSalary = max(0, $baseSalary + $otAmount + $bonus - $deductions); // 15,250
-
-                $workDays = 26;
-                $workHours = '208 ชม.';
-                $otHours = '0 ชม.';
-                $leaveDays = 0;
-                $ratePercent = '100%';
-                $grade = 'A';
-                $roleBadgeText = $emp['position'] ?? 'พนง. บริการประจำ';
-            } else {
-                // Admin (e.g. Munib Salaemae, hayinotaf) without custom payroll setting: clean 0 (no fake mock data)
-                $baseSalary = 0.0;
-                $otAmount = 0.0;
-                $otRate = 0.0;
-                $bonus = 0.0;
-                $deductions = 0.0;
-                $deductionLate = 0.0;
-                $deductionSs = 0.0;
-                $netSalary = 0.0;
-
-                $workDays = 0;
-                $workHours = '0 ชม.';
-                $otHours = '0 ชม.';
-                $leaveDays = 0;
-                $ratePercent = '0%';
-                $grade = 'A';
-                $roleBadgeText = 'Admin';
-            }
-
+            $roleBadgeText = $isAdmin
+                ? 'Admin'
+                : ($savedData['profile']['position'] ?? $emp['position'] ?? 'พนักงานร้าน');
             $roleBadgeIcon = $isAdmin ? '🛡️' : '💼';
             $roleBadgeClass = $isAdmin ? 'bg-blue-50 text-blue-700' : 'bg-emerald-50 text-emerald-700';
+
+            $expectedDays = $metrics['expected_elapsed_days'] > 0
+                ? $metrics['expected_elapsed_days']
+                : $metrics['scheduled_days_in_month'];
+
+            $lateText = $metrics['late_days'] > 0
+                ? "สาย {$metrics['late_days']} วัน"
+                : ($metrics['work_days'] > 0 ? 'ตรงเวลาทุกวัน' : 'ตรงเวลา');
+
+            $absentText = $metrics['absent_days'] > 0
+                ? "ขาด {$metrics['absent_days']} วัน"
+                : 'ไม่ขาดงาน';
 
             $cards[] = [
                 'id' => $empId,
@@ -1186,26 +1405,29 @@ class EmployeeController extends Controller
                 'role_badge_text' => $roleBadgeText,
                 'role_badge_icon' => $roleBadgeIcon,
                 'role_badge_class' => $roleBadgeClass,
-                'grade' => $grade,
-                'work_days' => $workDays,
-                'work_hours' => $workHours,
-                'ot_hours' => $otHours,
-                'leave_days' => $leaveDays,
-                'rate_percent' => $ratePercent,
-                'rate_delta' => $ratePercent === '100%' ? '▲ 100%' : ($ratePercent === '0%' ? '0%' : '▲ ' . $ratePercent),
-                'progress_width' => $ratePercent,
-                'attendance_ratio' => "{$workDays} / 26 วัน",
-                'late_text' => $workDays > 0 ? 'ตรงเวลาทุกวัน' : 'ตรงเวลา',
-                'absent_text' => 'ไม่ขาดงาน',
-                'base_salary' => $baseSalary,
-                'ot_amount' => $otAmount,
-                'ot_rate' => $otRate,
-                'bonus' => $bonus,
-                'deductions' => $deductions,
-                'deduction_late' => $deductionLate,
-                'deduction_ss' => $deductionSs,
-                'net_salary' => $netSalary,
-                'search_text' => strtolower("{$empName} {$roleLabel} {$branch} {$email} " . (int)$netSalary),
+                'grade' => $metrics['grade'],
+                'work_days' => $metrics['work_days'],
+                'late_days' => $metrics['late_days'],
+                'absent_days' => $metrics['absent_days'],
+                'work_hours' => $metrics['work_hours'],
+                'ot_hours' => $metrics['ot_hours'],
+                'leave_days' => $metrics['leave_days'],
+                'rate_num' => $metrics['rate_num'],
+                'rate_percent' => $metrics['rate_percent'],
+                'rate_delta' => $metrics['rate_num'] > 0 ? '▲' : '',
+                'progress_width' => $metrics['rate_percent'],
+                'attendance_ratio' => "{$metrics['work_days']} / {$expectedDays} วัน",
+                'late_text' => $lateText,
+                'absent_text' => $absentText,
+                'base_salary' => $metrics['base_salary'],
+                'ot_amount' => $metrics['ot_amount'],
+                'ot_rate' => $metrics['ot_rate'],
+                'bonus' => $metrics['bonus'],
+                'deductions' => $metrics['deductions'],
+                'deduction_late' => $metrics['deduction_late'],
+                'deduction_ss' => $metrics['deduction_ss'],
+                'net_salary' => $metrics['net_salary'],
+                'search_text' => strtolower("{$empName} {$roleLabel} {$roleBadgeText} {$branch} {$email} " . (int) $metrics['net_salary']),
             ];
         }
 
