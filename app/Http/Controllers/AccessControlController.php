@@ -623,6 +623,7 @@ class AccessControlController extends Controller
                     'annual_leave' => 6,
                     'late_grace_times_month' => 3,
                     'late_grace_minutes' => 15,
+                    'late_fine_amount' => 0,
                 ],
                 'more_info' => [
                     'id_card' => '',
@@ -1060,6 +1061,7 @@ class AccessControlController extends Controller
                 'annual_leave' => 6,
                 'late_grace_times_month' => 3,
                 'late_grace_minutes' => 15,
+                'late_fine_amount' => 0,
             ],
             'more_info' => [
                 'id_card' => '',
@@ -1510,6 +1512,7 @@ class AccessControlController extends Controller
                 'annual_leave' => 6,
                 'late_grace_times_month' => 3,
                 'late_grace_minutes' => 15,
+                'late_fine_amount' => 0,
             ],
             'more_info' => [
                 'id_card' => '',

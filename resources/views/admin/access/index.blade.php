@@ -1351,7 +1351,7 @@
                             </div>
                         </div>
 
-                        <!-- 3. อนุโลมเข้าสาย (ครั้ง/เดือน & กี่นาที) -->
+                        <!-- 3. อนุโลมเข้าสาย (ครั้ง/เดือน, กี่นาที & ค่าปรับเข้าสาย) -->
                         <div class="p-3 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
                             <div class="flex items-center gap-1.5 font-bold text-xs text-slate-800">
                                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
@@ -1365,6 +1365,10 @@
                                 <div>
                                     <label class="block text-[11px] font-semibold text-slate-600 mb-1">กี่นาที (นาที/ครั้ง)</label>
                                     <input type="number" id="emp-edit-grace-minutes" value="{{ $activeEmployeeData['leave']['late_grace_minutes'] ?? 15 }}" class="w-full text-xs px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">ค่าปรับเข้าสาย (บาท/ครั้ง)</label>
+                                    <input type="number" min="0" step="1" id="emp-edit-late-fine" value="{{ $activeEmployeeData['leave']['late_fine_amount'] ?? 0 }}" placeholder="0" class="w-full text-xs px-3 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500">
                                 </div>
                             </div>
                         </div>
@@ -3292,6 +3296,8 @@
         const sickYear = parseFloat(document.getElementById('emp-edit-sick-year')?.value || 30);
         const graceTimes = parseInt(document.getElementById('emp-edit-grace-times')?.value || 3);
         const graceMinutes = parseInt(document.getElementById('emp-edit-grace-minutes')?.value || 15);
+        const rawLateFine = document.getElementById('emp-edit-late-fine')?.value;
+        const lateFine = (rawLateFine !== undefined && rawLateFine !== '') ? parseFloat(rawLateFine) : 0;
         const annualLeave = parseFloat(document.getElementById('emp-edit-annual')?.value || 6);
 
         const leave = {
@@ -3303,6 +3309,7 @@
             sick_leave: sickYear,
             late_grace_times_month: graceTimes,
             late_grace_minutes: graceMinutes,
+            late_fine_amount: lateFine,
             annual_leave: annualLeave
         };
 
