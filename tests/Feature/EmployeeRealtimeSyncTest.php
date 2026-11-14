@@ -144,12 +144,16 @@ class EmployeeRealtimeSyncTest extends TestCase
         $this->assertSame('สาย 2 วัน', $salsabil['late_text']);
         $this->assertSame('ขาด 7 วัน', $salsabil['absent_text']);
 
-        // Pay: 3 worked days * 300 = 900 base + 500 KPI - 1 billable late * 50 fine = 1350 net
-        $this->assertEquals(900, $salsabil['base_salary']);
-        $this->assertEquals(500, $salsabil['bonus']);
+        // Full Salary & KPI upfront, then cut when actually absent:
+        // Base = 6429, absent 7 days * 300 = 2100, late 1 billable * 50 = 50, KPI 500 cut to 0 -> Net 4279
+        $this->assertEquals(6429, $salsabil['base_salary']);
+        $this->assertEquals(0, $salsabil['bonus']);
+        $this->assertTrue($salsabil['kpi_cut']);
+        $this->assertEquals(500, $salsabil['configured_kpi']);
+        $this->assertEquals(2100, $salsabil['deduction_absent']);
         $this->assertEquals(50, $salsabil['deduction_late']);
         $this->assertEquals(0, $salsabil['deduction_ss']);
-        $this->assertEquals(1350, $salsabil['net_salary']);
+        $this->assertEquals(4279, $salsabil['net_salary']);
 
         // Unconfigured Admin has clean 0 pay, real elapsed Mon-Fri absence = 10
         $munib = $cards->firstWhere('id', 'usr_munib');
@@ -163,7 +167,7 @@ class EmployeeRealtimeSyncTest extends TestCase
         $nov3 = $logs->first(fn($l) => $l['employee_id'] === 'usr_salsabil' && $l['date'] === '2026-11-03');
         $this->assertSame('late', $nov3['status']);
 
-        // Auto-sync test: when a new account is created in future, sync-data immediately includes it
+        // Auto-sync test: newly registered account gets NO phantom default 2000 KPI, and shows full scheduled base salary until absent
         $regRes = $this->postJson('/register-request', [
             'name' => 'วาสนา ใหม่ล่าสุด',
             'email' => 'wasana.new@malastreet.com',
@@ -179,7 +183,29 @@ class EmployeeRealtimeSyncTest extends TestCase
         $this->assertNotNull($wasana);
         $this->assertSame(0, $wasana['work_days']);
         $this->assertSame(0, $wasana['absent_days']); // Hired today 2026-11-14 -> 0 prior absent days
-        $this->assertEquals(0, $wasana['net_salary']);
+        $this->assertEquals(5250, $wasana['base_salary']); // 21 Mon-Fri days * 250 upfront
+        $this->assertEquals(0, $wasana['bonus']); // KPI disabled by default unless Admin enables it
+        $this->assertEquals(5250, $wasana['net_salary']);
+
+        // If KPI is enabled for wasana with 0 absent days, full KPI shows immediately
+        $wasanaData = json_decode(Setting::get('employee_data_' . $wasana['id'], '{}'), true);
+        $wasanaData['wage_kpi']['kpi_enabled'] = true;
+        $wasanaData['wage_kpi']['kpi_amount'] = 1000;
+        Setting::set('employee_data_' . $wasana['id'], json_encode($wasanaData), 'employees');
+
+        $kpiRes = $this->actingAs($admin)->getJson('/admin/employees/sync-data');
+        $wasanaWithKpi = collect($kpiRes->json('payrollCards'))->firstWhere('id', $wasana['id']);
+        $this->assertEquals(1000, $wasanaWithKpi['bonus']);
+        $this->assertFalse($wasanaWithKpi['kpi_cut']);
+        $this->assertEquals(6250, $wasanaWithKpi['net_salary']);
+
+        // If schedule days are empty ([]), absent_text clearly warns 'ยังไม่กำหนดวันทำงาน'
+        $wasanaData['schedule']['days'] = [];
+        Setting::set('employee_data_' . $wasana['id'], json_encode($wasanaData), 'employees');
+        $unconfRes = $this->actingAs($admin)->getJson('/admin/employees/sync-data');
+        $wasanaUnconf = collect($unconfRes->json('payrollCards'))->firstWhere('id', $wasana['id']);
+        $this->assertTrue($wasanaUnconf['schedule_unconfigured']);
+        $this->assertSame('ยังไม่กำหนดวันทำงาน', $wasanaUnconf['absent_text']);
 
         // Rendered /admin/employees HTML contains real period & no hardcoded 2567 mock periods
         $page = $this->actingAs($admin)->get('/admin/employees?tab=payroll');
@@ -190,3 +216,4 @@ class EmployeeRealtimeSyncTest extends TestCase
         $page->assertSee('สาย 2 วัน', false);
     }
 }
+

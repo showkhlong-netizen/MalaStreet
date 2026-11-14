@@ -838,7 +838,9 @@
                             $rateTextColor = $rateNum >= 80 ? 'text-[#16A34A]' : ($rateNum >= 50 ? 'text-amber-600' : 'text-rose-600');
                             $rateBarColor = $rateNum >= 80 ? 'bg-[#16A34A]' : ($rateNum >= 50 ? 'bg-amber-500' : 'bg-rose-500');
                             $lateTextColor = (($card['late_days'] ?? 0) > 0) ? 'text-amber-600' : 'text-[#16A34A]';
-                            $absentTextColor = (($card['absent_days'] ?? 0) > 0) ? 'text-rose-600' : 'text-[#16A34A]';
+                            $absentTextColor = !empty($card['schedule_unconfigured'])
+                                ? 'text-amber-600'
+                                : ((($card['absent_days'] ?? 0) > 0) ? 'text-rose-600' : 'text-[#16A34A]');
                         @endphp
                         <div class="pt-2.5 pb-2.5 border-t border-slate-100">
                             <div class="flex items-center justify-between text-xs">
@@ -916,9 +918,14 @@
                                 <span @if($loop->first) id="dtl-ot-amount" @endif class="font-bold text-emerald-600">฿{{ number_format($card['ot_amount'], 0) }}</span>
                             </div>
 
-                            <div class="py-1.5 flex justify-between items-center">
-                                <span class="text-slate-600">โบนัส / เบี้ยขยัน</span>
-                                <span @if($loop->first) id="dtl-bonus-amount" @endif class="font-bold text-emerald-600">฿{{ number_format($card['bonus'], 0) }}</span>
+                            <div class="py-1.5 flex justify-between items-start">
+                                <div>
+                                    <span class="text-slate-600 block">โบนัส / เบี้ยขยัน</span>
+                                    @if(!empty($card['kpi_cut']) && ($card['configured_kpi'] ?? 0) > 0)
+                                        <span class="text-[10px] text-rose-500 font-semibold">ตัดสิทธิ์ KPI (฿{{ number_format($card['configured_kpi'], 0) }}) จากขาดงาน</span>
+                                    @endif
+                                </div>
+                                <span @if($loop->first) id="dtl-bonus-amount" @endif class="font-bold {{ !empty($card['kpi_cut']) ? 'text-rose-500' : 'text-emerald-600' }}">฿{{ number_format($card['bonus'], 0) }}</span>
                             </div>
 
                             <div class="py-1.5">
@@ -928,6 +935,12 @@
                                 </div>
                                 @if($card['deductions'] > 0)
                                 <div class="pl-2 mt-1 space-y-0.5 text-slate-500 text-[10.5px]">
+                                    @if(($card['deduction_absent'] ?? 0) > 0)
+                                    <div class="flex justify-between">
+                                        <span>• หักขาดงาน ({{ $card['absent_days'] ?? 0 }} วัน)</span>
+                                        <span @if($loop->first) id="dtl-absent" @endif class="text-rose-500 font-semibold">-฿{{ number_format($card['deduction_absent'], 0) }}</span>
+                                    </div>
+                                    @endif
                                     @if($card['deduction_late'] > 0)
                                     <div class="flex justify-between">
                                         <span>• หักจากการมาสาย</span>
@@ -1831,8 +1844,15 @@
                     <span id="ps-ot-amount" class="font-bold text-emerald-600">+฿{{ number_format($currentPayroll['ot_amount'] ?? 0, 2) }}</span>
                 </div>
                 <div class="py-2 flex justify-between font-medium">
-                    <span class="text-slate-600">โบนัส / เบี้ยขยัน (Incentive)</span>
+                    <div>
+                        <span class="text-slate-600">โบนัส / เบี้ยขยัน (Incentive)</span>
+                        <span id="ps-kpi-cut-note" class="block text-[10px] text-rose-500 font-semibold {{ !empty($currentPayroll['kpi_cut']) ? '' : 'hidden' }}">ถูกตัดสิทธิ์เนื่องจากขาดงาน</span>
+                    </div>
                     <span id="ps-bonus-amount" class="font-bold text-emerald-600">+฿{{ number_format($currentPayroll['bonus'] ?? 0, 2) }}</span>
+                </div>
+                <div id="ps-absent-row" class="py-2 flex justify-between font-medium {{ ($currentPayroll['deduction_absent'] ?? 0) > 0 ? '' : 'hidden' }}">
+                    <span id="ps-absent-label" class="text-slate-600">หักขาดงาน</span>
+                    <span id="ps-deduction-absent" class="font-bold text-rose-600">-฿{{ number_format($currentPayroll['deduction_absent'] ?? 0, 2) }}</span>
                 </div>
                 <div id="ps-late-row" class="py-2 flex justify-between font-medium {{ ($currentPayroll['deduction_late'] ?? 0) > 0 ? '' : 'hidden' }}">
                     <span class="text-slate-600">หักจากการมาสาย</span>
@@ -2006,7 +2026,7 @@
         const boxBonus = document.getElementById('box-bonus-amount');
         if (boxBonus) boxBonus.innerText = '฿' + Number(data.bonus).toLocaleString();
         const boxDed = document.getElementById('box-deductions-amount');
-        if (boxDed) boxDed.innerText = '-฿' + Number(data.deductions_total).toLocaleString();
+        if (boxDed) boxDed.innerText = (Number(data.deductions_total) > 0 ? '-฿' : '฿') + Number(data.deductions_total).toLocaleString();
         const boxNet = document.getElementById('box-net-salary');
         if (boxNet) boxNet.innerText = '฿' + Number(data.net_salary).toLocaleString();
 
@@ -2020,7 +2040,9 @@
         const dtlBonus = document.getElementById('dtl-bonus-amount');
         if (dtlBonus) dtlBonus.innerText = '฿' + Number(data.bonus).toLocaleString();
         const dtlDedTotal = document.getElementById('dtl-deductions-total');
-        if (dtlDedTotal) dtlDedTotal.innerText = '-฿' + Number(data.deductions_total).toLocaleString();
+        if (dtlDedTotal) dtlDedTotal.innerText = (Number(data.deductions_total) > 0 ? '-฿' : '฿') + Number(data.deductions_total).toLocaleString();
+        const dtlAbsent = document.getElementById('dtl-absent');
+        if (dtlAbsent) dtlAbsent.innerText = '-฿' + Number(data.deduction_absent || 0).toLocaleString();
         const dtlLate = document.getElementById('dtl-late');
         if (dtlLate) dtlLate.innerText = '-฿' + Number(data.deduction_late).toLocaleString();
         const dtlSs = document.getElementById('dtl-ss');
@@ -2774,6 +2796,10 @@
             const otLabelEl = document.getElementById('ps-ot-label');
             const otAmountEl = document.getElementById('ps-ot-amount');
             const bonusAmountEl = document.getElementById('ps-bonus-amount');
+            const kpiCutNoteEl = document.getElementById('ps-kpi-cut-note');
+            const absentRowEl = document.getElementById('ps-absent-row');
+            const absentLabelEl = document.getElementById('ps-absent-label');
+            const absentEl = document.getElementById('ps-deduction-absent');
             const lateRowEl = document.getElementById('ps-late-row');
             const lateEl = document.getElementById('ps-deduction-late');
             const ssRowEl = document.getElementById('ps-ss-row');
@@ -2792,6 +2818,17 @@
             if (otLabelEl) otLabelEl.innerText = `ค่าล่วงเวลา (Overtime ${card.ot_hours || '0 ชม.'})`;
             if (otAmountEl) otAmountEl.innerText = '+฿' + fmt2(card.ot_amount);
             if (bonusAmountEl) bonusAmountEl.innerText = '+฿' + fmt2(card.bonus);
+            if (kpiCutNoteEl) {
+                kpiCutNoteEl.classList.toggle('hidden', !card.kpi_cut);
+                if (card.kpi_cut && Number(card.configured_kpi || 0) > 0) {
+                    kpiCutNoteEl.innerText = `ถูกตัดสิทธิ์ KPI (฿${Number(card.configured_kpi).toLocaleString()}) เนื่องจากขาดงาน`;
+                }
+            }
+
+            const absentAmt = Number(card.deduction_absent || 0);
+            if (absentRowEl) absentRowEl.classList.toggle('hidden', absentAmt <= 0);
+            if (absentLabelEl) absentLabelEl.innerText = `หักขาดงาน (${Number(card.absent_days || 0)} วัน)`;
+            if (absentEl) absentEl.innerText = '-฿' + fmt2(absentAmt);
 
             const lateAmt = Number(card.deduction_late || 0);
             if (lateRowEl) lateRowEl.classList.toggle('hidden', lateAmt <= 0);
@@ -3304,7 +3341,9 @@
             const rateTextColor = rateNum >= 80 ? 'text-[#16A34A]' : (rateNum >= 50 ? 'text-amber-600' : 'text-rose-600');
             const rateBarColor = rateNum >= 80 ? 'bg-[#16A34A]' : (rateNum >= 50 ? 'bg-amber-500' : 'bg-rose-500');
             const lateTextColor = Number(card.late_days || 0) > 0 ? 'text-amber-600' : 'text-[#16A34A]';
-            const absentTextColor = Number(card.absent_days || 0) > 0 ? 'text-rose-600' : 'text-[#16A34A]';
+            const absentTextColor = card.schedule_unconfigured
+                ? 'text-amber-600'
+                : (Number(card.absent_days || 0) > 0 ? 'text-rose-600' : 'text-[#16A34A]');
             const gradeColor = (card.grade === 'A' || card.grade === 'B')
                 ? 'bg-[#DCFCE7] text-[#16A34A]'
                 : (card.grade === 'C' ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600');
@@ -3320,9 +3359,14 @@
             const dedVal = Number(card.deductions || 0);
             const dedDetailHtml = dedVal > 0
                 ? `<div class="pl-2 mt-1 space-y-0.5 text-slate-500 text-[10.5px]">
+                    ${Number(card.deduction_absent || 0) > 0 ? `<div class="flex justify-between"><span>• หักขาดงาน (${Number(card.absent_days || 0)} วัน)</span><span ${idx === 0 ? 'id="dtl-absent"' : ''} class="text-rose-500 font-semibold">-฿${Number(card.deduction_absent).toLocaleString()}</span></div>` : ''}
                     ${Number(card.deduction_late || 0) > 0 ? `<div class="flex justify-between"><span>• หักจากการมาสาย</span><span ${idx === 0 ? 'id="dtl-late"' : ''} class="text-rose-500 font-semibold">-฿${Number(card.deduction_late).toLocaleString()}</span></div>` : ''}
                     ${Number(card.deduction_ss || 0) > 0 ? `<div class="flex justify-between"><span>• ประกันสังคม</span><span ${idx === 0 ? 'id="dtl-ss"' : ''} class="text-rose-500 font-semibold">-฿${Number(card.deduction_ss).toLocaleString()}</span></div>` : ''}
                    </div>`
+                : '';
+
+            const bonusCutSubHtml = card.kpi_cut && Number(card.configured_kpi || 0) > 0
+                ? `<span class="text-[10px] text-rose-500 font-semibold">ตัดสิทธิ์ KPI (฿${Number(card.configured_kpi).toLocaleString()}) จากขาดงาน</span>`
                 : '';
 
             return `
@@ -3430,9 +3474,9 @@
                                 <div><span class="text-slate-600 block">ค่าล่วงเวลา (OT)</span>${otSubHtml}</div>
                                 <span ${idx === 0 ? 'id="dtl-ot-amount"' : ''} class="font-bold text-emerald-600">฿${Number(card.ot_amount || 0).toLocaleString()}</span>
                             </div>
-                            <div class="py-1.5 flex justify-between items-center">
-                                <span class="text-slate-600">โบนัส / เบี้ยขยัน</span>
-                                <span ${idx === 0 ? 'id="dtl-bonus-amount"' : ''} class="font-bold text-emerald-600">฿${Number(card.bonus || 0).toLocaleString()}</span>
+                            <div class="py-1.5 flex justify-between items-start">
+                                <div><span class="text-slate-600 block">โบนัส / เบี้ยขยัน</span>${bonusCutSubHtml}</div>
+                                <span ${idx === 0 ? 'id="dtl-bonus-amount"' : ''} class="font-bold ${card.kpi_cut ? 'text-rose-500' : 'text-emerald-600'}">฿${Number(card.bonus || 0).toLocaleString()}</span>
                             </div>
                             <div class="py-1.5">
                                 <div class="flex justify-between items-center">

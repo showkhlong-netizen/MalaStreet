@@ -521,6 +521,7 @@ class EmployeeController extends Controller
             'base_salary' => $activeCard['base_salary'] ?? $period['base_salary'],
             'ot_amount' => $activeCard['ot_amount'] ?? $period['ot_amount'],
             'bonus' => $activeCard['bonus'] ?? $period['bonus'],
+            'deduction_absent' => $activeCard['deduction_absent'] ?? ($period['deduction_absent'] ?? 0),
             'deduction_late' => $activeCard['deduction_late'] ?? $period['deduction_late'],
             'deduction_social_security' => $activeCard['deduction_ss'] ?? $period['deduction_social_security'],
             'deductions_total' => $activeCard['deductions'] ?? $period['deductions_total'],
@@ -1172,24 +1173,27 @@ class EmployeeController extends Controller
             ? min(100, (int) round(($workDays / $denominator) * 100))
             : 0;
 
-        // 5. Real Wage, OT, KPI, Late Fine from ประเภทการจ้างงาน & เงินเดือน + อนุโลมเข้าสาย
+        // 5. Real Wage, OT, KPI, Absent & Late Deductions (แสดงเต็มไปก่อน เมื่อขาดงานจริงค่อยตัด)
         $wageKpi = $empData['wage_kpi'] ?? [];
         $wageType = $wageKpi['wage_type'] ?? ($isAdmin ? 'monthly' : 'daily');
         $dailyWage = (float) ($wageKpi['daily_wage'] ?? 0);
         $monthlyWage = (float) ($wageKpi['monthly_wage'] ?? 0);
         $otRate = (float) ($wageKpi['regular_ot_rate'] ?? ($empData['payroll']['ot_rate'] ?? 0));
+        $scheduleUnconfigured = empty($scheduledDayNums);
+        $isActiveInMonth = $effectiveStart->lte($monthEnd) && $monthKey <= $currentMonthKey;
 
-        if (!empty($wageKpi)) {
-            if ($wageType === 'daily' || $wageType === 'part_time') {
-                $baseSalary = round($dailyWage * $workDays, 2);
-            } elseif ($wageType === 'hourly') {
-                $hourlyRate = $dailyWage > 0 ? ($dailyWage / 8) : 0;
-                $baseSalary = round($hourlyRate * ($totalWorkMinutes / 60), 2);
+        if (!$isActiveInMonth) {
+            $baseSalary = 0.0;
+        } elseif (!empty($wageKpi)) {
+            if ($monthlyWage > 0) {
+                $baseSalary = round($monthlyWage, 2);
+            } elseif ($wageType === 'monthly') {
+                $baseSalary = round((float) ($empData['payroll']['base_salary'] ?? 0), 2);
             } else {
-                // Monthly fixed wage
-                $baseSalary = $monthlyWage > 0
-                    ? round($monthlyWage, 2)
-                    : round((float) ($empData['payroll']['base_salary'] ?? 0), 2);
+                // Daily / hourly / part-time without manual monthly_wage: full scheduled days in month * daily_wage
+                $baseSalary = ($dailyWage > 0 && $scheduledDaysInMonth > 0)
+                    ? round($dailyWage * $scheduledDaysInMonth, 2)
+                    : 0.0;
             }
         } else {
             $baseSalary = round((float) ($empData['payroll']['base_salary'] ?? 0), 2);
@@ -1201,16 +1205,33 @@ class EmployeeController extends Controller
 
         $kpiEnabled = !empty($wageKpi['kpi_enabled']);
         $kpiAmount = (float) ($wageKpi['kpi_amount'] ?? 0);
-        $bonus = ($kpiEnabled && $kpiAmount > 0 && ($workDays > 0 || ($wageType === 'monthly' && $baseSalary > 0)))
-            ? round($kpiAmount, 2)
-            : 0.0;
+        $configuredKpi = ($isActiveInMonth && $kpiEnabled && $kpiAmount > 0) ? round($kpiAmount, 2) : 0.0;
+        $kpiCut = ($configuredKpi > 0 && $absentDays > 0);
+        $bonus = ($configuredKpi > 0 && $absentDays === 0) ? $configuredKpi : 0.0;
+
+        $deductionAbsent = 0.0;
+        if ($absentDays > 0 && $baseSalary > 0) {
+            if ($wageType === 'monthly') {
+                $absentDailyRate = $scheduledDaysInMonth > 0
+                    ? round($baseSalary / $scheduledDaysInMonth, 2)
+                    : ($dailyWage > 0 ? $dailyWage : round($baseSalary / 30, 2));
+            } else {
+                $absentDailyRate = $dailyWage > 0
+                    ? $dailyWage
+                    : ($scheduledDaysInMonth > 0 ? round($baseSalary / $scheduledDaysInMonth, 2) : 0.0);
+            }
+
+            if ($absentDailyRate > 0) {
+                $deductionAbsent = min($baseSalary, round($absentDays * $absentDailyRate, 2));
+            }
+        }
 
         $billableLateCount = max(0, $lateDays - $graceTimesMonth);
         $deductionLate = ($billableLateCount > 0 && $lateFineAmount > 0)
             ? round($billableLateCount * $lateFineAmount, 2)
             : 0.0;
         $deductionSs = 0.0;
-        $deductions = $deductionLate;
+        $deductions = round($deductionAbsent + $deductionLate + $deductionSs, 2);
 
         $netSalary = max(0.0, round($baseSalary + $otAmount + $bonus - $deductions, 2));
 
@@ -1226,6 +1247,7 @@ class EmployeeController extends Controller
             'leave_days' => $leaveDays,
             'expected_elapsed_days' => $expectedElapsedDays,
             'scheduled_days_in_month' => $scheduledDaysInMonth,
+            'schedule_unconfigured' => $scheduleUnconfigured,
             'total_work_minutes' => $totalWorkMinutes,
             'total_ot_minutes' => $totalOtMinutes,
             'work_hours' => $this->formatMinutesAsThaiDuration($totalWorkMinutes),
@@ -1237,6 +1259,9 @@ class EmployeeController extends Controller
             'ot_rate' => $otRate,
             'ot_amount' => $otAmount,
             'bonus' => $bonus,
+            'configured_kpi' => $configuredKpi,
+            'kpi_cut' => $kpiCut,
+            'deduction_absent' => $deductionAbsent,
             'deduction_late' => $deductionLate,
             'deduction_ss' => $deductionSs,
             'deductions' => $deductions,
@@ -1286,7 +1311,10 @@ class EmployeeController extends Controller
                 'ot_hours' => $metrics['ot_hours'],
                 'ot_rate' => number_format((float) $metrics['ot_rate'], 2, '.', ''),
                 'bonus' => $metrics['bonus'],
+                'configured_kpi' => $metrics['configured_kpi'],
+                'kpi_cut' => $metrics['kpi_cut'],
                 'deductions_total' => $metrics['deductions'],
+                'deduction_absent' => $metrics['deduction_absent'],
                 'deduction_late' => $metrics['deduction_late'],
                 'deduction_social_security' => $metrics['deduction_ss'],
                 'net_salary' => $metrics['net_salary'],
@@ -1386,9 +1414,9 @@ class EmployeeController extends Controller
                 ? "สาย {$metrics['late_days']} วัน"
                 : ($metrics['work_days'] > 0 ? 'ตรงเวลาทุกวัน' : 'ตรงเวลา');
 
-            $absentText = $metrics['absent_days'] > 0
-                ? "ขาด {$metrics['absent_days']} วัน"
-                : 'ไม่ขาดงาน';
+            $absentText = !empty($metrics['schedule_unconfigured'])
+                ? 'ยังไม่กำหนดวันทำงาน'
+                : ($metrics['absent_days'] > 0 ? "ขาด {$metrics['absent_days']} วัน" : 'ไม่ขาดงาน');
 
             $cards[] = [
                 'id' => $empId,
@@ -1419,11 +1447,15 @@ class EmployeeController extends Controller
                 'attendance_ratio' => "{$metrics['work_days']} / {$expectedDays} วัน",
                 'late_text' => $lateText,
                 'absent_text' => $absentText,
+                'schedule_unconfigured' => !empty($metrics['schedule_unconfigured']),
                 'base_salary' => $metrics['base_salary'],
                 'ot_amount' => $metrics['ot_amount'],
                 'ot_rate' => $metrics['ot_rate'],
                 'bonus' => $metrics['bonus'],
+                'configured_kpi' => $metrics['configured_kpi'],
+                'kpi_cut' => $metrics['kpi_cut'],
                 'deductions' => $metrics['deductions'],
+                'deduction_absent' => $metrics['deduction_absent'],
                 'deduction_late' => $metrics['deduction_late'],
                 'deduction_ss' => $metrics['deduction_ss'],
                 'net_salary' => $metrics['net_salary'],

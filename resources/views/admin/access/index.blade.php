@@ -1429,13 +1429,13 @@
                             'ot_per_time' => '',
                             'ot_delivery' => '',
                             'ot_content' => '',
-                            'kpi_enabled' => true,
-                            'kpi_amount' => 2000,
+                            'kpi_enabled' => false,
+                            'kpi_amount' => 0,
                             'kpi_rounds' => 3,
                             'kpi_period_name' => 'สัปดาห์',
                             'show_in_evaluation' => false,
                         ];
-                        $kAmount = (int)($wageKpi['kpi_amount'] ?? 2000);
+                        $kAmount = (int)($wageKpi['kpi_amount'] ?? 0);
                         $kRounds = (int)($wageKpi['kpi_rounds'] ?? 3);
                         $kPeriod = $wageKpi['kpi_period_name'] ?? 'สัปดาห์';
                         $kPerRound = ($kRounds > 0) ? round($kAmount / $kRounds) : 0;
@@ -1540,7 +1540,7 @@
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-[11px] font-bold text-slate-700 mb-1">ค่าตอบแทน KPI (฿/รอบ)</label>
-                                    <input type="number" id="wage-kpi-amount" value="{{ $wageKpi['kpi_amount'] ?? 2000 }}" oninput="recalcKpiBanner()" class="w-full text-xs sm:text-sm font-medium px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-indigo-500 shadow-2xs">
+                                    <input type="number" id="wage-kpi-amount" value="{{ $wageKpi['kpi_amount'] ?? 0 }}" oninput="recalcKpiBanner()" class="w-full text-xs sm:text-sm font-medium px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-indigo-500 shadow-2xs">
                                 </div>
                                 <div>
                                     <label class="block text-[11px] font-bold text-slate-700 mb-1">รอบประเมิน KPI (ครั้ง/เดือน)</label>
@@ -3327,8 +3327,8 @@
             monthly_wage: parseFloat(document.getElementById('wage-monthly-total-input')?.value || 0),
             ot_per_time: document.getElementById('wage-ot-per-time')?.value || '',
             ot_delivery: document.getElementById('wage-ot-delivery')?.value || '',
-            kpi_enabled: document.getElementById('wage-enable-kpi')?.checked ?? true,
-            kpi_amount: parseFloat(document.getElementById('wage-kpi-amount')?.value || 2000),
+            kpi_enabled: document.getElementById('wage-enable-kpi')?.checked ?? false,
+            kpi_amount: parseFloat(document.getElementById('wage-kpi-amount')?.value || 0),
             kpi_rounds: parseFloat(document.getElementById('wage-kpi-rounds')?.value || 3),
             kpi_period_name: document.getElementById('wage-kpi-period-name')?.value || 'สัปดาห์',
             show_in_evaluation: document.getElementById('wage-kpi-show-detail')?.checked ?? false,
