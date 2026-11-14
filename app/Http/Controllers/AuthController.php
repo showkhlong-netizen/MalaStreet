@@ -58,13 +58,45 @@ class AuthController extends Controller
         if (Auth::attempt(['email' => $email, 'password' => $password], $remember)) {
             $authenticatedUser = Auth::user();
         } else {
-            // 2. Fallback check for users registered via Access Control
+            // 2. Fallback & employee_data password sync check
             $userModel = User::whereRaw('LOWER(email) = ?', [$email])->first();
-            if ($userModel && ($password === 'password123' || Hash::check($password, $userModel->password))) {
+            $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true) ?: [];
+            $matchedProfile = collect($savedUsers)->first(function ($u) use ($email) {
+                return strtolower(trim((string) ($u['email'] ?? ''))) === $email;
+            });
+            $empId = $matchedProfile['id'] ?? ($email === 'arena@malastreet.com' ? 'usr_arena_employee' : ($email === 'admin@malastreet.com' ? 'usr_main_admin' : null));
+            $savedEmpData = $empId ? (json_decode(Setting::get("employee_data_{$empId}", '{}'), true) ?: []) : [];
+            $savedEmpPassword = isset($savedEmpData['profile']['password']) ? (string) $savedEmpData['profile']['password'] : '';
+            $hasCustomPassword = strlen($savedEmpPassword) > 0;
+
+            if ($hasCustomPassword) {
+                if ($password === $savedEmpPassword) {
+                    if (!$userModel) {
+                        $userModel = User::create([
+                            'name' => $matchedProfile['name'] ?? ($savedEmpData['profile']['name'] ?? 'พนักงาน'),
+                            'email' => $email,
+                            'password' => Hash::make($password),
+                        ]);
+                    } elseif (!Hash::check($password, $userModel->password)) {
+                        $userModel->password = Hash::make($password);
+                        $userModel->save();
+                    }
+                    Auth::login($userModel, $remember);
+                    $authenticatedUser = $userModel;
+                }
+            } elseif ($userModel && ($password === 'password123' || Hash::check($password, $userModel->password))) {
                 if (!Hash::check($password, $userModel->password)) {
                     $userModel->password = Hash::make($password);
                     $userModel->save();
                 }
+                Auth::login($userModel, $remember);
+                $authenticatedUser = $userModel;
+            } elseif (!$userModel && $matchedProfile && $password === 'password123') {
+                $userModel = User::create([
+                    'name' => $matchedProfile['name'] ?? 'พนักงาน',
+                    'email' => $email,
+                    'password' => Hash::make($password),
+                ]);
                 Auth::login($userModel, $remember);
                 $authenticatedUser = $userModel;
             }

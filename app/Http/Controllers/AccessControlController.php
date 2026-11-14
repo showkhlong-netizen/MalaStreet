@@ -747,10 +747,86 @@ class AccessControlController extends Controller
 
         $schedule = $request->input('schedule', $existingData['schedule'] ?? []);
         $profile = $request->input('profile', $existingData['profile'] ?? []);
+        if (!is_array($profile)) {
+            $profile = [];
+        }
         $payroll = $request->has('payroll') ? $request->input('payroll', []) : ($existingData['payroll'] ?? []);
         $leave = $request->input('leave', $existingData['leave'] ?? []);
         $moreInfo = $request->input('more_info', $existingData['more_info'] ?? []);
         $wageKpi = $request->input('wage_kpi', $existingData['wage_kpi'] ?? []);
+
+        // Load access_users_list (seed default primary accounts if empty while test accounts are cleared)
+        $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true) ?: [];
+        $isTestCleared = (bool) Setting::get('access_test_accounts_cleared', false);
+        if (empty($savedUsers) && $isTestCleared && in_array($userId, ['usr_arena_employee', 'usr_main_admin'], true)) {
+            $savedUsers = [
+                [
+                    'id' => 'usr_arena_employee',
+                    'name' => 'อารีนา เจ๊ะอามะ',
+                    'full_name' => 'อารีนา เจ๊ะอามะ',
+                    'email' => 'arena@malastreet.com',
+                    'phone' => '082-345-6789',
+                    'role' => 'Employee',
+                    'role_label' => 'พนักงาน',
+                    'position' => 'พนง. บริการประจำ',
+                    'initials' => 'อ',
+                    'color' => 'bg-[#2563EB]',
+                    'avatar' => null,
+                    'status' => 'online',
+                    'status_label' => 'ใช้งานอยู่',
+                    'branch' => 'สาขายะลา',
+                    'is_test' => false,
+                    'created_at' => now()->toDateTimeString(),
+                ],
+                [
+                    'id' => 'usr_main_admin',
+                    'name' => 'Admin (เจ้าของร้าน)',
+                    'full_name' => 'ผู้ดูแลระบบสูงสุด ร้านหม่าล่าสตรีท',
+                    'email' => 'admin@malastreet.com',
+                    'phone' => '081-999-9999',
+                    'role' => 'Admin',
+                    'role_label' => 'ผู้ดูแลระบบ (Admin)',
+                    'position' => 'ผู้จัดการร้าน',
+                    'initials' => 'AD',
+                    'color' => 'bg-rose-600',
+                    'avatar' => null,
+                    'status' => 'online',
+                    'status_label' => 'ใช้งานอยู่',
+                    'branch' => 'ทุกสาขา',
+                    'is_test' => false,
+                    'created_at' => now()->toDateTimeString(),
+                ],
+            ];
+        }
+
+        $matchedListUser = collect($savedUsers)->firstWhere('id', $userId);
+        $fallbackEmails = [
+            'usr_arena_employee' => 'arena@malastreet.com',
+            'usr_main_admin' => 'admin@malastreet.com',
+        ];
+        $oldEmail = strtolower(trim((string) ($existingData['profile']['email'] ?? ($matchedListUser['email'] ?? ($fallbackEmails[$userId] ?? '')))));
+        $newEmail = strtolower(trim((string) ($profile['email'] ?? $oldEmail)));
+        if ($newEmail !== '') {
+            $profile['email'] = $newEmail;
+        }
+
+        // Handle simple password/PIN update (allows any non-empty length including 1-4 chars; preserves existing if blank)
+        $submittedPassword = array_key_exists('password', $profile) ? trim((string) $profile['password']) : '';
+        $existingPassword = isset($existingData['profile']['password']) ? (string) $existingData['profile']['password'] : '';
+        if (strlen($submittedPassword) > 0) {
+            $profile['password'] = $submittedPassword;
+            $profile['has_custom_password'] = true;
+            $profile['password_updated_at'] = now()->toDateTimeString();
+        } elseif (strlen($existingPassword) > 0) {
+            $profile['password'] = $existingPassword;
+            $profile['has_custom_password'] = true;
+            if (!empty($existingData['profile']['password_updated_at'])) {
+                $profile['password_updated_at'] = $existingData['profile']['password_updated_at'];
+            }
+        } else {
+            $profile['password'] = '';
+        }
+        $effectivePassword = (string) ($profile['password'] ?? '');
 
         $employeeData = [
             'schedule' => $schedule,
@@ -764,33 +840,62 @@ class AccessControlController extends Controller
 
         Setting::set("employee_data_{$userId}", json_encode($employeeData), 'employees');
 
-        // Update password in Laravel users table if provided
-        if (!empty($profile['password']) && !empty($profile['email'])) {
+        // Update or create real User in Laravel users table so login uses the new password immediately
+        $targetEmail = $newEmail !== '' ? $newEmail : $oldEmail;
+        $targetUserName = trim((string) ($profile['name'] ?? ($matchedListUser['name'] ?? $userId)));
+        if ($targetEmail !== '') {
             try {
-                User::where('email', strtolower(trim($profile['email'])))
-                    ->update(['password' => Hash::make($profile['password'])]);
+                $userModel = User::whereRaw('LOWER(email) = ?', [$targetEmail])->first();
+                if (!$userModel && $oldEmail !== '' && $oldEmail !== $targetEmail) {
+                    $userModel = User::whereRaw('LOWER(email) = ?', [$oldEmail])->first();
+                }
+
+                if ($userModel) {
+                    $userModel->email = $targetEmail;
+                    if ($targetUserName !== '') {
+                        $userModel->name = $targetUserName;
+                    }
+                    if (strlen($submittedPassword) > 0) {
+                        $userModel->password = Hash::make($submittedPassword);
+                    }
+                    $userModel->save();
+                } else {
+                    User::create([
+                        'name' => $targetUserName !== '' ? $targetUserName : 'พนักงาน',
+                        'email' => $targetEmail,
+                        'password' => Hash::make(strlen($effectivePassword) > 0 ? $effectivePassword : 'password123'),
+                    ]);
+                }
             } catch (\Throwable $e) {
-                // Non-blocking
+                \Illuminate\Support\Facades\Log::warning('saveEmployeeData user sync failed: ' . $e->getMessage());
             }
         }
 
-        // Update name or position in access_users_list if modified
-        $savedUsers = json_decode(Setting::get('access_users_list', '[]'), true);
+        // Update profile fields (including email & role) in access_users_list
+        $roleLabels = [
+            'Admin' => 'ผู้ดูแลระบบ (Admin)',
+            'Employee' => 'พนักงานร้าน (Employee)',
+            'Customer' => 'ลูกค้า (Customer)',
+        ];
         $updated = false;
-        $targetUserName = $profile['name'] ?? $userId;
         foreach ($savedUsers as &$u) {
-            if ($u['id'] === $userId) {
+            if (($u['id'] ?? '') === $userId) {
                 if (!empty($profile['name'])) $u['name'] = $profile['name'];
                 if (!empty($profile['full_name'])) $u['full_name'] = $profile['full_name'];
                 if (!empty($profile['position'])) $u['position'] = $profile['position'];
-                if (!empty($profile['phone'])) $u['phone'] = $profile['phone'];
-                if (!empty($profile['email'])) $u['email'] = $profile['email'];
+                if (isset($profile['phone'])) $u['phone'] = $profile['phone'];
+                if ($targetEmail !== '') $u['email'] = $targetEmail;
                 if (!empty($profile['branch'])) $u['branch'] = $profile['branch'];
+                if (!empty($profile['role'])) {
+                    $u['role'] = $profile['role'];
+                    $u['role_label'] = $roleLabels[$profile['role']] ?? $profile['role'];
+                }
                 $targetUserName = $u['name'] ?? $targetUserName;
                 $updated = true;
                 break;
             }
         }
+        unset($u);
         if ($updated) {
             Setting::set('access_users_list', json_encode($savedUsers), 'access');
         }
@@ -806,7 +911,9 @@ class AccessControlController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'บันทึกข้อมูลตารางงานและสิทธิการทำงานพนักงานเรียบร้อยแล้ว!',
+            'message' => strlen($submittedPassword) > 0
+                ? 'บันทึกรหัสผ่านและข้อมูลพนักงานเรียบร้อยแล้ว!'
+                : 'บันทึกข้อมูลตารางงานและสิทธิการทำงานพนักงานเรียบร้อยแล้ว!',
             'data' => $employeeData,
         ]);
     }
@@ -823,7 +930,7 @@ class AccessControlController extends Controller
             'phone' => 'nullable|string|max:50',
             'role' => 'required|string|in:Admin,Employee,Customer',
             'branch' => 'nullable|string|max:100',
-            'password' => 'nullable|string|min:4|max:100',
+            'password' => 'nullable|string|min:1|max:100',
             'avatar' => 'nullable|image|max:5120', // max 5MB
         ]);
 
@@ -832,7 +939,8 @@ class AccessControlController extends Controller
         $phone = trim($request->input('phone') ?? '-');
         $role = $request->input('role', 'Employee');
         $branch = $request->input('branch', 'ทุกสาขา');
-        $password = $request->input('password', 'password123');
+        $rawPassword = trim((string) $request->input('password', ''));
+        $password = strlen($rawPassword) > 0 ? $rawPassword : 'password123';
         $clearTestAccounts = $request->boolean('clear_test_accounts', true);
 
         // Process profile avatar upload
@@ -930,6 +1038,8 @@ class AccessControlController extends Controller
                 'email' => $email,
                 'branch' => $branch,
                 'role' => $role,
+                'password' => $password,
+                'has_custom_password' => $password !== 'password123',
             ],
             'payroll' => [
                 'base_salary' => $isNewUserAdmin ? 0 : 15000,
@@ -1205,7 +1315,7 @@ class AccessControlController extends Controller
         $request->validate([
             'name' => 'required|string|max:100',
             'email' => 'required|email|max:150',
-            'password' => 'required|string|min:4|max:100',
+            'password' => 'required|string|min:1|max:100',
             'phone' => 'nullable|string|max:50',
             'position' => 'nullable|string|max:100',
             'role' => 'nullable|string|in:Admin,Employee,Customer',

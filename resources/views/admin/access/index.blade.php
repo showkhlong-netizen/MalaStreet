@@ -684,7 +684,7 @@
                                                    id="reg-input-password"
                                                    required
                                                    value="password123"
-                                                   placeholder="กำหนดรหัสผ่าน (ค่าเริ่มต้น password123)"
+                                                   placeholder="กำหนดรหัสผ่าน / PIN ได้ง่ายๆ (เช่น 1234 หรือ password123)"
                                                    class="w-full text-xs sm:text-sm pl-9 pr-9 py-1.5 sm:py-2 rounded-xl border border-slate-200 focus:outline-blue-500 focus:bg-white bg-slate-50 text-slate-800 transition-all font-medium font-mono">
                                             <button type="button"
                                                     onclick="togglePasswordVisibility('reg-input-password', this)"
@@ -1280,7 +1280,9 @@
                                 </span>
                                 <input type="password"
                                        id="emp-edit-password"
-                                       placeholder="ตั้งรหัสผ่านใหม่ (ค่าเริ่มต้น password123 หากไม่เปลี่ยนเว้นว่างไว้ได้)"
+                                       value="{{ $activeEmployeeData['profile']['password'] ?? '' }}"
+                                       autocomplete="new-password"
+                                       placeholder="ตั้งรหัสผ่าน / PIN ใหม่ได้เลย (ตั้งแต่ 1–4 ตัวขึ้นไป เช่น 1234)"
                                        class="w-full text-xs sm:text-sm pl-9 pr-9 py-1.5 sm:py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-indigo-500 font-mono">
                                 <button type="button"
                                         onclick="togglePasswordVisibility('emp-edit-password', this)"
@@ -1292,16 +1294,20 @@
                                     </svg>
                                 </button>
                             </div>
-                            <span class="text-[9.5px] text-slate-500 mt-1 flex items-center gap-1">
-                                <svg class="w-3.5 h-3.5 text-amber-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <span id="emp-password-status-hint" class="text-[9.5px] mt-1 flex items-center gap-1 {{ !empty($activeEmployeeData['profile']['password']) ? 'text-emerald-600 font-semibold' : 'text-slate-500' }}">
+                                <svg class="w-3.5 h-3.5 {{ !empty($activeEmployeeData['profile']['password']) ? 'text-emerald-500' : 'text-amber-500' }} shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a3.75 3.75 0 10-7.5 0 3.75 3.75 0 007.5 0zm0 0v-1.5a1.5 1.5 0 013 0v1.5" />
                                 </svg>
-                                <span>ค่าเริ่มต้นของระบบคือ <strong>password123</strong> ท่านสามารถพิมพ์เปลี่ยนรหัสผ่านใหม่ที่นี่ได้ตลอดเวลา</span>
+                                @if(!empty($activeEmployeeData['profile']['password']))
+                                    <span>บันทึกรหัสผ่านแล้ว (กดไอคอนรูปตาเพื่อดู หรือพิมพ์แก้ใหม่ได้ตั้งแต่ 1–4 ตัวขึ้นไป เช่น 1234)</span>
+                                @else
+                                    <span>ตั้งรหัสผ่าน / PIN ได้ง่ายๆ (สั้นสุด 1–4 ตัว เช่น 1234 หรือค่าเริ่มต้น <strong>password123</strong>)</span>
+                                @endif
                             </span>
                         </div>
                     </div>
                     <div class="flex justify-end pt-1.5">
-                        <button type="button" onclick="saveActiveEmployeeData()" class="px-4 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs cursor-pointer hover:bg-indigo-700">บันทึกข้อมูลส่วนตัว</button>
+                        <button type="button" onclick="saveActiveEmployeeData(this)" class="px-4 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs cursor-pointer hover:bg-indigo-700 flex items-center gap-1.5">บันทึกข้อมูลส่วนตัว</button>
                     </div>
                 </div>
 
@@ -1402,7 +1408,7 @@
                         </div>
                     </div>
                     <div class="flex justify-end pt-1.5">
-                        <button type="button" onclick="saveActiveEmployeeData()" class="px-4 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs cursor-pointer hover:bg-indigo-700">บันทึกข้อมูลเพิ่มเติม</button>
+                        <button type="button" onclick="saveActiveEmployeeData(this)" class="px-4 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs cursor-pointer hover:bg-indigo-700 flex items-center gap-1.5">บันทึกข้อมูลเพิ่มเติม</button>
                     </div>
                 </div>
 
@@ -3326,6 +3332,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 },
                 body: JSON.stringify({
@@ -3345,7 +3352,19 @@
             });
 
             const json = await res.json();
-            if (json.success) {
+            if (res.ok && json.success) {
+                // Keep saved password reflected immediately in the input & status hint
+                const savedPwd = json.data?.profile?.password ?? '';
+                const pwdInput = document.getElementById('emp-edit-password');
+                const pwdHint = document.getElementById('emp-password-status-hint');
+                if (pwdInput && savedPwd !== '') {
+                    pwdInput.value = savedPwd;
+                }
+                if (pwdHint && savedPwd !== '') {
+                    pwdHint.className = 'text-[9.5px] mt-1 flex items-center gap-1 text-emerald-600 font-semibold';
+                    pwdHint.innerHTML = `<svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>บันทึกรหัสผ่านแล้ว (กดไอคอนรูปตาเพื่อดู หรือพิมพ์แก้ใหม่ได้ตั้งแต่ 1–4 ตัวขึ้นไป เช่น 1234)</span>`;
+                }
+
                 // Update top card display in real-time
                 if (profile.name) {
                     const nameEl = document.getElementById('emp-card-name');
@@ -3365,7 +3384,7 @@
             }
         } catch (err) {
             console.error(err);
-            showToast("บันทึกข้อมูลเรียบร้อย");
+            alert("ไม่สามารถบันทึกข้อมูลได้ กรุณาตรวจสอบการเชื่อมต่อและลองใหม่อีกครั้ง");
         } finally {
             if (btnSave) {
                 btnSave.disabled = false;
