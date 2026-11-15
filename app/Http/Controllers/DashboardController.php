@@ -24,32 +24,88 @@ class DashboardController extends Controller
     public function index(): View
     {
         $today = Carbon::today();
+        $yesterday = Carbon::yesterday();
 
         // Orders summary today
         $todayOrders = Order::whereDate('created_at', $today)->get();
+        $todayPaidOrders = $todayOrders->where('payment_status', 'paid');
         $posOrders = $todayOrders->where('order_type', 'pos');
         $onlineOrders = $todayOrders->where('order_type', 'online');
 
-        $totalSalesToday = $todayOrders->where('payment_status', 'paid')->sum('total_amount');
-        $posSalesToday = $posOrders->where('payment_status', 'paid')->sum('total_amount');
-        $onlineSalesToday = $onlineOrders->where('payment_status', 'paid')->sum('total_amount');
+        // Row 1: Financial KPIs
+        $cashSalesToday = $todayPaidOrders->where('payment_method', 'cash')->sum('total_amount');
+        $cashOrdersCount = $todayPaidOrders->where('payment_method', 'cash')->count();
 
-        // Total sticks sold today
+        $transferSalesToday = $todayPaidOrders->whereIn('payment_method', ['promptpay', 'transfer', 'qr'])->sum('total_amount');
+        $transferOrdersCount = $todayPaidOrders->whereIn('payment_method', ['promptpay', 'transfer', 'qr'])->count();
+
+        $onlineSalesToday = $onlineOrders->where('payment_status', 'paid')->sum('total_amount');
+        $onlineOrdersCount = $onlineOrders->where('payment_status', 'paid')->count();
+
+        $appOrderTypes = ['app', 'grab', 'lineman', 'shopee', 'delivery_app'];
+        $appSalesToday = $todayPaidOrders->filter(function (Order $order) use ($appOrderTypes) {
+            return in_array($order->order_type, $appOrderTypes, true)
+                || $order->payment_method === 'app'
+                || ($order->order_type === 'online' && in_array($order->payment_method, ['promptpay', 'transfer', 'qr'], true));
+        })->sum('total_amount');
+        $appOrdersCount = $todayPaidOrders->filter(function (Order $order) use ($appOrderTypes) {
+            return in_array($order->order_type, $appOrderTypes, true)
+                || $order->payment_method === 'app'
+                || ($order->order_type === 'online' && in_array($order->payment_method, ['promptpay', 'transfer', 'qr'], true));
+        })->count();
+
+        $totalSalesToday = $todayPaidOrders->sum('total_amount');
+        $posSalesToday = $posOrders->where('payment_status', 'paid')->sum('total_amount');
+
+        // Today's Purchases / Ingestion Costs (from Receipts) + Fixed/Variable Expenses
+        $todayReceiptsCost = Receipt::whereDate('purchase_date', $today)->sum('total_amount');
+        $todayExpenses = Expense::whereDate('expense_date', $today)->sum('amount');
+        $totalExpensesToday = $todayReceiptsCost + $todayExpenses;
+
+        // Est. Net Profit (kept for compatibility)
+        $netProfitToday = $totalSalesToday - $todayReceiptsCost - $todayExpenses;
+
+        // Row 2: Skewers, Stock, Waste, Yesterday Carryover, Sauce & Staff Withdrawals
         $totalSticksSold = OrderItem::whereHas('order', function ($query) use ($today) {
             $query->whereDate('created_at', $today)->where('payment_status', 'paid');
         })->sum('quantity_sticks');
 
-        // Total sticks in current stock
         $totalSticksInStock = Product::sum('stock_sticks');
 
-        // Today's Purchases / Ingestion Costs (from Receipts)
-        $todayReceiptsCost = Receipt::whereDate('purchase_date', $today)->sum('total_amount');
+        $todayInventoryRows = InventoryDaily::whereDate('record_date', $today)->get();
+        $wasteSticksToday = (int) $todayInventoryRows->sum('waste_sticks');
 
-        // Today's Expenses (Fixed costs + Utilities)
-        $todayExpenses = Expense::whereDate('expense_date', $today)->sum('amount');
+        $yesterdayCarryoverSticks = (int) $todayInventoryRows->sum('opening_sticks');
+        if ($yesterdayCarryoverSticks === 0) {
+            $yesterdayRows = InventoryDaily::whereDate('record_date', $yesterday)->get();
+            $yesterdayCarryoverSticks = (int) $yesterdayRows->sum(function (InventoryDaily $row) {
+                return $row->actual_closing_sticks ?? $row->expected_closing_sticks ?? 0;
+            });
+        }
 
-        // Est. Net Profit
-        $netProfitToday = $totalSalesToday - $todayReceiptsCost - $todayExpenses;
+        // Sauce sold today (quantity + total money)
+        $sauceItemsQuery = OrderItem::whereHas('order', function ($query) use ($today) {
+            $query->whereDate('created_at', $today)->where('payment_status', 'paid');
+        })->where(function ($query) {
+            $query->where('product_name', 'like', '%น้ำจิ้ม%')
+                ->orWhereHas('product.category', function ($catQuery) {
+                    $catQuery->where('name', 'like', '%น้ำจิ้ม%')
+                        ->orWhere('slug', 'like', '%sauce%');
+                });
+        });
+        $sauceSoldCount = (int) (clone $sauceItemsQuery)->sum('quantity_sticks');
+        $sauceSalesAmount = (float) (clone $sauceItemsQuery)->sum('subtotal');
+
+        // Staff withdrawals today (orders/notes marked as เบิก)
+        $staffWithdrawOrders = $todayOrders->filter(function (Order $order) {
+            $haystack = mb_strtolower(($order->order_type ?? '') . ' ' . ($order->customer_name ?? '') . ' ' . ($order->notes ?? ''), 'UTF-8');
+            return $order->order_type === 'staff_withdraw' || str_contains($haystack, 'เบิก');
+        });
+        $staffWithdrawCount = $staffWithdrawOrders->count();
+        $staffWithdrawSticks = 0;
+        if ($staffWithdrawCount > 0) {
+            $staffWithdrawSticks = (int) OrderItem::whereIn('order_id', $staffWithdrawOrders->pluck('id'))->sum('quantity_sticks');
+        }
 
         // Recent Price Alerts / Fluctuations (ไส้กรอกเมื่อวาน 60 วันนี้ 65)
         $recentPriceAlerts = PriceHistory::with('rawMaterial')->orderByDesc('recorded_at')->orderByDesc('id')->take(4)->get();
@@ -64,14 +120,28 @@ class DashboardController extends Controller
         $onlineOrderStatus = Setting::get('online_order_status', 'preview');
 
         return view('admin.dashboard', compact(
+            'cashSalesToday',
+            'cashOrdersCount',
+            'transferSalesToday',
+            'transferOrdersCount',
+            'onlineSalesToday',
+            'onlineOrdersCount',
+            'appSalesToday',
+            'appOrdersCount',
             'totalSalesToday',
             'posSalesToday',
-            'onlineSalesToday',
+            'totalExpensesToday',
+            'todayReceiptsCost',
+            'todayExpenses',
             'todayOrders',
             'totalSticksSold',
             'totalSticksInStock',
-            'todayReceiptsCost',
-            'todayExpenses',
+            'wasteSticksToday',
+            'yesterdayCarryoverSticks',
+            'sauceSoldCount',
+            'sauceSalesAmount',
+            'staffWithdrawCount',
+            'staffWithdrawSticks',
             'netProfitToday',
             'recentPriceAlerts',
             'recentOrders',

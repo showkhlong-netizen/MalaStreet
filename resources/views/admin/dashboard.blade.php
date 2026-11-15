@@ -49,75 +49,147 @@
 
 
 
-    <!-- KPI Metric Cards Grid -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <!-- 1. Total Sales -->
-        <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
-            <span class="text-xs font-bold text-slate-500 uppercase">ยอดขายวันนี้</span>
-            <div class="my-2">
-                <span class="text-2xl font-black text-slate-900">฿{{ number_format($totalSalesToday, 0) }}</span>
+    <!-- KPI Metric Cards (2 Rows x 6 Cards) -->
+    <div class="space-y-4">
+        <!-- Row 1: การเงิน -->
+        <div>
+            <div class="flex items-center gap-2 mb-2.5">
+                <span class="w-1.5 h-4 rounded-full bg-rose-600"></span>
+                <h2 class="text-xs font-extrabold text-slate-600 uppercase tracking-wider">การเงินวันนี้</h2>
             </div>
-            <div class="text-[11px] text-slate-500 flex justify-between">
-                <span>POS: ฿{{ number_format($posSalesToday, 0) }}</span>
-                <span class="text-emerald-600 font-bold">App: ฿{{ number_format($onlineSalesToday, 0) }}</span>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <!-- 1. รวมเงินสด -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-slate-500">รวมเงินสด</span>
+                    <div class="my-2">
+                        <span class="text-2xl font-black text-slate-900">฿{{ number_format($cashSalesToday, 0) }}</span>
+                    </div>
+                    <span class="text-[11px] text-slate-400">จาก {{ number_format($cashOrdersCount) }} บิล</span>
+                </div>
+
+                <!-- 2. รวมเงินโอน -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-slate-500">รวมเงินโอน</span>
+                    <div class="my-2">
+                        <span class="text-2xl font-black text-sky-600">฿{{ number_format($transferSalesToday, 0) }}</span>
+                    </div>
+                    <span class="text-[11px] text-slate-400">พร้อมเพย์/โอน {{ number_format($transferOrdersCount) }} บิล</span>
+                </div>
+
+                <!-- 3. สั่งออนไลน์ -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-slate-500">สั่งออนไลน์</span>
+                    <div class="my-2">
+                        <span class="text-2xl font-black text-indigo-600">฿{{ number_format($onlineSalesToday, 0) }}</span>
+                    </div>
+                    <span class="text-[11px] text-slate-400">สั่งหน้าเว็บ ({{ number_format($onlineOrdersCount) }} ออเดอร์)</span>
+                </div>
+
+                <!-- 4. รวมเงินผ่านแอพ -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-slate-500">รวมเงินผ่านแอพ</span>
+                    <div class="my-2">
+                        <span class="text-2xl font-black text-emerald-600">฿{{ number_format($appSalesToday, 0) }}</span>
+                    </div>
+                    <span class="text-[11px] text-slate-400">ชำระผ่านแอพ ({{ number_format($appOrdersCount) }} รายการ)</span>
+                </div>
+
+                <!-- 5. ยอดขายรวม -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-slate-500">ยอดขายรวม</span>
+                    <div class="my-2">
+                        <span class="text-2xl font-black text-slate-900">฿{{ number_format($totalSalesToday, 0) }}</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 flex justify-between gap-1">
+                        <span>POS: ฿{{ number_format($posSalesToday, 0) }}</span>
+                        <span class="text-emerald-600 font-bold">App: ฿{{ number_format($onlineSalesToday, 0) }}</span>
+                    </div>
+                </div>
+
+                <!-- 6. รายจ่ายรวม -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-slate-500">รายจ่ายรวม</span>
+                    <div class="my-2">
+                        <span class="text-2xl font-black text-rose-600">฿{{ number_format($totalExpensesToday, 0) }}</span>
+                    </div>
+                    <a href="{{ route('admin.expenses.index') }}" class="text-[11px] text-slate-500 hover:text-rose-600 truncate">
+                        วัตถุดิบ ฿{{ number_format($todayReceiptsCost, 0) }} • คอส ฿{{ number_format($todayExpenses, 0) }}
+                    </a>
+                </div>
             </div>
         </div>
 
-        <!-- 2. Sticks Sold -->
-        <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
-            <span class="text-xs font-bold text-slate-500 uppercase">ขายไปแล้ว</span>
-            <div class="my-2">
-                <span class="text-2xl font-black text-rose-600">{{ number_format($totalSticksSold) }}</span>
-                <span class="text-xs text-slate-400 font-bold">ไม้</span>
+        <!-- Row 2: สต็อกไม้ & การขาย & เบิก -->
+        <div>
+            <div class="flex items-center gap-2 mb-2.5">
+                <span class="w-1.5 h-4 rounded-full bg-amber-500"></span>
+                <h2 class="text-xs font-extrabold text-slate-600 uppercase tracking-wider">สต็อกไม้ &amp; การขายวันนี้</h2>
             </div>
-            <span class="text-[11px] text-slate-400">จาก {{ $todayOrders->count() }} ออเดอร์</span>
-        </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <!-- 1. ขายไปแล้วกี่ไม้ -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-slate-500">ขายไปแล้วกี่ไม้</span>
+                    <div class="my-2">
+                        <span class="text-2xl font-black text-rose-600">{{ number_format($totalSticksSold) }}</span>
+                        <span class="text-xs text-slate-400 font-bold">ไม้</span>
+                    </div>
+                    <span class="text-[11px] text-slate-400">จาก {{ number_format($todayOrders->count()) }} ออเดอร์</span>
+                </div>
 
-        <!-- 3. Current Stock Sticks -->
-        <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
-            <span class="text-xs font-bold text-slate-500 uppercase">สต็อกไม้คงเหลือ</span>
-            <div class="my-2">
-                <span class="text-2xl font-black text-amber-600">{{ number_format($totalSticksInStock) }}</span>
-                <span class="text-xs text-slate-400 font-bold">ไม้</span>
-            </div>
-            <a href="{{ route('admin.inventory.index') }}" class="text-[11px] text-rose-600 font-semibold hover:underline">
-                ตรวจนับสต็อก →
-            </a>
-        </div>
+                <!-- 2. สต๊อกไม้คงเหลือ -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-slate-500">สต๊อกไม้คงเหลือ</span>
+                    <div class="my-2">
+                        <span class="text-2xl font-black text-amber-600">{{ number_format($totalSticksInStock) }}</span>
+                        <span class="text-xs text-slate-400 font-bold">ไม้</span>
+                    </div>
+                    <a href="{{ route('admin.inventory.index') }}" class="text-[11px] text-rose-600 font-semibold hover:underline">
+                        ตรวจนับสต็อก →
+                    </a>
+                </div>
 
-        <!-- 4. Today Purchases (COGS) -->
-        <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
-            <span class="text-xs font-bold text-slate-500 uppercase">ซื้อวัตถุดิบวันนี้</span>
-            <div class="my-2">
-                <span class="text-2xl font-black text-slate-800">฿{{ number_format($todayReceiptsCost, 0) }}</span>
-            </div>
-            <a href="{{ route('admin.receipts.index') }}" class="text-[11px] text-slate-500 hover:text-rose-600">
-                สแกนใบเสร็จ →
-            </a>
-        </div>
+                <!-- 3. ไม้เสียทิ้ง -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-slate-500">ไม้เสียทิ้ง</span>
+                    <div class="my-2">
+                        <span class="text-2xl font-black text-slate-800">{{ number_format($wasteSticksToday) }}</span>
+                        <span class="text-xs text-slate-400 font-bold">ไม้</span>
+                    </div>
+                    <a href="{{ route('admin.inventory.index') }}" class="text-[11px] text-slate-400 hover:text-rose-600 truncate">
+                        เก็บเกิน 2 วัน / ตกพื้น
+                    </a>
+                </div>
 
-        <!-- 5. Fixed Costs & Expenses -->
-        <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
-            <span class="text-xs font-bold text-slate-500 uppercase">ฟิกคอส & รายจ่าย</span>
-            <div class="my-2">
-                <span class="text-2xl font-black text-slate-800">฿{{ number_format($todayExpenses, 0) }}</span>
-            </div>
-            <a href="{{ route('admin.expenses.index') }}" class="text-[11px] text-slate-500 hover:text-rose-600">
-                จัดการรายจ่าย →
-            </a>
-        </div>
+                <!-- 4. ไม้ที่เหลือจากเมื่อวาน -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-slate-500">ไม้ที่เหลือจากเมื่อวาน</span>
+                    <div class="my-2">
+                        <span class="text-2xl font-black text-slate-800">{{ number_format($yesterdayCarryoverSticks) }}</span>
+                        <span class="text-xs text-slate-400 font-bold">ไม้</span>
+                    </div>
+                    <span class="text-[11px] text-slate-400">ยอดยกมาเปิดร้านวันนี้</span>
+                </div>
 
-        <!-- 6. Estimated Net Profit -->
-        <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between {{ $netProfitToday >= 0 ? 'bg-emerald-50/50 border-emerald-200' : 'bg-rose-50/50 border-rose-200' }}">
-            <span class="text-xs font-bold text-slate-600 uppercase">กำไรสุทธิวันนี้ (Est.)</span>
-            <div class="my-2">
-                <span class="text-2xl font-black {{ $netProfitToday >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
-                    ฿{{ number_format($netProfitToday, 0) }}
-                </span>
+                <!-- 5. น้ำจิ้มขายออก (แสดงยอดเงินด้วย) -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-slate-500">น้ำจิ้มขายออก</span>
+                    <div class="my-2 flex items-baseline gap-1.5">
+                        <span class="text-2xl font-black text-emerald-700">{{ number_format($sauceSoldCount) }}</span>
+                        <span class="text-xs text-slate-400 font-bold">ชุด</span>
+                    </div>
+                    <span class="text-[11px] font-bold text-emerald-600">ยอดเงิน: ฿{{ number_format($sauceSalesAmount, 0) }}</span>
+                </div>
+
+                <!-- 6. รายการเบิก (พนักงานเบิกมากิน) -->
+                <div class="bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                    <span class="text-xs font-bold text-slate-500">รายการเบิก</span>
+                    <div class="my-2">
+                        <span class="text-2xl font-black text-slate-800">{{ number_format($staffWithdrawSticks) }}</span>
+                        <span class="text-xs text-slate-400 font-bold">ไม้</span>
+                    </div>
+                    <span class="text-[11px] text-slate-400 truncate">พนักงานเบิกกิน ({{ number_format($staffWithdrawCount) }} ครั้ง)</span>
+                </div>
             </div>
-            <span class="text-[11px] {{ $netProfitToday >= 0 ? 'text-emerald-600' : 'text-rose-600' }} font-semibold">
-                {{ $netProfitToday >= 0 ? 'กำไรเป็นบวก' : 'ยังไม่คุ้มฟิกคอส' }}
-            </span>
         </div>
     </div>
 
