@@ -249,23 +249,6 @@
                                 </a>
                             </div>
 
-                            @if(!empty($allSystemUsers) && count($allSystemUsers) > 1)
-                                <div class="px-3 py-2 border-t border-slate-100 bg-slate-50/70">
-                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">สลับบัญชีผู้ใช้งานด่วน (Sync)</div>
-                                    <div class="space-y-1 max-h-36 overflow-y-auto">
-                                        @foreach($allSystemUsers as $sysUsr)
-                                            <form action="{{ route('switch_user', ['userId' => $sysUsr['id']]) }}" method="POST">
-                                                @csrf
-                                                <button type="submit" class="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-left text-[11px] transition-colors cursor-pointer {{ ($currentUser['id'] ?? '') === ($sysUsr['id'] ?? '') ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200' : 'hover:bg-white text-slate-700 font-medium' }}">
-                                                    <span class="truncate">{{ $sysUsr['name'] }}</span>
-                                                    <span class="text-[9.5px] px-1.5 py-0.5 rounded {{ ($sysUsr['role'] ?? '') === 'Admin' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700' }}">{{ $sysUsr['role'] ?? 'Staff' }}</span>
-                                                </button>
-                                            </form>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
-
                             <!-- Logout Action -->
                             <div class="pt-1 border-t border-slate-100 p-1">
                                 <form action="{{ route('logout') }}" method="POST">
