@@ -1056,16 +1056,21 @@
 
                 <!-- Customer Info -->
                 <div class="bg-gradient-to-b from-[#E5E9F0] via-[#F5F7FA] to-white p-3 rounded-2xl border border-slate-200 space-y-2">
-                    <span class="font-bold text-[#101114] block">ข้อมูลผู้สั่งอาหาร</span>
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="font-bold text-[#101114] block">ข้อมูลผู้สั่งอาหาร</span>
+                        <span id="cust-profile-save-badge" class="text-[10px] font-semibold text-emerald-600 {{ (!empty($savedCustomerProfile['customer_name']) || !empty($savedCustomerProfile['customer_phone'])) ? '' : 'hidden' }}">จำข้อมูลตาม IP แล้ว ✓</span>
+                    </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="text-[10.5px] text-[#596272] block mb-0.5">ชื่อผู้สั่ง <span class="text-[#D90012]">*</span></label>
                             <input type="text" id="cust-name" placeholder="ชื่อของคุณ"
+                                   value="{{ $savedCustomerProfile['customer_name'] ?? '' }}"
                                    class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl focus:border-[#D90012] focus:outline-none">
                         </div>
                         <div>
                             <label class="text-[10.5px] text-[#596272] block mb-0.5">เบอร์โทรศัพท์ <span class="text-[#D90012]">*</span></label>
                             <input type="tel" id="cust-phone" placeholder="08X-XXX-XXXX"
+                                   value="{{ $savedCustomerProfile['customer_phone'] ?? '' }}"
                                    class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl focus:border-[#D90012] focus:outline-none">
                         </div>
                     </div>
@@ -1073,7 +1078,7 @@
                     <div id="delivery-address-group">
                         <label class="text-[10.5px] text-[#596272] block mb-0.5">ที่อยู่จัดส่งเดลิเวอรี่ <span class="text-[#D90012]">*</span></label>
                         <textarea id="cust-address" rows="2" placeholder="บ้านเลขที่ / ซอย / จุดสังเกต..."
-                                  class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl focus:border-[#D90012] focus:outline-none"></textarea>
+                                  class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-xl focus:border-[#D90012] focus:outline-none">{{ $savedCustomerProfile['customer_address'] ?? '' }}</textarea>
                     </div>
 
                     <div id="pickup-time-group" class="hidden">
@@ -1631,7 +1636,65 @@
         // Clean initial state: cart starts completely empty
         document.addEventListener('DOMContentLoaded', () => {
             updateCartUI();
+            initAutoSaveCustomerProfileByIp();
         });
+
+        let customerProfileSaveTimer = null;
+
+        function initAutoSaveCustomerProfileByIp() {
+            const fields = ['cust-name', 'cust-phone', 'cust-address']
+                .map(id => document.getElementById(id))
+                .filter(Boolean);
+
+            fields.forEach((el) => {
+                el.addEventListener('input', () => {
+                    clearTimeout(customerProfileSaveTimer);
+                    customerProfileSaveTimer = setTimeout(persistCustomerProfileNow, 350);
+                });
+                el.addEventListener('change', () => {
+                    clearTimeout(customerProfileSaveTimer);
+                    persistCustomerProfileNow();
+                });
+                el.addEventListener('blur', () => {
+                    clearTimeout(customerProfileSaveTimer);
+                    persistCustomerProfileNow();
+                });
+            });
+        }
+
+        async function persistCustomerProfileNow() {
+            const name = document.getElementById('cust-name')?.value.trim() || '';
+            const phone = document.getElementById('cust-phone')?.value.trim() || '';
+            const address = document.getElementById('cust-address')?.value.trim() || '';
+            const badge = document.getElementById('cust-profile-save-badge');
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+            try {
+                const res = await fetch('{{ route("online.customer_profile.save") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        customer_name: name,
+                        customer_phone: phone,
+                        customer_address: address,
+                    }),
+                });
+                if (res.ok && badge) {
+                    if (name || phone || address) {
+                        badge.textContent = 'บันทึกล่าสุดตาม IP แล้ว ✓';
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+            } catch (e) {
+                // Silent background save failure
+            }
+        }
 
         // Quick +/- directly on product cards
         function quickAddStick(productId) {
@@ -2119,6 +2182,7 @@
             const payload = {
                 customer_name: name,
                 customer_phone: phone,
+                customer_address: address || '',
                 pickup_time: orderingMethod === 'delivery' ? ('เดลิเวอรี่: ' + address) : pickupTime,
                 items: cart.map(item => ({
                     product_id: item.product_id,

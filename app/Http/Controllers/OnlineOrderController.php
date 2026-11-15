@@ -143,7 +143,9 @@ class OnlineOrderController extends Controller
             ->take(6)
             ->get();
 
-        return view('online.index', compact('categories', 'featuredProducts', 'recommendedProducts', 'heroBannerImage', 'heroBannerPosition', 'heroBannerHistory', 'profileLogoImage', 'profileLogoPosition', 'profileLogoHistory', 'showPromoBanner'));
+        $savedCustomerProfile = $this->getSavedCustomerProfileByIp($this->getClientIp($request));
+
+        return view('online.index', compact('categories', 'featuredProducts', 'recommendedProducts', 'heroBannerImage', 'heroBannerPosition', 'heroBannerHistory', 'profileLogoImage', 'profileLogoPosition', 'profileLogoHistory', 'showPromoBanner', 'savedCustomerProfile'));
     }
 
     /**
@@ -284,6 +286,12 @@ class OnlineOrderController extends Controller
                 'slip_image' => $slipPath,
                 'notes' => $validated['notes'] ?? null,
                 'paid_at' => Carbon::now(),
+            ]);
+
+            $this->saveCustomerProfileByIp($clientIp, [
+                'customer_name' => $validated['customer_name'],
+                'customer_phone' => $validated['customer_phone'],
+                'customer_address' => (string) $request->input('customer_address', ''),
             ]);
 
             foreach ($orderItemsData as $itemData) {
@@ -1308,6 +1316,79 @@ class OnlineOrderController extends Controller
             'message' => $show ? 'เปิดการแสดงแถบโปรโมชั่นแล้ว' : 'ปิดการแสดงแถบโปรโมชั่นแล้ว',
             'show' => $show,
         ]);
+    }
+
+    /**
+     * Auto-save latest customer order profile keyed by client device IP.
+     */
+    public function saveCustomerProfile(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'customer_name' => 'nullable|string|max:100',
+            'customer_phone' => 'nullable|string|max:30',
+            'customer_address' => 'nullable|string|max:500',
+        ]);
+
+        $clientIp = $this->getClientIp($request);
+        $profile = $this->saveCustomerProfileByIp($clientIp, $validated);
+
+        return response()->json([
+            'success' => true,
+            'ip' => $clientIp,
+            'profile' => $profile,
+        ]);
+    }
+
+    private function customerProfileSettingKey(string $ip): string
+    {
+        return 'online_customer_profile_' . md5(trim($ip));
+    }
+
+    private function getSavedCustomerProfileByIp(string $ip): array
+    {
+        $raw = Setting::get($this->customerProfileSettingKey($ip));
+        if ($raw) {
+            $decoded = json_decode((string) $raw, true);
+            if (is_array($decoded)) {
+                return [
+                    'customer_name' => (string) ($decoded['customer_name'] ?? ''),
+                    'customer_phone' => (string) ($decoded['customer_phone'] ?? ''),
+                    'customer_address' => (string) ($decoded['customer_address'] ?? ''),
+                ];
+            }
+        }
+
+        $latestOrder = Order::where('ip_address', $ip)
+            ->where('order_type', 'online')
+            ->latest('id')
+            ->first(['customer_name', 'customer_phone']);
+
+        return [
+            'customer_name' => (string) ($latestOrder?->customer_name ?? ''),
+            'customer_phone' => (string) ($latestOrder?->customer_phone ?? ''),
+            'customer_address' => '',
+        ];
+    }
+
+    private function saveCustomerProfileByIp(string $ip, array $data): array
+    {
+        $existing = $this->getSavedCustomerProfileByIp($ip);
+
+        $profile = [
+            'customer_name' => array_key_exists('customer_name', $data) ? trim((string) ($data['customer_name'] ?? '')) : $existing['customer_name'],
+            'customer_phone' => array_key_exists('customer_phone', $data) ? trim((string) ($data['customer_phone'] ?? '')) : $existing['customer_phone'],
+            'customer_address' => array_key_exists('customer_address', $data) ? trim((string) ($data['customer_address'] ?? '')) : $existing['customer_address'],
+            'ip' => $ip,
+            'updated_at' => Carbon::now('Asia/Bangkok')->toIso8601String(),
+        ];
+
+        Setting::set(
+            $this->customerProfileSettingKey($ip),
+            json_encode($profile, JSON_UNESCAPED_UNICODE),
+            'customer_profile'
+        );
+
+        return $profile;
     }
 
     /**

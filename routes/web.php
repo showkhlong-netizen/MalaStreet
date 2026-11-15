@@ -64,6 +64,7 @@ Route::prefix('order')->name('online.')->group(function () {
     Route::get('/', [OnlineOrderController::class, 'index'])->name('index');
     Route::get('/hub', [OnlineOrderController::class, 'hub'])->name('hub');
     Route::get('/checkout', [OnlineOrderController::class, 'checkout'])->name('checkout');
+    Route::post('/customer-profile', [OnlineOrderController::class, 'saveCustomerProfile'])->name('customer_profile.save');
     Route::post('/submit', [OnlineOrderController::class, 'storeOrder'])->name('submit');
     Route::get('/track/{order_no}', [OnlineOrderController::class, 'track'])->name('track');
     Route::get('/status/{order_no}', [OnlineOrderController::class, 'statusJson'])->name('status');
