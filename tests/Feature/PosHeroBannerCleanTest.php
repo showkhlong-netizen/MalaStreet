@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -58,5 +59,43 @@ class PosHeroBannerCleanTest extends TestCase
 
         $resOff->assertStatus(200)
             ->assertJson(['success' => true, 'mode' => 'preview']);
+    }
+
+    public function test_pos_hero_banner_survives_ephemeral_disk_wipe_after_deploy(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin POS Banner Persist',
+            'email' => 'admin_pos_persist@malastreet.local',
+            'password' => Hash::make('password123'),
+        ]);
+
+        // Tiny valid 1x1 PNG base64 (> 50 bytes)
+        $sampleBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+        $uploadRes = $this->actingAs($admin)->postJson(route('online.hero_banner.upload'), [
+            'scope' => 'pos',
+            'image_base64' => $sampleBase64,
+        ]);
+
+        $uploadRes->assertStatus(200)->assertJson(['success' => true]);
+        $uploadedUrl = $uploadRes->json('url');
+        $this->assertNotEmpty($uploadedUrl);
+
+        // Delete physical file to simulate Render container redeploy / ephemeral disk wipe
+        $parsedPath = parse_url($uploadedUrl, PHP_URL_PATH);
+        $diskPath = public_path(ltrim($parsedPath, '/'));
+        if (file_exists($diskPath)) {
+            @unlink($diskPath);
+        }
+        $this->assertFileDoesNotExist($diskPath);
+
+        // Reload POS page -> should restore file from DB backup and render the image
+        $posRes = $this->actingAs($admin)->get(route('pos.index'));
+        $posRes->assertStatus(200);
+        $this->assertStringContainsString($uploadedUrl, $posRes->getContent());
+        $this->assertFileExists($diskPath);
+
+        // Clean up test upload file
+        @unlink($diskPath);
     }
 }

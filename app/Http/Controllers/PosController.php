@@ -64,9 +64,17 @@ class PosController extends Controller
         $onlineOrderStatus = Setting::get('online_order_status', 'preview');
 
         $posHeroBannerImage = Setting::get('pos_hero_banner_image', '');
+        $posHeroHistoryB64 = json_decode(Setting::get('pos_hero_banner_history_b64', '{}'), true) ?: [];
+        $activeHeroB64 = $posHeroHistoryB64[$posHeroBannerImage] ?? Setting::get('pos_hero_banner_base64');
+        $posHeroBannerImage = $this->restorePersistedHeroUrl($posHeroBannerImage, $activeHeroB64);
+
         $rawPosHeroPos = Setting::get('pos_hero_banner_position', '{"x":50,"y":50,"scale":1}');
         $posHeroBannerPosition = json_decode($rawPosHeroPos, true) ?: ['x' => 50, 'y' => 50, 'scale' => 1];
-        $posHeroBannerHistory = json_decode(Setting::get('pos_hero_banner_history', '[]'), true) ?: [];
+        $rawHistory = json_decode(Setting::get('pos_hero_banner_history', '[]'), true) ?: [];
+        $posHeroBannerHistory = array_values(array_map(
+            fn ($url) => $this->restorePersistedHeroUrl((string) $url, $posHeroHistoryB64[$url] ?? null),
+            $rawHistory
+        ));
 
         return view('pos.index', compact(
             'categories',
@@ -113,6 +121,40 @@ class PosController extends Controller
         }
 
         return redirect()->back()->with('success', $msg);
+    }
+
+    /**
+     * Restore an ephemeral /uploads/hero file from its DB base64 backup after redeploy/restart.
+     */
+    protected function restorePersistedHeroUrl(?string $url, ?string $base64Backup): string
+    {
+        $url = trim((string) $url);
+        if ($url === '') {
+            return '';
+        }
+
+        if (str_contains($url, '/uploads/hero/')) {
+            $parsedPath = parse_url($url, PHP_URL_PATH);
+            $fullPath = $parsedPath ? public_path(ltrim($parsedPath, '/')) : null;
+
+            if ($fullPath && !file_exists($fullPath) && $base64Backup && str_starts_with($base64Backup, 'data:image/')) {
+                $commaPos = strpos($base64Backup, ',');
+                $decoded = $commaPos !== false ? base64_decode(substr($base64Backup, $commaPos + 1)) : false;
+                if ($decoded !== false && strlen($decoded) > 50) {
+                    $dir = dirname($fullPath);
+                    if (!file_exists($dir)) {
+                        @mkdir($dir, 0755, true);
+                    }
+                    @file_put_contents($fullPath, $decoded);
+                }
+
+                if (!file_exists($fullPath)) {
+                    return $base64Backup;
+                }
+            }
+        }
+
+        return $url;
     }
 
     /**

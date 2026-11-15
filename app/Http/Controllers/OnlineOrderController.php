@@ -1028,6 +1028,16 @@ class OnlineOrderController extends Controller
         $history = array_slice($history, 0, 24);
         Setting::set("{$prefix}_history", json_encode($history), 'storefront');
 
+        // Keep active base64 backup in sync with the chosen image
+        $historyB64 = json_decode(Setting::get("{$prefix}_history_b64", '{}'), true) ?: [];
+        if ($imageUrl === '') {
+            Setting::set("{$prefix}_base64", '', 'storefront');
+        } elseif (str_starts_with($imageUrl, 'data:image/')) {
+            Setting::set("{$prefix}_base64", $imageUrl, 'storefront');
+        } elseif (!empty($historyB64[$imageUrl])) {
+            Setting::set("{$prefix}_base64", $historyB64[$imageUrl], 'storefront');
+        }
+
         return response()->json([
             'success' => true,
             'message' => $imageUrl === '' ? 'ลบภาพปกหน้าร้านเรียบร้อยแล้ว' : 'บันทึกภาพปกหน้าร้านและตำแหน่งแสดงผลเรียบร้อยแล้ว 🔥',
@@ -1084,10 +1094,25 @@ class OnlineOrderController extends Controller
             ], 422);
         }
 
-        // Persist immediately as active and save base64 backup
+        // Persist immediately as active and save base64 backup in DB (survives ephemeral container deploys)
         Setting::set("{$prefix}_image", $imageUrl, 'storefront');
-        if ($request->filled('image_base64')) {
-            Setting::set("{$prefix}_base64", $request->input('image_base64'), 'storefront');
+        $rawBase64 = $request->input('image_base64');
+        if (!$rawBase64 && $imageUrl && str_contains($imageUrl, '/uploads/hero/')) {
+            $savedPath = public_path('uploads/hero/' . basename(parse_url($imageUrl, PHP_URL_PATH)));
+            if (file_exists($savedPath)) {
+                $mime = mime_content_type($savedPath) ?: 'image/jpeg';
+                $rawBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($savedPath));
+            }
+        }
+        if ($rawBase64) {
+            Setting::set("{$prefix}_base64", $rawBase64, 'storefront');
+            $historyB64 = json_decode(Setting::get("{$prefix}_history_b64", '{}'), true) ?: [];
+            $historyB64[$imageUrl] = $rawBase64;
+            // Keep most recent 12 base64 entries in DB
+            if (count($historyB64) > 12) {
+                $historyB64 = array_slice($historyB64, -12, 12, true);
+            }
+            Setting::set("{$prefix}_history_b64", json_encode($historyB64), 'storefront');
         }
 
         // Add to history
@@ -1136,12 +1161,19 @@ class OnlineOrderController extends Controller
         }
         Setting::set("{$prefix}_history", json_encode($history), 'storefront');
 
+        $historyB64 = json_decode(Setting::get("{$prefix}_history_b64", '{}'), true) ?: [];
+        if (isset($historyB64[$imageUrl])) {
+            unset($historyB64[$imageUrl]);
+            Setting::set("{$prefix}_history_b64", json_encode($historyB64), 'storefront');
+        }
+
         // If active image was deleted, fallback to default
         $currentActive = Setting::get("{$prefix}_image");
         $newActive = $currentActive;
         if ($currentActive === $imageUrl) {
             $newActive = $history[0] ?? $defaultHeroImage;
             Setting::set("{$prefix}_image", $newActive, 'storefront');
+            Setting::set("{$prefix}_base64", $historyB64[$newActive] ?? '', 'storefront');
         }
 
         // Try deleting file if stored in uploads/hero
