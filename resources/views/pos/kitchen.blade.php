@@ -1,7 +1,7 @@
 @extends('layouts.app', ['title' => 'จอครัว (KDS) - ร้านหม่าล่าสตรีท'])
 
 @section('content')
-<div class="flex-1 bg-slate-100/70 text-slate-800 p-3 sm:p-4 lg:p-6 overflow-y-auto">
+<div class="flex-1 bg-slate-100/70 text-slate-800 p-3 sm:p-4 lg:p-6 overflow-x-clip">
     <div class="max-w-[1920px] mx-auto flex flex-col xl:flex-row gap-5 items-start">
         
         <!-- LEFT: KITCHEN DISPLAY (จอคุมเตาย่าง & หม้อซุป) -->
@@ -63,8 +63,8 @@
             </div>
         </div>
 
-        <!-- 1.5 Kitchen Search, 3/4 Column Toggle & Sort/Filter Bar -->
-        <section class="flex flex-wrap items-center justify-between gap-3 pt-0.5">
+        <!-- 1.5 Kitchen Search, 3/4 Column Toggle & Sort/Filter Bar (Floating Sticky Card) -->
+        <section id="kitchen-floating-toolbar" class="sticky top-[88px] z-30 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-sm px-4 py-3 flex flex-wrap items-center justify-between gap-3 transition-shadow">
             <div class="flex items-center gap-2.5">
                 <span class="w-1.5 h-5 rounded-full bg-[#E50914] block"></span>
                 <h2 class="text-[17px] font-black text-slate-900 tracking-tight">รายการออเดอร์ในครัว</h2>
@@ -406,7 +406,7 @@
         </div> <!-- End of LEFT: KITCHEN DISPLAY (จอคุมเตาย่าง & หม้อซุป) -->
 
         <!-- RIGHT: PERMANENTLY OPEN ADMIN CHAT (ฝั่งขวามือสุด เปิดค้างอยู่ตลอด) -->
-        <aside class="w-full xl:w-[420px] 2xl:w-[430px] shrink-0 xl:sticky xl:top-4 h-[calc(100vh-2rem)] min-h-[720px] max-h-[960px] flex flex-col bg-white rounded-3xl border-2 border-slate-200/90 shadow-xl overflow-hidden transition-all ring-1 ring-slate-200/60" id="kitchen-side-chat-panel">
+        <aside class="w-full xl:w-[420px] 2xl:w-[430px] shrink-0 xl:sticky xl:top-[88px] h-[calc(100vh-6.5rem)] min-h-[580px] max-h-[860px] flex flex-col bg-white rounded-3xl border-2 border-slate-200/90 shadow-xl overflow-hidden transition-all ring-1 ring-slate-200/60" id="kitchen-side-chat-panel">
             <iframe id="kitchen-side-chat-frame" 
                     src="{{ route('kitchen.chat', array_filter(['order_no' => request('chat_order') ?: request('order_no')])) }}" 
                     class="w-full h-full border-0 flex-1 bg-white"
