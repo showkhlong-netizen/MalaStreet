@@ -18,25 +18,7 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5">
-            <!-- 1. ปุ่มเปิดรับออเดอร์ออนไลน์จริง (GO LIVE) หรือ สลับโหมดพรีวิว (ย้ายขึ้นมาจากแถบเหลืองเดิม) -->
-            <form action="{{ route('admin.settings.toggle_online') }}" method="POST" class="inline-block m-0">
-                @csrf
-                @if(($onlineOrderStatus ?? 'preview') === 'live')
-                    <input type="hidden" name="mode" value="preview">
-                    <button type="submit" class="py-2.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs shadow-md shadow-amber-600/30 flex items-center space-x-1.5 transition-all cursor-pointer">
-                        <span>🟡</span>
-                        <span>สลับกลับเป็นโหมดพรีวิว</span>
-                    </button>
-                @else
-                    <input type="hidden" name="mode" value="live">
-                    <button type="submit" class="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/30 flex items-center space-x-1.5 transition-all cursor-pointer">
-                        <span>🚀</span>
-                        <span>กดเปิดรับออเดอร์ออนไลน์จริง (GO LIVE)</span>
-                    </button>
-                @endif
-            </form>
-
-            <!-- 2. แถบฟิกคอสและกำไร (ย้ายมาอยู่ด้วยกันตามสั่ง) -->
+            <!-- แถบฟิกคอสและกำไร -->
             <a href="{{ route('admin.expenses.index') }}" 
                class="py-2.5 px-4 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-white font-bold text-xs shadow-md border border-slate-700/80 flex items-center space-x-1.5 transition-all cursor-pointer">
                 <svg class="w-4 h-4 text-rose-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

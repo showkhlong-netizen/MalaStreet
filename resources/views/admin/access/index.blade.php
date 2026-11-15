@@ -1207,37 +1207,94 @@
                             </button>
                         </div>
 
-                        <!-- Time Inputs: เวลาเข้างาน & เวลาเลิกงาน -->
+                        @php
+                            $format24h = function ($val, $fallback) {
+                                $raw = trim((string) ($val ?? ''));
+                                if ($raw === '') return $fallback;
+                                try {
+                                    return \Carbon\Carbon::parse($raw)->format('H:i');
+                                } catch (\Throwable $e) {
+                                    return $fallback;
+                                }
+                            };
+                            $startTime24 = $format24h($activeEmployeeData['schedule']['start_time'] ?? null, '09:00');
+                            $endTime24 = $format24h($activeEmployeeData['schedule']['end_time'] ?? null, '19:00');
+                        @endphp
+
+                        <!-- Time Inputs: เวลาเข้างาน & เวลาเลิกงาน (24 ชม.) -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-600 mb-0.5">เวลาเข้างาน</label>
-                                <div class="relative">
+                            <div class="relative" id="time-picker-wrap-start">
+                                <label class="block text-[11px] font-bold text-slate-600 mb-0.5">เวลาเข้างาน <span class="text-[10px] font-medium text-slate-400">(24 ชม.)</span></label>
+                                <div class="relative flex items-center">
                                     <input type="text"
                                            id="emp-time-start"
-                                           value="{{ $activeEmployeeData['schedule']['start_time'] ?? '09:00 AM' }}"
-                                           placeholder="09:00 AM"
-                                           class="w-full text-xs sm:text-sm font-bold font-mono px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-indigo-500 shadow-2xs">
-                                    <span class="absolute right-2.5 top-2 text-slate-400 pointer-events-none">
+                                           value="{{ $startTime24 }}"
+                                           placeholder="09:00"
+                                           maxlength="5"
+                                           inputmode="numeric"
+                                           onfocus="openTimePicker('emp-time-start')"
+                                           onchange="handleTimeInputChange(this)"
+                                           class="w-full text-xs sm:text-sm font-bold font-mono pl-3 pr-20 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-indigo-500 shadow-2xs cursor-pointer">
+                                    <button type="button"
+                                            onclick="toggleTimePicker('emp-time-start')"
+                                            class="absolute right-1.5 inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 text-[10.5px] font-bold transition-colors cursor-pointer">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                    </span>
+                                        <span>เลือก</span>
+                                    </button>
                                 </div>
                             </div>
 
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-600 mb-0.5">เวลาเลิกงาน</label>
-                                <div class="relative">
+                            <div class="relative" id="time-picker-wrap-end">
+                                <label class="block text-[11px] font-bold text-slate-600 mb-0.5">เวลาเลิกงาน <span class="text-[10px] font-medium text-slate-400">(24 ชม.)</span></label>
+                                <div class="relative flex items-center">
                                     <input type="text"
                                            id="emp-time-end"
-                                           value="{{ $activeEmployeeData['schedule']['end_time'] ?? '07:00 PM' }}"
-                                           placeholder="07:00 PM"
-                                           class="w-full text-xs sm:text-sm font-bold font-mono px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-indigo-500 shadow-2xs">
-                                    <span class="absolute right-2.5 top-2 text-slate-400 pointer-events-none">
+                                           value="{{ $endTime24 }}"
+                                           placeholder="19:00"
+                                           maxlength="5"
+                                           inputmode="numeric"
+                                           onfocus="openTimePicker('emp-time-end')"
+                                           onchange="handleTimeInputChange(this)"
+                                           class="w-full text-xs sm:text-sm font-bold font-mono pl-3 pr-20 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-indigo-500 shadow-2xs cursor-pointer">
+                                    <button type="button"
+                                            onclick="toggleTimePicker('emp-time-end')"
+                                            class="absolute right-1.5 inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 text-[10.5px] font-bold transition-colors cursor-pointer">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                    </span>
+                                        <span>เลือก</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 24-Hour Time Picker Popover -->
+                        <div id="time-picker-popover" class="hidden rounded-2xl border border-indigo-200 bg-white p-3 shadow-lg space-y-2.5">
+                            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                                <div class="flex items-center gap-2">
+                                    <span id="tp-target-label" class="text-xs font-bold text-slate-700">เลือกเวลา</span>
+                                    <span id="tp-preview" class="px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 font-mono text-xs font-extrabold">09:00 น.</span>
+                                </div>
+                                <button type="button" onclick="closeTimePicker()" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold cursor-pointer">
+                                    ตกลง
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <div class="text-[11px] font-bold text-slate-500 mb-1.5">ชั่วโมง (00 - 23)</div>
+                                    <div id="tp-hours-grid" class="grid grid-cols-6 gap-1"></div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <span class="text-[11px] font-bold text-slate-500">นาที (00 - 59)</span>
+                                        <div class="flex items-center gap-1">
+                                            <button type="button" onclick="nudgeTimeMinute(-1)" class="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-[10px] font-bold text-slate-700 cursor-pointer">-1 นาที</button>
+                                            <button type="button" onclick="nudgeTimeMinute(1)" class="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-[10px] font-bold text-slate-700 cursor-pointer">+1 นาที</button>
+                                        </div>
+                                    </div>
+                                    <div id="tp-minutes-grid" class="grid grid-cols-4 gap-1"></div>
                                 </div>
                             </div>
                         </div>
@@ -1245,22 +1302,30 @@
                         <!-- Shift Preset Pills -->
                         <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
                             <button type="button"
-                                    onclick="setTimePreset('09:00 AM', '06:00 PM', this)"
+                                    data-preset-start="09:00"
+                                    data-preset-end="18:00"
+                                    onclick="setTimePreset('09:00', '18:00', this)"
                                     class="time-preset-pill px-2.5 py-1 rounded-full border border-slate-200 bg-white hover:bg-slate-100 text-[10.5px] font-semibold text-slate-600 cursor-pointer transition-all">
                                 09:00 - 18:00
                             </button>
                             <button type="button"
-                                    onclick="setTimePreset('10:00 AM', '07:00 PM', this)"
+                                    data-preset-start="10:00"
+                                    data-preset-end="19:00"
+                                    onclick="setTimePreset('10:00', '19:00', this)"
                                     class="time-preset-pill px-2.5 py-1 rounded-full border border-slate-200 bg-white hover:bg-slate-100 text-[10.5px] font-semibold text-slate-600 cursor-pointer transition-all">
                                 10:00 - 19:00
                             </button>
                             <button type="button"
-                                    onclick="setTimePreset('12:00 PM', '09:00 PM', this)"
+                                    data-preset-start="12:00"
+                                    data-preset-end="21:00"
+                                    onclick="setTimePreset('12:00', '21:00', this)"
                                     class="time-preset-pill px-2.5 py-1 rounded-full border border-slate-200 bg-white hover:bg-slate-100 text-[10.5px] font-semibold text-slate-600 cursor-pointer transition-all">
                                 12:00 - 21:00
                             </button>
                             <button type="button"
-                                    onclick="setTimePreset('01:00 PM', '10:00 PM', this)"
+                                    data-preset-start="13:00"
+                                    data-preset-end="22:00"
+                                    onclick="setTimePreset('13:00', '22:00', this)"
                                     class="time-preset-pill px-2.5 py-1 rounded-full border border-slate-200 bg-white hover:bg-slate-100 text-[10.5px] font-semibold text-slate-600 cursor-pointer transition-all">
                                 13:00 - 22:00
                             </button>
@@ -3334,20 +3399,169 @@
         }
     }
 
-    // E. Shift Presets (09:00 - 18:00, 10:00 - 19:00, etc.)
+    // E. Shift Presets (09:00 - 18:00, 10:00 - 19:00, etc.) & 24-Hour Time Picker
+    let activeTimePickerTargetId = null;
+
+    function normalizeTime24(raw, fallback = '09:00') {
+        const s = String(raw || '').trim();
+        if (!s) return fallback;
+        // Match HH:mm AM/PM or HH:mm or HHmm
+        const ampmMatch = s.match(/^(\d{1,2})[:.](\d{2})\s*(AM|PM)$/i);
+        if (ampmMatch) {
+            let h = parseInt(ampmMatch[1], 10);
+            const m = parseInt(ampmMatch[2], 10);
+            const mer = ampmMatch[3].toUpperCase();
+            if (mer === 'PM' && h < 12) h += 12;
+            if (mer === 'AM' && h === 12) h = 0;
+            if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+                return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            }
+        }
+        const hmMatch = s.match(/^(\d{1,2})[:.]?(\d{2})$/);
+        if (hmMatch) {
+            const h = parseInt(hmMatch[1], 10);
+            const m = parseInt(hmMatch[2], 10);
+            if (h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+                return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            }
+        }
+        return fallback;
+    }
+
+    function syncTimePresetHighlight() {
+        const startVal = normalizeTime24(document.getElementById('emp-time-start')?.value, '');
+        const endVal = normalizeTime24(document.getElementById('emp-time-end')?.value, '');
+        document.querySelectorAll('.time-preset-pill').forEach(p => {
+            const pStart = p.dataset.presetStart || '';
+            const pEnd = p.dataset.presetEnd || '';
+            if (startVal && endVal && pStart === startVal && pEnd === endVal) {
+                p.className = "time-preset-pill px-2.5 py-1 rounded-full border-2 border-indigo-500 bg-indigo-50 text-[10.5px] font-bold text-indigo-700 cursor-pointer transition-all shadow-2xs";
+            } else {
+                p.className = "time-preset-pill px-2.5 py-1 rounded-full border border-slate-200 bg-white hover:bg-slate-100 text-[10.5px] font-semibold text-slate-600 cursor-pointer transition-all";
+            }
+        });
+    }
+
+    function renderTimePickerGrids() {
+        if (!activeTimePickerTargetId) return;
+        const input = document.getElementById(activeTimePickerTargetId);
+        const fallback = activeTimePickerTargetId === 'emp-time-end' ? '19:00' : '09:00';
+        const val = normalizeTime24(input?.value, fallback);
+        if (input && input.value !== val) input.value = val;
+
+        const [curH, curM] = val.split(':').map(n => parseInt(n, 10));
+        const labelEl = document.getElementById('tp-target-label');
+        const previewEl = document.getElementById('tp-preview');
+        if (labelEl) {
+            labelEl.textContent = activeTimePickerTargetId === 'emp-time-start' ? 'เวลาเข้างาน (24 ชม.)' : 'เวลาเลิกงาน (24 ชม.)';
+        }
+        if (previewEl) {
+            previewEl.textContent = `${val} น.`;
+        }
+
+        const hoursGrid = document.getElementById('tp-hours-grid');
+        if (hoursGrid) {
+            let hHtml = '';
+            for (let h = 0; h < 24; h++) {
+                const hh = String(h).padStart(2, '0');
+                const active = h === curH;
+                hHtml += `<button type="button" onclick="selectTimeHour('${hh}')" class="py-1 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${active ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700'}">${hh}</button>`;
+            }
+            hoursGrid.innerHTML = hHtml;
+        }
+
+        const minutesGrid = document.getElementById('tp-minutes-grid');
+        if (minutesGrid) {
+            let mHtml = '';
+            for (let m = 0; m < 60; m += 5) {
+                const mm = String(m).padStart(2, '0');
+                const active = m === curM;
+                mHtml += `<button type="button" onclick="selectTimeMinute('${mm}')" class="py-1.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${active ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700'}">:${mm}</button>`;
+            }
+            minutesGrid.innerHTML = mHtml;
+        }
+    }
+
+    function openTimePicker(targetId) {
+        activeTimePickerTargetId = targetId;
+        const pop = document.getElementById('time-picker-popover');
+        if (pop) pop.classList.remove('hidden');
+        renderTimePickerGrids();
+    }
+
+    function closeTimePicker() {
+        activeTimePickerTargetId = null;
+        const pop = document.getElementById('time-picker-popover');
+        if (pop) pop.classList.add('hidden');
+    }
+
+    function toggleTimePicker(targetId) {
+        const pop = document.getElementById('time-picker-popover');
+        if (pop && !pop.classList.contains('hidden') && activeTimePickerTargetId === targetId) {
+            closeTimePicker();
+        } else {
+            openTimePicker(targetId);
+        }
+    }
+
+    function selectTimeHour(hh) {
+        if (!activeTimePickerTargetId) return;
+        const input = document.getElementById(activeTimePickerTargetId);
+        if (!input) return;
+        const cur = normalizeTime24(input.value, '09:00');
+        const mm = cur.split(':')[1] || '00';
+        input.value = `${hh}:${mm}`;
+        renderTimePickerGrids();
+        syncTimePresetHighlight();
+    }
+
+    function selectTimeMinute(mm) {
+        if (!activeTimePickerTargetId) return;
+        const input = document.getElementById(activeTimePickerTargetId);
+        if (!input) return;
+        const cur = normalizeTime24(input.value, '09:00');
+        const hh = cur.split(':')[0] || '09';
+        input.value = `${hh}:${mm}`;
+        renderTimePickerGrids();
+        syncTimePresetHighlight();
+    }
+
+    function nudgeTimeMinute(delta) {
+        if (!activeTimePickerTargetId) return;
+        const input = document.getElementById(activeTimePickerTargetId);
+        if (!input) return;
+        const cur = normalizeTime24(input.value, '09:00');
+        let [h, m] = cur.split(':').map(n => parseInt(n, 10));
+        let total = (h * 60 + m + delta + 1440) % 1440;
+        const nh = String(Math.floor(total / 60)).padStart(2, '0');
+        const nm = String(total % 60).padStart(2, '0');
+        input.value = `${nh}:${nm}`;
+        renderTimePickerGrids();
+        syncTimePresetHighlight();
+    }
+
+    function handleTimeInputChange(el) {
+        const fallback = el.id === 'emp-time-end' ? '19:00' : '09:00';
+        el.value = normalizeTime24(el.value, fallback);
+        if (activeTimePickerTargetId === el.id) {
+            renderTimePickerGrids();
+        }
+        syncTimePresetHighlight();
+    }
+
+    document.addEventListener('DOMContentLoaded', syncTimePresetHighlight);
+
     function setTimePreset(start, end, btn) {
         const startInput = document.getElementById('emp-time-start');
         const endInput = document.getElementById('emp-time-end');
-        if (startInput) startInput.value = start;
-        if (endInput) endInput.value = end;
+        const start24 = normalizeTime24(start, '09:00');
+        const end24 = normalizeTime24(end, '19:00');
+        if (startInput) startInput.value = start24;
+        if (endInput) endInput.value = end24;
 
-        document.querySelectorAll('.time-preset-pill').forEach(p => {
-            p.className = "time-preset-pill px-3.5 py-1.5 rounded-full border border-slate-200 bg-white hover:bg-slate-100 text-xs font-semibold text-slate-600 cursor-pointer transition-all";
-        });
-        if (btn) {
-            btn.className = "time-preset-pill px-3.5 py-1.5 rounded-full border-2 border-indigo-500 bg-indigo-50 text-xs font-bold text-indigo-700 cursor-pointer transition-all shadow-2xs";
-        }
-        showToast(`เลือกกะการทำงาน: ${start} - ${end}`);
+        syncTimePresetHighlight();
+        if (activeTimePickerTargetId) renderTimePickerGrids();
+        showToast(`เลือกกะการทำงาน: ${start24} - ${end24} น.`);
     }
 
     // KPI Banner Calculation & Toggle
@@ -3397,8 +3611,8 @@
             activeDays.push(card.dataset.day);
         });
 
-        const startTime = document.getElementById('emp-time-start')?.value || '09:00 AM';
-        const endTime = document.getElementById('emp-time-end')?.value || '07:00 PM';
+        const startTime = normalizeTime24(document.getElementById('emp-time-start')?.value, '09:00');
+        const endTime = normalizeTime24(document.getElementById('emp-time-end')?.value, '19:00');
         const notes = document.getElementById('emp-schedule-notes')?.value || '';
 
         // Profile fields

@@ -41,6 +41,7 @@ Route::post('/register-request', [AccessControlController::class, 'submitRegistr
 // 1. บริการหน้าร้าน (In-Store POS & Kitchen Display) - ต้องเข้าสู่ระบบ (Requires Auth + RBAC Enforcement)
 Route::prefix('pos')->name('pos.')->middleware(['auth', EnforceDailyEmployeeLanding::class, 'access.enforce'])->group(function () {
     Route::get('/', [PosController::class, 'index'])->name('index');
+    Route::post('/toggle-online-mode', [PosController::class, 'toggleOnlineMode'])->name('toggle_online');
     Route::get('/orders/live', [PosController::class, 'liveOrders'])->name('orders.live');
     Route::post('/order', [PosController::class, 'storeOrder'])->name('order.store');
     Route::get('/kitchen', [PosController::class, 'kitchen'])->name('kitchen');

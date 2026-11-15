@@ -61,8 +61,58 @@ class PosController extends Controller
         $nextQueueNumber = 'A' . str_pad($todayOrders->where('order_type', 'pos')->count() + 1, 2, '0', STR_PAD_LEFT);
         $priceHistoriesCount = PriceHistory::count();
         $livePosOrders = $this->buildLivePosOrders();
+        $onlineOrderStatus = Setting::get('online_order_status', 'preview');
 
-        return view('pos.index', compact('categories', 'todayOrders', 'totalSalesToday', 'totalOrdersToday', 'nextQueueNumber', 'priceHistoriesCount', 'livePosOrders'));
+        $posHeroBannerImage = Setting::get('pos_hero_banner_image', '');
+        $rawPosHeroPos = Setting::get('pos_hero_banner_position', '{"x":50,"y":50,"scale":1}');
+        $posHeroBannerPosition = json_decode($rawPosHeroPos, true) ?: ['x' => 50, 'y' => 50, 'scale' => 1];
+        $posHeroBannerHistory = json_decode(Setting::get('pos_hero_banner_history', '[]'), true) ?: [];
+
+        return view('pos.index', compact(
+            'categories',
+            'todayOrders',
+            'totalSalesToday',
+            'totalOrdersToday',
+            'nextQueueNumber',
+            'priceHistoriesCount',
+            'livePosOrders',
+            'onlineOrderStatus',
+            'posHeroBannerImage',
+            'posHeroBannerPosition',
+            'posHeroBannerHistory'
+        ));
+    }
+
+    /**
+     * Toggle online ordering mode between 'preview' and 'live' from POS Cashier.
+     */
+    public function toggleOnlineMode(Request $request): JsonResponse|\Illuminate\Http\RedirectResponse
+    {
+        $targetMode = $request->input('mode') === 'live' ? 'live' : 'preview';
+        Setting::set('online_order_status', $targetMode);
+
+        $msg = $targetMode === 'live'
+            ? 'เปิดบริการสั่งออนไลน์รับออเดอร์จริงเรียบร้อยแล้ว!'
+            : 'ปิดบริการออนไลน์ชั่วคราว (โหมดพรีวิว) เรียบร้อยแล้ว';
+
+        AuditLog::record(
+            'pos',
+            'update',
+            $msg,
+            "Online Order Mode: {$targetMode}",
+            'setting',
+            'online_order_status'
+        );
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'mode' => $targetMode,
+                'message' => $msg,
+            ]);
+        }
+
+        return redirect()->back()->with('success', $msg);
     }
 
     /**

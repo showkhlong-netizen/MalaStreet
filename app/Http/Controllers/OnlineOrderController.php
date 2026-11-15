@@ -982,43 +982,55 @@ class OnlineOrderController extends Controller
     /**
      * Update active Online Hero Banner image and position.
      */
+    private function heroBannerPrefix(Request $request): string
+    {
+        return $request->input('scope') === 'pos' ? 'pos_hero_banner' : 'online_hero_banner';
+    }
+
     public function updateHeroBanner(Request $request): JsonResponse
     {
+        $prefix = $this->heroBannerPrefix($request);
+        $isPos = $prefix === 'pos_hero_banner';
+
         $validated = $request->validate([
-            'image_url' => 'required|string',
+            'image_url' => $isPos ? 'nullable|string' : 'required|string',
             'pos_x' => 'nullable|numeric|min:0|max:100',
             'pos_y' => 'nullable|numeric|min:0|max:100',
             'scale' => 'nullable|numeric|min:0.5|max:3',
         ]);
 
-        $imageUrl = trim($validated['image_url']);
+        $imageUrl = trim((string) ($validated['image_url'] ?? ''));
         $position = [
             'x' => isset($validated['pos_x']) ? round((float) $validated['pos_x'], 1) : 50,
             'y' => isset($validated['pos_y']) ? round((float) $validated['pos_y'], 1) : 50,
             'scale' => isset($validated['scale']) ? round((float) $validated['scale'], 2) : 1.0,
         ];
 
-        Setting::set('online_hero_banner_image', $imageUrl, 'storefront');
-        Setting::set('online_hero_banner_position', json_encode($position), 'storefront');
+        Setting::set("{$prefix}_image", $imageUrl, 'storefront');
+        Setting::set("{$prefix}_position", json_encode($position), 'storefront');
 
         // Update history
-        $history = json_decode(Setting::get('online_hero_banner_history', '[]'), true) ?: [];
-        $defaultHeroImage = asset('assets/online/hero-banner-ref.png');
-        if (!in_array($defaultHeroImage, $history)) {
-            $history[] = $defaultHeroImage;
+        $history = json_decode(Setting::get("{$prefix}_history", '[]'), true) ?: [];
+        if (!$isPos) {
+            $defaultHeroImage = asset('assets/online/hero-banner-ref.png');
+            if (!in_array($defaultHeroImage, $history)) {
+                $history[] = $defaultHeroImage;
+            }
         }
-        if (!in_array($imageUrl, $history)) {
-            array_unshift($history, $imageUrl);
-        } else {
-            $history = array_values(array_diff($history, [$imageUrl]));
-            array_unshift($history, $imageUrl);
+        if ($imageUrl !== '') {
+            if (!in_array($imageUrl, $history)) {
+                array_unshift($history, $imageUrl);
+            } else {
+                $history = array_values(array_diff($history, [$imageUrl]));
+                array_unshift($history, $imageUrl);
+            }
         }
         $history = array_slice($history, 0, 24);
-        Setting::set('online_hero_banner_history', json_encode($history), 'storefront');
+        Setting::set("{$prefix}_history", json_encode($history), 'storefront');
 
         return response()->json([
             'success' => true,
-            'message' => 'บันทึกภาพปกหน้าร้านและตำแหน่งแสดงผลเรียบร้อยแล้ว 🔥',
+            'message' => $imageUrl === '' ? 'ลบภาพปกหน้าร้านเรียบร้อยแล้ว' : 'บันทึกภาพปกหน้าร้านและตำแหน่งแสดงผลเรียบร้อยแล้ว 🔥',
             'image_url' => $imageUrl,
             'position' => $position,
             'history' => $history,
@@ -1030,6 +1042,8 @@ class OnlineOrderController extends Controller
      */
     public function uploadHeroBannerImage(Request $request): JsonResponse
     {
+        $prefix = $this->heroBannerPrefix($request);
+        $isPos = $prefix === 'pos_hero_banner';
         $destDir = public_path('uploads/hero');
         if (!file_exists($destDir)) {
             mkdir($destDir, 0755, true);
@@ -1071,22 +1085,24 @@ class OnlineOrderController extends Controller
         }
 
         // Persist immediately as active and save base64 backup
-        Setting::set('online_hero_banner_image', $imageUrl, 'storefront');
+        Setting::set("{$prefix}_image", $imageUrl, 'storefront');
         if ($request->filled('image_base64')) {
-            Setting::set('online_hero_banner_base64', $request->input('image_base64'), 'storefront');
+            Setting::set("{$prefix}_base64", $request->input('image_base64'), 'storefront');
         }
 
         // Add to history
-        $history = json_decode(Setting::get('online_hero_banner_history', '[]'), true) ?: [];
-        $defaultHeroImage = asset('assets/online/hero-banner-ref.png');
-        if (!in_array($defaultHeroImage, $history)) {
-            $history[] = $defaultHeroImage;
+        $history = json_decode(Setting::get("{$prefix}_history", '[]'), true) ?: [];
+        if (!$isPos) {
+            $defaultHeroImage = asset('assets/online/hero-banner-ref.png');
+            if (!in_array($defaultHeroImage, $history)) {
+                $history[] = $defaultHeroImage;
+            }
         }
         if (!in_array($imageUrl, $history)) {
             array_unshift($history, $imageUrl);
         }
         $history = array_slice($history, 0, 24);
-        Setting::set('online_hero_banner_history', json_encode($history), 'storefront');
+        Setting::set("{$prefix}_history", json_encode($history), 'storefront');
 
         return response()->json([
             'success' => true,
@@ -1101,29 +1117,31 @@ class OnlineOrderController extends Controller
      */
     public function deleteHeroBannerHistory(Request $request): JsonResponse
     {
+        $prefix = $this->heroBannerPrefix($request);
+        $isPos = $prefix === 'pos_hero_banner';
         $imageUrl = trim((string) $request->input('image_url'));
         if (empty($imageUrl)) {
             return response()->json(['success' => false, 'message' => 'กรุณาระบุ URL ภาพ'], 422);
         }
 
-        $defaultHeroImage = asset('assets/online/hero-banner-ref.png');
-        if (str_contains($imageUrl, 'hero-banner-ref.png')) {
+        $defaultHeroImage = $isPos ? '' : asset('assets/online/hero-banner-ref.png');
+        if (!$isPos && str_contains($imageUrl, 'hero-banner-ref.png')) {
             return response()->json(['success' => false, 'message' => 'ภาพปกเริ่มต้นของระบบไม่สามารถลบได้'], 422);
         }
 
-        $history = json_decode(Setting::get('online_hero_banner_history', '[]'), true) ?: [];
+        $history = json_decode(Setting::get("{$prefix}_history", '[]'), true) ?: [];
         $history = array_values(array_filter($history, fn ($url) => trim($url) !== $imageUrl));
-        if (empty($history)) {
+        if (!$isPos && empty($history)) {
             $history = [$defaultHeroImage];
         }
-        Setting::set('online_hero_banner_history', json_encode($history), 'storefront');
+        Setting::set("{$prefix}_history", json_encode($history), 'storefront');
 
         // If active image was deleted, fallback to default
-        $currentActive = Setting::get('online_hero_banner_image');
+        $currentActive = Setting::get("{$prefix}_image");
         $newActive = $currentActive;
         if ($currentActive === $imageUrl) {
             $newActive = $history[0] ?? $defaultHeroImage;
-            Setting::set('online_hero_banner_image', $newActive, 'storefront');
+            Setting::set("{$prefix}_image", $newActive, 'storefront');
         }
 
         // Try deleting file if stored in uploads/hero

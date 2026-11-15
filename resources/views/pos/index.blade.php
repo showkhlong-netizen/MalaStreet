@@ -87,6 +87,47 @@
     }
 </style>
 <div class="flex-1 bg-[#F5F5F7] py-4 px-3 sm:px-5 lg:px-6">
+    @php
+        $isOnlineLive = ($onlineOrderStatus ?? 'preview') === 'live';
+        $posHeroImg = $posHeroBannerImage ?? '';
+        $posHeroPosX = $posHeroBannerPosition['x'] ?? 50;
+        $posHeroPosY = $posHeroBannerPosition['y'] ?? 50;
+        $posHeroScale = $posHeroBannerPosition['scale'] ?? 1;
+    @endphp
+
+    <!-- TOP-LEFT PROMINENT SWITCH: เปิดบริการออนไลน์ -->
+    <div class="max-w-[1420px] mx-auto mb-3.5 flex flex-wrap items-center justify-between gap-3">
+        <div id="pos-online-switch-card"
+             class="inline-flex items-center gap-4 px-4 sm:px-5 py-3 rounded-2xl border-2 shadow-md transition-all duration-200 {{ $isOnlineLive ? 'bg-emerald-50/95 border-emerald-500 shadow-emerald-500/15' : 'bg-white border-slate-300 shadow-slate-900/5' }}">
+            <button type="button"
+                    id="pos-online-switch-btn"
+                    role="switch"
+                    aria-checked="{{ $isOnlineLive ? 'true' : 'false' }}"
+                    onclick="togglePosOnlineServiceSwitch()"
+                    class="relative inline-flex h-10 w-[72px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 {{ $isOnlineLive ? 'bg-emerald-500' : 'bg-slate-300' }}"
+                    title="สลับเปิด/ปิดบริการรับออเดอร์ออนไลน์">
+                <span id="pos-online-switch-knob"
+                      class="pointer-events-none inline-block h-9 w-9 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out flex items-center justify-center {{ $isOnlineLive ? 'translate-x-8' : 'translate-x-0' }}">
+                    <span id="pos-online-switch-dot" class="w-3 h-3 rounded-full {{ $isOnlineLive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400' }}"></span>
+                </span>
+            </button>
+
+            <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                    <span class="text-base sm:text-lg font-black tracking-tight text-slate-900">เปิดบริการออนไลน์</span>
+                    <span id="pos-online-status-badge"
+                          class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold {{ $isOnlineLive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700' }}">
+                        <span id="pos-online-badge-dot" class="w-2 h-2 rounded-full {{ $isOnlineLive ? 'bg-white animate-pulse' : 'bg-slate-500' }}"></span>
+                        <span id="pos-online-badge-text">{{ $isOnlineLive ? 'กำลังเปิดรับออเดอร์ (LIVE)' : 'ปิดชั่วคราว (พรีวิว)' }}</span>
+                    </span>
+                </div>
+                <p id="pos-online-status-sub" class="text-[11px] font-medium {{ $isOnlineLive ? 'text-emerald-700' : 'text-slate-500' }}">
+                    {{ $isOnlineLive ? 'ลูกค้าสามารถกดสั่งอาหารออนไลน์ได้ทันที' : 'ลูกค้าเข้าดูเมนูได้ แต่ยังไม่เปิดรับออเดอร์จริง' }}
+                </p>
+            </div>
+        </div>
+    </div>
+
     <div class="max-w-[1420px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
         <!-- ========================================================================= -->
@@ -94,7 +135,7 @@
         <!-- ========================================================================= -->
         <div class="lg:col-span-8 xl:col-span-8 space-y-3.5 min-w-0">
 
-            <!-- 1. RESTAURANT HERO & PRICE TRACKER BANNER (Matches Image 1 100%) -->
+            <!-- 1. RESTAURANT HERO & PRICE TRACKER BANNER -->
             <section class="relative rounded-[22px] overflow-hidden shadow-md border border-[#5A080C] bg-gradient-to-r from-[#3D0307] via-[#6B0910] to-[#260204] p-3 sm:p-3.5">
                 <!-- Subtle Warm Glow Overlay -->
                 <div class="absolute -left-10 -top-10 w-64 h-64 rounded-full bg-rose-600/20 blur-2xl pointer-events-none"></div>
@@ -102,58 +143,64 @@
 
                 <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-3 sm:gap-3.5">
 
-                    <!-- LEFT: Restaurant Hero & Brand Identity Card (Matches Image 1) -->
-                    <div class="relative w-full lg:flex-1 min-w-0 min-h-[172px] sm:min-h-[182px] rounded-[18px] overflow-hidden flex flex-col justify-between p-3 bg-[#420206] shadow-inner">
-                        <!-- Sizzling Skewers Photography & Mala Street Calligraphy -->
-                        <img src="{{ asset('assets/online/hero-banner-ref.png') }}"
-                             alt="หม่าล่า Mala Street เผ็ดชา ต้นตำรับ"
-                             class="absolute inset-0 w-full h-full object-cover object-left select-none pointer-events-none">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent pointer-events-none"></div>
+                    <!-- LEFT: Restaurant Hero & Brand Identity Card (1:7 Horizontal Cover + 3-Bar Settings Menu) -->
+                    <div class="relative w-full lg:flex-1 min-w-0 aspect-[7/1] min-h-[126px] rounded-[18px] overflow-hidden flex flex-col justify-between p-3 bg-gradient-to-br from-[#4A0408] via-[#6B0910] to-[#2B0204] shadow-inner">
+                        <!-- Dynamic Editable Cover Image (1:7 แนวนอน) -->
+                        <img id="pos-hero-banner-img"
+                             src="{{ $posHeroImg }}"
+                             alt="ภาพปกหน้าร้าน หม่าล่าสตรีท"
+                             class="absolute inset-0 w-full h-full object-cover select-none pointer-events-none transition-all duration-150 {{ $posHeroImg ? '' : 'hidden' }}"
+                             style="object-position: {{ $posHeroPosX }}% {{ $posHeroPosY }}%; transform: scale({{ $posHeroScale }});">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none"></div>
 
-                        <!-- Top Floating Action Buttons Over Artwork: Back & Search -->
-                        <div class="relative z-10 flex items-center justify-between pointer-events-auto">
-                            <!-- Back Button (<) -->
-                            <button type="button"
-                                    onclick="window.history.length > 1 ? window.history.back() : window.location.href='{{ route('admin.dashboard') }}'"
-                                    class="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full bg-white/95 hover:bg-white active:scale-95 text-slate-800 shadow-md backdrop-blur-xs flex items-center justify-center transition-all cursor-pointer border border-white/80"
-                                    title="ย้อนกลับ"
-                                    aria-label="ย้อนกลับ">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </button>
-
-                            <!-- Top-Right Actions: Search (🔍) + Favorite & Share -->
-                            <div class="flex items-center gap-1.5">
-                                <!-- Search Button (🔍) -->
+                        <!-- Top-Right Action: 3-Bar Menu Button (ปุ่มสามขีด) -->
+                        <div class="relative z-20 flex items-center justify-end pointer-events-auto">
+                            <div class="relative">
                                 <button type="button"
-                                        onclick="document.getElementById('search-input')?.focus(); document.getElementById('search-input')?.scrollIntoView({behavior: 'smooth', block: 'center'});"
-                                        class="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full bg-white/95 hover:bg-white active:scale-95 text-slate-800 shadow-md backdrop-blur-xs flex items-center justify-center transition-all cursor-pointer border border-white/80"
-                                        title="ค้นหาเมนูอาหาร"
-                                        aria-label="ค้นหาเมนูอาหาร">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                                        <circle cx="11" cy="11" r="7"></circle>
-                                        <path stroke-linecap="round" d="m21 21-4.35-4.35"></path>
+                                        id="btn-pos-master-settings"
+                                        onclick="togglePosMasterSettingsMenu(event)"
+                                        class="w-9 h-9 rounded-full bg-white/95 hover:bg-white active:scale-95 text-slate-800 shadow-md backdrop-blur-xs flex items-center justify-center transition-all cursor-pointer border border-white/80"
+                                        title="ตั้งค่าหน้าร้าน (แอดมิน)"
+                                        aria-label="ตั้งค่าหน้าร้าน">
+                                    <!-- 3-Bar Hamburger Icon (ปุ่มสามขีด) -->
+                                    <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" viewBox="0 0 24 24">
+                                        <line x1="4" y1="6.5" x2="20" y2="6.5" />
+                                        <line x1="4" y1="12" x2="20" y2="12" />
+                                        <line x1="4" y1="17.5" x2="20" y2="17.5" />
                                     </svg>
                                 </button>
 
-                                <!-- Favorite Button (Heart) -->
-                                <button type="button" id="btn-favorite-store" onclick="toggleFavoriteStore()"
-                                        class="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full bg-white/95 hover:bg-white active:scale-95 text-[#E50914] shadow-md backdrop-blur-xs flex items-center justify-center transition-all cursor-pointer border border-white/80"
-                                        title="บันทึกเป็นร้านโปรด">
-                                    <svg id="icon-favorite-heart" class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                                    </svg>
-                                </button>
+                                <!-- Dropdown Menu: ตั้งค่าหน้าร้าน (แอดมิน) -->
+                                <div id="pos-master-settings-menu"
+                                     class="hidden fixed w-72 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 p-2 z-[9999] text-slate-800 select-none">
+                                    <div class="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
+                                        <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                            <span class="w-2 h-2 rounded-full bg-[#E50914] animate-pulse"></span>
+                                            <span>ตั้งค่าหน้าร้าน (แอดมิน)</span>
+                                        </span>
+                                        <span class="text-[10px] text-slate-400 font-mono">ADMIN</span>
+                                    </div>
 
-                                <!-- Share Button -->
-                                <button type="button" onclick="shareStoreLink()"
-                                        class="w-8 h-8 sm:w-8.5 sm:h-8.5 rounded-full bg-white/95 hover:bg-white active:scale-95 text-slate-800 shadow-md backdrop-blur-xs flex items-center justify-center transition-all cursor-pointer border border-white/80"
-                                        title="แชร์ลิงก์ร้านหม่าล่าสตรีท">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                                    </svg>
-                                </button>
+                                    <div class="py-1 space-y-1">
+                                        <!-- Option 1: แก้ไขภาพปกหน้าร้าน (1:7 แนวนอน) -->
+                                        <button type="button"
+                                                onclick="closePosMasterSettingsMenu(); openPosHeroBannerModal();"
+                                                class="w-full px-3 py-2.5 rounded-xl hover:bg-rose-50/80 active:bg-rose-100/80 flex items-center gap-3 text-left transition cursor-pointer group">
+                                            <div class="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200/80 text-[#D90012] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                                <svg class="w-4 h-4 text-[#D90012]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <rect x="3" y="3" width="18" height="18" rx="3" />
+                                                    <circle cx="8.5" cy="8.5" r="1.8" fill="currentColor" stroke="none" />
+                                                    <path d="M21 15l-5-5L5 21" />
+                                                </svg>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-xs font-bold text-slate-800 group-hover:text-[#E50914]">แก้ไขภาพปกหน้าร้าน</div>
+                                                <div class="text-[10.5px] text-slate-500 truncate">ปรับตำแหน่ง ซูม และจัดการภาพปก (1:7)</div>
+                                            </div>
+                                            <span class="text-slate-400 text-xs">›</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -1994,6 +2041,499 @@
         renderPosLiveOrders();
         setInterval(() => refreshPosLiveOrders(false), 5000);
     });
+
+    // =========================================================================
+    // ONLINE SERVICE SWITCH (เปิดบริการออนไลน์)
+    // =========================================================================
+    let isPosOnlineLive = {{ $isOnlineLive ? 'true' : 'false' }};
+    let isTogglingOnlineMode = false;
+
+    async function togglePosOnlineServiceSwitch() {
+        if (isTogglingOnlineMode) return;
+        isTogglingOnlineMode = true;
+
+        const targetMode = isPosOnlineLive ? 'preview' : 'live';
+        try {
+            const res = await fetch('{{ route("pos.toggle_online") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ mode: targetMode })
+            });
+            const data = await res.json();
+            if (data && data.success) {
+                isPosOnlineLive = (data.mode === 'live');
+                renderPosOnlineSwitchUI();
+                if (typeof showToast === 'function') {
+                    showToast(data.message);
+                }
+            } else {
+                if (typeof showToast === 'function') showToast('ไม่สามารถเปลี่ยนสถานะบริการออนไลน์ได้');
+            }
+        } catch (err) {
+            if (typeof showToast === 'function') showToast('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+        } finally {
+            isTogglingOnlineMode = false;
+        }
+    }
+
+    function renderPosOnlineSwitchUI() {
+        const card = document.getElementById('pos-online-switch-card');
+        const btn = document.getElementById('pos-online-switch-btn');
+        const knob = document.getElementById('pos-online-switch-knob');
+        const dot = document.getElementById('pos-online-switch-dot');
+        const badge = document.getElementById('pos-online-status-badge');
+        const badgeDot = document.getElementById('pos-online-badge-dot');
+        const badgeText = document.getElementById('pos-online-badge-text');
+        const sub = document.getElementById('pos-online-status-sub');
+
+        if (card) {
+            card.className = `inline-flex items-center gap-4 px-4 sm:px-5 py-3 rounded-2xl border-2 shadow-md transition-all duration-200 ${isPosOnlineLive ? 'bg-emerald-50/95 border-emerald-500 shadow-emerald-500/15' : 'bg-white border-slate-300 shadow-slate-900/5'}`;
+        }
+        if (btn) {
+            btn.setAttribute('aria-checked', isPosOnlineLive ? 'true' : 'false');
+            btn.className = `relative inline-flex h-10 w-[72px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${isPosOnlineLive ? 'bg-emerald-500' : 'bg-slate-300'}`;
+        }
+        if (knob) {
+            knob.className = `pointer-events-none inline-block h-9 w-9 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out flex items-center justify-center ${isPosOnlineLive ? 'translate-x-8' : 'translate-x-0'}`;
+        }
+        if (dot) {
+            dot.className = `w-3 h-3 rounded-full ${isPosOnlineLive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`;
+        }
+        if (badge) {
+            badge.className = `inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold ${isPosOnlineLive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'}`;
+        }
+        if (badgeDot) {
+            badgeDot.className = `w-2 h-2 rounded-full ${isPosOnlineLive ? 'bg-white animate-pulse' : 'bg-slate-500'}`;
+        }
+        if (badgeText) {
+            badgeText.textContent = isPosOnlineLive ? 'กำลังเปิดรับออเดอร์ (LIVE)' : 'ปิดชั่วคราว (พรีวิว)';
+        }
+        if (sub) {
+            sub.className = `text-[11px] font-medium ${isPosOnlineLive ? 'text-emerald-700' : 'text-slate-500'}`;
+            sub.textContent = isPosOnlineLive ? 'ลูกค้าสามารถกดสั่งอาหารออนไลน์ได้ทันที' : 'ลูกค้าเข้าดูเมนูได้ แต่ยังไม่เปิดรับออเดอร์จริง';
+        }
+    }
+
+    // =========================================================================
+    // POS 3-BAR SETTINGS MENU & 1:7 HORIZONTAL HERO COVER EDITOR
+    // =========================================================================
+    let posHeroBanner = {
+        image: @json($posHeroBannerImage ?? ''),
+        x: {{ $posHeroBannerPosition['x'] ?? 50 }},
+        y: {{ $posHeroBannerPosition['y'] ?? 50 }},
+        scale: {{ $posHeroBannerPosition['scale'] ?? 1 }},
+        history: @json($posHeroBannerHistory ?? [])
+    };
+
+    function togglePosMasterSettingsMenu(event) {
+        if (event) event.stopPropagation();
+        const menu = document.getElementById('pos-master-settings-menu');
+        const btn = document.getElementById('btn-pos-master-settings');
+        if (!menu || !btn) return;
+        const isHidden = menu.classList.contains('hidden');
+        if (isHidden) {
+            const rect = btn.getBoundingClientRect();
+            menu.style.top = (rect.bottom + 8) + 'px';
+            menu.style.right = Math.max(12, window.innerWidth - rect.right) + 'px';
+            menu.classList.remove('hidden');
+        } else {
+            menu.classList.add('hidden');
+        }
+    }
+
+    function closePosMasterSettingsMenu() {
+        const menu = document.getElementById('pos-master-settings-menu');
+        if (menu) menu.classList.add('hidden');
+    }
+
+    document.addEventListener('click', (e) => {
+        const menu = document.getElementById('pos-master-settings-menu');
+        const btn = document.getElementById('btn-pos-master-settings');
+        if (menu && !menu.classList.contains('hidden') && !menu.contains(e.target) && (!btn || !btn.contains(e.target))) {
+            menu.classList.add('hidden');
+        }
+    });
+
+    function openPosHeroBannerModal() {
+        const modal = document.getElementById('pos-hero-banner-modal');
+        if (!modal) return;
+        renderPosHeroPreview();
+        renderPosHeroHistoryGrid();
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closePosHeroBannerModal() {
+        const modal = document.getElementById('pos-hero-banner-modal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    function applyPosHeroToBanner() {
+        const bannerImg = document.getElementById('pos-hero-banner-img');
+        if (!bannerImg) return;
+        if (posHeroBanner.image) {
+            bannerImg.src = posHeroBanner.image;
+            bannerImg.classList.remove('hidden');
+            bannerImg.style.objectPosition = `${posHeroBanner.x}% ${posHeroBanner.y}%`;
+            bannerImg.style.transform = `scale(${posHeroBanner.scale})`;
+        } else {
+            bannerImg.removeAttribute('src');
+            bannerImg.classList.add('hidden');
+        }
+    }
+
+    function renderPosHeroPreview() {
+        const previewImg = document.getElementById('pos-modal-hero-preview-img');
+        const emptyHint = document.getElementById('pos-modal-hero-empty');
+        const sliderX = document.getElementById('pos-hero-slider-x');
+        const sliderY = document.getElementById('pos-hero-slider-y');
+        const sliderScale = document.getElementById('pos-hero-slider-scale');
+        const valX = document.getElementById('pos-hero-val-x');
+        const valY = document.getElementById('pos-hero-val-y');
+        const valScale = document.getElementById('pos-hero-val-scale');
+
+        if (previewImg) {
+            if (posHeroBanner.image) {
+                previewImg.src = posHeroBanner.image;
+                previewImg.classList.remove('hidden');
+                previewImg.style.objectPosition = `${posHeroBanner.x}% ${posHeroBanner.y}%`;
+                previewImg.style.transform = `scale(${posHeroBanner.scale})`;
+                if (emptyHint) emptyHint.classList.add('hidden');
+            } else {
+                previewImg.removeAttribute('src');
+                previewImg.classList.add('hidden');
+                if (emptyHint) emptyHint.classList.remove('hidden');
+            }
+        }
+
+        if (sliderX) sliderX.value = posHeroBanner.x;
+        if (sliderY) sliderY.value = posHeroBanner.y;
+        if (sliderScale) sliderScale.value = posHeroBanner.scale;
+        if (valX) valX.textContent = `${posHeroBanner.x}%`;
+        if (valY) valY.textContent = `${posHeroBanner.y}%`;
+        if (valScale) valScale.textContent = `${posHeroBanner.scale}x`;
+    }
+
+    function renderPosHeroHistoryGrid() {
+        const grid = document.getElementById('pos-hero-history-grid');
+        if (!grid) return;
+
+        const list = Array.isArray(posHeroBanner.history) ? posHeroBanner.history : [];
+        if (list.length === 0) {
+            grid.innerHTML = '<div class="col-span-4 text-center text-xs text-slate-400 py-3">ยังไม่มีประวัติภาพปก</div>';
+            return;
+        }
+
+        grid.innerHTML = list.map(url => {
+            const isSelected = (url === posHeroBanner.image);
+            const safeUrl = String(url).replace(/'/g, "\\'");
+            return `
+                <div class="relative group rounded-xl overflow-visible aspect-[7/2] border-2 ${isSelected ? 'border-[#E50914] ring-2 ring-rose-200' : 'border-slate-200 hover:border-slate-300'} bg-slate-900 cursor-pointer transition select-none" onclick="selectPosHeroHistoryImage('${safeUrl}')">
+                    <img src="${url}" alt="ภาพปกประวัติ" class="w-full h-full object-cover rounded-[10px]">
+                    ${isSelected ? '<span class="absolute bottom-1 left-1 px-1 rounded bg-[#E50914] text-white text-[8px] font-bold">เลือกอยู่</span>' : ''}
+                    <button type="button"
+                            onclick="deletePosHeroHistoryImage(event, '${safeUrl}')"
+                            class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer z-20 active:scale-90 transition-transform"
+                            title="ลบภาพนี้">
+                        ✕
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function selectPosHeroHistoryImage(url) {
+        posHeroBanner.image = url;
+        renderPosHeroPreview();
+        renderPosHeroHistoryGrid();
+        applyPosHeroToBanner();
+    }
+
+    function nudgePosHeroPos(dx, dy) {
+        posHeroBanner.x = Math.max(0, Math.min(100, Math.round(posHeroBanner.x + dx)));
+        posHeroBanner.y = Math.max(0, Math.min(100, Math.round(posHeroBanner.y + dy)));
+        renderPosHeroPreview();
+    }
+
+    function nudgePosHeroZoom(dScale) {
+        posHeroBanner.scale = Math.max(1, Math.min(2.5, +(posHeroBanner.scale + dScale).toFixed(2)));
+        renderPosHeroPreview();
+    }
+
+    function updatePosHeroSliderPos() {
+        const sliderX = document.getElementById('pos-hero-slider-x');
+        const sliderY = document.getElementById('pos-hero-slider-y');
+        const sliderScale = document.getElementById('pos-hero-slider-scale');
+        if (sliderX) posHeroBanner.x = Number(sliderX.value);
+        if (sliderY) posHeroBanner.y = Number(sliderY.value);
+        if (sliderScale) posHeroBanner.scale = Number(sliderScale.value);
+        renderPosHeroPreview();
+    }
+
+    function resetPosHeroBannerPosition() {
+        posHeroBanner.x = 50;
+        posHeroBanner.y = 50;
+        posHeroBanner.scale = 1;
+        renderPosHeroPreview();
+    }
+
+    function clearPosHeroImage() {
+        posHeroBanner.image = '';
+        posHeroBanner.x = 50;
+        posHeroBanner.y = 50;
+        posHeroBanner.scale = 1;
+        renderPosHeroPreview();
+        renderPosHeroHistoryGrid();
+        applyPosHeroToBanner();
+    }
+
+    async function handlePosHeroBannerUpload(event) {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+
+        const label = document.getElementById('pos-hero-upload-label');
+        if (label) label.textContent = '⏳ กำลังประมวลผลและอัปโหลดภาพ...';
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = async function() {
+                const canvas = document.getElementById('pos-hero-compress-canvas');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const maxDim = 1920;
+                let width = img.width;
+                let height = img.height;
+                if (width > maxDim || height > maxDim) {
+                    if (width > height) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    } else {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+                const base64Data = canvas.toDataURL('image/jpeg', 0.92);
+
+                try {
+                    const res = await fetch('{{ route("online.hero_banner.upload") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ scope: 'pos', image_base64: base64Data })
+                    });
+                    const data = await res.json();
+                    if (data && data.success && data.url) {
+                        posHeroBanner.image = data.url;
+                        if (Array.isArray(data.history)) posHeroBanner.history = data.history;
+                        renderPosHeroPreview();
+                        renderPosHeroHistoryGrid();
+                        applyPosHeroToBanner();
+                        if (typeof showToast === 'function') showToast('อัปโหลดภาพปกเรียบร้อยแล้ว 📷');
+                    } else {
+                        if (typeof showToast === 'function') showToast(data.message || 'อัปโหลดล้มเหลว');
+                    }
+                } catch (err) {
+                    if (typeof showToast === 'function') showToast('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+                } finally {
+                    if (label) label.textContent = '📷 เลือกรูปภาพใหม่จากเครื่อง (ขนาดแนะนำ 1:7 แนวนอน)';
+                    event.target.value = '';
+                }
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function deletePosHeroHistoryImage(event, url) {
+        if (event) event.stopPropagation();
+        if (!confirm('ต้องการลบภาพปกนี้ออกจากประวัติหรือไม่?')) return;
+        try {
+            const res = await fetch('{{ route("online.hero_banner.delete_history") }}', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ scope: 'pos', image_url: url })
+            });
+            const data = await res.json();
+            if (data && data.success) {
+                posHeroBanner.history = data.history || [];
+                if (data.active_image !== undefined) {
+                    posHeroBanner.image = data.active_image || '';
+                }
+                renderPosHeroPreview();
+                renderPosHeroHistoryGrid();
+                applyPosHeroToBanner();
+                if (typeof showToast === 'function') showToast(data.message || 'ลบภาพปกแล้ว');
+            }
+        } catch (err) {
+            if (typeof showToast === 'function') showToast('เกิดข้อผิดพลาดในการลบภาพ');
+        }
+    }
+
+    async function savePosHeroBannerSettings() {
+        const btn = document.getElementById('btn-save-pos-hero-banner');
+        if (btn) btn.disabled = true;
+        try {
+            const res = await fetch('{{ route("online.hero_banner.update") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    scope: 'pos',
+                    image_url: posHeroBanner.image || '',
+                    pos_x: posHeroBanner.x,
+                    pos_y: posHeroBanner.y,
+                    scale: posHeroBanner.scale
+                })
+            });
+            const data = await res.json();
+            if (data && data.success) {
+                if (Array.isArray(data.history)) posHeroBanner.history = data.history;
+                applyPosHeroToBanner();
+                closePosHeroBannerModal();
+                if (typeof showToast === 'function') showToast(data.message || 'บันทึกภาพปกเรียบร้อยแล้ว');
+            } else {
+                if (typeof showToast === 'function') showToast(data.message || 'บันทึกไม่สำเร็จ');
+            }
+        } catch (err) {
+            if (typeof showToast === 'function') showToast('เกิดข้อผิดพลาดในการบันทึก');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
 </script>
+
+<!-- POS HERO BANNER SETTINGS MODAL (1:7 แนวนอน) -->
+<div id="pos-hero-banner-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/75 backdrop-blur-xs p-3 overflow-y-auto" onclick="if(event.target === this) closePosHeroBannerModal()">
+    <div class="bg-white rounded-[26px] max-w-[540px] w-full shadow-2xl border border-slate-100 overflow-hidden flex flex-col my-auto max-h-[92vh]">
+        <div class="p-4 bg-gradient-to-r from-[#4A0408] via-[#8B0912] to-[#4A0408] text-white flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-base">🖼️</div>
+                <div>
+                    <h3 class="text-sm font-bold leading-tight">แก้ไขภาพปกหน้าร้าน (POS)</h3>
+                    <p class="text-[11px] text-rose-200/90 font-normal">ปรับตำแหน่ง ซูม และจัดการภาพปกขนาด 1:7 แนวนอน</p>
+                </div>
+            </div>
+            <button type="button" onclick="closePosHeroBannerModal()" class="w-7 h-7 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white cursor-pointer transition">✕</button>
+        </div>
+
+        <div class="p-4 space-y-4 overflow-y-auto">
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <span class="w-1.5 h-3.5 rounded-full bg-[#E50914]"></span>
+                        <span>ตัวอย่างขนาดปก (1:7 แนวนอน)</span>
+                    </span>
+                    <span class="text-[10.5px] text-slate-500 font-medium">7 : 1 Wide Banner</span>
+                </div>
+
+                <div class="relative w-full rounded-2xl overflow-hidden border-2 border-slate-300/80 shadow-md bg-gradient-to-br from-[#4A0408] via-[#6B0910] to-[#2B0204] select-none" style="aspect-ratio: 7 / 1;">
+                    <img id="pos-modal-hero-preview-img"
+                         src="{{ $posHeroImg }}"
+                         alt="พรีวิวภาพปก 1:7"
+                         class="w-full h-full object-cover transition-all duration-75 pointer-events-none {{ $posHeroImg ? '' : 'hidden' }}"
+                         style="object-position: {{ $posHeroPosX }}% {{ $posHeroPosY }}%; transform: scale({{ $posHeroScale }});">
+                    <div id="pos-modal-hero-empty" class="absolute inset-0 flex items-center justify-center text-rose-200/80 text-xs font-bold pointer-events-none {{ $posHeroImg ? 'hidden' : '' }}">
+                        ยังไม่มีภาพปก (ใช้พื้นหลังสีแดงเข้มเรียบ)
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-700">ปรับมุมมอง (ซ้าย ขวา บน ล่าง)</span>
+                    <button type="button" onclick="resetPosHeroBannerPosition()" class="text-[11px] font-bold text-rose-600 hover:text-rose-700 cursor-pointer">🔄 รีเซ็ตกึ่งกลาง</button>
+                </div>
+
+                <div class="flex items-center justify-around gap-2 pt-1">
+                    <div class="grid grid-cols-3 gap-1.5 w-32 shrink-0">
+                        <div></div>
+                        <button type="button" onclick="nudgePosHeroPos(0, -5)" class="h-8 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-[#E50914] shadow-2xs font-bold text-xs flex items-center justify-center cursor-pointer">⬆️</button>
+                        <div></div>
+                        <button type="button" onclick="nudgePosHeroPos(-5, 0)" class="h-8 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-[#E50914] shadow-2xs font-bold text-xs flex items-center justify-center cursor-pointer">⬅️</button>
+                        <button type="button" onclick="resetPosHeroBannerPosition()" class="h-8 rounded-lg bg-white border border-slate-200 text-slate-500 hover:bg-rose-50 hover:text-[#E50914] shadow-2xs text-[10px] font-bold flex items-center justify-center cursor-pointer">🎯</button>
+                        <button type="button" onclick="nudgePosHeroPos(5, 0)" class="h-8 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-[#E50914] shadow-2xs font-bold text-xs flex items-center justify-center cursor-pointer">➡️</button>
+                        <div></div>
+                        <button type="button" onclick="nudgePosHeroPos(0, 5)" class="h-8 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-[#E50914] shadow-2xs font-bold text-xs flex items-center justify-center cursor-pointer">⬇️</button>
+                        <div></div>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5 flex-1 max-w-[190px]">
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="nudgePosHeroZoom(-0.1)" class="flex-1 py-1.5 px-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold shadow-2xs flex items-center justify-center gap-1 cursor-pointer">➖ ซูมออก</button>
+                            <button type="button" onclick="nudgePosHeroZoom(0.1)" class="flex-1 py-1.5 px-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold shadow-2xs flex items-center justify-center gap-1 cursor-pointer">➕ ซูมเข้า</button>
+                        </div>
+                        <button type="button" onclick="clearPosHeroImage()" class="w-full py-1.5 px-2 rounded-xl bg-white border border-rose-200 text-rose-700 hover:bg-rose-50 text-[11px] font-bold shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition">
+                            🗑️ ลบรูปภาพปกออก
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-1.5 pt-1 text-[11px]">
+                    <div class="flex items-center justify-between text-slate-600 font-medium">
+                        <span>แนวนอน (ซ้าย - ขวา):</span>
+                        <span id="pos-hero-val-x" class="font-bold text-slate-800">{{ $posHeroPosX }}%</span>
+                    </div>
+                    <input type="range" id="pos-hero-slider-x" min="0" max="100" value="{{ $posHeroPosX }}" oninput="updatePosHeroSliderPos()" class="w-full accent-[#E50914] cursor-pointer">
+
+                    <div class="flex items-center justify-between text-slate-600 font-medium pt-1">
+                        <span>แนวตั้ง (บน - ล่าง):</span>
+                        <span id="pos-hero-val-y" class="font-bold text-slate-800">{{ $posHeroPosY }}%</span>
+                    </div>
+                    <input type="range" id="pos-hero-slider-y" min="0" max="100" value="{{ $posHeroPosY }}" oninput="updatePosHeroSliderPos()" class="w-full accent-[#E50914] cursor-pointer">
+
+                    <div class="flex items-center justify-between text-slate-600 font-medium pt-1">
+                        <span>อัตราขยาย (Zoom):</span>
+                        <span id="pos-hero-val-scale" class="font-bold text-slate-800">{{ $posHeroScale }}x</span>
+                    </div>
+                    <input type="range" id="pos-hero-slider-scale" min="1" max="2.5" step="0.05" value="{{ $posHeroScale }}" oninput="updatePosHeroSliderPos()" class="w-full accent-[#E50914] cursor-pointer">
+                </div>
+            </div>
+
+            <div>
+                <label class="flex items-center justify-center gap-2 p-3 rounded-2xl border-2 border-dashed border-rose-300 hover:border-[#E50914] bg-rose-50/60 hover:bg-rose-50 text-[#E50914] text-xs font-bold cursor-pointer transition select-none">
+                    <span id="pos-hero-upload-label">📷 เลือกรูปภาพใหม่จากเครื่อง (ขนาดแนะนำ 1:7 แนวนอน)</span>
+                    <input type="file" id="pos-hero-banner-file-input" accept="image/*" class="hidden" onchange="handlePosHeroBannerUpload(event)">
+                </label>
+                <canvas id="pos-hero-compress-canvas" class="hidden"></canvas>
+            </div>
+
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <span class="w-1.5 h-3.5 rounded-full bg-[#E50914]"></span>
+                        <span>ประวัติภาพปกเก่า &amp; ภาพที่บันทึกไว้</span>
+                    </span>
+                    <span class="text-[10px] text-slate-400">กด ✕ บนรูปเพื่อลบ</span>
+                </div>
+                <div id="pos-hero-history-grid" class="grid grid-cols-4 gap-2.5 max-h-40 overflow-y-auto p-1 pr-1.5"></div>
+            </div>
+        </div>
+
+        <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2 shrink-0">
+            <button type="button" onclick="closePosHeroBannerModal()" class="py-2.5 px-4 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold cursor-pointer transition">ยกเลิก</button>
+            <button type="button" id="btn-save-pos-hero-banner" onclick="savePosHeroBannerSettings()" class="py-2.5 px-5 rounded-xl bg-[#E50914] hover:bg-[#C8102E] text-white text-xs font-bold shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition active:scale-95">💾 บันทึกภาพปกนี้</button>
+        </div>
+    </div>
+</div>
 @endpush
 @endsection

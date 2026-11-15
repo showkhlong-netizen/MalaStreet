@@ -346,8 +346,8 @@ class AccessControlController extends Controller
                     'days' => ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์'],
                     'week_filter' => 'all',
                     'time_mode' => 'same',
-                    'start_time' => '09:00 AM',
-                    'end_time' => '07:00 PM',
+                    'start_time' => '09:00',
+                    'end_time' => '19:00',
                     'notes' => 'ทำงานเฉพาะเสาร์-อาทิตย์, เข้างานตามกะคอนเทนต์',
                 ],
                 'profile' => [
@@ -848,8 +848,8 @@ class AccessControlController extends Controller
                 'days' => ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์'],
                 'week_filter' => 'all',
                 'time_mode' => 'same',
-                'start_time' => '09:00 AM',
-                'end_time' => '07:00 PM',
+                'start_time' => '09:00',
+                'end_time' => '19:00',
                 'notes' => 'ทำงานเฉพาะเสาร์-อาทิตย์, เข้างานตามกะคอนเทนต์',
             ],
             'profile' => [
@@ -1244,8 +1244,8 @@ class AccessControlController extends Controller
                 'days' => ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัส', 'ศุกร์'],
                 'week_filter' => 'all',
                 'time_mode' => 'same',
-                'start_time' => '09:00 AM',
-                'end_time' => '07:00 PM',
+                'start_time' => '09:00',
+                'end_time' => '19:00',
                 'notes' => '',
             ],
             'profile' => [
