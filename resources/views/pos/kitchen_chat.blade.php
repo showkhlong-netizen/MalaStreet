@@ -70,8 +70,18 @@
                         </div>
                     </div>
 
-                    <!-- Right Controls: Popout & Refresh -->
-                    <div class="flex items-center gap-1 shrink-0">
+                    <!-- Right Controls: Online/Offline Switch, Refresh & Popout -->
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button type="button"
+                                role="switch"
+                                aria-checked="true"
+                                id="inbox-online-switch"
+                                onclick="toggleInboxOnlineSwitch()"
+                                class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-emerald-500"
+                                title="สลับดูแชท Online ({{ $onlineOrders->count() }}) / Offline ({{ $offlineOrders->count() }})">
+                            <span id="inbox-online-switch-knob"
+                                  class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out translate-x-4"></span>
+                        </button>
                         <button type="button"
                                 onclick="window.location.reload()"
                                 class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200/80 flex items-center justify-center transition-all cursor-pointer active:scale-95"
@@ -161,37 +171,6 @@
                            oninput="filterInboxItems(this.value)"
                            placeholder="🔍 ค้นหาชื่อลูกค้า, เลขคิว, หรือ IP..."
                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition font-prompt">
-                </div>
-
-                <!-- 1.3 TOP BAR TABS: ONLINE vs OFFLINE (ตามคำสั่ง) -->
-                <div class="mt-2.5 flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200/90 text-xs font-bold">
-                    <!-- Tab: Online -->
-                    <button type="button"
-                            onclick="setInboxFilter('online')"
-                            id="tab-btn-online"
-                            class="flex-1 py-1.5 px-2 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 bg-rose-600 text-white shadow-xs">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span>Online</span>
-                        <span class="text-[10px] bg-white/20 px-1.5 py-0.2 rounded-full font-mono">{{ $onlineOrders->count() }}</span>
-                    </button>
-
-                    <!-- Tab: Offline -->
-                    <button type="button"
-                            onclick="setInboxFilter('offline')"
-                            id="tab-btn-offline"
-                            class="flex-1 py-1.5 px-2 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 hover:bg-white/80">
-                        <span class="w-2 h-2 rounded-full bg-slate-400"></span>
-                        <span>Offline</span>
-                        <span class="text-[10px] bg-slate-200/80 px-1.5 py-0.2 rounded-full font-mono text-slate-600">{{ $offlineOrders->count() }}</span>
-                    </button>
-
-                    <!-- Tab: All -->
-                    <button type="button"
-                            onclick="setInboxFilter('all')"
-                            id="tab-btn-all"
-                            class="py-1.5 px-2.5 rounded-xl text-center transition-all text-slate-600 hover:text-slate-900 hover:bg-white/80 text-[11px]">
-                        <span>ทั้งหมด ({{ $recentOrders->count() }})</span>
-                    </button>
                 </div>
             </header>
 
@@ -708,24 +687,26 @@
             setInterval(pollNewMessages, 3000);
         });
 
-        // 1. INBOX TABS: ONLINE vs OFFLINE vs ALL
+        // 1. INBOX SWITCH: ONLINE vs OFFLINE
+        function toggleInboxOnlineSwitch() {
+            setInboxFilter(currentTabFilter === 'online' ? 'offline' : 'online');
+        }
+
         function setInboxFilter(filter) {
             currentTabFilter = filter;
-            const btnOnline = document.getElementById('tab-btn-online');
-            const btnOffline = document.getElementById('tab-btn-offline');
-            const btnAll = document.getElementById('tab-btn-all');
+            const sw = document.getElementById('inbox-online-switch');
+            const knob = document.getElementById('inbox-online-switch-knob');
 
-            // Reset tab styles
-            btnOnline.className = "flex-1 py-1.5 px-2 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 hover:bg-white/80 text-xs font-bold";
-            btnOffline.className = "flex-1 py-1.5 px-2 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 hover:bg-white/80 text-xs font-bold";
-            btnAll.className = "py-1.5 px-2.5 rounded-xl text-center transition-all text-slate-600 hover:text-slate-900 hover:bg-white/80 text-[11px] font-bold";
-
-            if (filter === 'online') {
-                btnOnline.className = "flex-1 py-1.5 px-2 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 bg-rose-600 text-white shadow-xs text-xs font-bold";
-            } else if (filter === 'offline') {
-                btnOffline.className = "flex-1 py-1.5 px-2 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 border border-slate-200/80 shadow-xs text-xs font-bold";
-            } else {
-                btnAll.className = "py-1.5 px-2.5 rounded-xl text-center transition-all bg-white text-slate-900 border border-slate-200/80 shadow-xs text-[11px] font-bold";
+            if (sw && knob) {
+                if (filter === 'online') {
+                    sw.setAttribute('aria-checked', 'true');
+                    sw.className = 'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-emerald-500';
+                    knob.className = 'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out translate-x-4';
+                } else {
+                    sw.setAttribute('aria-checked', 'false');
+                    sw.className = 'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-slate-300';
+                    knob.className = 'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out translate-x-0';
+                }
             }
 
             applyInboxFilter();
