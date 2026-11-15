@@ -2269,42 +2269,47 @@
     }
 
     function verifyShopLocation() {
-        if (!navigator.geolocation) {
-            currentUserCoords = {
-                lat: null,
-                lng: null,
-                distance: null,
-                inside: false,
-                gpsReady: false,
-                gpsError: 'เบราว์เซอร์ไม่รองรับ GPS'
-            };
-            updateGeofenceUI(null, false, 'เบราว์เซอร์ไม่รองรับการตรวจสอบ GPS');
-            return;
-        }
+        return new Promise((resolve) => {
+            if (!navigator.geolocation) {
+                currentUserCoords = {
+                    lat: null,
+                    lng: null,
+                    distance: null,
+                    inside: false,
+                    gpsReady: false,
+                    gpsError: 'เบราว์เซอร์ไม่รองรับ GPS'
+                };
+                updateGeofenceUI(null, false, 'เบราว์เซอร์ไม่รองรับการตรวจสอบ GPS');
+                resolve(currentUserCoords);
+                return;
+            }
 
-        navigator.geolocation.getCurrentPosition((pos) => {
-            const dist = calculateDistance(pos.coords.latitude, pos.coords.longitude, STORE_COORDS.lat, STORE_COORDS.lng);
-            const inside = dist <= STORE_COORDS.radius;
-            currentUserCoords = {
-                lat: pos.coords.latitude,
-                lng: pos.coords.longitude,
-                distance: dist,
-                inside: inside,
-                gpsReady: true,
-                gpsError: null
-            };
-            updateGeofenceUI(dist, inside);
-        }, (err) => {
-            currentUserCoords = {
-                lat: null,
-                lng: null,
-                distance: null,
-                inside: false,
-                gpsReady: false,
-                gpsError: err?.message || 'ไม่สามารถดึงพิกัด GPS ได้'
-            };
-            updateGeofenceUI(null, false, 'กรุณาเปิด GPS / อนุญาตตำแหน่งเพื่อยืนยันเขตร้าน');
-        }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const dist = calculateDistance(pos.coords.latitude, pos.coords.longitude, STORE_COORDS.lat, STORE_COORDS.lng);
+                const inside = dist <= STORE_COORDS.radius;
+                currentUserCoords = {
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                    distance: dist,
+                    inside: inside,
+                    gpsReady: true,
+                    gpsError: null
+                };
+                updateGeofenceUI(dist, inside);
+                resolve(currentUserCoords);
+            }, (err) => {
+                currentUserCoords = {
+                    lat: null,
+                    lng: null,
+                    distance: null,
+                    inside: false,
+                    gpsReady: false,
+                    gpsError: err?.message || 'ไม่สามารถดึงพิกัด GPS ได้'
+                };
+                updateGeofenceUI(null, false, 'กรุณาเปิด GPS / อนุญาตตำแหน่งเพื่อยืนยันเขตร้าน');
+                resolve(currentUserCoords);
+            }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
+        });
     }
 
     // 4. Leaflet Map Interactive Store Picker
@@ -2506,11 +2511,22 @@
     }
 
     async function openFaceScannerModal() {
+        // Check GPS coordinates before opening camera / allowing scan
+        const coords = await verifyShopLocation();
+
+        if (!STORE_COORDS.allow_mock) {
+            if (!coords.gpsReady || coords.lat === null || coords.lng === null) {
+                alert('⚠️ ไม่สามารถเปิดกล้องสแกนได้: กรุณาเปิดสิทธิ์เข้าถึงตำแหน่ง (Location/GPS) ของเบราว์เซอร์ก่อน');
+                return;
+            }
+            if (!coords.inside) {
+                alert(`⚠️ ไม่สามารถเปิดกล้องสแกนได้: คุณอยู่นอกเขตร้านหม่าล่าสตรีท (ระยะห่าง ${coords.distance} ม.) ต้องอยู่ในเขตร้านเท่านั้น (ไม่เกิน ${STORE_COORDS.radius} ม.)`);
+                return;
+            }
+        }
+
         const modal = document.getElementById('modal-face-scanner');
         modal.classList.remove('hidden');
-
-        // Check GPS coordinates
-        verifyShopLocation();
 
         // เงื่อนไขอัตโนมัติ: ถ่ายครั้งแรกของวัน เข้างานอัตโนมัติ / ครั้งที่ 2 ของวัน ออกงาน
         const isFirstScan = (currentAttendanceStatus !== 'เข้างานแล้ว');
@@ -2656,6 +2672,17 @@
 
     // Step 1: ถ่ายภาพ snapshot เพื่อดูตัวอย่างก่อนยืนยัน
     function takePhotoSnapshot() {
+        if (!STORE_COORDS.allow_mock) {
+            if (!currentUserCoords.gpsReady || currentUserCoords.lat === null || currentUserCoords.lng === null) {
+                alert('⚠️ ไม่พบพิกัด GPS ปัจจุบัน: กรุณาเปิดสิทธิ์เข้าถึงตำแหน่ง (Location/GPS) ก่อนถ่ายภาพ');
+                return;
+            }
+            if (!currentUserCoords.inside) {
+                alert(`⚠️ ไม่สามารถถ่ายภาพได้: คุณอยู่นอกเขตร้าน (ระยะห่าง ${currentUserCoords.distance} ม.) ต้องอยู่ในเขตร้านเท่านั้น (ไม่เกิน ${STORE_COORDS.radius} ม.)`);
+                return;
+            }
+        }
+
         const photo = captureCameraFrame();
         if (!photo) {
             alert('ไม่สามารถบันทึกภาพถ่ายได้ กรุณาลองใหม่อีกครั้ง');
