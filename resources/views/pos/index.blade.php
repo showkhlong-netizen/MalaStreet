@@ -620,7 +620,55 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Live Storefront & Online Orders Queue Card -->
+            <div id="pos-live-orders-card" class="bg-white rounded-[20px] border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-4 py-3.5 border-b border-gray-100 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                        <h3 class="text-sm font-black text-gray-900 truncate">ออเดอร์ออนไลน์ & หน้าร้าน</h3>
+                        <span id="pos-live-orders-count" class="px-2 py-0.5 rounded-full text-[11px] font-black bg-rose-50 text-[#DC143C] border border-rose-100">{{ count($livePosOrders ?? []) }}</span>
+                    </div>
+                    <button type="button" onclick="refreshPosLiveOrders(true)" title="รีเฟรชรายการออเดอร์" class="w-8 h-8 rounded-full border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-600 flex items-center justify-center transition-colors shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    </button>
+                </div>
+
+                <div class="px-3 pt-2.5 pb-2 border-b border-gray-50 flex items-center gap-1.5 bg-gray-50/60">
+                    <button type="button" data-pos-filter="all" onclick="setPosOrdersFilter('all')" class="pos-order-filter-btn px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#DC143C] text-white transition-colors">ทั้งหมด</button>
+                    <button type="button" data-pos-filter="online" onclick="setPosOrdersFilter('online')" class="pos-order-filter-btn px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-gray-600 border border-gray-200 hover:bg-gray-100 transition-colors">ออนไลน์</button>
+                    <button type="button" data-pos-filter="active" onclick="setPosOrdersFilter('active')" class="pos-order-filter-btn px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-gray-600 border border-gray-200 hover:bg-gray-100 transition-colors">รอทำ/กำลังปรุง</button>
+                </div>
+
+                <div id="pos-live-orders-list" class="divide-y divide-gray-100 max-h-[360px] overflow-y-auto">
+                    <div class="p-6 text-center text-xs text-gray-400">กำลังโหลดรายการออเดอร์...</div>
+                </div>
+            </div>
         </aside>
+
+        <!-- Slide-over Customer Chat Drawer (กล่องข้อความลูกค้า) -->
+        <div id="pos-chat-drawer" class="fixed inset-0 z-50 hidden">
+            <div class="absolute inset-0 bg-black/40 backdrop-blur-[1px]" onclick="closePosCustomerChatDrawer()"></div>
+            <div class="absolute inset-y-0 right-0 w-full max-w-2xl bg-white shadow-2xl flex flex-col border-l border-gray-200">
+                <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-3 bg-gray-50/80">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <h3 class="text-sm font-black text-gray-900">กล่องข้อความลูกค้า</h3>
+                            <span id="pos-chat-drawer-badge" class="px-2 py-0.5 rounded-md bg-gray-900 text-white text-[11px] font-black hidden"></span>
+                        </div>
+                        <p id="pos-chat-drawer-subtitle" class="text-[11px] text-gray-500 truncate mt-0.5">เลือกออเดอร์เพื่อสนทนากับลูกค้า</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <a id="pos-chat-drawer-external" href="{{ route('kitchen.chat') }}" target="_blank" class="px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-[11px] font-bold text-gray-700 transition-colors">เปิดเต็มจอ</a>
+                        <button type="button" onclick="closePosCustomerChatDrawer()" class="w-8 h-8 rounded-lg border border-gray-200 bg-white hover:bg-gray-100 text-gray-600 flex items-center justify-center transition-colors" aria-label="ปิดหน้าต่างแชท">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <iframe id="pos-chat-drawer-frame" src="about:blank" class="w-full flex-1 border-0 bg-white"></iframe>
+            </div>
+        </div>
 
     </div>
 </div>
@@ -1791,6 +1839,161 @@
             toast.classList.remove('flex');
         }, 3200);
     }
+
+    // === Live Storefront & Online Orders + Customer Chat Drawer ===
+    let posLiveOrdersData = @json($livePosOrders ?? []);
+    let posOrdersFilter = 'all';
+
+    function escapePosHtml(str) {
+        return String(str ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function getPosOrderStatusMeta(status) {
+        switch (status) {
+            case 'pending':
+                return { label: 'รอรับออเดอร์', cls: 'bg-amber-50 text-amber-700 border-amber-200' };
+            case 'confirmed':
+                return { label: 'ร้านรับออเดอร์แล้ว', cls: 'bg-sky-50 text-sky-700 border-sky-200' };
+            case 'cooking':
+                return { label: 'กำลังปรุง', cls: 'bg-orange-50 text-orange-700 border-orange-200' };
+            case 'ready':
+                return { label: 'พร้อมรับ/เสิร์ฟ', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+            case 'completed':
+                return { label: 'เสร็จสิ้น', cls: 'bg-gray-100 text-gray-600 border-gray-200' };
+            case 'cancelled':
+                return { label: 'ยกเลิก', cls: 'bg-rose-50 text-rose-700 border-rose-200' };
+            default:
+                return { label: status || '-', cls: 'bg-gray-100 text-gray-600 border-gray-200' };
+        }
+    }
+
+    function setPosOrdersFilter(filter) {
+        posOrdersFilter = filter;
+        document.querySelectorAll('.pos-order-filter-btn').forEach((btn) => {
+            const isActive = btn.getAttribute('data-pos-filter') === filter;
+            btn.className = isActive
+                ? 'pos-order-filter-btn px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#DC143C] text-white transition-colors'
+                : 'pos-order-filter-btn px-2.5 py-1 rounded-full text-[11px] font-bold bg-white text-gray-600 border border-gray-200 hover:bg-gray-100 transition-colors';
+        });
+        renderPosLiveOrders();
+    }
+
+    function renderPosLiveOrders() {
+        const listEl = document.getElementById('pos-live-orders-list');
+        const countEl = document.getElementById('pos-live-orders-count');
+        if (!listEl) return;
+
+        const activeStatuses = ['pending', 'confirmed', 'cooking', 'ready'];
+        const filtered = (posLiveOrdersData || []).filter((o) => {
+            if (posOrdersFilter === 'online') return o.order_type === 'online';
+            if (posOrdersFilter === 'active') return activeStatuses.includes(o.status);
+            return true;
+        });
+
+        if (countEl) {
+            countEl.textContent = String(filtered.length);
+        }
+
+        if (filtered.length === 0) {
+            listEl.innerHTML = '<div class="p-6 text-center text-xs text-gray-400">ยังไม่มีออเดอร์ในหมวดนี้</div>';
+            return;
+        }
+
+        listEl.innerHTML = filtered.map((o) => {
+            const st = getPosOrderStatusMeta(o.status);
+            const isOnline = o.order_type === 'online';
+            const channelBadge = isOnline
+                ? '<span class="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-bold">ออนไลน์</span>'
+                : '<span class="px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200 text-[10px] font-bold">หน้าร้าน</span>';
+            const unreadBadge = o.unread_chat > 0
+                ? `<span class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#DC143C] text-white text-[10px] font-black flex items-center justify-center shadow-sm">${o.unread_chat}</span>`
+                : '';
+            const phonePart = o.customer_phone ? ` • ${escapePosHtml(o.customer_phone)}` : '';
+            const totalFormatted = Number(o.total_amount || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+            return `
+                <div class="p-3 hover:bg-gray-50/80 transition-colors flex items-start justify-between gap-2.5">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center flex-wrap gap-1.5">
+                            <span class="px-2 py-0.5 rounded-md bg-gray-900 text-white text-[11px] font-black tracking-wide">คิว ${escapePosHtml(o.queue_number)}</span>
+                            ${channelBadge}
+                            <span class="px-2 py-0.5 rounded-full border text-[10px] font-bold ${st.cls}">${st.label}</span>
+                        </div>
+                        <div class="mt-1 flex items-center justify-between gap-2">
+                            <p class="text-xs font-bold text-gray-900 truncate">${escapePosHtml(o.customer_name)}${phonePart}</p>
+                            <span class="text-xs font-black text-[#DC143C] shrink-0">฿${totalFormatted}</span>
+                        </div>
+                        <p class="text-[11px] text-gray-500 truncate mt-0.5">${escapePosHtml(o.items_summary)}</p>
+                        <p class="text-[10px] text-gray-400 mt-0.5">${escapePosHtml(o.order_no)} • ${escapePosHtml(o.created_at_hm)} น.</p>
+                    </div>
+                    <button type="button"
+                        onclick="openPosCustomerChatDrawer('${escapePosHtml(o.order_no)}', '${escapePosHtml(o.queue_number)}', '${escapePosHtml(o.customer_name)}')"
+                        title="เปิดแชทลูกค้าในกล่องข้อความ"
+                        class="relative w-9 h-9 rounded-xl border border-rose-200 bg-rose-50 hover:bg-[#DC143C] text-[#DC143C] hover:text-white flex items-center justify-center transition-colors shrink-0 mt-0.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        ${unreadBadge}
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function refreshPosLiveOrders(showToastOnSuccess = false) {
+        try {
+            const res = await fetch('{{ route('pos.orders.live') }}', {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (Array.isArray(data.orders)) {
+                posLiveOrdersData = data.orders;
+                renderPosLiveOrders();
+                if (showToastOnSuccess) {
+                    showPosSyncToast('อัปเดตรายการออเดอร์ล่าสุดแล้ว');
+                }
+            }
+        } catch (err) {
+            // Silent background poll failure
+        }
+    }
+
+    function openPosCustomerChatDrawer(orderNo, queueNo, customerName) {
+        const drawer = document.getElementById('pos-chat-drawer');
+        const frame = document.getElementById('pos-chat-drawer-frame');
+        const badge = document.getElementById('pos-chat-drawer-badge');
+        const subtitle = document.getElementById('pos-chat-drawer-subtitle');
+        const extLink = document.getElementById('pos-chat-drawer-external');
+        if (!drawer || !frame) return;
+
+        const chatUrl = '{{ route('kitchen.chat') }}?order_no=' + encodeURIComponent(orderNo);
+        frame.src = chatUrl;
+        if (extLink) extLink.href = chatUrl;
+        if (badge) {
+            badge.textContent = 'คิว ' + queueNo;
+            badge.classList.remove('hidden');
+        }
+        if (subtitle) {
+            subtitle.textContent = `${customerName} (${orderNo})`;
+        }
+
+        drawer.classList.remove('hidden');
+    }
+
+    function closePosCustomerChatDrawer() {
+        const drawer = document.getElementById('pos-chat-drawer');
+        if (drawer) drawer.classList.add('hidden');
+        refreshPosLiveOrders(false);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderPosLiveOrders();
+        setInterval(() => refreshPosLiveOrders(false), 5000);
+    });
 </script>
 @endpush
 @endsection

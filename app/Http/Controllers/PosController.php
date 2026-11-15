@@ -60,8 +60,9 @@ class PosController extends Controller
         $totalOrdersToday = $todayOrders->count();
         $nextQueueNumber = 'A' . str_pad($todayOrders->where('order_type', 'pos')->count() + 1, 2, '0', STR_PAD_LEFT);
         $priceHistoriesCount = PriceHistory::count();
+        $livePosOrders = $this->buildLivePosOrders();
 
-        return view('pos.index', compact('categories', 'todayOrders', 'totalSalesToday', 'totalOrdersToday', 'nextQueueNumber', 'priceHistoriesCount'));
+        return view('pos.index', compact('categories', 'todayOrders', 'totalSalesToday', 'totalOrdersToday', 'nextQueueNumber', 'priceHistoriesCount', 'livePosOrders'));
     }
 
     /**
@@ -225,8 +226,8 @@ class PosController extends Controller
     {
         $today = Carbon::today();
         $activeOrders = Order::with('items')
-            ->whereDate('created_at', $today)
             ->whereIn('status', ['pending', 'confirmed', 'cooking', 'ready'])
+            ->where('created_at', '>=', Carbon::now('Asia/Bangkok')->subDays(2))
             ->orderBy('created_at')
             ->get();
 
@@ -234,6 +235,70 @@ class PosController extends Controller
         $unreadChatCount = ChatMessage::where('sender', 'customer')->where('is_read', false)->count();
 
         return view('pos.kitchen', compact('activeOrders', 'completedCount', 'unreadChatCount'));
+    }
+
+    /**
+     * Return live storefront & online orders for POS real-time sync.
+     */
+    public function liveOrders(Request $request): JsonResponse
+    {
+        return response()->json([
+            'orders' => $this->buildLivePosOrders(),
+            'server_time' => Carbon::now('Asia/Bangkok')->format('H:i:s'),
+        ]);
+    }
+
+    /**
+     * Build active and today's orders payload for the POS storefront queue panel.
+     */
+    private function buildLivePosOrders(): array
+    {
+        $today = Carbon::today('Asia/Bangkok');
+        $cutoff = Carbon::now('Asia/Bangkok')->subDays(2);
+
+        $orders = Order::with('items')
+            ->where('created_at', '>=', $cutoff)
+            ->where(function ($query) use ($today) {
+                $query->whereIn('status', ['pending', 'confirmed', 'cooking', 'ready'])
+                    ->orWhereDate('created_at', $today);
+            })
+            ->orderByRaw("CASE WHEN status IN ('pending','confirmed','cooking','ready') THEN 0 ELSE 1 END")
+            ->orderByDesc('created_at')
+            ->limit(40)
+            ->get();
+
+        $unreadByOrder = collect();
+        if ($orders->isNotEmpty()) {
+            $unreadByOrder = ChatMessage::whereIn('order_no', $orders->pluck('order_no'))
+                ->where('sender', 'customer')
+                ->where('is_read', false)
+                ->selectRaw('order_no, COUNT(*) as cnt')
+                ->groupBy('order_no')
+                ->pluck('cnt', 'order_no');
+        }
+
+        return $orders->map(function (Order $order) use ($unreadByOrder) {
+            $itemsSummary = $order->items->map(function (OrderItem $item) {
+                $qty = (int) ($item->quantity_sticks ?? 0);
+                return trim($item->product_name . ' x' . $qty);
+            })->implode(', ');
+
+            return [
+                'id' => $order->id,
+                'order_no' => $order->order_no,
+                'queue_number' => $order->queue_number ?? '-',
+                'order_type' => $order->order_type ?? 'pos',
+                'customer_name' => $order->customer_name ?: ($order->order_type === 'online' ? 'ลูกค้าออนไลน์' : 'ลูกค้าหน้าร้าน'),
+                'customer_phone' => $order->customer_phone ?? '',
+                'pickup_time' => $order->pickup_time ?? '',
+                'status' => $order->status,
+                'total_amount' => (float) $order->total_amount,
+                'items_count' => $order->items->count(),
+                'items_summary' => $itemsSummary ?: '-',
+                'unread_chat' => (int) ($unreadByOrder[$order->order_no] ?? 0),
+                'created_at_hm' => $order->created_at ? $order->created_at->timezone('Asia/Bangkok')->format('H:i') : '',
+            ];
+        })->values()->all();
     }
 
     /**

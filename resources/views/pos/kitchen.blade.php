@@ -656,8 +656,8 @@
         }
     }
 
-    // Background silent sync every 8 seconds - ZERO screen flickering, ZERO iframe reload!
-    setInterval(() => syncKitchenOrdersSilently(false), 8000);
+    // Background silent sync every 4 seconds - ZERO screen flickering, ZERO iframe reload!
+    setInterval(() => syncKitchenOrdersSilently(false), 4000);
 </script>
 @endpush
 @endsection
