@@ -95,39 +95,6 @@
         $posHeroScale = $posHeroBannerPosition['scale'] ?? 1;
     @endphp
 
-    <!-- TOP-LEFT PROMINENT SWITCH: เปิดบริการออนไลน์ -->
-    <div class="max-w-[1420px] mx-auto mb-3.5 flex flex-wrap items-center justify-between gap-3">
-        <div id="pos-online-switch-card"
-             class="inline-flex items-center gap-4 px-4 sm:px-5 py-3 rounded-2xl border-2 shadow-md transition-all duration-200 {{ $isOnlineLive ? 'bg-emerald-50/95 border-emerald-500 shadow-emerald-500/15' : 'bg-white border-slate-300 shadow-slate-900/5' }}">
-            <button type="button"
-                    id="pos-online-switch-btn"
-                    role="switch"
-                    aria-checked="{{ $isOnlineLive ? 'true' : 'false' }}"
-                    onclick="togglePosOnlineServiceSwitch()"
-                    class="relative inline-flex h-10 w-[72px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 {{ $isOnlineLive ? 'bg-emerald-500' : 'bg-slate-300' }}"
-                    title="สลับเปิด/ปิดบริการรับออเดอร์ออนไลน์">
-                <span id="pos-online-switch-knob"
-                      class="pointer-events-none inline-block h-9 w-9 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out flex items-center justify-center {{ $isOnlineLive ? 'translate-x-8' : 'translate-x-0' }}">
-                    <span id="pos-online-switch-dot" class="w-3 h-3 rounded-full {{ $isOnlineLive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400' }}"></span>
-                </span>
-            </button>
-
-            <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                    <span class="text-base sm:text-lg font-black tracking-tight text-slate-900">เปิดบริการออนไลน์</span>
-                    <span id="pos-online-status-badge"
-                          class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold {{ $isOnlineLive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700' }}">
-                        <span id="pos-online-badge-dot" class="w-2 h-2 rounded-full {{ $isOnlineLive ? 'bg-white animate-pulse' : 'bg-slate-500' }}"></span>
-                        <span id="pos-online-badge-text">{{ $isOnlineLive ? 'กำลังเปิดรับออเดอร์ (LIVE)' : 'ปิดชั่วคราว (พรีวิว)' }}</span>
-                    </span>
-                </div>
-                <p id="pos-online-status-sub" class="text-[11px] font-medium {{ $isOnlineLive ? 'text-emerald-700' : 'text-slate-500' }}">
-                    {{ $isOnlineLive ? 'ลูกค้าสามารถกดสั่งอาหารออนไลน์ได้ทันที' : 'ลูกค้าเข้าดูเมนูได้ แต่ยังไม่เปิดรับออเดอร์จริง' }}
-                </p>
-            </div>
-        </div>
-    </div>
-
     <div class="max-w-[1420px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
         <!-- ========================================================================= -->
@@ -146,9 +113,40 @@
 
                 <!-- Floating Controls & Price Tracker Row Over the Full-Width Cover Image -->
                 <div class="relative z-10 flex flex-col lg:flex-row items-stretch lg:items-start justify-between gap-3 sm:gap-3.5">
-                    <!-- Open Cover Area + Top-Right 3-Bar Menu Button (ปุ่มสามขีด) -->
-                    <div class="flex-1 flex items-start justify-end pointer-events-auto">
-                        <div class="relative">
+                    <!-- Left Floating Online Switch (70% Compact, Same Structure) + 3-Bar Menu Button (ปุ่มสามขีด) -->
+                    <div class="flex-1 flex flex-wrap sm:flex-nowrap items-start justify-between gap-2 pointer-events-auto min-w-0">
+                        <!-- FLOATING COMPACT SWITCH: เปิดบริการออนไลน์ -->
+                        <div id="pos-online-switch-card"
+                             class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-[14px] border shadow-lg backdrop-blur-xs transition-all duration-200 max-w-full {{ $isOnlineLive ? 'bg-emerald-50/95 border-emerald-400 shadow-emerald-950/20' : 'bg-white/95 border-white/90 shadow-black/25' }}">
+                            <button type="button"
+                                    id="pos-online-switch-btn"
+                                    role="switch"
+                                    aria-checked="{{ $isOnlineLive ? 'true' : 'false' }}"
+                                    onclick="togglePosOnlineServiceSwitch()"
+                                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 {{ $isOnlineLive ? 'bg-emerald-500' : 'bg-slate-300' }}"
+                                    title="สลับเปิด/ปิดบริการรับออเดอร์ออนไลน์">
+                                <span id="pos-online-switch-knob"
+                                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out flex items-center justify-center {{ $isOnlineLive ? 'translate-x-5' : 'translate-x-0' }}">
+                                    <span id="pos-online-switch-dot" class="w-1.5 h-1.5 rounded-full {{ $isOnlineLive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400' }}"></span>
+                                </span>
+                            </button>
+
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[11px] sm:text-[11.5px] font-black tracking-tight text-slate-900 whitespace-nowrap">เปิดบริการออนไลน์</span>
+                                    <span id="pos-online-status-badge"
+                                          class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-extrabold whitespace-nowrap {{ $isOnlineLive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700' }}">
+                                        <span id="pos-online-badge-dot" class="w-1.5 h-1.5 rounded-full {{ $isOnlineLive ? 'bg-white animate-pulse' : 'bg-slate-500' }}"></span>
+                                        <span id="pos-online-badge-text">{{ $isOnlineLive ? 'กำลังเปิดรับออเดอร์ (LIVE)' : 'ปิดชั่วคราว (พรีวิว)' }}</span>
+                                    </span>
+                                </div>
+                                <p id="pos-online-status-sub" class="text-[8.5px] sm:text-[9px] font-medium leading-tight truncate {{ $isOnlineLive ? 'text-emerald-700' : 'text-slate-500' }}">
+                                    {{ $isOnlineLive ? 'ลูกค้าสามารถกดสั่งอาหารออนไลน์ได้ทันที' : 'ลูกค้าเข้าดูเมนูได้ แต่ยังไม่เปิดรับออเดอร์จริง' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="relative shrink-0">
                             <button type="button"
                                     id="btn-pos-master-settings"
                                     onclick="togglePosMasterSettingsMenu(event)"
@@ -2020,29 +2018,29 @@
         const sub = document.getElementById('pos-online-status-sub');
 
         if (card) {
-            card.className = `inline-flex items-center gap-4 px-4 sm:px-5 py-3 rounded-2xl border-2 shadow-md transition-all duration-200 ${isPosOnlineLive ? 'bg-emerald-50/95 border-emerald-500 shadow-emerald-500/15' : 'bg-white border-slate-300 shadow-slate-900/5'}`;
+            card.className = `inline-flex items-center gap-2 px-2.5 py-1.5 rounded-[14px] border shadow-lg backdrop-blur-xs transition-all duration-200 max-w-full ${isPosOnlineLive ? 'bg-emerald-50/95 border-emerald-400 shadow-emerald-950/20' : 'bg-white/95 border-white/90 shadow-black/25'}`;
         }
         if (btn) {
             btn.setAttribute('aria-checked', isPosOnlineLive ? 'true' : 'false');
-            btn.className = `relative inline-flex h-10 w-[72px] shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${isPosOnlineLive ? 'bg-emerald-500' : 'bg-slate-300'}`;
+            btn.className = `relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 ${isPosOnlineLive ? 'bg-emerald-500' : 'bg-slate-300'}`;
         }
         if (knob) {
-            knob.className = `pointer-events-none inline-block h-9 w-9 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out flex items-center justify-center ${isPosOnlineLive ? 'translate-x-8' : 'translate-x-0'}`;
+            knob.className = `pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out flex items-center justify-center ${isPosOnlineLive ? 'translate-x-5' : 'translate-x-0'}`;
         }
         if (dot) {
-            dot.className = `w-3 h-3 rounded-full ${isPosOnlineLive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`;
+            dot.className = `w-1.5 h-1.5 rounded-full ${isPosOnlineLive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`;
         }
         if (badge) {
-            badge.className = `inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold ${isPosOnlineLive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'}`;
+            badge.className = `inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-extrabold whitespace-nowrap ${isPosOnlineLive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'}`;
         }
         if (badgeDot) {
-            badgeDot.className = `w-2 h-2 rounded-full ${isPosOnlineLive ? 'bg-white animate-pulse' : 'bg-slate-500'}`;
+            badgeDot.className = `w-1.5 h-1.5 rounded-full ${isPosOnlineLive ? 'bg-white animate-pulse' : 'bg-slate-500'}`;
         }
         if (badgeText) {
             badgeText.textContent = isPosOnlineLive ? 'กำลังเปิดรับออเดอร์ (LIVE)' : 'ปิดชั่วคราว (พรีวิว)';
         }
         if (sub) {
-            sub.className = `text-[11px] font-medium ${isPosOnlineLive ? 'text-emerald-700' : 'text-slate-500'}`;
+            sub.className = `text-[8.5px] sm:text-[9px] font-medium leading-tight truncate ${isPosOnlineLive ? 'text-emerald-700' : 'text-slate-500'}`;
             sub.textContent = isPosOnlineLive ? 'ลูกค้าสามารถกดสั่งอาหารออนไลน์ได้ทันที' : 'ลูกค้าเข้าดูเมนูได้ แต่ยังไม่เปิดรับออเดอร์จริง';
         }
     }
