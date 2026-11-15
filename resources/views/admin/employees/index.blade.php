@@ -2194,10 +2194,12 @@
         allow_mock: {{ $storeLocation['allow_mock'] ? 'true' : 'false' }}
     };
     let currentUserCoords = {
-        lat: {{ (float)$storeLocation['lat'] }},
-        lng: {{ (float)$storeLocation['lng'] }},
-        distance: 8,
-        inside: true
+        lat: null,
+        lng: null,
+        distance: null,
+        inside: false,
+        gpsReady: false,
+        gpsError: null
     };
 
     function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -2213,13 +2215,27 @@
         return Math.round(R * c);
     }
 
-    function updateGeofenceUI(distance, inside) {
+    function updateGeofenceUI(distance, inside, errorMsg = null) {
         const statusText = document.getElementById('geofence-status-text');
         const indicator = document.getElementById('geofence-distance-indicator');
         const modalBadge = document.getElementById('modal-geofence-badge');
-        
-        if (inside || STORE_COORDS.allow_mock) {
-            if (statusText) statusText.innerText = STORE_COORDS.allow_mock ? 'อยู่ในเขตร้าน (โหมดทดสอบเปิดอยู่)' : 'อยู่ในเขตร้าน (ยืนยันแล้ว)';
+
+        if (STORE_COORDS.allow_mock) {
+            const distLabel = (distance !== null && distance !== undefined) ? `${distance} ม.` : 'โหมดทดสอบ';
+            if (statusText) statusText.innerText = 'อยู่ในเขตร้าน (โหมดทดสอบเปิดอยู่)';
+            if (indicator) {
+                indicator.innerText = `ห่าง ${distLabel} (โหมดทดสอบ)`;
+                indicator.className = 'text-emerald-600 font-bold';
+            }
+            if (modalBadge) {
+                modalBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>📍 โหมดทดสอบเปิดอยู่ (${distLabel})</span>`;
+                modalBadge.className = 'mt-3 text-[11px] px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold inline-flex items-center gap-1.5';
+            }
+            return;
+        }
+
+        if (inside && distance !== null && distance !== undefined) {
+            if (statusText) statusText.innerText = 'อยู่ในเขตร้าน (ยืนยันแล้ว)';
             if (indicator) {
                 indicator.innerText = `ห่าง ${distance} ม. (อยู่ในเขตร้าน)`;
                 indicator.className = 'text-emerald-600 font-bold';
@@ -2228,36 +2244,67 @@
                 modalBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>📍 ลิงก์พิกัดร้าน: ผ่านการตรวจสอบ (${distance} ม.)</span>`;
                 modalBadge.className = 'mt-3 text-[11px] px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold inline-flex items-center gap-1.5';
             }
-        } else {
-            if (statusText) statusText.innerText = `อยู่นอกเขตร้าน (${distance} ม.)`;
+        } else if (errorMsg) {
+            if (statusText) statusText.innerText = 'ยังไม่ยืนยันพิกัด GPS';
             if (indicator) {
-                indicator.innerText = `ห่าง ${distance} ม. (เกินระยะ ${STORE_COORDS.radius} ม.)`;
+                indicator.innerText = errorMsg;
                 indicator.className = 'text-rose-600 font-bold';
             }
             if (modalBadge) {
-                modalBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span><span>⚠️ อยู่นอกเขตร้าน (${distance} ม.) ต้องอยู่ในเขตร้านเท่านั้น</span>`;
+                modalBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span><span>⚠️ ${errorMsg}</span>`;
+                modalBadge.className = 'mt-3 text-[11px] px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-bold inline-flex items-center gap-1.5';
+            }
+        } else {
+            const distText = (distance !== null && distance !== undefined) ? `${distance} ม.` : 'นอกเขต';
+            if (statusText) statusText.innerText = `อยู่นอกเขตร้าน (${distText})`;
+            if (indicator) {
+                indicator.innerText = `ห่าง ${distText} (เกินระยะ ${STORE_COORDS.radius} ม.)`;
+                indicator.className = 'text-rose-600 font-bold';
+            }
+            if (modalBadge) {
+                modalBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span><span>⚠️ อยู่นอกเขตร้าน (${distText}) ต้องอยู่ในเขตร้านเท่านั้น</span>`;
                 modalBadge.className = 'mt-3 text-[11px] px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-bold inline-flex items-center gap-1.5';
             }
         }
     }
 
     function verifyShopLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                const dist = calculateDistance(pos.coords.latitude, pos.coords.longitude, STORE_COORDS.lat, STORE_COORDS.lng);
-                const inside = dist <= STORE_COORDS.radius;
-                currentUserCoords = {
-                    lat: pos.coords.latitude,
-                    lng: pos.coords.longitude,
-                    distance: dist,
-                    inside: inside
-                };
-                updateGeofenceUI(dist, inside);
-            }, (err) => {
-                // If permission denied or HTTP without GPS, default to shop-verified
-                updateGeofenceUI(8, true);
-            }, { enableHighAccuracy: true, timeout: 6000 });
+        if (!navigator.geolocation) {
+            currentUserCoords = {
+                lat: null,
+                lng: null,
+                distance: null,
+                inside: false,
+                gpsReady: false,
+                gpsError: 'เบราว์เซอร์ไม่รองรับ GPS'
+            };
+            updateGeofenceUI(null, false, 'เบราว์เซอร์ไม่รองรับการตรวจสอบ GPS');
+            return;
         }
+
+        navigator.geolocation.getCurrentPosition((pos) => {
+            const dist = calculateDistance(pos.coords.latitude, pos.coords.longitude, STORE_COORDS.lat, STORE_COORDS.lng);
+            const inside = dist <= STORE_COORDS.radius;
+            currentUserCoords = {
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+                distance: dist,
+                inside: inside,
+                gpsReady: true,
+                gpsError: null
+            };
+            updateGeofenceUI(dist, inside);
+        }, (err) => {
+            currentUserCoords = {
+                lat: null,
+                lng: null,
+                distance: null,
+                inside: false,
+                gpsReady: false,
+                gpsError: err?.message || 'ไม่สามารถดึงพิกัด GPS ได้'
+            };
+            updateGeofenceUI(null, false, 'กรุณาเปิด GPS / อนุญาตตำแหน่งเพื่อยืนยันเขตร้าน');
+        }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
     }
 
     // 4. Leaflet Map Interactive Store Picker
@@ -2700,9 +2747,16 @@
 
     // 6. Execute Face Clock In / Clock Out (เมื่อกดยืนยันบันทึกเวลา)
     async function executeFaceClockIn() {
-        if (!currentUserCoords.inside && !STORE_COORDS.allow_mock) {
-            alert(`⚠️ ไม่สามารถบันทึกเวลาได้: คุณอยู่นอกเขตร้านหม่าล่าสตรีท (ระยะห่าง ${currentUserCoords.distance} ม.) จุดสำคัญคือต้องอยู่ในเขตร้านเท่านั้น (ไม่เกิน ${STORE_COORDS.radius} ม.) หรือสามารถคลิกไอคอนหน้าร้านท้ายการ์ดเพื่อเลือกปักหมุดตำแหน่งร้านใหม่`);
-            return;
+        if (!STORE_COORDS.allow_mock) {
+            if (!currentUserCoords.gpsReady || currentUserCoords.lat === null || currentUserCoords.lng === null) {
+                verifyShopLocation();
+                alert('⚠️ ไม่พบพิกัด GPS ปัจจุบัน: กรุณาเปิดสิทธิ์เข้าถึงตำแหน่ง (Location/GPS) ของเบราว์เซอร์ก่อนเช็คอิน/เช็คเอาท์');
+                return;
+            }
+            if (!currentUserCoords.inside) {
+                alert(`⚠️ ไม่สามารถบันทึกเวลาได้: คุณอยู่นอกเขตร้านหม่าล่าสตรีท (ระยะห่าง ${currentUserCoords.distance} ม.) ต้องอยู่ในเขตร้านเท่านั้น (ไม่เกิน ${STORE_COORDS.radius} ม.)`);
+                return;
+            }
         }
 
         // หากยังไม่ได้ถ่ายรูป ให้ถ่ายทันที

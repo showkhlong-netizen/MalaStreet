@@ -187,7 +187,7 @@ class EmployeeController extends Controller
         $storeLat = (float) Setting::get('store_latitude', 6.5500);
         $storeLng = (float) Setting::get('store_longitude', 101.2944);
         $storeRadius = (int) Setting::get('store_radius_meters', 150);
-        $storeAllowMock = (bool) Setting::get('store_allow_mock_location', true);
+        $storeAllowMock = filter_var(Setting::get('store_allow_mock_location', '0'), FILTER_VALIDATE_BOOLEAN);
         $storeName = Setting::get('store_location_name', 'ร้านหม่าล่าสตรีท (Mala Street สาขาหลัก)');
 
         $storeLocation = [
@@ -341,14 +341,25 @@ class EmployeeController extends Controller
         $isMock = $request->boolean('is_mock', false);
 
         // Store coordinates (ดึงจาก Setting หรือ Default)
-        $storeLat = (float) Setting::get('store_latitude', 13.756331);
-        $storeLng = (float) Setting::get('store_longitude', 100.501765);
+        $storeLat = (float) Setting::get('store_latitude', 6.5500);
+        $storeLng = (float) Setting::get('store_longitude', 101.2944);
         $maxRadius = (int) Setting::get('store_radius_meters', 150);
-        $allowMock = (bool) Setting::get('store_allow_mock_location', false);
+        $allowMock = filter_var(Setting::get('store_allow_mock_location', '0'), FILTER_VALIDATE_BOOLEAN);
 
-        // Calculate Geolocation distance
-        $distance = 12; // default simulated meters within store
-        if (!empty($lat) && !empty($lng) && !$isMock) {
+        $hasValidCoords = is_numeric($lat) && is_numeric($lng);
+
+        if (!$allowMock && (!$hasValidCoords || $isMock)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'GPS_REQUIRED',
+                'message' => 'ไม่พบพิกัด GPS ปัจจุบัน กรุณาเปิดสิทธิ์เข้าถึงตำแหน่ง (Location/GPS) แล้วลองใหม่อีกครั้ง เพื่อยืนยันว่าอยู่ในเขตร้าน',
+                'max_radius' => $maxRadius,
+            ], 422);
+        }
+
+        // Calculate Geolocation distance (Haversine)
+        $distance = 0;
+        if ($hasValidCoords) {
             $earthRadius = 6371000;
             $latFrom = deg2rad($storeLat);
             $lonFrom = deg2rad($storeLng);
@@ -363,7 +374,7 @@ class EmployeeController extends Controller
                 return response()->json([
                     'success' => false,
                     'error' => 'OUT_OF_GEOFENCE',
-                    'message' => "คุณอยู่นอกเขตร้าน (ระยะห่าง {$distance} ม.) จุดสำคัญคือต้องเช็คอิน/เช็คเอาท์ในเขตร้านเท่านั้น (ไม่เกิน {$maxRadius} ม.) หรือคลิกไอคอนหน้าร้านเพื่อเลือกหมุดตำแหน่งร้านใหม่",
+                    'message' => "คุณอยู่นอกเขตร้าน (ระยะห่าง {$distance} ม.) ต้องเช็คอิน/เช็คเอาท์ภายในเขตร้านเท่านั้น (ไม่เกิน {$maxRadius} ม.)",
                     'distance' => $distance,
                     'max_radius' => $maxRadius,
                 ], 422);
@@ -424,7 +435,9 @@ class EmployeeController extends Controller
         }
 
         $photoUrl = '/attendance-photos/' . $filename;
-        $locationText = "พิกัดร้าน: 13.7563, 100.5018 (ระยะห่าง {$distance} ม. - ในเขตร้าน)";
+        $coordLabel = number_format($storeLat, 4) . ', ' . number_format($storeLng, 4);
+        $zoneLabel = ($distance <= $maxRadius) ? 'ในเขตร้าน' : 'โหมดทดสอบนอกเขต';
+        $locationText = "พิกัดร้าน: {$coordLabel} (ระยะห่าง {$distance} ม. - {$zoneLabel})";
 
         $attendanceSettingKey = 'attendance_today_' . $empId . '_' . $now->format('Ymd');
         $savedAttendance = json_decode(Setting::get($attendanceSettingKey, 'null'), true) ?: [];
