@@ -1525,7 +1525,7 @@
                 <!-- Video Element for WebCam (Active Live Stream) -->
                 <video id="webcam-video" autoplay playsinline muted class="w-full h-full object-cover [transform:scaleX(-1)] bg-slate-950"></video>
                 <!-- Image Element for Captured Photo Preview (Shown after snapshot) -->
-                <img id="webcam-preview-img" class="w-full h-full object-cover hidden [transform:scaleX(-1)]" alt="ภาพถ่ายที่บันทึก" />
+                <img id="webcam-preview-img" class="w-full h-full object-cover hidden" alt="ภาพถ่ายที่บันทึก" />
                 <!-- Hidden Canvas for snapshot capturing -->
                 <canvas id="webcam-canvas" class="hidden"></canvas>
 
