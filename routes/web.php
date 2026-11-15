@@ -148,6 +148,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', EnforceDailyEmployee
 });
 
 // Shortcut alias for employees & access - ต้องเข้าสู่ระบบ (Requires Auth)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/attendance-photos/{filename}', [EmployeeController::class, 'showAttendancePhoto'])
+        ->where('filename', '[A-Za-z0-9._-]+')
+        ->name('attendance.photo');
+    Route::get('/uploads/attendance/{filename}', [EmployeeController::class, 'showAttendancePhoto'])
+        ->where('filename', '[A-Za-z0-9._-]+');
+});
+
 Route::get('/employees', function () {
     return redirect()->route('admin.employees.index');
 })->middleware(['auth', EnforceDailyEmployeeLanding::class]);

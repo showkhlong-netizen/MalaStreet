@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AttendancePhoto;
 use App\Models\AuditLog;
 use App\Models\Setting;
 use App\Services\AccessControlService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -22,6 +24,8 @@ class EmployeeController extends Controller
      */
     public function index(Request $request): View
     {
+        AttendancePhoto::pruneExpiredThrottled();
+
         $currentTab = $request->query('tab');
         $selectedEmployeeId = $request->query('employee_id');
         $selectedMonth = $request->query('month');
@@ -376,31 +380,7 @@ class EmployeeController extends Controller
             $actionType = ($action === 'check_in') ? 'check_in' : 'check_out';
         }
 
-        // Save image to public/uploads/attendance/
-        $dir = public_path('uploads/attendance');
-        if (!file_exists($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        $filename = "attendance_{$actionType}_" . date('Ymd_His') . '_' . substr(uniqid(), -4) . '.jpg';
-        $fullPath = $dir . DIRECTORY_SEPARATOR . $filename;
-        $savedFromBase64 = false;
-
-        if (!empty($base64Photo) && str_contains($base64Photo, 'base64,')) {
-            $parts = explode('base64,', $base64Photo);
-            $decoded = base64_decode($parts[1]);
-            if ($decoded !== false && strlen($decoded) > 100) {
-                file_put_contents($fullPath, $decoded);
-                $savedFromBase64 = true;
-            }
-        }
-
-        if (!$savedFromBase64) {
-            $this->generateAttendanceGDPhoto($fullPath, $actionType, $formattedTime, $distance);
-        }
-
-        $photoUrl = '/uploads/attendance/' . $filename;
-        $locationText = "พิกัดร้าน: 13.7563, 100.5018 (ระยะห่าง {$distance} ม. - ในเขตร้าน)";
+        AttendancePhoto::pruneExpiredThrottled();
 
         $loggedActor = AuditLog::resolveCurrentUserActor();
         $realEmps = $this->getRealEmployeesList();
@@ -412,6 +392,39 @@ class EmployeeController extends Controller
 
         $empName = $activeEmp['name'] ?? $loggedActor['name'] ?? 'พนักงาน';
         $empId = $activeEmp['id'] ?? $loggedActor['id'] ?? 'EMP-001';
+
+        // Save image persistently in PostgreSQL (3-month retention) and cache to public/uploads/attendance/
+        $dir = public_path('uploads/attendance');
+        if (!file_exists($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+
+        $filename = "attendance_{$actionType}_" . date('Ymd_His') . '_' . substr(uniqid(), -4) . '.jpg';
+        $fullPath = $dir . DIRECTORY_SEPARATOR . $filename;
+        $binaryData = null;
+
+        if (!empty($base64Photo) && str_contains($base64Photo, 'base64,')) {
+            $parts = explode('base64,', $base64Photo);
+            $decoded = base64_decode($parts[1]);
+            if ($decoded !== false && strlen($decoded) > 100) {
+                $binaryData = $decoded;
+                @file_put_contents($fullPath, $binaryData);
+            }
+        }
+
+        if ($binaryData === null) {
+            $this->generateAttendanceGDPhoto($fullPath, $actionType, $formattedTime, $distance);
+            if (is_file($fullPath)) {
+                $binaryData = @file_get_contents($fullPath) ?: null;
+            }
+        }
+
+        if ($binaryData !== null) {
+            AttendancePhoto::storeFromBinary($filename, $binaryData, $empId, $actionType, 'image/jpeg');
+        }
+
+        $photoUrl = '/attendance-photos/' . $filename;
+        $locationText = "พิกัดร้าน: 13.7563, 100.5018 (ระยะห่าง {$distance} ม. - ในเขตร้าน)";
 
         $attendanceSettingKey = 'attendance_today_' . $empId . '_' . $now->format('Ymd');
         $savedAttendance = json_decode(Setting::get($attendanceSettingKey, 'null'), true) ?: [];
@@ -1536,5 +1549,38 @@ class EmployeeController extends Controller
         }
 
         return $cards;
+    }
+
+    /**
+     * Serve attendance scan photo from persistent PostgreSQL storage (3-month retention)
+     * with fallback to local disk if present.
+     */
+    public function showAttendancePhoto(string $filename)
+    {
+        AttendancePhoto::pruneExpiredThrottled();
+
+        $safeName = basename($filename);
+        $photo = AttendancePhoto::where('filename', $safeName)
+            ->where('expires_at', '>', Carbon::now('Asia/Bangkok'))
+            ->first();
+
+        if ($photo && !empty($photo->image_base64)) {
+            $binary = base64_decode($photo->image_base64, true);
+            if ($binary !== false) {
+                return response($binary, 200, [
+                    'Content-Type' => $photo->mime_type ?: 'image/jpeg',
+                    'Cache-Control' => 'public, max-age=86400',
+                ]);
+            }
+        }
+
+        $diskPath = public_path('uploads/attendance/' . $safeName);
+        if (is_file($diskPath)) {
+            return response()->file($diskPath, [
+                'Cache-Control' => 'public, max-age=86400',
+            ]);
+        }
+
+        abort(404);
     }
 }

@@ -30,73 +30,75 @@
         </div>
     </div>
 
-    {{-- ขั้นตอนที่ 1: เลือกสาขาที่ต้องการลบ --}}
-    <div class="bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-sm">
-        <div class="flex items-center gap-3 mb-4">
-            <span class="w-9 h-9 rounded-xl bg-rose-600 text-white font-black text-lg flex items-center justify-center">1</span>
-            <div>
-                <h3 class="text-lg md:text-xl font-extrabold text-slate-900">เลือกสาขาที่ต้องการรีเซ็ทข้อมูล</h3>
-                <p class="text-sm text-slate-500">เลือก "ทุกสาขา" หรือคลิกเลือกเฉพาะบางสาขาที่ต้องการลบ (เมื่อเพิ่มสาขาใหม่ ปุ่มสาขาจะเพิ่มให้อัตโนมัติ)</p>
-            </div>
-        </div>
-
-        <div class="flex flex-wrap gap-3" id="malaResetBranchPills">
-            <button type="button"
-                    data-branch-id="ALL"
-                    onclick="MalaResetHub.toggleBranch('ALL')"
-                    class="mala-branch-pill active px-5 py-3.5 rounded-xl font-extrabold text-base border-2 border-rose-600 bg-rose-600 text-white shadow-sm transition cursor-pointer">
-                🌐 ทุกสาขารวมกัน
-            </button>
-            @foreach(($resetBranches ?? []) as $b)
-                <button type="button"
-                        data-branch-id="{{ $b->id }}"
-                        data-branch-name="{{ $b->name }}"
-                        onclick="MalaResetHub.toggleBranch({{ $b->id }})"
-                        class="mala-branch-pill px-5 py-3.5 rounded-xl font-bold text-base border-2 border-slate-200 bg-slate-50 text-slate-700 hover:border-rose-400 transition cursor-pointer">
-                    🏪 {{ $b->name }}
-                    @if(($b->status ?? 'ACTIVE') !== 'ACTIVE')
-                        <span class="text-xs text-slate-400">(ปิดชั่วคราว)</span>
-                    @endif
-                </button>
-            @endforeach
-        </div>
-        <div class="mt-3 text-sm font-bold text-rose-600" id="malaSelectedBranchSummary">
-            📌 กำลังเลือก: ทุกสาขารวมกัน
-        </div>
-    </div>
-
-    {{-- ขั้นตอนที่ 2: เลือกช่วงวันที่ต้องการลบ --}}
-    <div class="bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-sm">
-        <div class="flex items-center gap-3 mb-4">
-            <span class="w-9 h-9 rounded-xl bg-amber-500 text-white font-black text-lg flex items-center justify-center">2</span>
-            <div>
-                <h3 class="text-lg md:text-xl font-extrabold text-slate-900">เลือกช่วงเวลาของข้อมูลที่จะลบ</h3>
-                <p class="text-sm text-slate-500">เลือกลบเฉพาะรายการที่เปิดวันนี้ เลือกเฉพาะวันที่ต้องการ หรือลบทั้งหมดทุกวัน</p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <button type="button" data-date-mode="TODAY" onclick="MalaResetHub.setDateMode('TODAY')"
-                    class="mala-date-pill active p-4 rounded-xl border-2 border-amber-500 bg-amber-50 text-left transition cursor-pointer">
-                <div class="text-base font-extrabold text-slate-900">📅 ลบเฉพาะข้อมูล "วันนี้"</div>
-                <div class="text-xs text-slate-600 mt-1">ลบเฉพาะรายการที่ทำในวันนี้ ข้อมูลวันก่อนหน้าปลอดภัย</div>
-            </button>
-
-            <button type="button" data-date-mode="CUSTOM" onclick="MalaResetHub.setDateMode('CUSTOM')"
-                    class="mala-date-pill p-4 rounded-xl border-2 border-slate-200 bg-slate-50 text-left transition cursor-pointer">
-                <div class="text-base font-extrabold text-slate-900">🗓️ เลือกวันที่ต้องการลบเอง</div>
-                <div class="mt-2">
-                    <input type="date" id="malaResetCustomDate" value="{{ now()->toDateString() }}"
-                           onchange="MalaResetHub.setDateMode('CUSTOM')"
-                           class="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-bold text-slate-800">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        {{-- ขั้นตอนที่ 1: เลือกสาขาที่ต้องการลบ --}}
+        <div class="bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-sm">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="w-9 h-9 rounded-xl bg-rose-600 text-white font-black text-lg flex items-center justify-center">1</span>
+                <div>
+                    <h3 class="text-lg md:text-xl font-extrabold text-slate-900">เลือกสาขาที่ต้องการรีเซ็ทข้อมูล</h3>
+                    <p class="text-sm text-slate-500">เลือก "ทุกสาขา" หรือคลิกเลือกเฉพาะบางสาขาที่ต้องการลบ (เมื่อเพิ่มสาขาใหม่ ปุ่มสาขาจะเพิ่มให้อัตโนมัติ)</p>
                 </div>
-            </button>
+            </div>
 
-            <button type="button" data-date-mode="ALL" onclick="MalaResetHub.setDateMode('ALL')"
-                    class="mala-date-pill p-4 rounded-xl border-2 border-slate-200 bg-slate-50 text-left transition cursor-pointer">
-                <div class="text-base font-extrabold text-rose-700">🧹 ลบทั้งหมดทุกวัน (ตั้งแต่วันแรก)</div>
-                <div class="text-xs text-slate-600 mt-1">ล้างข้อมูลสะสมทั้งหมดของสาขาที่เลือกไว้</div>
-            </button>
+            <div class="flex flex-wrap gap-3" id="malaResetBranchPills">
+                <button type="button"
+                        data-branch-id="ALL"
+                        onclick="MalaResetHub.toggleBranch('ALL')"
+                        class="mala-branch-pill active px-5 py-3.5 rounded-xl font-extrabold text-base border-2 border-rose-600 bg-rose-600 text-white shadow-sm transition cursor-pointer">
+                    🌐 ทุกสาขารวมกัน
+                </button>
+                @foreach(($resetBranches ?? []) as $b)
+                    <button type="button"
+                            data-branch-id="{{ $b->id }}"
+                            data-branch-name="{{ $b->name }}"
+                            onclick="MalaResetHub.toggleBranch({{ $b->id }})"
+                            class="mala-branch-pill px-5 py-3.5 rounded-xl font-bold text-base border-2 border-slate-200 bg-slate-50 text-slate-700 hover:border-rose-400 transition cursor-pointer">
+                        🏪 {{ $b->name }}
+                        @if(($b->status ?? 'ACTIVE') !== 'ACTIVE')
+                            <span class="text-xs text-slate-400">(ปิดชั่วคราว)</span>
+                        @endif
+                    </button>
+                @endforeach
+            </div>
+            <div class="mt-3 text-sm font-bold text-rose-600" id="malaSelectedBranchSummary">
+                📌 กำลังเลือก: ทุกสาขารวมกัน
+            </div>
+        </div>
+
+        {{-- ขั้นตอนที่ 2: เลือกช่วงวันที่ต้องการลบ --}}
+        <div class="bg-white rounded-2xl border-2 border-slate-200 p-6 shadow-sm">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="w-9 h-9 rounded-xl bg-amber-500 text-white font-black text-lg flex items-center justify-center">2</span>
+                <div>
+                    <h3 class="text-lg md:text-xl font-extrabold text-slate-900">เลือกช่วงเวลาของข้อมูลที่จะลบ</h3>
+                    <p class="text-sm text-slate-500">เลือกลบเฉพาะรายการที่เปิดวันนี้ เลือกเฉพาะวันที่ต้องการ หรือลบทั้งหมดทุกวัน</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button type="button" data-date-mode="TODAY" onclick="MalaResetHub.setDateMode('TODAY')"
+                        class="mala-date-pill active p-4 rounded-xl border-2 border-amber-500 bg-amber-50 text-left transition cursor-pointer">
+                    <div class="text-base font-extrabold text-slate-900">📅 ลบเฉพาะข้อมูล "วันนี้"</div>
+                    <div class="text-xs text-slate-600 mt-1">ลบเฉพาะรายการที่ทำในวันนี้ ข้อมูลวันก่อนหน้าปลอดภัย</div>
+                </button>
+
+                <button type="button" data-date-mode="CUSTOM" onclick="MalaResetHub.setDateMode('CUSTOM')"
+                        class="mala-date-pill p-4 rounded-xl border-2 border-slate-200 bg-slate-50 text-left transition cursor-pointer">
+                    <div class="text-base font-extrabold text-slate-900">🗓️ เลือกวันที่ต้องการลบเอง</div>
+                    <div class="mt-2">
+                        <input type="date" id="malaResetCustomDate" value="{{ now()->toDateString() }}"
+                               onchange="MalaResetHub.setDateMode('CUSTOM')"
+                               class="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-bold text-slate-800">
+                    </div>
+                </button>
+
+                <button type="button" data-date-mode="ALL" onclick="MalaResetHub.setDateMode('ALL')"
+                        class="mala-date-pill p-4 rounded-xl border-2 border-slate-200 bg-slate-50 text-left transition cursor-pointer">
+                    <div class="text-base font-extrabold text-rose-700">🧹 ลบทั้งหมดทุกวัน (ตั้งแต่วันแรก)</div>
+                    <div class="text-xs text-slate-600 mt-1">ล้างข้อมูลสะสมทั้งหมดของสาขาที่เลือกไว้</div>
+                </button>
+            </div>
         </div>
     </div>
 
