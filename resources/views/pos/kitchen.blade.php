@@ -129,6 +129,33 @@
                     </svg>
                 </div>
             </div>
+
+            <!-- Top Order Channel Tabs (แยกประเภทออเดอร์: ทั้งหมด / สั่งรับหน้าร้าน / Delivery / หน้าร้าน) -->
+            <div id="kitchen-channel-tabs" class="w-full pt-2.5 mt-0.5 border-t border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar">
+                <button type="button" data-channel-tab="all" onclick="setKitchenChannelTab('all')"
+                        class="kitchen-channel-tab shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all bg-[#E50914] text-white shadow-xs cursor-pointer">
+                    <span>ทั้งหมด</span>
+                    <span id="tab-count-all" class="px-1.5 py-0.2 rounded-full text-[11px] bg-white/20 text-white">{{ $activeOrders->count() }}</span>
+                </button>
+                <button type="button" data-channel-tab="online_pickup" onclick="setKitchenChannelTab('online_pickup')"
+                        class="kitchen-channel-tab shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/80 cursor-pointer">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>สั่งรับหน้าร้าน (ออนไลน์)</span>
+                    <span id="tab-count-online_pickup" class="px-1.5 py-0.2 rounded-full text-[11px] bg-white text-slate-700 border border-slate-200">0</span>
+                </button>
+                <button type="button" data-channel-tab="delivery" onclick="setKitchenChannelTab('delivery')"
+                        class="kitchen-channel-tab shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-sky-50 hover:text-sky-800 border border-slate-200/80 cursor-pointer">
+                    <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                    <span>Delivery (จัดส่ง)</span>
+                    <span id="tab-count-delivery" class="px-1.5 py-0.2 rounded-full text-[11px] bg-white text-slate-700 border border-slate-200">0</span>
+                </button>
+                <button type="button" data-channel-tab="pos" onclick="setKitchenChannelTab('pos')"
+                        class="kitchen-channel-tab shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 cursor-pointer">
+                    <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+                    <span>หน้าร้าน (POS)</span>
+                    <span id="tab-count-pos" class="px-1.5 py-0.2 rounded-full text-[11px] bg-white text-slate-700 border border-slate-200">0</span>
+                </button>
+            </div>
         </section>
 
         <div id="kitchen-orders-sync-container">
@@ -148,6 +175,15 @@
                 @foreach($activeOrders as $order)
                     @php
                         $isOnline = $order->order_type === 'online';
+                        $channelHaystack = mb_strtolower(trim(($order->pickup_time ?? '') . ' ' . ($order->notes ?? '')), 'UTF-8');
+                        $isDelivery = ($order->order_type === 'delivery')
+                            || ($isOnline && (
+                                str_contains($channelHaystack, 'delivery')
+                                || str_contains($channelHaystack, 'จัดส่ง')
+                                || str_contains($channelHaystack, 'ส่งถึง')
+                                || str_contains($channelHaystack, 'เดลิเวอรี่')
+                            ));
+                        $orderChannel = $isDelivery ? 'delivery' : ($isOnline ? 'online_pickup' : 'pos');
                         $statusBorder = match($order->status) {
                             'pending', 'confirmed' => 'border-t-4 border-t-amber-500',
                             'cooking' => 'border-t-4 border-t-rose-600 ring-2 ring-rose-500/10',
@@ -169,6 +205,7 @@
                          id="order-card-{{ $order->id }}"
                          data-order-id="{{ $order->id }}"
                          data-order-type="{{ $order->order_type ?? 'pos' }}"
+                         data-channel="{{ $orderChannel }}"
                          data-status="{{ $order->status }}"
                          data-created-ts="{{ $order->created_at ? $order->created_at->timestamp : 0 }}"
                          data-search="{{ $searchText }}">
@@ -181,19 +218,31 @@
                                         <span class="text-4xl font-black text-slate-900 tracking-tight">
                                             {{ $order->queue_number }}
                                         </span>
-                                        <span class="text-[11px] font-extrabold px-2.5 py-1 rounded-xl border flex items-center space-x-1.5 {{ $isOnline ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-700 border-slate-200' }}">
-                                            @if($isOnline)
+                                        @php
+                                            $badgeClass = match($orderChannel) {
+                                                'delivery' => 'bg-sky-50 text-sky-800 border-sky-200',
+                                                'online_pickup' => 'bg-emerald-50 text-emerald-800 border-emerald-200',
+                                                default => 'bg-slate-100 text-slate-700 border-slate-200',
+                                            };
+                                        @endphp
+                                        <span class="text-[11px] font-extrabold px-2.5 py-1 rounded-xl border flex items-center space-x-1.5 {{ $badgeClass }}">
+                                            @if($orderChannel === 'delivery')
+                                                <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                                </svg>
+                                                <span>Delivery (จัดส่ง)</span>
+                                            @elseif($orderChannel === 'online_pickup')
                                                 <!-- Monochrome Phone SVG -->
                                                 <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                                 </svg>
-                                                <span>สั่งออนไลน์ (รับเอง)</span>
+                                                <span>สั่งรับหน้าร้าน (ออนไลน์)</span>
                                             @else
                                                 <!-- Monochrome Store SVG -->
                                                 <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                                                 </svg>
-                                                <span>หน้าร้าน</span>
+                                                <span>หน้าร้าน (POS)</span>
                                             @endif
                                         </span>
                                     </div>
@@ -753,9 +802,33 @@
         }
     }
 
-    // === Kitchen Grid Columns (3 / 4), Live Search & Sort/Filter ===
+    // === Kitchen Grid Columns (3 / 4), Channel Tabs, Live Search & Sort/Filter ===
     let kitchenGridColumns = Number(localStorage.getItem('kitchen_grid_columns')) === 4 ? 4 : 3;
     let kitchenSortMode = localStorage.getItem('kitchen_sort_mode') || 'newest';
+    let kitchenChannelTab = localStorage.getItem('kitchen_channel_tab') || 'all';
+
+    function setKitchenChannelTab(channel) {
+        kitchenChannelTab = channel || 'all';
+        localStorage.setItem('kitchen_channel_tab', kitchenChannelTab);
+        renderKitchenChannelTabsUI();
+        applyKitchenOrderFiltersAndLayout();
+    }
+
+    function renderKitchenChannelTabsUI() {
+        document.querySelectorAll('.kitchen-channel-tab').forEach((btn) => {
+            const tab = btn.dataset.channelTab || 'all';
+            const isActive = tab === kitchenChannelTab;
+            btn.className = isActive
+                ? 'kitchen-channel-tab shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all bg-[#E50914] text-white shadow-xs cursor-pointer'
+                : 'kitchen-channel-tab shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 cursor-pointer';
+            const countBadge = btn.querySelector('span[id^="tab-count-"]');
+            if (countBadge) {
+                countBadge.className = isActive
+                    ? 'px-1.5 py-0.2 rounded-full text-[11px] bg-white/20 text-white'
+                    : 'px-1.5 py-0.2 rounded-full text-[11px] bg-white text-slate-700 border border-slate-200';
+            }
+        });
+    }
 
     function setKitchenGridColumns(cols) {
         kitchenGridColumns = cols === 4 ? 4 : 3;
@@ -789,17 +862,36 @@
         if (searchEl) searchEl.value = '';
         if (sortEl) sortEl.value = 'newest';
         kitchenSortMode = 'newest';
+        kitchenChannelTab = 'all';
         localStorage.setItem('kitchen_sort_mode', 'newest');
+        localStorage.setItem('kitchen_channel_tab', 'all');
+        renderKitchenChannelTabsUI();
         applyKitchenOrderFiltersAndLayout();
+    }
+
+    function updateKitchenChannelTabCounts(cards) {
+        const counts = { all: cards.length, online_pickup: 0, delivery: 0, pos: 0 };
+        cards.forEach((card) => {
+            const ch = card.dataset.channel || 'pos';
+            if (Object.prototype.hasOwnProperty.call(counts, ch)) {
+                counts[ch]++;
+            }
+        });
+        Object.entries(counts).forEach(([key, val]) => {
+            const el = document.getElementById(`tab-count-${key}`);
+            if (el) el.textContent = String(val);
+        });
     }
 
     function applyKitchenOrderFiltersAndLayout() {
         setKitchenGridColumns(kitchenGridColumns);
+        renderKitchenChannelTabsUI();
 
         const grid = document.getElementById('kitchen-orders-grid');
         const countEl = document.getElementById('kitchen-visible-count');
         const emptyEl = document.getElementById('kitchen-filter-empty');
         if (!grid) {
+            updateKitchenChannelTabCounts([]);
             if (countEl) countEl.textContent = '0';
             if (emptyEl) emptyEl.classList.add('hidden');
             return;
@@ -807,6 +899,7 @@
 
         const query = (document.getElementById('kitchen-search-input')?.value || '').trim().toLowerCase();
         const cards = Array.from(grid.querySelectorAll('.kitchen-order-card'));
+        updateKitchenChannelTabCounts(cards);
 
         const statusPriorityCooking = { cooking: 0, confirmed: 1, pending: 1, ready: 2 };
         const statusPriorityReady = { ready: 0, cooking: 1, confirmed: 2, pending: 2 };
@@ -850,7 +943,10 @@
 
             const haystack = card.dataset.search || '';
             const type = card.dataset.orderType || 'pos';
+            const channel = card.dataset.channel || 'pos';
             const status = card.dataset.status || '';
+
+            const matchesChannelTab = (kitchenChannelTab === 'all') || (channel === kitchenChannelTab);
 
             let matchesFilter = true;
             if (kitchenSortMode === 'filter_online') matchesFilter = (type === 'online');
@@ -859,7 +955,7 @@
             else if (kitchenSortMode === 'filter_pending') matchesFilter = (status === 'pending' || status === 'confirmed');
 
             const matchesQuery = !query || haystack.includes(query);
-            const show = matchesFilter && matchesQuery;
+            const show = matchesChannelTab && matchesFilter && matchesQuery;
             card.classList.toggle('hidden', !show);
             if (show) visibleCount++;
         });

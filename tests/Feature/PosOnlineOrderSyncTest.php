@@ -79,19 +79,24 @@ class PosOnlineOrderSyncTest extends TestCase
             'is_read' => false,
         ]);
 
-        // 1. Kitchen Display shows active online order even if created >12h ago (no strict date drop)
+        // 1. Kitchen Display shows active online order + top channel tabs
         $kitchenRes = $this->actingAs($this->adminUser)->get('/pos/kitchen');
         $kitchenRes->assertStatus(200);
         $kitchenRes->assertSee('G01');
         $kitchenRes->assertSee('คุณทดสอบ ออนไลน์');
         $kitchenRes->assertSee('MS-ONL-20261115-001-3MI');
+        $kitchenRes->assertSee('kitchen-channel-tabs');
+        $kitchenRes->assertSee('สั่งรับหน้าร้าน (ออนไลน์)');
+        $kitchenRes->assertSee('Delivery (จัดส่ง)');
+        $kitchenRes->assertSee('หน้าร้าน (POS)');
+        $kitchenRes->assertSee('data-channel="online_pickup"', false);
 
-        // 2. POS Storefront renders live orders card & customer chat drawer
+        // 2. POS Storefront no longer renders live orders card or customer chat drawer
         $posRes = $this->actingAs($this->adminUser)->get('/pos');
         $posRes->assertStatus(200);
-        $posRes->assertSee('pos-live-orders-card');
-        $posRes->assertSee('pos-chat-drawer');
-        $posRes->assertSee('MS-ONL-20261115-001-3MI');
+        $posRes->assertDontSee('pos-live-orders-card');
+        $posRes->assertDontSee('pos-chat-drawer');
+        $posRes->assertDontSee('ออเดอร์ออนไลน์ & หน้าร้าน');
 
         // 3. Live orders JSON endpoint returns order details + unread chat count
         $liveRes = $this->actingAs($this->adminUser)->getJson('/pos/orders/live');
@@ -109,5 +114,40 @@ class PosOnlineOrderSyncTest extends TestCase
         $chatRes->assertStatus(200);
         $chatRes->assertSee('คุณทดสอบ ออนไลน์');
         $chatRes->assertSee('ขอเผ็ดกลางนะครับ');
+    }
+
+    public function test_kitchen_separates_delivery_pickup_online_and_pos_channels(): void
+    {
+        Order::create([
+            'order_no' => 'MS-DLV-001',
+            'queue_number' => 'D01',
+            'order_type' => 'online',
+            'customer_name' => 'ลูกค้าเดลิเวอรี่',
+            'pickup_time' => 'Delivery จัดส่งถึงบ้าน',
+            'status' => 'confirmed',
+            'payment_status' => 'paid',
+            'payment_method' => 'promptpay',
+            'subtotal' => 60,
+            'total_amount' => 60,
+        ]);
+
+        Order::create([
+            'order_no' => 'MS-POS-001',
+            'queue_number' => 'A01',
+            'order_type' => 'pos',
+            'customer_name' => 'ลูกค้าหน้าร้าน',
+            'status' => 'cooking',
+            'payment_status' => 'paid',
+            'payment_method' => 'cash',
+            'subtotal' => 45,
+            'total_amount' => 45,
+        ]);
+
+        $res = $this->actingAs($this->adminUser)->get('/pos/kitchen');
+        $res->assertStatus(200);
+        $res->assertSee('data-channel="delivery"', false);
+        $res->assertSee('data-channel="pos"', false);
+        $res->assertSee('D01');
+        $res->assertSee('A01');
     }
 }
