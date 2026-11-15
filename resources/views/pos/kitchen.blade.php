@@ -24,7 +24,7 @@
             </div>
 
             <!-- Stats & Quick Refresh -->
-            <div class="flex flex-wrap items-center gap-2 sm:gap-3 text-xs w-full sm:w-auto justify-between sm:justify-end">
+            <div id="kitchen-header-stats" class="flex flex-wrap items-center gap-2 sm:gap-3 text-xs w-full sm:w-auto justify-between sm:justify-end">
                 <div class="px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 font-medium flex items-center space-x-2">
                     <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                     <span>รอปรุง: <strong class="text-slate-900 font-black text-sm">{{ $activeOrders->count() }}</strong> บิล</span>
@@ -63,6 +63,75 @@
             </div>
         </div>
 
+        <!-- 1.5 Kitchen Search, 3/4 Column Toggle & Sort/Filter Bar -->
+        <section class="flex flex-wrap items-center justify-between gap-3 pt-0.5">
+            <div class="flex items-center gap-2.5">
+                <span class="w-1.5 h-5 rounded-full bg-[#E50914] block"></span>
+                <h2 class="text-[17px] font-black text-slate-900 tracking-tight">รายการออเดอร์ในครัว</h2>
+                <span class="text-[13px] font-medium text-slate-500">(<span id="kitchen-visible-count">{{ $activeOrders->count() }}</span> บิล)</span>
+            </div>
+
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+                <!-- Quick Search Input -->
+                <div class="relative flex-1 sm:w-56 sm:flex-initial">
+                    <input type="text" id="kitchen-search-input"
+                           oninput="applyKitchenOrderFiltersAndLayout()"
+                           placeholder="ค้นหาคิว ชื่อ เบอร์ หรือเมนู..."
+                           class="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200/90 rounded-full text-[12.5px] font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#E50914] shadow-2xs">
+                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+
+                <!-- 3 / 4 Items per Row Toggle (Matches POS Grid Toggle UI) -->
+                <div class="flex items-center bg-white border border-slate-200/90 rounded-full p-0.5 shadow-2xs shrink-0" title="เลือกการแสดงผลจำนวนรายการต่อแถว">
+                    <button type="button" onclick="setKitchenGridColumns(3)" id="btn-kitchen-grid-3"
+                            class="kitchen-grid-toggle-btn px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all bg-[#E50914] text-white shadow-2xs cursor-pointer"
+                            title="แสดง 3 รายการต่อแถว">
+                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
+                            <rect x="2" y="7" width="4" height="6" rx="1"/>
+                            <rect x="8" y="7" width="4" height="6" rx="1"/>
+                            <rect x="14" y="7" width="4" height="6" rx="1"/>
+                        </svg>
+                        <span class="text-[11px] leading-none">3</span>
+                    </button>
+
+                    <button type="button" onclick="setKitchenGridColumns(4)" id="btn-kitchen-grid-4"
+                            class="kitchen-grid-toggle-btn px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-100 cursor-pointer"
+                            title="แสดง 4 รายการต่อแถว">
+                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
+                            <rect x="1.5" y="7" width="3.2" height="6" rx="0.8"/>
+                            <rect x="6.1" y="7" width="3.2" height="6" rx="0.8"/>
+                            <rect x="10.7" y="7" width="3.2" height="6" rx="0.8"/>
+                            <rect x="15.3" y="7" width="3.2" height="6" rx="0.8"/>
+                        </svg>
+                        <span class="text-[11px] leading-none">4</span>
+                    </button>
+                </div>
+
+                <!-- Sort & Filter Dropdown -->
+                <div class="relative shrink-0">
+                    <select id="kitchen-sort-select" onchange="onKitchenSortChange(this.value)"
+                            class="appearance-none bg-white border border-slate-200/90 hover:border-slate-300 rounded-full pl-3.5 pr-8 py-1.5 text-[12.5px] font-bold text-slate-700 shadow-2xs focus:outline-none focus:border-[#E50914] cursor-pointer">
+                        <option value="newest">เรียงตาม : ออเดอร์ล่าสุดก่อน</option>
+                        <option value="oldest">เรียงตาม : คิวมาก่อน (FIFO)</option>
+                        <option value="online_first">แสดง : ออนไลน์ขึ้นก่อน</option>
+                        <option value="pos_first">แสดง : หน้าร้านขึ้นก่อน</option>
+                        <option value="cooking_first">สถานะ : กำลังปรุงขึ้นก่อน</option>
+                        <option value="ready_first">สถานะ : พร้อมรับขึ้นก่อน</option>
+                        <option value="filter_online">กรองเฉพาะ : สั่งออนไลน์</option>
+                        <option value="filter_pos">กรองเฉพาะ : หน้าร้าน</option>
+                        <option value="filter_cooking">กรองเฉพาะ : กำลังปรุง</option>
+                        <option value="filter_pending">กรองเฉพาะ : รอเริ่มทำ</option>
+                    </select>
+                    <svg class="w-3.5 h-3.5 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <div id="kitchen-orders-sync-container">
         <!-- 2. Active Orders Grid (Light Theme, Luxury Modern Cards) -->
         @if($activeOrders->isEmpty())
             <div class="bg-white border border-slate-200/90 rounded-3xl p-16 text-center text-slate-400 shadow-sm">
@@ -75,7 +144,7 @@
                 <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">ย่างเตาถ่านและต้มซุปเสร็จครบทุกรายการแล้ว ระบบจะตรวจจับและดึงออเดอร์ใหม่เข้ามาอัตโนมัติ</p>
             </div>
         @else
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div id="kitchen-orders-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                 @foreach($activeOrders as $order)
                     @php
                         $isOnline = $order->order_type === 'online';
@@ -85,10 +154,24 @@
                             'ready' => 'border-t-4 border-t-emerald-500 ring-2 ring-emerald-500/10',
                             default => 'border-t-4 border-t-slate-400'
                         };
+                        $searchText = mb_strtolower(trim(
+                            ($order->queue_number ?? '') . ' ' .
+                            ($order->order_no ?? '') . ' ' .
+                            ($order->customer_name ?? '') . ' ' .
+                            ($order->customer_phone ?? '') . ' ' .
+                            ($order->ip_address ?? '') . ' ' .
+                            ($order->notes ?? '') . ' ' .
+                            $order->items->pluck('product_name')->implode(' ')
+                        ), 'UTF-8');
                     @endphp
 
-                    <div class="bg-white rounded-3xl border border-slate-200/90 {{ $statusBorder }} shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden" 
-                         id="order-card-{{ $order->id }}">
+                    <div class="kitchen-order-card bg-white rounded-3xl border border-slate-200/90 {{ $statusBorder }} shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden" 
+                         id="order-card-{{ $order->id }}"
+                         data-order-id="{{ $order->id }}"
+                         data-order-type="{{ $order->order_type ?? 'pos' }}"
+                         data-status="{{ $order->status }}"
+                         data-created-ts="{{ $order->created_at ? $order->created_at->timestamp : 0 }}"
+                         data-search="{{ $searchText }}">
                         
                         <div class="p-6">
                             <!-- Card Header -->
@@ -313,6 +396,13 @@
                 @endforeach
             </div>
         @endif
+            <div id="kitchen-filter-empty" class="hidden bg-white border border-slate-200/90 rounded-3xl p-12 text-center text-slate-400 shadow-sm mt-2">
+                <p class="text-sm font-black text-slate-700">ไม่พบออเดอร์ที่ตรงกับการค้นหาหรือตัวกรอง</p>
+                <button type="button" onclick="resetKitchenFilters()" class="mt-3 px-4 py-1.5 rounded-full bg-rose-50 hover:bg-rose-100 text-[#E50914] text-xs font-bold transition-colors cursor-pointer">
+                    ล้างตัวกรองทั้งหมด
+                </button>
+            </div>
+        </div>
         </div> <!-- End of LEFT: KITCHEN DISPLAY (จอคุมเตาย่าง & หม้อซุป) -->
 
         <!-- RIGHT: PERMANENTLY OPEN ADMIN CHAT (ฝั่งขวามือสุด เปิดค้างอยู่ตลอด) -->
@@ -632,12 +722,18 @@
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
 
-            // 1. Update Left Kitchen Orders Area (cards & stats) seamlessly
-            const newArea = doc.getElementById('kitchen-main-orders-area');
-            const curArea = document.getElementById('kitchen-main-orders-area');
+            // 1. Update Header Stats & Kitchen Orders Grid without touching search/filter bar
+            const newStats = doc.getElementById('kitchen-header-stats');
+            const curStats = document.getElementById('kitchen-header-stats');
+            if (newStats && curStats && newStats.innerHTML !== curStats.innerHTML) {
+                curStats.innerHTML = newStats.innerHTML;
+            }
 
-            if (newArea && curArea && newArea.innerHTML !== curArea.innerHTML) {
-                curArea.innerHTML = newArea.innerHTML;
+            const newOrders = doc.getElementById('kitchen-orders-sync-container');
+            const curOrders = document.getElementById('kitchen-orders-sync-container');
+            if (newOrders && curOrders && newOrders.innerHTML !== curOrders.innerHTML) {
+                curOrders.innerHTML = newOrders.innerHTML;
+                applyKitchenOrderFiltersAndLayout();
             }
 
             // 2. Update activeOrdersMap JSON in memory
@@ -656,6 +752,127 @@
             }
         }
     }
+
+    // === Kitchen Grid Columns (3 / 4), Live Search & Sort/Filter ===
+    let kitchenGridColumns = Number(localStorage.getItem('kitchen_grid_columns')) === 4 ? 4 : 3;
+    let kitchenSortMode = localStorage.getItem('kitchen_sort_mode') || 'newest';
+
+    function setKitchenGridColumns(cols) {
+        kitchenGridColumns = cols === 4 ? 4 : 3;
+        localStorage.setItem('kitchen_grid_columns', String(kitchenGridColumns));
+
+        const btn3 = document.getElementById('btn-kitchen-grid-3');
+        const btn4 = document.getElementById('btn-kitchen-grid-4');
+        const activeCls = 'kitchen-grid-toggle-btn px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all bg-[#E50914] text-white shadow-2xs cursor-pointer';
+        const inactiveCls = 'kitchen-grid-toggle-btn px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-100 cursor-pointer';
+
+        if (btn3) btn3.className = kitchenGridColumns === 3 ? activeCls : inactiveCls;
+        if (btn4) btn4.className = kitchenGridColumns === 4 ? activeCls : inactiveCls;
+
+        const grid = document.getElementById('kitchen-orders-grid');
+        if (grid) {
+            grid.className = kitchenGridColumns === 4
+                ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4'
+                : 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5';
+        }
+    }
+
+    function onKitchenSortChange(mode) {
+        kitchenSortMode = mode || 'newest';
+        localStorage.setItem('kitchen_sort_mode', kitchenSortMode);
+        applyKitchenOrderFiltersAndLayout();
+    }
+
+    function resetKitchenFilters() {
+        const searchEl = document.getElementById('kitchen-search-input');
+        const sortEl = document.getElementById('kitchen-sort-select');
+        if (searchEl) searchEl.value = '';
+        if (sortEl) sortEl.value = 'newest';
+        kitchenSortMode = 'newest';
+        localStorage.setItem('kitchen_sort_mode', 'newest');
+        applyKitchenOrderFiltersAndLayout();
+    }
+
+    function applyKitchenOrderFiltersAndLayout() {
+        setKitchenGridColumns(kitchenGridColumns);
+
+        const grid = document.getElementById('kitchen-orders-grid');
+        const countEl = document.getElementById('kitchen-visible-count');
+        const emptyEl = document.getElementById('kitchen-filter-empty');
+        if (!grid) {
+            if (countEl) countEl.textContent = '0';
+            if (emptyEl) emptyEl.classList.add('hidden');
+            return;
+        }
+
+        const query = (document.getElementById('kitchen-search-input')?.value || '').trim().toLowerCase();
+        const cards = Array.from(grid.querySelectorAll('.kitchen-order-card'));
+
+        const statusPriorityCooking = { cooking: 0, confirmed: 1, pending: 1, ready: 2 };
+        const statusPriorityReady = { ready: 0, cooking: 1, confirmed: 2, pending: 2 };
+
+        cards.sort((a, b) => {
+            const tsA = Number(a.dataset.createdTs || 0);
+            const tsB = Number(b.dataset.createdTs || 0);
+            const typeA = a.dataset.orderType || 'pos';
+            const typeB = b.dataset.orderType || 'pos';
+            const stA = a.dataset.status || '';
+            const stB = b.dataset.status || '';
+
+            switch (kitchenSortMode) {
+                case 'oldest':
+                    return tsA - tsB;
+                case 'online_first':
+                    if (typeA !== typeB) return typeA === 'online' ? -1 : 1;
+                    return tsB - tsA;
+                case 'pos_first':
+                    if (typeA !== typeB) return typeA === 'pos' ? -1 : 1;
+                    return tsB - tsA;
+                case 'cooking_first':
+                    if ((statusPriorityCooking[stA] ?? 9) !== (statusPriorityCooking[stB] ?? 9)) {
+                        return (statusPriorityCooking[stA] ?? 9) - (statusPriorityCooking[stB] ?? 9);
+                    }
+                    return tsB - tsA;
+                case 'ready_first':
+                    if ((statusPriorityReady[stA] ?? 9) !== (statusPriorityReady[stB] ?? 9)) {
+                        return (statusPriorityReady[stA] ?? 9) - (statusPriorityReady[stB] ?? 9);
+                    }
+                    return tsB - tsA;
+                case 'newest':
+                default:
+                    return tsB - tsA;
+            }
+        });
+
+        let visibleCount = 0;
+        cards.forEach((card) => {
+            grid.appendChild(card);
+
+            const haystack = card.dataset.search || '';
+            const type = card.dataset.orderType || 'pos';
+            const status = card.dataset.status || '';
+
+            let matchesFilter = true;
+            if (kitchenSortMode === 'filter_online') matchesFilter = (type === 'online');
+            else if (kitchenSortMode === 'filter_pos') matchesFilter = (type === 'pos');
+            else if (kitchenSortMode === 'filter_cooking') matchesFilter = (status === 'cooking');
+            else if (kitchenSortMode === 'filter_pending') matchesFilter = (status === 'pending' || status === 'confirmed');
+
+            const matchesQuery = !query || haystack.includes(query);
+            const show = matchesFilter && matchesQuery;
+            card.classList.toggle('hidden', !show);
+            if (show) visibleCount++;
+        });
+
+        if (countEl) countEl.textContent = String(visibleCount);
+        if (emptyEl) emptyEl.classList.toggle('hidden', visibleCount > 0);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const sortEl = document.getElementById('kitchen-sort-select');
+        if (sortEl) sortEl.value = kitchenSortMode;
+        applyKitchenOrderFiltersAndLayout();
+    });
 
     // Background silent sync every 4 seconds - ZERO screen flickering, ZERO iframe reload!
     setInterval(() => syncKitchenOrdersSilently(false), 4000);
