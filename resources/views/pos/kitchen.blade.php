@@ -620,6 +620,7 @@
 
         try {
             const res = await fetch(window.location.href, {
+                cache: 'no-store',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }

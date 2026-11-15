@@ -227,7 +227,6 @@ class PosController extends Controller
         $today = Carbon::today();
         $activeOrders = Order::with('items')
             ->whereIn('status', ['pending', 'confirmed', 'cooking', 'ready'])
-            ->where('created_at', '>=', Carbon::now('Asia/Bangkok')->subDays(2))
             ->orderBy('created_at')
             ->get();
 
@@ -254,10 +253,8 @@ class PosController extends Controller
     private function buildLivePosOrders(): array
     {
         $today = Carbon::today('Asia/Bangkok');
-        $cutoff = Carbon::now('Asia/Bangkok')->subDays(2);
 
         $orders = Order::with('items')
-            ->where('created_at', '>=', $cutoff)
             ->where(function ($query) use ($today) {
                 $query->whereIn('status', ['pending', 'confirmed', 'cooking', 'ready'])
                     ->orWhereDate('created_at', $today);
