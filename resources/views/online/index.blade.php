@@ -2152,7 +2152,11 @@
                     updateCartUI();
                     document.getElementById('success-queue-tag').innerText = result.queue_number || 'G01';
                     document.getElementById('success-order-no').innerText = result.order_no || '-';
-                    document.getElementById('success-track-link').href = result.redirect_url || result.track_url || ('/order/track/' + result.order_no);
+                    const chatTrackParams = new URLSearchParams({ order_no: result.order_no || '' });
+                    if (new URLSearchParams(window.location.search).has('hub')) {
+                        chatTrackParams.set('hub', '1');
+                    }
+                    document.getElementById('success-track-link').href = '{{ route('online.chat') }}?' + chatTrackParams.toString();
                     document.getElementById('success-modal').classList.remove('hidden');
                 } else {
                     showToast(result.message || 'ไม่สามารถส่งออเดอร์ได้ กรุณาลองใหม่');

@@ -141,14 +141,14 @@
                             </div>
                             <div class="text-[9.5px] text-slate-500 truncate">
                                 {{ $activeOrder->items->count() }} รายการ • รวม ฿{{ number_format($activeOrder->total_amount, 0) }}
-                                ({{ match($activeOrder->status) {
+                                (<span id="order-sync-status-label">{{ match($activeOrder->status) {
                                     'pending' => 'รอยืนยัน',
                                     'confirmed' => 'รับออเดอร์แล้ว',
                                     'cooking' => '🔥 กำลังย่างในครัว',
                                     'ready' => '🎉 พร้อมรับหน้าร้าน',
                                     'completed' => '✅ จัดส่งสำเร็จ',
                                     default => $activeOrder->status
-                                } }})
+                                } }}</span>)
                             </div>
                         </div>
                     </div>
@@ -161,11 +161,12 @@
                             <span>แชร์ออเดอร์</span>
                         </button>
 
-                        <!-- Live Track Link -->
-                        <a href="{{ route('online.track', ['order_no' => $activeOrder->order_no]) }}"
-                           class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-[10px] font-bold px-2 py-1 rounded-lg transition-all flex items-center gap-0.5 shadow-2xs">
-                            <span>สถานะ</span>
-                        </a>
+                        <!-- Live Track Sheet Button (ติดตามออเดอร์ สีเขียวสดใส) -->
+                        <button type="button"
+                                onclick="openOrderDetailSheet()"
+                                class="bg-[#00C853] hover:bg-[#00B248] active:scale-95 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all flex items-center gap-0.5 shadow-2xs cursor-pointer">
+                            <span>ติดตามออเดอร์</span>
+                        </button>
 
                         <!-- Switch Order Button -->
                         <button type="button"
@@ -187,6 +188,17 @@
                     </button>
                 @endif
             </div>
+
+            @if($activeOrder)
+                <!-- Compact Live Order Timeline Strip (Mala Street Red Theme) -->
+                <div id="order-timeline-strip"
+                     onclick="openOrderDetailSheet()"
+                     role="button"
+                     tabindex="0"
+                     class="mt-2 pt-2.5 border-t border-slate-100 cursor-pointer hover:bg-rose-50/40 -mx-3.5 px-3.5 pb-1 transition-colors">
+                    @include('online.partials.order-timeline-stepper', ['variant' => 'strip', 'order' => $activeOrder])
+                </div>
+            @endif
         </header>
 
         <!-- ================================================================= -->
@@ -408,10 +420,218 @@
         <button type="button" class="absolute top-4 right-4 text-white text-2xl font-bold bg-black/50 w-10 h-10 rounded-full flex items-center justify-center">✕</button>
     </div>
 
+    @if($activeOrder)
+        <!-- ===================================================================== -->
+        <!-- MODAL 4: FULL ORDER TRACKING DETAIL SHEET (RED THEME)                 -->
+        <!-- ===================================================================== -->
+        <div id="order-detail-sheet" class="fixed inset-0 z-50 hidden justify-center bg-black/60 backdrop-blur-xs">
+            <div class="w-full {{ request()->has('hub') ? 'max-w-none' : 'max-w-[430px]' }} h-full bg-white flex flex-col overflow-y-auto hide-scrollbar relative shadow-2xl">
+                <!-- Top Red-Themed Sky & Cityscape Mascot Banner -->
+                <div class="relative h-44 bg-gradient-to-b from-[#FFE4E6] via-[#FFF1F2] to-[#FECDD3] overflow-hidden shrink-0">
+                    <!-- Soft Clouds -->
+                    <div class="absolute top-5 left-12 w-12 h-4 bg-white/80 rounded-full blur-[0.5px]"></div>
+                    <div class="absolute top-9 right-10 w-16 h-5 bg-white/80 rounded-full blur-[0.5px]"></div>
+
+                    <!-- Stylized Rose City Skyline -->
+                    <svg class="absolute bottom-2 inset-x-0 w-full h-20 text-[#FDA4AF]/45" preserveAspectRatio="none" viewBox="0 0 400 80" fill="currentColor">
+                        <rect x="10" y="25" width="32" height="55" rx="2"/>
+                        <rect x="48" y="38" width="24" height="42" rx="2"/>
+                        <rect x="78" y="16" width="36" height="64" rx="2"/>
+                        <rect x="120" y="34" width="26" height="46" rx="2"/>
+                        <rect x="255" y="28" width="30" height="52" rx="2"/>
+                        <rect x="292" y="14" width="38" height="66" rx="2"/>
+                        <rect x="336" y="36" width="24" height="44" rx="2"/>
+                        <rect x="366" y="24" width="28" height="56" rx="2"/>
+                    </svg>
+
+                    <!-- Top Bar Controls -->
+                    <div class="relative z-20 flex items-center justify-between px-4 pt-4">
+                        <button type="button"
+                                onclick="closeOrderDetailSheet()"
+                                aria-label="ปิดรายละเอียดออเดอร์"
+                                class="w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 shadow-md flex items-center justify-center transition-all cursor-pointer active:scale-95">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+
+                        <span class="px-3.5 py-1.5 rounded-full bg-white text-[#D90012] font-extrabold text-[11.5px] shadow-md border border-rose-100">
+                            คิว {{ $activeOrder->queue_number }}
+                        </span>
+                    </div>
+
+                    <!-- Centered Mala Street Red Mascot Character SVG -->
+                    <div class="relative z-10 flex justify-center -mt-3">
+                        <svg class="w-28 h-28 drop-shadow-md" viewBox="0 0 120 120" fill="none">
+                            <!-- Ground shadow -->
+                            <ellipse cx="60" cy="110" rx="26" ry="5" fill="#BE123C" fill-opacity="0.18"/>
+                            <!-- Legs -->
+                            <rect x="47" y="84" width="9" height="22" rx="4" fill="#1F2937"/>
+                            <rect x="64" y="84" width="9" height="22" rx="4" fill="#1F2937"/>
+                            <ellipse cx="50" cy="107" rx="7" ry="4" fill="#111827"/>
+                            <ellipse cx="70" cy="107" rx="7" ry="4" fill="#111827"/>
+                            <!-- Jacket Body (Mala Street Red) -->
+                            <path d="M40 58C40 51 48 48 60 48C72 48 80 51 80 58L82 86C82 89 79 91 75 91H45C41 91 38 89 38 86L40 58Z" fill="#D90012"/>
+                            <path d="M60 48V91" stroke="#B8000F" stroke-width="2"/>
+                            <!-- White Apron / Center Stripe -->
+                            <rect x="52" y="53" width="16" height="33" rx="4" fill="#FFFFFF"/>
+                            <text x="60" y="73" text-anchor="middle" font-size="11" font-weight="900" fill="#D90012" font-family="sans-serif">M</text>
+                            <!-- Arms -->
+                            <path d="M40 56L26 70" stroke="#D90012" stroke-width="9" stroke-linecap="round"/>
+                            <path d="M80 56L94 68" stroke="#D90012" stroke-width="9" stroke-linecap="round"/>
+                            <circle cx="24" cy="72" r="5" fill="#FDE68A"/>
+                            <circle cx="96" cy="69" r="5" fill="#FDE68A"/>
+                            <!-- Mala Skewer in Hand -->
+                            <line x1="96" y1="69" x2="106" y2="44" stroke="#92400E" stroke-width="2.5" stroke-linecap="round"/>
+                            <circle cx="101" cy="57" r="4" fill="#EA580C"/>
+                            <circle cx="104" cy="50" r="4" fill="#DC2626"/>
+                            <circle cx="106" cy="43" r="3.5" fill="#F59E0B"/>
+                            <!-- Head / Face -->
+                            <circle cx="60" cy="34" r="19" fill="#FFFFFF" stroke="#1E293B" stroke-width="2"/>
+                            <!-- Red Delivery Helmet -->
+                            <path d="M39 32C39 17 48 10 60 10C72 10 81 17 81 32H39Z" fill="#D90012"/>
+                            <rect x="55" y="10" width="10" height="22" fill="#FFFFFF" fill-opacity="0.9"/>
+                            <rect x="37" y="30" width="46" height="5" rx="2.5" fill="#991B1B"/>
+                            <!-- Cute Determined Face -->
+                            <path d="M49 33L55 35" stroke="#1E293B" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M71 33L65 35" stroke="#1E293B" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="53" cy="38" r="2.2" fill="#1E293B"/>
+                            <circle cx="67" cy="38" r="2.2" fill="#1E293B"/>
+                            <ellipse cx="47" cy="41" rx="3" ry="1.8" fill="#FDA4AF"/>
+                            <ellipse cx="73" cy="41" rx="3" ry="1.8" fill="#FDA4AF"/>
+                            <path d="M56 44C58 46.5 62 46.5 64 44" stroke="#D90012" stroke-width="2.2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- White Sheet Container -->
+                <div class="-mt-4 rounded-t-[24px] bg-white relative z-20 px-5 pt-2.5 pb-8 flex-1 shadow-[0_-6px_24px_rgba(0,0,0,0.06)]">
+                    <div class="w-10 h-1 rounded-full bg-slate-200 mx-auto mb-3.5"></div>
+
+                    <!-- Synchronized Red-Themed Live Order Timeline -->
+                    @include('online.partials.order-timeline-stepper', ['variant' => 'sheet', 'order' => $activeOrder])
+
+                    <hr class="border-slate-100 my-4">
+
+                    <!-- Store Name -->
+                    <div class="text-[15px] font-bold text-slate-900 mb-3">หม่าล่าสตรีท (Mala Street)</div>
+
+                    <!-- Payment & Totals Summary -->
+                    <div class="space-y-2.5 text-[13px]">
+                        <div class="flex items-center justify-between text-slate-600">
+                            <span>ยอดรวม</span>
+                            <span class="font-bold text-slate-900 text-[14px]">฿{{ number_format($activeOrder->total_amount, 2) }}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-slate-600">
+                            <span>คูปอง</span>
+                            <span class="{{ ($activeOrder->discount ?? 0) > 0 ? 'font-bold text-[#D90012]' : 'text-slate-700' }}">
+                                @if(($activeOrder->discount ?? 0) > 0)
+                                    -฿{{ number_format($activeOrder->discount, 2) }}
+                                @else
+                                    ไม่ได้ใช้คูปอง
+                                @endif
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between text-slate-600">
+                            <span>วิธีชำระเงิน</span>
+                            <span class="flex items-center gap-1.5 font-medium text-slate-800">
+                                @if(($activeOrder->payment_method ?? 'promptpay') === 'promptpay')
+                                    <span class="px-1.5 py-0.5 rounded bg-rose-50 text-[#D90012] border border-rose-200 text-[10px] font-extrabold">PromptPay</span>
+                                    <span>โอนจ่าย / QR</span>
+                                @else
+                                    <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-extrabold">เงินสด</span>
+                                    <span>ชำระหน้าร้าน</span>
+                                @endif
+                            </span>
+                        </div>
+                    </div>
+
+                    <hr class="border-slate-100 my-4">
+
+                    <!-- Order Items List -->
+                    <div class="space-y-3">
+                        @foreach($activeOrder->items as $idx => $item)
+                            @php
+                                $cookLabel = $item->cooking_type === 'grill'
+                                    ? ($item->grill_style === 'brush' ? 'ปิ้งย่าง (ทาซอสหม่าล่า)' : 'ปิ้งย่าง (จุ่มซอสหม่าล่า)')
+                                    : 'ต้มซุปหม่าล่า';
+                                $spiceLabel = match($item->spiciness_level) {
+                                    'none' => 'ไม่เผ็ด',
+                                    'mild' => 'เผ็ดน้อย',
+                                    'medium' => 'เผ็ดกลาง',
+                                    'hot' => 'เผ็ดมาก',
+                                    default => $item->spiciness_level ?: 'เผ็ดกลาง',
+                                };
+                            @endphp
+                            <div class="flex items-start gap-3 {{ $idx >= 2 ? 'hidden extra-order-detail-item' : '' }}">
+                                <div class="w-5 h-5 rounded-[4px] border border-slate-300 text-[11px] font-bold text-slate-800 flex items-center justify-center shrink-0 mt-0.5">
+                                    {{ $item->quantity_sticks }}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-[13px] font-medium text-slate-900 leading-snug">{{ $item->product_name }}</div>
+                                    <div class="text-[11px] text-slate-400 leading-snug mt-0.5">{{ $cookLabel }} • {{ $spiceLabel }}</div>
+                                </div>
+                                <div class="text-[12px] font-semibold text-slate-600 shrink-0">
+                                    ฿{{ number_format($item->subtotal, 2) }}
+                                </div>
+                            </div>
+                        @endforeach
+
+                        <!-- Expandable Order Breakdown (Shown on Show more toggle) -->
+                        <div id="order-detail-extra-summary" class="hidden pt-2 mt-2 border-t border-dashed border-slate-200 space-y-1.5 text-[11.5px] text-slate-500">
+                            <div class="flex items-center justify-between">
+                                <span>จำนวนทั้งหมด</span>
+                                <span class="font-bold text-slate-700">{{ $activeOrder->items->sum('quantity_sticks') }} ไม้ ({{ $activeOrder->items->count() }} รายการ)</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>ค่าซุปหม่าล่าเพิ่มเติม</span>
+                                <span class="font-bold text-slate-700">฿{{ number_format($activeOrder->soup_extra ?? 0, 2) }}</span>
+                            </div>
+                            @if(!empty($activeOrder->notes))
+                                <div class="pt-1 text-slate-600">
+                                    <span class="font-bold text-slate-700">หมายเหตุถึงครัว:</span> {{ $activeOrder->notes }}
+                                </div>
+                            @endif
+                        </div>
+
+                        <button type="button"
+                                id="toggle-more-items-btn"
+                                onclick="toggleOrderDetailMoreItems()"
+                                class="w-full py-2 text-xs font-bold text-[#D90012] hover:bg-rose-50 rounded-xl flex items-center justify-center gap-1 transition-colors cursor-pointer">
+                            <span id="toggle-more-items-label">ดูเพิ่มเติม</span>
+                            <svg id="toggle-more-items-icon" class="w-3.5 h-3.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <hr class="border-slate-100 my-3">
+
+                    <!-- Pickup / Delivery Location Footer -->
+                    <div class="flex items-start gap-2.5 pt-1">
+                        <svg class="w-4 h-4 text-[#D90012] shrink-0 mt-0.5" viewBox="0 0 24 24" fill="currentColor">
+                            <path fill-rule="evenodd" d="M12 2.25c-4.142 0-7.5 3.28-7.5 7.326 0 4.92 6.082 10.973 7.015 11.87a.7.7 0 00.97 0C13.418 20.55 19.5 14.497 19.5 9.576 19.5 5.53 16.142 2.25 12 2.25zm0 9.826a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" clip-rule="evenodd"/>
+                        </svg>
+                        <div class="min-w-0">
+                            <div class="text-[13px] font-bold text-slate-900">รับอาหารหน้าร้าน • หม่าล่าสตรีท</div>
+                            <div class="text-[11.5px] text-slate-500 mt-0.5 leading-relaxed">
+                                {{ $activeOrder->customer_name ?: 'ลูกค้าออนไลน์' }}{{ $activeOrder->customer_phone ? ' (' . $activeOrder->customer_phone . ')' : '' }}
+                                • เวลานัดรับ: {{ $activeOrder->pickup_time ?: 'ตามคิวหน้าร้าน' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- JAVASCRIPT LOGIC -->
     <script>
         const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         const ACTIVE_ORDER_NO = "{{ $activeOrder ? $activeOrder->order_no : '' }}";
+        const ACTIVE_ORDER_QUEUE = "{{ $activeOrder ? $activeOrder->queue_number : '' }}";
+        const ACTIVE_ORDER_STATUS_URL = @json($activeOrder ? route('online.status', ['order_no' => $activeOrder->order_no]) : '');
+        let ACTIVE_ORDER_STATUS = "{{ $activeOrder ? $activeOrder->status : '' }}";
         const CUSTOMER_NAME = "{{ $activeOrder ? $activeOrder->customer_name : 'ลูกค้า' }}";
         const CUSTOMER_PHONE = "{{ $phone }}";
 
@@ -433,6 +653,9 @@
             });
             scrollToBottom();
             setInterval(pollCustomerChatMessages, 3000);
+            if (ACTIVE_ORDER_STATUS_URL) {
+                setInterval(pollActiveOrderStatus, 4000);
+            }
         });
 
         // 1. Send Order Card into Chat
@@ -724,6 +947,110 @@
             const modal = document.getElementById('image-viewer-modal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+        }
+
+        function openOrderDetailSheet() {
+            const sheet = document.getElementById('order-detail-sheet');
+            if (!sheet) return;
+            sheet.classList.remove('hidden');
+            sheet.classList.add('flex');
+        }
+
+        function closeOrderDetailSheet() {
+            const sheet = document.getElementById('order-detail-sheet');
+            if (!sheet) return;
+            sheet.classList.add('hidden');
+            sheet.classList.remove('flex');
+        }
+
+        function toggleOrderDetailMoreItems() {
+            const extraItems = document.querySelectorAll('.extra-order-detail-item');
+            const extraSummary = document.getElementById('order-detail-extra-summary');
+            const label = document.getElementById('toggle-more-items-label');
+            const icon = document.getElementById('toggle-more-items-icon');
+            const isExpanded = extraSummary && !extraSummary.classList.contains('hidden');
+
+            extraItems.forEach((el) => el.classList.toggle('hidden', isExpanded));
+            if (extraSummary) extraSummary.classList.toggle('hidden', isExpanded);
+            if (label) label.textContent = isExpanded ? 'ดูเพิ่มเติม' : 'แสดงน้อยลง';
+            if (icon) icon.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+
+        function updateOrderTimelineUI(status) {
+            const stageMap = { pending: 1, confirmed: 1, cooking: 2, ready: 3, completed: 4, cancelled: 0 };
+            const stage = stageMap[status] ?? 1;
+
+            const titleMap = {
+                pending: 'รอร้านค้ายืนยันออเดอร์',
+                confirmed: 'ร้านรับออเดอร์แล้ว',
+                cooking: 'กำลังปิ้งย่างในครัว',
+                ready: 'อาหารเสร็จแล้ว พร้อมรับ!',
+                completed: 'ส่งมอบอาหารเรียบร้อย',
+                cancelled: 'ยกเลิกออเดอร์แล้ว'
+            };
+            const subtitleMap = {
+                pending: 'กำลังดำเนินการ...',
+                confirmed: 'กำลังเตรียมวัตถุดิบและคิวเตาย่าง...',
+                cooking: 'กำลังย่างเตาถ่านและปรุงตามสั่ง...',
+                ready: `แจ้งคิว ${ACTIVE_ORDER_QUEUE} รับอาหารที่หน้าร้านได้เลย`,
+                completed: 'ขอบพระคุณที่อุดหนุนหม่าล่าสตรีท',
+                cancelled: 'กรุณาสอบถามแอดมินในแชท'
+            };
+            const syncLabelMap = {
+                pending: 'รอยืนยัน',
+                confirmed: 'รับออเดอร์แล้ว',
+                cooking: '🔥 กำลังย่างในครัว',
+                ready: '🎉 พร้อมรับหน้าร้าน',
+                completed: '✅ จัดส่งสำเร็จ',
+                cancelled: '❌ ยกเลิกแล้ว'
+            };
+
+            const syncEl = document.getElementById('order-sync-status-label');
+            if (syncEl) syncEl.textContent = syncLabelMap[status] || status;
+
+            document.querySelectorAll('[data-order-timeline]').forEach((root) => {
+                const titleEl = root.querySelector('[data-tl-title]');
+                const subEl = root.querySelector('[data-tl-subtitle]');
+                if (titleEl) {
+                    titleEl.textContent = titleMap[status] || 'กำลังดำเนินการ';
+                    titleEl.classList.toggle('text-[#D90012]', status !== 'cancelled');
+                    titleEl.classList.toggle('text-slate-500', status === 'cancelled');
+                }
+                if (subEl) subEl.textContent = subtitleMap[status] || 'กำลังดำเนินการ...';
+
+                const step1 = root.querySelector('[data-tl-step="1"]');
+                if (step1) {
+                    step1.classList.toggle('bg-[#D90012]', stage >= 1);
+                    step1.classList.toggle('text-white', stage >= 1);
+                    step1.classList.toggle('bg-slate-200', stage < 1);
+                    step1.classList.toggle('text-slate-400', stage < 1);
+                }
+                [2, 3, 4].forEach((n) => {
+                    const stepEl = root.querySelector(`[data-tl-step="${n}"]`);
+                    const lineEl = root.querySelector(`[data-tl-line="${n}"]`);
+                    if (stepEl) {
+                        stepEl.classList.toggle('text-[#D90012]', stage >= n);
+                        stepEl.classList.toggle('text-slate-300', stage < n);
+                    }
+                    if (lineEl) {
+                        lineEl.classList.toggle('bg-[#D90012]', stage >= n);
+                        lineEl.classList.toggle('bg-slate-200', stage < n);
+                    }
+                });
+            });
+        }
+
+        async function pollActiveOrderStatus() {
+            if (!ACTIVE_ORDER_STATUS_URL) return;
+            try {
+                const res = await fetch(ACTIVE_ORDER_STATUS_URL, { headers: { 'Accept': 'application/json' } });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.status && data.status !== ACTIVE_ORDER_STATUS) {
+                    ACTIVE_ORDER_STATUS = data.status;
+                    updateOrderTimelineUI(data.status);
+                }
+            } catch (err) {}
         }
     </script>
 </body>
