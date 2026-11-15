@@ -44,7 +44,12 @@
                     $canNavCustomer = !$hasNavRestriction || in_array('customers.members.view', $navPerms, true) || in_array('pos.orders.view', $navPerms, true);
                     $canNavDashboard = !$hasNavRestriction || in_array('dashboard.overview.view', $navPerms, true) || in_array('finance.daily.view', $navPerms, true);
                     $canNavInventory = !$hasNavRestriction || in_array('inventory.stock.view', $navPerms, true) || in_array('inventory.waste.view', $navPerms, true);
-                    $canNavEmployees = !$hasNavRestriction || in_array('employees.attendance.view', $navPerms, true) || in_array('employees.payroll.view', $navPerms, true);
+                    $canNavEmployees = !$hasNavRestriction
+                        || in_array('employees.attendance.view', $navPerms, true)
+                        || in_array('employees.payroll.view', $navPerms, true)
+                        || in_array('employees.overview_daily.view', $navPerms, true)
+                        || in_array('employees.overview_monthly.view', $navPerms, true)
+                        || in_array('employees.manage_all.view', $navPerms, true);
                     $canNavAccess = !$hasNavRestriction || in_array('access.users.view', $navPerms, true) || in_array('access.permissions.view', $navPerms, true);
                 @endphp
                 <nav class="hidden lg:flex items-center space-x-1.5 xl:space-x-2.5">

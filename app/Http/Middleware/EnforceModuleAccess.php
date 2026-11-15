@@ -51,10 +51,20 @@ class EnforceModuleAccess
 
         $requiredKey = $requirement['key'];
         $altKey = $requirement['alt_key'] ?? null;
+        $altKeys = $requirement['alt_keys'] ?? [];
         $moduleLabel = $requirement['label'] ?? 'ส่วนนี้';
 
         $hasAccess = AccessControlService::userHasPermission($user, $requiredKey)
             || ($altKey && AccessControlService::userHasPermission($user, $altKey));
+
+        if (!$hasAccess && is_array($altKeys)) {
+            foreach ($altKeys as $candidateKey) {
+                if ($candidateKey && AccessControlService::userHasPermission($user, (string) $candidateKey)) {
+                    $hasAccess = true;
+                    break;
+                }
+            }
+        }
 
         if ($hasAccess) {
             return $next($request);

@@ -96,10 +96,38 @@
             </div>
         </header>
 
+        @php
+            $uiPerms = $employeeUiPermissions ?? [
+                'is_self_only'              => false,
+                'can_manage_all'            => true,
+                'can_attendance_view'       => true,
+                'can_attendance_create'     => true,
+                'can_geofence_edit'         => true,
+                'can_payroll_view'          => true,
+                'can_payroll_export'        => true,
+                'can_overview_daily_view'   => true,
+                'can_overview_monthly_view' => true,
+                'can_overview_view'         => true,
+            ];
+            $isSelfOnly = !empty($uiPerms['is_self_only']);
+            $defaultOverviewMode = !empty($uiPerms['can_overview_daily_view']) ? 'daily' : 'monthly';
+        @endphp
+
+        @if($isSelfOnly)
+            <div class="bg-blue-50/90 border border-blue-200 text-blue-900 rounded-2xl px-4 py-2.5 flex items-center justify-between gap-2 text-xs font-semibold shadow-2xs">
+                <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-black shrink-0">🔒</span>
+                    <span>โหมดข้อมูลส่วนตัวพนักงาน: หน้านี้แสดงเฉพาะเวลาเข้า-ออกงาน สรุปเงินเดือน และสลิปของ <strong>{{ $employee['name'] }}</strong> เท่านั้น</span>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full bg-white text-blue-700 border border-blue-200 text-[11px] font-bold shrink-0">เฉพาะของฉัน</span>
+            </div>
+        @endif
+
         <!-- ========================================================================= -->
         <!-- 2. SUB-NAVIGATION TABS: [สแกนหน้าเข้างาน], [สรุปยอดเงินเดือน], [ภาพรวมพนักงาน]  -->
         <!-- ========================================================================= -->
         <nav class="bg-white/95 rounded-2xl p-1.5 shadow-sm border border-slate-200/80 flex items-center gap-1.5 sm:gap-2">
+            @if(!empty($uiPerms['can_attendance_view']))
             <!-- Tab 1: สแกนหน้าเข้างาน -->
             <button type="button"
                     id="tab-btn-attendance"
@@ -113,7 +141,9 @@
                 </svg>
                 <span>สแกนหน้าเข้างาน</span>
             </button>
+            @endif
 
+            @if(!empty($uiPerms['can_payroll_view']))
             <!-- Tab 2: สรุปยอดเงินเดือน -->
             <button type="button"
                     id="tab-btn-payroll"
@@ -126,9 +156,11 @@
                     <path d="M4 10v4c0 1.66 3.58 3 8 3s8-1.34 8-3v-4"/>
                     <path d="M4 14v4c0 1.66 3.58 3 8 3s8-1.34 8-3v-4"/>
                 </svg>
-                <span>สรุปยอดเงินเดือน</span>
+                <span>{{ $isSelfOnly ? 'สรุปเงินเดือนของฉัน' : 'สรุปยอดเงินเดือน' }}</span>
             </button>
+            @endif
 
+            @if(!empty($uiPerms['can_overview_view']))
             <!-- Tab 3: ภาพรวมพนักงาน (Matches Image 2) -->
             <button type="button"
                     id="tab-btn-overview"
@@ -138,14 +170,15 @@
                 <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <span>ภาพรวมพนักงาน</span>
+                <span>{{ $isSelfOnly ? 'ประวัติเวลาทำงานของฉัน' : 'ภาพรวมพนักงาน' }}</span>
             </button>
+            @endif
         </nav>
 
         <!-- ========================================================================= -->
         <!-- 3. TAB PANE 1: สแกนหน้าเข้างาน                                            -->
         <!-- ========================================================================= -->
-        <div id="tab-pane-attendance" class="space-y-4 sm:space-y-5">
+        <div id="tab-pane-attendance" class="{{ $currentTab === 'attendance' && !empty($uiPerms['can_attendance_view']) ? '' : 'hidden' }} space-y-4 sm:space-y-5">
             <!-- Main Grid: Unified Left Card (Geofence + Instructions + Scan Action) & Right Card (Today Attendance Summary & Split Photos) -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-stretch">
                 <!-- Left: Combined Card (Geofence Status + 3-Step Guide + Face Scan Action) -->
@@ -182,6 +215,7 @@
                             </div>
                         </div>
 
+                        @if(!empty($uiPerms['can_geofence_edit']))
                         <!-- Storefront Icon Button (Right side) - คลิกเพื่อเปิดหน้าต่างปักหมุดเลือกพิกัดร้าน -->
                         <button type="button"
                                 onclick="openStoreLocationModal()"
@@ -197,6 +231,7 @@
                                 📍
                             </span>
                         </button>
+                        @endif
                     </div>
 
                     <!-- 2. Guide Steps Flow (วิธีเช็คอิน / เช็คเอาท์ด้วยใบหน้า) -->
@@ -500,7 +535,7 @@
         <!-- ========================================================================= -->
         <!-- 4. TAB PANE 2: สรุปยอดเงินเดือน (Images 3 & 4)                               -->
         <!-- ========================================================================= -->
-        <div id="tab-pane-payroll" class="hidden space-y-4 sm:space-y-5">
+        <div id="tab-pane-payroll" class="{{ $currentTab === 'payroll' && !empty($uiPerms['can_payroll_view']) ? '' : 'hidden' }} space-y-4 sm:space-y-5">
             <!-- Hero Card: 3D Calendar + Title + Month Dropdown + 5 Metric Boxes -->
             <div class="bg-gradient-to-r from-rose-50/80 via-pink-50/40 to-white rounded-3xl p-5 sm:p-7 border border-rose-100 shadow-sm space-y-5">
                 <!-- Top Row: 3D Calendar + Title + Month Selector -->
@@ -682,10 +717,13 @@
             <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
                 <div class="flex items-center gap-2.5">
                     <span class="w-1.5 h-5 rounded-full bg-[#E50914] block"></span>
-                    <h3 class="text-base sm:text-lg font-bold text-slate-900 tracking-tight">สรุปรายบุคคล</h3>
-                    <span class="text-xs text-slate-500">(<span id="payroll-visible-count">{{ count($payrollCards) }}</span> คน)</span>
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 tracking-tight">{{ $isSelfOnly ? 'รายละเอียดเงินเดือนของฉัน' : 'สรุปรายบุคคล' }}</h3>
+                    @if(!$isSelfOnly)
+                        <span class="text-xs text-slate-500">(<span id="payroll-visible-count">{{ count($payrollCards) }}</span> คน)</span>
+                    @endif
                 </div>
 
+                @if(!$isSelfOnly)
                 <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
                     <!-- Quick Search Input (ตรงตามภาพที่ 2) -->
                     <div class="relative flex-1 sm:w-56 sm:flex-initial">
@@ -727,6 +765,7 @@
                         </button>
                     </div>
                 </div>
+                @endif
             </div>
 
             <!-- Cards Grid: ปรับขนาดการ์ดตามภาพที่ 1 ให้เพียงพอกับ 4 การ์ดต่อแถว -->
@@ -984,7 +1023,7 @@
         <!-- ========================================================================= -->
         <!-- 5. TAB PANE 3: ภาพรวมพนักงาน (Employees Attendance Overview - Image 2)     -->
         <!-- ========================================================================= -->
-        <div id="tab-pane-overview" class="{{ $currentTab === 'overview' ? '' : 'hidden' }} space-y-4 sm:space-y-5">
+        <div id="tab-pane-overview" class="{{ $currentTab === 'overview' && !empty($uiPerms['can_overview_view']) ? '' : 'hidden' }} space-y-4 sm:space-y-5">
 
             <!-- 1. Top Controls Bar: [📅 รายวัน] / [📊 สรุปรายเดือน] + แถบกรองตามภาพที่ 1 (ต่อท้ายหรือฝั่งขวาของแถบสรุปทั้งเดือน) -->
             <div class="flex flex-wrap items-center justify-between gap-3">
@@ -992,10 +1031,11 @@
                 <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
                     <!-- Mode Switcher: รายวัน / สรุปรายเดือน -->
                     <div class="inline-flex items-center gap-1.5 p-1 bg-white rounded-2xl border border-slate-200/90 shadow-2xs shrink-0">
+                        @if(!empty($uiPerms['can_overview_daily_view']))
                         <button type="button"
                                 id="btn-overview-daily"
                                 onclick="switchOverviewMode('daily')"
-                                class="px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all cursor-pointer bg-[#0F172A] text-white shadow-xs flex items-center gap-1.5">
+                                class="px-3.5 py-1.5 sm:py-2 rounded-xl text-xs {{ $defaultOverviewMode === 'daily' ? 'font-bold bg-[#0F172A] text-white shadow-xs' : 'font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50' }} transition-all cursor-pointer flex items-center gap-1.5">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
                                 <line x1="16" y1="2" x2="16" y2="6"/>
@@ -1004,11 +1044,13 @@
                             </svg>
                             <span>รายวัน</span>
                         </button>
+                        @endif
 
+                        @if(!empty($uiPerms['can_overview_monthly_view']))
                         <button type="button"
                                 id="btn-overview-monthly"
                                 onclick="switchOverviewMode('monthly')"
-                                class="px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer flex items-center gap-1.5">
+                                class="px-3.5 py-1.5 sm:py-2 rounded-xl text-xs {{ $defaultOverviewMode === 'monthly' ? 'font-bold bg-[#0F172A] text-white shadow-xs' : 'font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50' }} transition-all cursor-pointer flex items-center gap-1.5">
                             <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <line x1="18" y1="20" x2="18" y2="10"/>
                                 <line x1="12" y1="20" x2="12" y2="4"/>
@@ -1016,6 +1058,7 @@
                             </svg>
                             <span>สรุปรายเดือน</span>
                         </button>
+                        @endif
                     </div>
 
                     <!-- Divider -->
@@ -1183,10 +1226,10 @@
             </div>
 
             <!-- 3. Table Section: 📑 รายละเอียดบันทึกการทำงานของพนักงานทั้งหมด -->
-            <div id="view-daily-table" class="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-sm space-y-4">
+            <div id="view-daily-table" class="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-sm space-y-4 {{ $defaultOverviewMode === 'daily' ? '' : 'hidden' }}">
                 <div class="flex items-center gap-2 font-black text-sm sm:text-base text-slate-900">
                     <span class="text-base">📑</span>
-                    <span>รายละเอียดบันทึกการทำงานของพนักงานทั้งหมด</span>
+                    <span>{{ $isSelfOnly ? 'รายละเอียดบันทึกการทำงานของฉัน (' . $employee['name'] . ')' : 'รายละเอียดบันทึกการทำงานของพนักงานทั้งหมด' }}</span>
                 </div>
 
                 <div class="overflow-x-auto rounded-2xl border border-slate-100">
@@ -1379,11 +1422,11 @@
             </div>
 
             <!-- 4. Monthly Summary Table (Toggled via [📊 สรุปรายเดือน]) -->
-            <div id="view-monthly-table" class="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-sm space-y-4 hidden">
+            <div id="view-monthly-table" class="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-sm space-y-4 {{ $defaultOverviewMode === 'monthly' ? '' : 'hidden' }}">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2 font-black text-sm sm:text-base text-slate-900">
                         <span class="text-base">📊</span>
-                        <span>สรุปภาพรวมเวลาการทำงานรายเดือน (พนักงานทุกคน)</span>
+                        <span>{{ $isSelfOnly ? 'สรุปภาพรวมเวลาการทำงานรายเดือนของฉัน (' . $employee['name'] . ')' : 'สรุปภาพรวมเวลาการทำงานรายเดือน (พนักงานทุกคน)' }}</span>
                     </div>
                     <span class="text-xs font-bold text-slate-400" id="overview-monthly-period-label">ประจำเดือน {{ $currentPayroll['period_label'] ?? '' }}</span>
                 </div>
@@ -1900,9 +1943,18 @@
     let payrollCardsData = @json($payrollCards ?? []);
     let selectedHeroEmployeeId = @json($employee['id'] ?? null);
     const serverTodayDateKey = @json($todayDateKey ?? \Carbon\Carbon::now('Asia/Bangkok')->format('Y-m-d'));
+    const employeeUiPerms = @json($uiPerms);
 
     // 1. Tab Switching Function
     function switchEmployeeTab(tab) {
+        if (tab === 'attendance' && !employeeUiPerms.can_attendance_view) {
+            tab = employeeUiPerms.can_payroll_view ? 'payroll' : (employeeUiPerms.can_overview_view ? 'overview' : 'attendance');
+        } else if (tab === 'payroll' && !employeeUiPerms.can_payroll_view) {
+            tab = employeeUiPerms.can_attendance_view ? 'attendance' : (employeeUiPerms.can_overview_view ? 'overview' : 'payroll');
+        } else if (tab === 'overview' && !employeeUiPerms.can_overview_view) {
+            tab = employeeUiPerms.can_attendance_view ? 'attendance' : (employeeUiPerms.can_payroll_view ? 'payroll' : 'overview');
+        }
+
         const btnAttendance = document.getElementById('tab-btn-attendance');
         const btnPayroll = document.getElementById('tab-btn-payroll');
         const btnOverview = document.getElementById('tab-btn-overview');

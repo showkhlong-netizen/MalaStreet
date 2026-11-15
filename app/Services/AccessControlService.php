@@ -126,14 +126,34 @@ class AccessControlService
                 'icon'  => '🪪',
                 'children' => [
                     'attendance' => [
-                        'label'       => 'สแกนใบหน้าเข้า-ออกงาน & ตรวจสอบพิกัด GPS ร้าน',
-                        'description' => 'ลงเวลาเข้า-ออกงานด้วยกล้อง AI และดูภาพหลักฐานย้อนหลัง',
-                        'actions'     => ['view', 'create', 'edit'],
+                        'label'       => 'แท็บ 1: สแกนหน้าเข้างาน & บันทึกเวลาของตนเอง (AI Face Scan)',
+                        'description' => 'เปิดกล้อง AI สแกนใบหน้าเช็คอิน-เช็คเอาท์ ตรวจสอบพิกัดร้าน และดูรูปถ่ายเข้า-ออกงานของตนเอง',
+                        'actions'     => ['view', 'create'],
+                    ],
+                    'geofence' => [
+                        'label'       => 'ปักหมุดพิกัดร้าน & ตั้งค่ารัศมีขอบเขตเช็คอิน (Geofence Settings)',
+                        'description' => 'เปิดแผนที่ปักหมุดตำแหน่งร้าน กำหนดระยะรัศมีเมตรที่อนุญาตให้เช็คอิน และตั้งค่าโหมดทดสอบ GPS',
+                        'actions'     => ['view', 'edit'],
                     ],
                     'payroll' => [
-                        'label'       => 'สรุปยอดเงินเดือน, ค่าแรง, OT, KPI & สลิปเงินเดือน',
-                        'description' => 'ดูสรุปรายบุคคล คำนวณขาด/ลา/มาสาย และออกใบจ่ายเงินเดือน',
-                        'actions'     => ['view', 'edit', 'export'],
+                        'label'       => 'แท็บ 2: สรุปยอดเงินเดือน, ค่าแรง, OT, KPI & สลิปเงินเดือน (ข้อมูลของตนเอง)',
+                        'description' => 'ดูสรุปยอดเงินเดือน ค่าแรงรายวัน/รายเดือน ค่าล่วงเวลา (OT) โบนัส KPI รายการหักขาด/สาย และดาวน์โหลดสลิปเงินเดือนของตนเอง',
+                        'actions'     => ['view', 'export'],
+                    ],
+                    'overview_daily' => [
+                        'label'       => 'แท็บ 3 (รายวัน): ตารางประวัติเวลาเข้า-ออกงาน, รูปสแกน & พิกัดย้อนหลัง',
+                        'description' => 'ดูตารางบันทึกเวลาเข้า-ออกงานรายวัน รูปถ่ายหลักฐาน พิกัดแผนที่ และชั่วโมง OT ย้อนหลัง (พนักงานดูได้เฉพาะของตนเอง)',
+                        'actions'     => ['view', 'export'],
+                    ],
+                    'overview_monthly' => [
+                        'label'       => 'แท็บ 3 (รายเดือน): ตารางสรุปสถิติวันทำงาน, มาสาย, ขาดงาน & ชั่วโมงรวมรายเดือน',
+                        'description' => 'ดูตารางสรุปภาพรวมการทำงานรายเดือน จำนวนวันมาทำงาน วันสาย ชั่วโมงรวม และอัตราการเข้างาน (พนักงานดูได้เฉพาะของตนเอง)',
+                        'actions'     => ['view', 'export'],
+                    ],
+                    'manage_all' => [
+                        'label'       => 'สิทธิ์ผู้ดูแล/ผู้จัดการ: ดูข้อมูลและสรุปเงินเดือนของพนักงานทุกคนในร้าน (All Staff View)',
+                        'description' => 'หากเปิดสิทธิ์นี้จะเห็นข้อมูลพนักงานทุกคน หากปิดไว้จะเห็นเฉพาะข้อมูลและสลิปของตนเองเท่านั้น',
+                        'actions'     => ['view', 'edit', 'approve', 'export'],
                     ],
                 ],
             ],
@@ -234,7 +254,9 @@ class AccessControlService
                 'finance.daily.view', 'finance.daily.create',
                 'finance.drawer.view', 'finance.drawer.create',
                 'employees.attendance.view', 'employees.attendance.create',
-                'employees.payroll.view',
+                'employees.payroll.view', 'employees.payroll.export',
+                'employees.overview_daily.view',
+                'employees.overview_monthly.view',
             ],
 
             'kitchen' => [
@@ -243,6 +265,9 @@ class AccessControlService
                 'inventory.stock.view',
                 'inventory.waste.view', 'inventory.waste.create',
                 'employees.attendance.view', 'employees.attendance.create',
+                'employees.payroll.view', 'employees.payroll.export',
+                'employees.overview_daily.view',
+                'employees.overview_monthly.view',
             ],
 
             'stock' => [
@@ -250,6 +275,9 @@ class AccessControlService
                 'inventory.waste.view', 'inventory.waste.create', 'inventory.waste.edit',
                 'pos.menu.view', 'pos.menu.edit',
                 'employees.attendance.view', 'employees.attendance.create',
+                'employees.payroll.view', 'employees.payroll.export',
+                'employees.overview_daily.view',
+                'employees.overview_monthly.view',
             ],
 
             'finance' => [
@@ -262,6 +290,9 @@ class AccessControlService
                 'finance.vault.view', 'finance.vault.create', 'finance.vault.edit', 'finance.vault.approve', 'finance.vault.export',
                 'employees.attendance.view', 'employees.attendance.create',
                 'employees.payroll.view', 'employees.payroll.export',
+                'employees.overview_daily.view', 'employees.overview_daily.export',
+                'employees.overview_monthly.view', 'employees.overview_monthly.export',
+                'employees.manage_all.view', 'employees.manage_all.export',
             ],
 
             default => [
@@ -270,6 +301,9 @@ class AccessControlService
                 'kitchen.queue.view',
                 'employees.attendance.view',
                 'employees.attendance.create',
+                'employees.payroll.view',
+                'employees.overview_daily.view',
+                'employees.overview_monthly.view',
             ],
         };
     }
@@ -613,10 +647,41 @@ class AccessControlService
             'treasury.index'                   => ['key' => 'finance.vault.view',      'alt_key' => 'finance.drawer.view', 'label' => 'กระเป๋าเงิน & ลิ้นชัก'],
 
             // 7. พนักงาน, สแกนหน้าเข้างาน & เงินเดือน
-            'admin.employees.index'            => ['key' => 'employees.attendance.view', 'alt_key' => 'employees.payroll.view', 'label' => 'พนักงาน & ลงเวลาทำงาน'],
-            'admin.employees.clock_in'         => ['key' => 'employees.attendance.create', 'alt_key' => 'employees.attendance.view', 'label' => 'สแกนหน้าเข้า-ออกงาน'],
-            'admin.employees.update_location'  => ['key' => 'employees.attendance.edit', 'label' => 'ตั้งค่าพิกัดร้าน'],
-            'admin.employees.payslip'          => ['key' => 'employees.payroll.view',  'alt_key' => 'employees.attendance.view', 'label' => 'ดูสลิปเงินเดือน'],
+            'admin.employees.index'            => [
+                'key'      => 'employees.attendance.view',
+                'alt_keys' => [
+                    'employees.payroll.view',
+                    'employees.overview_daily.view',
+                    'employees.overview_monthly.view',
+                    'employees.manage_all.view',
+                ],
+                'label'    => 'พนักงาน & ลงเวลาทำงาน',
+            ],
+            'admin.employees.sync_data'        => [
+                'key'      => 'employees.attendance.view',
+                'alt_keys' => [
+                    'employees.payroll.view',
+                    'employees.overview_daily.view',
+                    'employees.overview_monthly.view',
+                    'employees.manage_all.view',
+                ],
+                'label'    => 'ซิงค์ข้อมูลพนักงาน',
+            ],
+            'admin.employees.clock_in'         => [
+                'key'     => 'employees.attendance.create',
+                'alt_key' => 'employees.attendance.view',
+                'label'   => 'สแกนหน้าเข้า-ออกงาน',
+            ],
+            'admin.employees.update_location'  => [
+                'key'     => 'employees.geofence.edit',
+                'alt_key' => 'employees.manage_all.edit',
+                'label'   => 'ปักหมุดและตั้งค่าพิกัดร้าน',
+            ],
+            'admin.employees.payslip'          => [
+                'key'      => 'employees.payroll.view',
+                'alt_keys' => ['employees.payroll.export', 'employees.manage_all.view'],
+                'label'    => 'ดูสลิปเงินเดือน',
+            ],
 
             // 8. สาขาและสิทธิ์การเข้าถึง
             'branches.index'                   => ['key' => 'branches.manage.view',    'label' => 'จัดการสาขา'],

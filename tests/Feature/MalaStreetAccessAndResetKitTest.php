@@ -150,5 +150,38 @@ class MalaStreetAccessAndResetKitTest extends TestCase
         $this->actingAs($staff->fresh())
             ->getJson('/admin/expenses')
             ->assertStatus(403);
+
+        // 10. Verify Employee page shows ONLY the logged-in employee's own data when not an admin
+        \App\Models\Setting::set('access_users_list', json_encode([
+            [
+                'id' => 'usr_staff_1',
+                'name' => 'พนักงานสาขายะลา',
+                'email' => 'yala.staff@malastreet.com',
+                'role' => 'Employee',
+                'role_label' => 'พนักงานร้าน (Employee)',
+                'branch' => 'สาขายะลา',
+            ],
+            [
+                'id' => 'usr_staff_2',
+                'name' => 'สมชาย พนักงานอีกคน',
+                'email' => 'somchai.other@malastreet.com',
+                'role' => 'Employee',
+                'role_label' => 'พนักงานร้าน (Employee)',
+                'branch' => 'สาขาปัตตานี',
+            ],
+        ]));
+
+        // Staff syncData returns only 1 payroll card (their own) and never exposes other employees
+        $empSyncRes = $this->actingAs($staff->fresh())->getJson('/admin/employees/sync-data');
+        $empSyncRes->assertOk()
+            ->assertJsonCount(1, 'payrollCards')
+            ->assertJsonPath('payrollCards.0.name', 'พนักงานสาขายะลา')
+            ->assertJsonPath('employeeUiPermissions.is_self_only', true);
+
+        // Admin syncData returns all employees
+        $admSyncRes = $this->actingAs($admin)->getJson('/admin/employees/sync-data');
+        $admSyncRes->assertOk()
+            ->assertJsonCount(2, 'payrollCards')
+            ->assertJsonPath('employeeUiPermissions.is_self_only', false);
     }
 }

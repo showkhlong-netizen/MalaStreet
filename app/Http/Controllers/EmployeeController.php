@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use App\Models\Setting;
+use App\Services\AccessControlService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class EmployeeController extends Controller
@@ -16,15 +18,38 @@ class EmployeeController extends Controller
      * Features:
      * Tab 1: Facial Recognition Clock-in / Clock-out (สแกนหน้าเข้างาน)
      * Tab 2: Payroll Summary & Payslips (สรุปยอดเงินเดือน)
+     * Tab 3: Employee Attendance Overview (ภาพรวมพนักงาน: รายวัน / สรุปรายเดือน)
      */
     public function index(Request $request): View
     {
-        $currentTab = $request->query('tab', 'attendance'); // 'attendance', 'payroll', or 'overview'
+        $currentTab = $request->query('tab');
         $selectedEmployeeId = $request->query('employee_id');
         $selectedMonth = $request->query('month');
         $overviewDate = $request->query('date');
 
         $payload = $this->buildSyncedPayload($selectedEmployeeId, $selectedMonth, $overviewDate);
+        $empPerms = $payload['employeeUiPermissions'] ?? [];
+
+        if (!$currentTab) {
+            if (!empty($empPerms['can_attendance_view'])) {
+                $currentTab = 'attendance';
+            } elseif (!empty($empPerms['can_payroll_view'])) {
+                $currentTab = 'payroll';
+            } elseif (!empty($empPerms['can_overview_view'])) {
+                $currentTab = 'overview';
+            } else {
+                $currentTab = 'attendance';
+            }
+        } else {
+            // If requested tab is not permitted for this user, fall back to the first permitted tab
+            if ($currentTab === 'attendance' && empty($empPerms['can_attendance_view'])) {
+                $currentTab = !empty($empPerms['can_payroll_view']) ? 'payroll' : (!empty($empPerms['can_overview_view']) ? 'overview' : 'attendance');
+            } elseif ($currentTab === 'payroll' && empty($empPerms['can_payroll_view'])) {
+                $currentTab = !empty($empPerms['can_attendance_view']) ? 'attendance' : (!empty($empPerms['can_overview_view']) ? 'overview' : 'payroll');
+            } elseif ($currentTab === 'overview' && empty($empPerms['can_overview_view'])) {
+                $currentTab = !empty($empPerms['can_attendance_view']) ? 'attendance' : (!empty($empPerms['can_payroll_view']) ? 'payroll' : 'overview');
+            }
+        }
 
         return view('admin.employees.index', array_merge($payload, [
             'currentTab' => $currentTab,
@@ -53,6 +78,7 @@ class EmployeeController extends Controller
             'allAttendanceLogs' => $payload['allAttendanceLogs'],
             'monthlyAttendanceSummary' => $payload['monthlyAttendanceSummary'],
             'overviewStats' => $payload['overviewStats'],
+            'employeeUiPermissions' => $payload['employeeUiPermissions'],
         ]);
     }
 
@@ -68,30 +94,75 @@ class EmployeeController extends Controller
         $overviewDate = $overviewDate ?: $todayDateKey;
 
         // Retrieve real active employees synced from Access Control (Setting: access_users_list)
-        $realEmployees = $this->getRealEmployeesList();
+        $allRealEmployees = $this->getRealEmployeesList();
         $loggedActor = AuditLog::resolveCurrentUserActor();
+        $authUser = Auth::user() ?: AccessControlService::resolveUserModel($loggedActor['email'] ?? ($loggedActor['id'] ?? null));
 
-        $activeEmployee = null;
-        if ($selectedEmployeeId) {
-            $activeEmployee = collect($realEmployees)->firstWhere('id', $selectedEmployeeId);
+        $effectivePerms = $authUser
+            ? AccessControlService::getEffectivePermissions($authUser)
+            : AccessControlService::getAllPermissionKeys();
+
+        $actorRoleLower = strtolower((string) ($loggedActor['role'] ?? ($authUser ? $authUser->getRoleName() : 'admin')));
+        $isActorAdmin = str_contains($actorRoleLower, 'admin')
+            || str_contains($actorRoleLower, 'manager')
+            || in_array('employees.manage_all.view', $effectivePerms, true);
+
+        $employeeUiPermissions = [
+            'is_self_only'              => !$isActorAdmin,
+            'can_manage_all'            => $isActorAdmin,
+            'can_attendance_view'       => in_array('employees.attendance.view', $effectivePerms, true) || in_array('employees.attendance.create', $effectivePerms, true),
+            'can_attendance_create'     => in_array('employees.attendance.create', $effectivePerms, true) || in_array('employees.attendance.view', $effectivePerms, true),
+            'can_geofence_edit'         => in_array('employees.geofence.edit', $effectivePerms, true) || in_array('employees.manage_all.edit', $effectivePerms, true),
+            'can_payroll_view'          => in_array('employees.payroll.view', $effectivePerms, true) || in_array('employees.payroll.export', $effectivePerms, true) || $isActorAdmin,
+            'can_payroll_export'        => in_array('employees.payroll.export', $effectivePerms, true) || in_array('employees.payroll.view', $effectivePerms, true) || $isActorAdmin,
+            'can_overview_daily_view'   => in_array('employees.overview_daily.view', $effectivePerms, true) || $isActorAdmin,
+            'can_overview_monthly_view' => in_array('employees.overview_monthly.view', $effectivePerms, true) || $isActorAdmin,
+        ];
+        $employeeUiPermissions['can_overview_view'] = $employeeUiPermissions['can_overview_daily_view'] || $employeeUiPermissions['can_overview_monthly_view'];
+
+        // Find the logged-in user's own employee record
+        $ownEmployee = collect($allRealEmployees)->first(function ($emp) use ($loggedActor, $authUser) {
+            $empEmail = strtolower(trim((string) ($emp['email'] ?? '')));
+            $actorEmail = strtolower(trim((string) ($loggedActor['email'] ?? ($authUser->email ?? ''))));
+            $empName = strtolower(trim((string) ($emp['name'] ?? '')));
+            $actorName = strtolower(trim((string) ($loggedActor['name'] ?? ($authUser->name ?? ''))));
+            return ($emp['id'] ?? '') === ($loggedActor['id'] ?? '')
+                || ($actorEmail !== '' && $empEmail === $actorEmail)
+                || ($actorName !== '' && $empName === $actorName);
+        });
+
+        if (!$ownEmployee) {
+            $ownEmployee = $isActorAdmin
+                ? ($allRealEmployees[0] ?? null)
+                : null;
         }
-        if (!$activeEmployee) {
-            $activeEmployee = collect($realEmployees)->first(function ($emp) use ($loggedActor) {
-                return ($emp['id'] ?? '') === ($loggedActor['id'] ?? '')
-                    || (!empty($loggedActor['email']) && strtolower($emp['email'] ?? '') === strtolower($loggedActor['email']))
-                    || strtolower($emp['name'] ?? '') === strtolower($loggedActor['name'] ?? '');
-            });
-        }
-        if (!$activeEmployee) {
-            $activeEmployee = $realEmployees[0] ?? [
-                'id' => $loggedActor['id'] ?? 'EMP-001',
-                'name' => $loggedActor['name'] ?? 'ผู้ใช้งาน',
+        if (!$ownEmployee) {
+            $ownEmployee = [
+                'id'         => $loggedActor['id'] ?? ($authUser ? 'usr_' . $authUser->id : 'EMP-001'),
+                'name'       => $loggedActor['name'] ?? ($authUser->name ?? 'ผู้ใช้งาน'),
+                'role'       => $loggedActor['role'] ?? 'Employee',
                 'role_label' => $loggedActor['role'] ?? 'พนักงานร้าน',
-                'branch' => 'ทุกสาขา',
-                'avatar' => null,
-                'email' => $loggedActor['email'] ?? '',
-                'phone' => '',
+                'branch'     => 'ทุกสาขา',
+                'avatar'     => null,
+                'email'      => $loggedActor['email'] ?? ($authUser->email ?? ''),
+                'phone'      => '',
             ];
+        }
+
+        // Enforce self-only visibility for non-admin/non-manager staff:
+        // Employees only ever see their own profile, own payroll card, and own attendance logs.
+        if (!$isActorAdmin) {
+            $realEmployees = [$ownEmployee];
+            $activeEmployee = $ownEmployee;
+        } else {
+            $realEmployees = $allRealEmployees;
+            $activeEmployee = null;
+            if ($selectedEmployeeId) {
+                $activeEmployee = collect($realEmployees)->firstWhere('id', $selectedEmployeeId);
+            }
+            if (!$activeEmployee) {
+                $activeEmployee = $ownEmployee;
+            }
         }
 
         // Active Employee Info (Synced from Access Control real accounts)
@@ -245,7 +316,8 @@ class EmployeeController extends Controller
             'attendanceLogs',
             'allAttendanceLogs',
             'overviewStats',
-            'monthlyAttendanceSummary'
+            'monthlyAttendanceSummary',
+            'employeeUiPermissions'
         );
     }
 

@@ -20,18 +20,18 @@
             -moz-osx-font-smoothing: grayscale;
         }
         body {
-            background: linear-gradient(135deg, #020617 0%, #0f172a 55%, #450a0a 100%);
+            background: #0b0f19;
             color: #1e293b;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 12px;
+            padding: 16px;
             position: relative;
         }
         ::selection { background: #dc2626; color: #fff; }
 
-        /* Atmospheric Background */
+        /* Minimal Atmospheric Background */
         .bg-glows {
             position: fixed;
             inset: 0;
@@ -41,26 +41,26 @@
         }
         .bg-glow-1 {
             position: absolute;
-            top: -110px;
-            right: -110px;
-            width: 260px;
-            height: 260px;
-            background: rgba(220, 38, 38, 0.15);
+            top: -140px;
+            right: -140px;
+            width: 320px;
+            height: 320px;
+            background: rgba(220, 38, 38, 0.08);
             border-radius: 9999px;
-            filter: blur(55px);
+            filter: blur(75px);
         }
         .bg-glow-2 {
             position: absolute;
-            bottom: -110px;
-            left: -110px;
-            width: 260px;
-            height: 260px;
-            background: rgba(217, 119, 6, 0.10);
+            bottom: -140px;
+            left: -140px;
+            width: 320px;
+            height: 320px;
+            background: rgba(148, 163, 184, 0.05);
             border-radius: 9999px;
-            filter: blur(55px);
+            filter: blur(75px);
         }
 
-        /* Main Container (~30% smaller than original 448px -> 314px) */
+        /* Main Container */
         .login-container {
             width: 100%;
             max-width: 314px;
@@ -68,58 +68,56 @@
             z-index: 10;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 14px;
         }
 
-        /* Brand Header (~30% smaller) */
+        /* Brand Header */
         .brand-header {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 9px;
+            gap: 10px;
             color: #ffffff;
             margin-bottom: 2px;
         }
         .brand-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 11px;
-            background: linear-gradient(135deg, #dc2626 0%, #e11d48 55%, #f59e0b 100%);
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: #dc2626;
+            color: #ffffff;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 6px 14px rgba(127, 29, 29, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 16px;
-            line-height: 1;
+            box-shadow: 0 6px 16px rgba(220, 38, 38, 0.35);
             flex-shrink: 0;
         }
         .brand-title {
-            font-size: 13.5px;
+            font-size: 14px;
             font-weight: 700;
             letter-spacing: -0.01em;
             line-height: 1.2;
         }
         .brand-subtitle {
-            font-size: 8.5px;
-            color: #fca5a5;
+            font-size: 9px;
+            color: #94a3b8;
             font-weight: 500;
-            letter-spacing: 0.02em;
+            letter-spacing: 0.03em;
         }
 
-        /* White Login Card (~30% smaller paddings & radii) */
+        /* Minimal White Login Card */
         .login-card {
             background: #ffffff;
-            border-radius: 20px;
-            padding: 18px 20px;
-            box-shadow: 0 20px 38px -10px rgba(0, 0, 0, 0.45);
-            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 18px;
+            padding: 22px 22px 20px;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(226, 232, 240, 0.85);
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
         }
         .card-title {
-            font-size: 15.5px;
+            font-size: 15px;
             font-weight: 700;
             color: #0f172a;
             letter-spacing: -0.02em;
@@ -202,23 +200,24 @@
         }
         .field-input {
             width: 100%;
-            padding: 8px 11px;
-            border-radius: 11px;
-            border: 1.5px solid #e2e8f0;
+            padding: 9px 12px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
             color: #0f172a;
             font-family: inherit;
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 11.5px;
+            font-weight: 500;
             outline: none;
-            transition: border-color 0.15s ease, box-shadow 0.15s ease;
-            background: #ffffff;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+            background: #f8fafc;
         }
         .field-input.has-toggle {
             padding-right: 34px;
         }
         .field-input:focus {
+            background: #ffffff;
             border-color: #dc2626;
-            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.10);
         }
         .field-input::placeholder {
             color: #94a3b8;
@@ -262,27 +261,27 @@
             cursor: pointer;
         }
 
-        /* Primary Submit Button (~30% smaller) */
+        /* Primary Submit Button */
         .btn-submit {
             width: 100%;
-            padding: 9px 12px;
-            border-radius: 11px;
+            padding: 10px 14px;
+            border-radius: 10px;
             border: 0;
-            background: linear-gradient(90deg, #dc2626 0%, #e11d48 50%, #d97706 100%);
+            background: #dc2626;
             color: #ffffff;
             font-family: inherit;
-            font-size: 11.5px;
+            font-size: 12px;
             font-weight: 700;
-            box-shadow: 0 6px 14px rgba(220, 38, 38, 0.28);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.22);
             cursor: pointer;
-            transition: transform 0.1s ease, filter 0.15s ease;
+            transition: background-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 6px;
         }
-        .btn-submit:hover { filter: brightness(0.95); }
-        .btn-submit:active { transform: scale(0.98); }
+        .btn-submit:hover { background: #b91c1c; box-shadow: 0 6px 16px rgba(220, 38, 38, 0.28); }
+        .btn-submit:active { transform: scale(0.985); }
         .btn-submit:disabled { opacity: 0.75; cursor: wait; }
 
         .divider {
@@ -304,25 +303,30 @@
         }
         .btn-register {
             width: 100%;
-            padding: 8px 10px;
-            border-radius: 11px;
-            border: 1px solid rgba(226, 232, 240, 0.95);
+            padding: 9px 10px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
             background: #ffffff;
             color: #1e293b;
             font-family: inherit;
-            font-size: 10px;
-            font-weight: 700;
+            font-size: 10.5px;
+            font-weight: 600;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 6px;
             cursor: pointer;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
             transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
         }
         .btn-register:hover { background: #f8fafc; border-color: #cbd5e1; }
-        .btn-register:active { transform: scale(0.98); }
-        .btn-register-icon { color: #d97706; font-weight: 700; font-size: 11px; }
+        .btn-register:active { transform: scale(0.985); }
+        .btn-register-icon {
+            color: #dc2626;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
 
         /* Footer (~30% smaller) */
         .login-footer {
@@ -547,7 +551,11 @@
 
         <!-- Mala Street Brand Logo & Subtitle -->
         <div class="brand-header">
-            <div class="brand-icon">🍢</div>
+            <div class="brand-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C11.5 2 11 2.2 10.6 2.6L9.2 4H7C5.3 4 4 5.3 4 7C4 8.7 5.3 10 7 10V11C7 16 10 21 16 22C16.6 22 17 21.6 17 21C17 20.4 16.6 20 16 20C11.8 19.2 9.2 15.6 9 11.7C10.1 11.9 11.2 12 12 12C16.4 12 20 8.4 20 4C20 3.4 19.8 2.8 19.4 2.4C19 2 18.4 1.8 17.8 1.9C16.8 2.1 15.6 2.7 14.5 3.5C13.8 2.6 12.9 2 12 2Z"/>
+                </svg>
+            </div>
             <div>
                 <div class="brand-title">หม่าล่าสตรีท</div>
                 <div class="brand-subtitle">Mala Street POS &amp; Cloud System</div>
@@ -588,7 +596,11 @@
             <!-- Info Alert -->
             @if(session('info'))
                 <div class="alert-info">
-                    <span>ℹ️</span>
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
                     <span>{{ session('info') }}</span>
                 </div>
             @endif
@@ -655,7 +667,14 @@
                 <div class="register-section">
                     <p class="register-hint">พนักงานใหม่ที่ยังไม่มีบัญชีเข้าใช้งาน?</p>
                     <button type="button" onclick="openRegisterModal()" class="btn-register">
-                        <span class="btn-register-icon">👤+</span>
+                        <span class="btn-register-icon" aria-hidden="true">
+                            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                                <circle cx="8.5" cy="7" r="4"/>
+                                <line x1="20" y1="8" x2="20" y2="14"/>
+                                <line x1="23" y1="11" x2="17" y2="11"/>
+                            </svg>
+                        </span>
                         <span>กดลงทะเบียน เพื่อสร้างอีเมลพนักงานบัญชีใหม่</span>
                     </button>
                 </div>
