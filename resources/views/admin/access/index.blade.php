@@ -22,6 +22,19 @@
 
             <!-- Top Right Action Buttons (Matches Image 2) -->
             <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                <!-- Live Thailand Time (พ.ศ.) & Cloud Sync Status Badge -->
+                <div class="flex flex-col items-end justify-center px-3 py-1 rounded-xl bg-slate-900/95 border border-slate-800 text-right shadow-xs">
+                    <div class="flex items-center gap-1.5 text-[11px] font-bold text-amber-400 leading-tight">
+                        <span id="realtime-sync-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="ซิงค์ข้อมูลเรียลไทม์ออนไลน์ปกติ"></span>
+                        <span id="global-thai-date-text">{{ \App\Support\ThaiDate::format(now(), false) }}</span>
+                    </div>
+                    <div class="flex items-center gap-1 text-[10px] text-slate-300 font-medium">
+                        <span>🕒 เวลาไทย:</span>
+                        <span id="global-thai-time-text" class="font-bold text-white tabular-nums">{{ now()->timezone('Asia/Bangkok')->format('H:i:s') }} น.</span>
+                        <span id="clock-sync-source" class="text-[9px] text-emerald-400">(เน็ตซิงค์)</span>
+                    </div>
+                </div>
+
                 <!-- 1. จำลองมุมมองพนักงานที่เลือก -->
                 <button type="button"
                         onclick="openSimulateViewModal()"
