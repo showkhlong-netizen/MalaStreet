@@ -1055,7 +1055,7 @@
                 </div>
 
                 <!-- Customer Info -->
-                <div class="bg-[#F7F8FA] p-3 rounded-2xl border border-slate-200 space-y-2">
+                <div class="bg-gradient-to-b from-[#E5E9F0] via-[#F5F7FA] to-white p-3 rounded-2xl border border-slate-200 space-y-2">
                     <span class="font-bold text-[#101114] block">ข้อมูลผู้สั่งอาหาร</span>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
