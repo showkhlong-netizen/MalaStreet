@@ -39,6 +39,17 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+        @keyframes soft-dim-glow {
+            0%, 100% {
+                box-shadow: 0 0 8px rgba(251, 191, 36, 0.16), 0 2px 6px rgba(0, 0, 0, 0.03);
+            }
+            50% {
+                box-shadow: 0 0 16px rgba(251, 191, 36, 0.28), 0 0 8px rgba(255, 255, 255, 0.6), 0 2px 8px rgba(0, 0, 0, 0.05);
+            }
+        }
+        .animate-soft-dim-glow {
+            animation: soft-dim-glow 3s ease-in-out infinite;
+        }
         /* Custom Chat Button Styles: ปกติสีดำ, วางเมาส์หรือกดเป็นสีเขียวอ่อนสดใส */
         .btn-chat-custom {
             background-color: #101114 !important;
@@ -1055,9 +1066,9 @@
                 </div>
 
                 <!-- Customer Info -->
-                <div class="bg-gradient-to-b from-[#E5E9F0] via-[#F5F7FA] to-white p-3 rounded-2xl border border-slate-200 space-y-2">
+                <div class="bg-gradient-to-r from-slate-100 via-[#FFFBEB] to-[#FFEDD5] border-2 border-white rounded-[18px] p-3 animate-soft-dim-glow shadow-xs space-y-2 transition-all">
                     <div class="flex items-center justify-between gap-2">
-                        <span class="font-bold text-[#101114] block">ข้อมูลผู้สั่งอาหาร</span>
+                        <span class="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug block">ข้อมูลผู้สั่งอาหาร</span>
                         <span id="cust-profile-save-badge" class="text-[10px] font-semibold text-emerald-600 {{ (!empty($savedCustomerProfile['customer_name']) || !empty($savedCustomerProfile['customer_phone'])) ? '' : 'hidden' }}">จำข้อมูลตาม IP แล้ว ✓</span>
                     </div>
                     <div class="grid grid-cols-2 gap-2">

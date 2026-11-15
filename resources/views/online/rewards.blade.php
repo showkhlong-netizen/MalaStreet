@@ -89,10 +89,11 @@
             <!-- ============================================================= -->
             <div class="space-y-1.5">
                 <!-- ข้อความอยู่ข้างบนแถบเบอร์สมาชิก (ตัวอักษรสีดำ หนาพิเศษ ใหญ่ขึ้นเด่นชัดเจน) -->
-                <div class="px-1 flex items-center gap-1.5">
+                <div class="px-1 flex items-center justify-between gap-2">
                     <span class="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug">
-                        โปรใส่เบอร์ติดต่อเพื่อเก็บแต้ม
+                        โปรดใส่เบอร์ติดต่อเพื่อเก็บแต้ม
                     </span>
+                    <span id="rewards-ip-save-badge" class="text-[10px] font-semibold text-emerald-600 {{ !empty($hasIpSavedPhone) ? '' : 'hidden' }}">จำข้อมูลตาม IP แล้ว ✓</span>
                 </div>
 
                 <!-- แถบเบอร์สมาชิก สไตล์เดียวกับ Image 3 พร้อมแสงสลัวๆ เบากว่า และไอคอนเดี่ยวสีแดง -->

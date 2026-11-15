@@ -774,11 +774,28 @@ class OnlineOrderController extends Controller
      */
     public function rewards(Request $request): View
     {
-        $phone = $request->query('phone') ?: session('customer_phone', '089-123-4567');
+        $clientIp = $this->getClientIp($request);
+        $ipProfile = $this->getSavedCustomerProfileByIp($clientIp);
+        $queryPhone = trim((string) $request->query('phone', ''));
+
+        $phone = $queryPhone !== ''
+            ? $queryPhone
+            : (($ipProfile['customer_phone'] ?? '') !== ''
+                ? $ipProfile['customer_phone']
+                : session('customer_phone', '089-123-4567'));
+
         $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
         if (empty($cleanPhone)) {
             $phone = '089-123-4567';
         }
+
+        if ($phone !== '089-123-4567') {
+            session(['customer_phone' => $phone]);
+            if ($queryPhone !== '') {
+                $this->saveCustomerProfileByIp($clientIp, ['customer_phone' => $phone]);
+            }
+        }
+        $hasIpSavedPhone = !empty($ipProfile['customer_phone']) || ($queryPhone !== '' && $queryPhone !== '089-123-4567');
 
         $reward = CustomerReward::firstOrCreate(
             ['customer_phone' => $phone],
@@ -838,7 +855,7 @@ class OnlineOrderController extends Controller
 
         $recentOrders = Order::where('customer_phone', $phone)->orWhere('customer_phone', $cleanPhone)->latest('id')->take(5)->get();
 
-        return view('online.rewards', compact('reward', 'vouchers', 'reviews', 'recentOrders', 'phone'));
+        return view('online.rewards', compact('reward', 'vouchers', 'reviews', 'recentOrders', 'phone', 'hasIpSavedPhone'));
     }
 
     /**
@@ -855,6 +872,7 @@ class OnlineOrderController extends Controller
             ['customer_name' => 'ลูกค้า', 'points' => 0, 'total_stamps' => 0, 'free_skewers_redeemed' => 0]
         );
         session(['customer_phone' => $phone]);
+        $this->saveCustomerProfileByIp($this->getClientIp($request), ['customer_phone' => $phone]);
 
         $vouchers = RewardRedemption::where('customer_phone', $phone)->latest('id')->get();
 
@@ -1381,6 +1399,9 @@ class OnlineOrderController extends Controller
 
         $clientIp = $this->getClientIp($request);
         $profile = $this->saveCustomerProfileByIp($clientIp, $validated);
+        if (!empty($profile['customer_phone'])) {
+            session(['customer_phone' => $profile['customer_phone']]);
+        }
 
         return response()->json([
             'success' => true,
