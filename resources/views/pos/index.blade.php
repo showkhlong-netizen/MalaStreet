@@ -135,140 +135,69 @@
         <!-- ========================================================================= -->
         <div class="lg:col-span-8 xl:col-span-8 space-y-3.5 min-w-0">
 
-            <!-- 1. RESTAURANT HERO & PRICE TRACKER BANNER -->
-            <section class="relative rounded-[22px] overflow-hidden shadow-md border border-[#5A080C] bg-gradient-to-r from-[#3D0307] via-[#6B0910] to-[#260204] p-3 sm:p-3.5">
-                <!-- Subtle Warm Glow Overlay -->
-                <div class="absolute -left-10 -top-10 w-64 h-64 rounded-full bg-rose-600/20 blur-2xl pointer-events-none"></div>
-                <div class="absolute -right-10 -bottom-10 w-64 h-64 rounded-full bg-amber-600/10 blur-2xl pointer-events-none"></div>
+            <!-- 1. RESTAURANT HERO & PRICE TRACKER BANNER (ทั้งแถบสีแดงคือขนาดภาพปก + การ์ดลอยอยู่ข้างบน) -->
+            <section id="pos-hero-banner-section" class="relative rounded-[22px] overflow-hidden shadow-md border border-[#5A080C] bg-[#3D0307] p-3 sm:p-4">
+                <!-- Full-Width Cover Image spanning the ENTIRE red section (1:7 แนวนอน) -->
+                <img id="pos-hero-banner-img"
+                     src="{{ $posHeroImg }}"
+                     alt="ภาพปกหน้าร้าน หม่าล่าสตรีท"
+                     class="absolute inset-0 w-full h-full object-cover select-none pointer-events-none transition-all duration-150 {{ $posHeroImg ? '' : 'hidden' }}"
+                     style="object-position: {{ $posHeroPosX }}% {{ $posHeroPosY }}%; transform: scale({{ $posHeroScale }});">
 
-                <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-3 sm:gap-3.5">
+                <!-- Floating Controls & Price Tracker Row Over the Full-Width Cover Image -->
+                <div class="relative z-10 flex flex-col lg:flex-row items-stretch lg:items-start justify-between gap-3 sm:gap-3.5">
+                    <!-- Open Cover Area + Top-Right 3-Bar Menu Button (ปุ่มสามขีด) -->
+                    <div class="flex-1 flex items-start justify-end pointer-events-auto">
+                        <div class="relative">
+                            <button type="button"
+                                    id="btn-pos-master-settings"
+                                    onclick="togglePosMasterSettingsMenu(event)"
+                                    class="w-9 h-9 rounded-full bg-white/95 hover:bg-white active:scale-95 text-slate-800 shadow-md backdrop-blur-xs flex items-center justify-center transition-all cursor-pointer border border-white/80"
+                                    title="ตั้งค่าหน้าร้าน (แอดมิน)"
+                                    aria-label="ตั้งค่าหน้าร้าน">
+                                <!-- 3-Bar Hamburger Icon (ปุ่มสามขีด) -->
+                                <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" viewBox="0 0 24 24">
+                                    <line x1="4" y1="6.5" x2="20" y2="6.5" />
+                                    <line x1="4" y1="12" x2="20" y2="12" />
+                                    <line x1="4" y1="17.5" x2="20" y2="17.5" />
+                                </svg>
+                            </button>
 
-                    <!-- LEFT: Restaurant Hero & Brand Identity Card (1:7 Horizontal Cover + 3-Bar Settings Menu) -->
-                    <div class="relative w-full lg:flex-1 min-w-0 aspect-[7/1] min-h-[126px] rounded-[18px] overflow-hidden flex flex-col justify-between p-3 bg-gradient-to-br from-[#4A0408] via-[#6B0910] to-[#2B0204] shadow-inner">
-                        <!-- Dynamic Editable Cover Image (1:7 แนวนอน) -->
-                        <img id="pos-hero-banner-img"
-                             src="{{ $posHeroImg }}"
-                             alt="ภาพปกหน้าร้าน หม่าล่าสตรีท"
-                             class="absolute inset-0 w-full h-full object-cover select-none pointer-events-none transition-all duration-150 {{ $posHeroImg ? '' : 'hidden' }}"
-                             style="object-position: {{ $posHeroPosX }}% {{ $posHeroPosY }}%; transform: scale({{ $posHeroScale }});">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none"></div>
-
-                        <!-- Top-Right Action: 3-Bar Menu Button (ปุ่มสามขีด) -->
-                        <div class="relative z-20 flex items-center justify-end pointer-events-auto">
-                            <div class="relative">
-                                <button type="button"
-                                        id="btn-pos-master-settings"
-                                        onclick="togglePosMasterSettingsMenu(event)"
-                                        class="w-9 h-9 rounded-full bg-white/95 hover:bg-white active:scale-95 text-slate-800 shadow-md backdrop-blur-xs flex items-center justify-center transition-all cursor-pointer border border-white/80"
-                                        title="ตั้งค่าหน้าร้าน (แอดมิน)"
-                                        aria-label="ตั้งค่าหน้าร้าน">
-                                    <!-- 3-Bar Hamburger Icon (ปุ่มสามขีด) -->
-                                    <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" viewBox="0 0 24 24">
-                                        <line x1="4" y1="6.5" x2="20" y2="6.5" />
-                                        <line x1="4" y1="12" x2="20" y2="12" />
-                                        <line x1="4" y1="17.5" x2="20" y2="17.5" />
-                                    </svg>
-                                </button>
-
-                                <!-- Dropdown Menu: ตั้งค่าหน้าร้าน (แอดมิน) -->
-                                <div id="pos-master-settings-menu"
-                                     class="hidden fixed w-72 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 p-2 z-[9999] text-slate-800 select-none">
-                                    <div class="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
-                                        <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                                            <span class="w-2 h-2 rounded-full bg-[#E50914] animate-pulse"></span>
-                                            <span>ตั้งค่าหน้าร้าน (แอดมิน)</span>
-                                        </span>
-                                        <span class="text-[10px] text-slate-400 font-mono">ADMIN</span>
-                                    </div>
-
-                                    <div class="py-1 space-y-1">
-                                        <!-- Option 1: แก้ไขภาพปกหน้าร้าน (1:7 แนวนอน) -->
-                                        <button type="button"
-                                                onclick="closePosMasterSettingsMenu(); openPosHeroBannerModal();"
-                                                class="w-full px-3 py-2.5 rounded-xl hover:bg-rose-50/80 active:bg-rose-100/80 flex items-center gap-3 text-left transition cursor-pointer group">
-                                            <div class="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200/80 text-[#D90012] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                                                <svg class="w-4 h-4 text-[#D90012]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                                    <rect x="3" y="3" width="18" height="18" rx="3" />
-                                                    <circle cx="8.5" cy="8.5" r="1.8" fill="currentColor" stroke="none" />
-                                                    <path d="M21 15l-5-5L5 21" />
-                                                </svg>
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <div class="text-xs font-bold text-slate-800 group-hover:text-[#E50914]">แก้ไขภาพปกหน้าร้าน</div>
-                                                <div class="text-[10.5px] text-slate-500 truncate">ปรับตำแหน่ง ซูม และจัดการภาพปก (1:7)</div>
-                                            </div>
-                                            <span class="text-slate-400 text-xs">›</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Bottom Overlapping Store Information White Card (Matches Image 1 Exactly) -->
-                        <div class="relative z-10 bg-white/98 rounded-[16px] sm:rounded-[18px] p-2.5 sm:p-3 shadow-lg border border-white flex items-center gap-2.5 sm:gap-3 max-w-full sm:max-w-fit mt-auto">
-                            <!-- Square Logo Card -->
-                            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-[14px] border-[2px] border-[#8B0000]/15 shadow-sm overflow-hidden shrink-0 bg-[#8B0000]">
-                                <img src="{{ asset('assets/brand/logo-card.png') }}"
-                                     alt="โลโก้ หม่าล่าสตรีท"
-                                     class="w-full h-full object-cover">
-                            </div>
-
-                            <!-- Store Title, Tags & Rating Metadata -->
-                            <div class="min-w-0 flex-1">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FFF8E6] text-[#B54708] border border-[#FEDF89] text-[9.5px] sm:text-[10px] font-bold">
-                                        <span>👑</span>
-                                        <span>ร้านแนะนำ</span>
+                            <!-- Dropdown Menu: ตั้งค่าหน้าร้าน (แอดมิน) -->
+                            <div id="pos-master-settings-menu"
+                                 class="hidden fixed w-72 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 p-2 z-[9999] text-slate-800 select-none">
+                                <div class="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-[#E50914] animate-pulse"></span>
+                                        <span>ตั้งค่าหน้าร้าน (แอดมิน)</span>
                                     </span>
+                                    <span class="text-[10px] text-slate-400 font-mono">ADMIN</span>
                                 </div>
 
-                                <h1 class="text-[13.5px] sm:text-[15px] font-bold text-[#101828] leading-tight truncate mt-0.5">
-                                    ร้านหม่าล่าสตรีท (Mala Street)
-                                </h1>
-
-                                <p class="text-[10px] sm:text-[11px] text-slate-500 truncate mt-0.5">
-                                    หม่าล่า • ปิ้งย่าง • ทานเล่น
-                                </p>
-
-                                <!-- Store Metrics Row -->
-                                <div class="flex items-center gap-2 text-[9.5px] sm:text-[10.5px] text-slate-700 mt-1 whitespace-nowrap overflow-hidden">
-                                    <button type="button" onclick="openStoreInfoModal('reviews')" class="inline-flex items-center gap-1 font-bold text-slate-900 hover:text-[#E50914] transition-colors cursor-pointer">
-                                        <!-- Single-color Gold Star -->
-                                        <svg class="w-3.5 h-3.5 text-[#F59E0B] fill-current shrink-0" viewBox="0 0 20 20">
-                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.175 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/>
-                                        </svg>
-                                        <span>4.9</span>
-                                        <span class="font-normal text-slate-500">(500+ รีวิว)</span>
-                                    </button>
-                                    <span class="text-slate-300">|</span>
-                                    <span class="inline-flex items-center gap-1 font-medium text-slate-800">
-                                        <!-- Single-color Red Vespa Scooter Icon -->
-                                        <svg class="w-4 h-3.5 text-[#E50914] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                            <circle cx="5" cy="17.5" r="2.5" />
-                                            <circle cx="19" cy="17.5" r="2.5" />
-                                            <path d="M5 15c0-2.8 1.8-4.5 4.5-4.5h2.5c.9 0 1.6.4 2.1 1.2l2.6 4.8" />
-                                            <path d="M9.5 16.5h5" />
-                                            <path d="M6.5 10.5h5c.6 0 1 .4 1 1s-.4 1-1 1H7" />
-                                            <path d="M15 6h2.2c.8 0 1.5.5 1.7 1.3l.6 2.2" />
-                                            <circle cx="18.8" cy="7.2" r="1.2" fill="currentColor" />
-                                        </svg>
-                                        <span>ส่งเร็ว ~15–20 นาที</span>
-                                    </span>
-                                    <span class="text-slate-300">|</span>
-                                    <button type="button" onclick="openStoreInfoModal('info')" class="inline-flex items-center gap-1 text-slate-600 hover:text-[#E50914] transition-colors cursor-pointer">
-                                        <!-- Single-color Pushpin Icon Matching Image 2 Exactly -->
-                                        <svg class="w-3.5 h-3.5 text-[#E50914] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M6 3.5h12c.8 0 1.5.7 1.5 1.5v.5c0 .6-.3 1.1-.8 1.4-1.2.7-2 2-2 3.4v.7c0 1.5.9 2.9 2.3 3.6l1.2.6c.7.4 1.1 1.1 1.1 1.9 0 .8-.7 1.5-1.5 1.5H4.2c-.8 0-1.5-.7-1.5-1.5 0-.8.4-1.5 1.1-1.9l1.2-.6c1.4-.7 2.3-2.1 2.3-3.6v-.7c0-1.4-.8-2.7-2-3.4-.5-.3-.8-.8-.8-1.4V5c0-.8.7-1.5 1.5-1.5z" />
-                                            <line x1="12" y1="18" x2="12" y2="23" stroke-width="2.2" stroke-linecap="round" />
-                                        </svg>
-                                        <span>ระยะทาง 2.3 กม.</span>
+                                <div class="py-1 space-y-1">
+                                    <!-- Option 1: แก้ไขภาพปกหน้าร้าน (1:7 แนวนอน) -->
+                                    <button type="button"
+                                            onclick="closePosMasterSettingsMenu(); openPosHeroBannerModal();"
+                                            class="w-full px-3 py-2.5 rounded-xl hover:bg-rose-50/80 active:bg-rose-100/80 flex items-center gap-3 text-left transition cursor-pointer group">
+                                        <div class="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200/80 text-[#D90012] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                            <svg class="w-4 h-4 text-[#D90012]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="3" y="3" width="18" height="18" rx="3" />
+                                                <circle cx="8.5" cy="8.5" r="1.8" fill="currentColor" stroke="none" />
+                                                <path d="M21 15l-5-5L5 21" />
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="text-xs font-bold text-slate-800 group-hover:text-[#E50914]">แก้ไขภาพปกหน้าร้าน</div>
+                                            <div class="text-[10.5px] text-slate-500 truncate">ปรับตำแหน่ง ซูม และจัดการภาพปก (1:7)</div>
+                                        </div>
+                                        <span class="text-slate-400 text-xs">›</span>
                                     </button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- RIGHT: Compact Half-Size Price Tracker Card (เล็กลงกว่าเดิมครึ่งหนึ่ง + 3 ปุ่มรวมปุ่มแดงหน้าร้าน) -->
+                    <!-- RIGHT FLOATING CARD: Compact Half-Size Price Tracker Card (ลอยอยู่ข้างบน) -->
                     <div class="w-full lg:w-[345px] xl:w-[365px] shrink-0">
                         <div class="relative bg-white/98 rounded-[18px] p-3 sm:p-3.5 shadow-lg border border-white flex flex-col justify-between gap-2.5">
                             <!-- Top Info Row -->
