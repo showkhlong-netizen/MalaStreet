@@ -47,12 +47,16 @@ Route::prefix('pos')->name('pos.')->middleware(['auth', EnforceDailyEmployeeLand
     Route::get('/kitchen/chat', [PosController::class, 'kitchenChat'])->name('kitchen.chat');
     Route::post('/kitchen/chat/send', [PosController::class, 'sendAdminChatMessage'])->name('kitchen.chat.send');
     Route::get('/kitchen/chat/messages', [PosController::class, 'getAdminChatMessages'])->name('kitchen.chat.messages');
+    Route::post('/kitchen/chat/toggle-ai', [PosController::class, 'toggleChatAiAutoReply'])->name('kitchen.chat.toggle_ai');
+    Route::post('/kitchen/chat/save-gemini-key', [PosController::class, 'saveChatGeminiKey'])->name('kitchen.chat.save_gemini_key');
 });
 
 // Top-level alias for Kitchen Chat
 Route::get('/kitchen/chat', [PosController::class, 'kitchenChat'])->name('kitchen.chat')->middleware('auth');
 Route::post('/kitchen/chat/send', [PosController::class, 'sendAdminChatMessage'])->name('kitchen.chat.send')->middleware('auth');
 Route::get('/kitchen/chat/messages', [PosController::class, 'getAdminChatMessages'])->name('kitchen.chat.messages')->middleware('auth');
+Route::post('/kitchen/chat/toggle-ai', [PosController::class, 'toggleChatAiAutoReply'])->name('kitchen.chat.toggle_ai')->middleware('auth');
+Route::post('/kitchen/chat/save-gemini-key', [PosController::class, 'saveChatGeminiKey'])->name('kitchen.chat.save_gemini_key')->middleware('auth');
 
 // 2. บริการออนไลน์ สั่งออเดอร์ ชำระในแอปทันที สั่งมารับเองหน้าร้าน (Grab Food 100% Style)
 Route::prefix('order')->name('online.')->group(function () {

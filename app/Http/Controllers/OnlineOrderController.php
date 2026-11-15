@@ -395,7 +395,9 @@ class OnlineOrderController extends Controller
             $messages = collect([$welcome]);
         }
 
-        return view('online.chat', compact('activeOrder', 'recentOrders', 'messages', 'phone'));
+        $aiAutoReplyEnabled = filter_var(Setting::get('chat_ai_auto_reply_enabled', '1'), FILTER_VALIDATE_BOOLEAN);
+
+        return view('online.chat', compact('activeOrder', 'recentOrders', 'messages', 'phone', 'aiAutoReplyEnabled'));
     }
 
     /**
@@ -459,7 +461,7 @@ class OnlineOrderController extends Controller
             'sender' => 'customer',
             'message' => $validated['message'] ?? null,
             'image_url' => $validated['image_url'] ?? null,
-            'is_read' => true,
+            'is_read' => false,
         ]);
 
         // If order exists and has no ip_address, save it now
@@ -467,46 +469,51 @@ class OnlineOrderController extends Controller
             $order->update(['ip_address' => $clientIp]);
         }
 
-        // Smart AI Auto-Reply (Google Gemini Flash with Intelligent Rule-Based Fallback)
+        // Smart AI Auto-Reply (controlled by chat_ai_auto_reply_enabled setting)
+        $aiAutoReplyEnabled = filter_var(Setting::get('chat_ai_auto_reply_enabled', '1'), FILTER_VALIDATE_BOOLEAN);
         $botReply = null;
-        $replyText = $this->generateSmartChatReply(
-            $validated['message'] ?? null,
-            $validated['image_url'] ?? null,
-            $order,
-            $sessionId
-        );
+        if ($aiAutoReplyEnabled) {
+            $replyText = $this->generateSmartChatReply(
+                $validated['message'] ?? null,
+                $validated['image_url'] ?? null,
+                $order,
+                $sessionId,
+                $chatMsg->id
+            );
 
-        if ($replyText) {
-            $botReply = ChatMessage::create([
-                'session_id' => $sessionId,
-                'order_id' => $order ? $order->id : null,
-                'order_no' => $chatMsg->order_no,
-                'customer_name' => $chatMsg->customer_name,
-                'customer_phone' => $chatMsg->customer_phone,
-                'ip_address' => $clientIp,
-                'sender' => 'shop',
-                'message' => $replyText,
-                'is_read' => false,
-            ]);
+            if ($replyText) {
+                $botReply = ChatMessage::create([
+                    'session_id' => $sessionId,
+                    'order_id' => $order ? $order->id : null,
+                    'order_no' => $chatMsg->order_no,
+                    'customer_name' => $chatMsg->customer_name,
+                    'customer_phone' => $chatMsg->customer_phone,
+                    'ip_address' => $clientIp,
+                    'sender' => 'shop',
+                    'message' => $replyText,
+                    'is_read' => false,
+                ]);
+            }
         }
 
         return response()->json([
             'success' => true,
             'message' => $chatMsg,
             'bot_reply' => $botReply,
+            'ai_auto_reply_enabled' => $aiAutoReplyEnabled,
         ]);
     }
 
     /**
      * Generate Smart AI Chat Reply via Google Gemini with intelligent fallback.
      */
-    protected function generateSmartChatReply(?string $userMessage, ?string $imageUrl, ?Order $order, string $sessionId): string
+    protected function generateSmartChatReply(?string $userMessage, ?string $imageUrl, ?Order $order, string $sessionId, ?int $excludeMessageId = null): string
     {
         $apiKey = env('GEMINI_API_KEY') ?: config('services.gemini.key') ?: Setting::get('gemini_api_key');
 
         if (!empty($apiKey) && (!empty($userMessage) || !empty($imageUrl))) {
             try {
-                $aiReply = $this->callGeminiChat($userMessage, $imageUrl, $order, $sessionId, $apiKey);
+                $aiReply = $this->callGeminiChat($userMessage, $imageUrl, $order, $sessionId, $apiKey, $excludeMessageId);
                 if (!empty($aiReply)) {
                     return $aiReply;
                 }
@@ -521,7 +528,7 @@ class OnlineOrderController extends Controller
     /**
      * Call Google Gemini API to generate contextual chat response.
      */
-    protected function callGeminiChat(?string $userMessage, ?string $imageUrl, ?Order $order, string $sessionId, string $apiKey): ?string
+    protected function callGeminiChat(?string $userMessage, ?string $imageUrl, ?Order $order, string $sessionId, string $apiKey, ?int $excludeMessageId = null): ?string
     {
         // 1. Gather Shop Context & Menu samples
         $menuSamples = Product::where('is_available', true)
@@ -531,6 +538,7 @@ class OnlineOrderController extends Controller
 
         // 2. Gather Order Context
         if ($order) {
+            $order->loadMissing('items');
             $itemsSummary = $order->items ? $order->items->map(fn($it) => $it->product_name . ' x' . $it->quantity)->implode(', ') : '-';
             $statusMap = [
                 'pending' => 'รอร้านค้ายืนยันคำสั่งซื้อ',
@@ -541,11 +549,12 @@ class OnlineOrderController extends Controller
                 'cancelled' => '❌ ยกเลิกคำสั่งซื้อแล้ว',
             ];
             $statusText = $statusMap[$order->status] ?? $order->status;
+            $orderTotal = $order->total_amount ?? $order->subtotal ?? 0;
             $orderContext = "ข้อมูลออเดอร์ของลูกค้าที่กำลังคุยอยู่:\n"
                 . "- รหัสออเดอร์: {$order->order_no}\n"
                 . "- หมายเลขคิว: คิวที่ {$order->queue_number}\n"
                 . "- สถานะปัจจุบัน: {$statusText}\n"
-                . "- ยอดรวม: ฿" . number_format($order->total_price, 2) . "\n"
+                . "- ยอดรวม: ฿" . number_format((float) $orderTotal, 2) . "\n"
                 . "- รายการอาหาร: {$itemsSummary}";
         } else {
             $orderContext = "ลูกค้ายังไม่มีออเดอร์ในระบบ กำลังเลือกดูเมนูหรือสอบถามข้อมูลทั่วไป";
@@ -570,8 +579,17 @@ class OnlineOrderController extends Controller
             . "3. หากลูกค้าส่งรูปภาพ (เช่น สลิปโอนเงิน หรือรูปอาหาร) ให้ขอบคุณและแจ้งว่าได้รับภาพเรียบร้อยแล้ว\n"
             . "4. หากลูกค้าถามเรื่องที่เกินขอบเขต หรือต้องการคุยกับเจ้าของร้าน ให้แจ้งว่าทางร้านบันทึกเรื่องไว้ให้แล้ว แอดมินจะติดต่อกลับโดยตรงครับ";
 
-        // 4. Retrieve recent chat history (last 4 messages)
-        $recentMsgs = ChatMessage::where('session_id', $sessionId)
+        // 4. Retrieve recent chat history (last 4 messages, excluding the current message being answered)
+        $historyQuery = ChatMessage::query();
+        if ($order && !empty($order->order_no)) {
+            $historyQuery->where('order_no', $order->order_no);
+        } else {
+            $historyQuery->where('session_id', $sessionId);
+        }
+        if ($excludeMessageId) {
+            $historyQuery->where('id', '<', $excludeMessageId);
+        }
+        $recentMsgs = $historyQuery
             ->orderBy('id', 'desc')
             ->take(4)
             ->get()
@@ -622,7 +640,7 @@ class OnlineOrderController extends Controller
         ];
 
         // 5. Call Gemini API
-        $candidateModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-flash-lite-latest'];
+        $candidateModels = ['gemini-2.5-flash', 'gemini-flash-lite-latest', 'gemini-2.0-flash'];
 
         foreach ($candidateModels as $model) {
             try {

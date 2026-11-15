@@ -90,7 +90,7 @@
                         </div>
                         <div class="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span>เปิดรับออเดอร์ • ตอบกลับทันที</span>
+                            <span>{{ ($aiAutoReplyEnabled ?? true) ? 'เปิดรับออเดอร์ • AI ตอบกลับทันที' : 'เปิดรับออเดอร์ • แอดมินร้านดูแลแชท' }}</span>
                         </div>
                     </div>
                 </div>
@@ -205,7 +205,7 @@
                 @foreach($messages as $msg)
                     @if($msg->sender === 'shop')
                         <!-- Shop Incoming Message Bubble (Left) -->
-                        <div class="flex items-start gap-2 max-w-[85%]">
+                        <div class="flex items-start gap-2 max-w-[85%]" data-msg-id="{{ $msg->id }}">
                             <img src="{{ asset('assets/brand/logo-card.png') }}"
                                  alt="Shop"
                                  class="w-7 h-7 rounded-full object-cover shrink-0 mt-0.5 border border-rose-200">
@@ -224,7 +224,7 @@
                         </div>
                     @else
                         <!-- Customer Outgoing Message Bubble (Right) -->
-                        <div class="flex items-end justify-end gap-1.5 ml-auto max-w-[85%]">
+                        <div class="flex items-end justify-end gap-1.5 ml-auto max-w-[85%]" data-msg-id="{{ $msg->id }}">
                             <div class="relative bg-[#D90012] text-white rounded-2xl rounded-tr-xs px-3.5 py-2 shadow-2xs bubble-tail-right text-[12.5px] leading-relaxed">
                                 <div class="whitespace-pre-line">{!! nl2br(e($msg->message)) !!}</div>
                                 @if($msg->image_url)
@@ -417,14 +417,23 @@
 
         let currentAttachedImageUrl = null;
 
-        // Auto Scroll to Chat Bottom
+        const renderedMessageIds = new Set();
+
+        // Auto Scroll to Chat Bottom & Init Live Poll for Admin Replies
         function scrollToBottom() {
             const container = document.getElementById('chat-messages-container');
             if (container) {
                 container.scrollTop = container.scrollHeight;
             }
         }
-        window.addEventListener('DOMContentLoaded', scrollToBottom);
+        window.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('#messages-list [data-msg-id]').forEach(el => {
+                const id = Number(el.getAttribute('data-msg-id'));
+                if (id) renderedMessageIds.add(id);
+            });
+            scrollToBottom();
+            setInterval(pollCustomerChatMessages, 3000);
+        });
 
         // 1. Send Order Card into Chat
         function sendOrderCardToChat(orderNo, queueNo, total, count, status) {
@@ -566,16 +575,44 @@
                 });
 
                 const data = await response.json();
+                if (data.success && data.message && data.message.id) {
+                    renderedMessageIds.add(Number(data.message.id));
+                }
                 if (data.success && data.bot_reply) {
+                    if (data.bot_reply.id) renderedMessageIds.add(Number(data.bot_reply.id));
                     // Slight delay for realistic chat typing experience
                     setTimeout(() => {
-                        appendShopBubble(data.bot_reply.message);
+                        appendShopBubble(data.bot_reply.message, data.bot_reply.image_url || null, data.bot_reply.id || null);
                         scrollToBottom();
                     }, 650);
                 }
             } catch (err) {
                 console.error('Chat error:', err);
             }
+        }
+
+        async function pollCustomerChatMessages() {
+            try {
+                const url = `{{ route('online.chat.messages') }}?order_no=${encodeURIComponent(ACTIVE_ORDER_NO)}&phone=${encodeURIComponent(CUSTOMER_PHONE)}`;
+                const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                const data = await response.json();
+                if (data.success && Array.isArray(data.messages)) {
+                    let appended = false;
+                    data.messages.forEach(m => {
+                        const msgId = Number(m.id);
+                        if (msgId && !renderedMessageIds.has(msgId)) {
+                            renderedMessageIds.add(msgId);
+                            if (m.sender === 'shop') {
+                                appendShopBubble(m.message || '', m.image_url || null, msgId);
+                                appended = true;
+                            }
+                        }
+                    });
+                    if (appended) {
+                        scrollToBottom();
+                    }
+                }
+            } catch (err) {}
         }
 
         function appendCustomerBubble(text, imageUrl) {
@@ -603,19 +640,24 @@
             list.insertAdjacentHTML('beforeend', html);
         }
 
-        function appendShopBubble(text) {
+        function appendShopBubble(text, imageUrl = null, msgId = null) {
             const list = document.getElementById('messages-list');
             const now = new Date();
             const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
+            const idAttr = msgId ? ` data-msg-id="${msgId}"` : '';
+            const imgHtml = imageUrl
+                ? `<div class="mt-2 rounded-xl overflow-hidden border border-slate-200"><img src="${imageUrl}" alt="ภาพแนบ" class="w-full max-h-48 object-cover cursor-pointer" onclick="viewFullImage('${imageUrl}')"></div>`
+                : '';
 
             const html = `
-                <div class="flex items-start gap-2 max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-150">
+                <div class="flex items-start gap-2 max-w-[85%] animate-in fade-in slide-in-from-bottom-2 duration-150"${idAttr}>
                     <img src="{{ asset('assets/brand/logo-card.png') }}"
                          alt="Shop"
                          class="w-7 h-7 rounded-full object-cover shrink-0 mt-0.5 border border-rose-200">
                     <div class="relative bg-white text-slate-800 rounded-2xl rounded-tl-xs px-3.5 py-2 shadow-2xs border border-slate-200/80 bubble-tail-left text-[12.5px] leading-relaxed">
                         <div class="text-[10px] font-bold text-rose-600 mb-0.5">หม่าล่าสตรีท (ร้านค้า)</div>
                         <div class="whitespace-pre-line">${escapeHtml(text)}</div>
+                        ${imgHtml}
                         <div class="text-[9.5px] text-slate-400 text-right mt-1 font-mono">
                             ${timeStr}
                         </div>

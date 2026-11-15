@@ -90,6 +90,70 @@
                     </div>
                 </div>
 
+                <!-- 1.15 AI AUTO-REPLY SWITCH BAR -->
+                <div class="mt-2.5 px-3 py-2 rounded-xl border transition-all flex items-center justify-between gap-2 {{ ($aiAutoReplyEnabled ?? true) ? 'bg-emerald-50/80 border-emerald-200/90' : 'bg-slate-50 border-slate-200' }}"
+                     id="ai-toggle-banner-inbox">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span id="ai-toggle-icon-inbox" class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 {{ ($aiAutoReplyEnabled ?? true) ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500' }}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3v2.25M14.25 3v2.25M4.5 9.75h15a1.5 1.5 0 011.5 1.5v6a3 3 0 01-3 3H6a3 3 0 01-3-3v-6a1.5 1.5 0 011.5-1.5zm4.5 4.5h.008v.008H9v-.008zm6 0h.008v.008H15v-.008z" />
+                            </svg>
+                        </span>
+                        <div class="min-w-0 leading-tight">
+                            <div class="text-[11.5px] font-extrabold text-slate-900 truncate">ตอบแชท AI อัตโนมัติ</div>
+                            <div id="ai-toggle-subtext-inbox" class="text-[10px] font-semibold truncate {{ ($aiAutoReplyEnabled ?? true) ? 'text-emerald-700' : 'text-slate-500' }}">
+                                @if($aiAutoReplyEnabled ?? true)
+                                    {{ ($hasGeminiKey ?? false) ? 'เปิดอยู่ • Gemini AI + คีย์เวิร์ดสำรอง' : 'เปิดอยู่ • ตอบอัตโนมัติตามคีย์เวิร์ด' }}
+                                @else
+                                    ปิดอยู่ • แอดมินตอบแชทเอง
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button type="button"
+                                onclick="toggleChatGeminiKeyDrawer()"
+                                id="chat-gemini-key-btn"
+                                class="px-2 py-1 rounded-lg border text-[10px] font-bold transition cursor-pointer {{ ($hasGeminiKey ?? false) ? 'bg-white/90 text-slate-600 border-slate-200 hover:bg-white' : 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' }}"
+                                title="ตั้งค่า Gemini API Key">
+                            {{ ($hasGeminiKey ?? false) ? 'แก้ Key' : 'ใส่ Key' }}
+                        </button>
+                        <button type="button"
+                                role="switch"
+                                aria-checked="{{ ($aiAutoReplyEnabled ?? true) ? 'true' : 'false' }}"
+                                id="ai-auto-reply-toggle-inbox"
+                                onclick="toggleAiAutoReply()"
+                                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none {{ ($aiAutoReplyEnabled ?? true) ? 'bg-emerald-600' : 'bg-slate-300' }}"
+                                title="เปิด/ปิดระบบตอบแชทอัตโนมัติด้วย AI">
+                            <span id="ai-auto-reply-knob-inbox"
+                                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out {{ ($aiAutoReplyEnabled ?? true) ? 'translate-x-5' : 'translate-x-0' }}"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 1.16 COLLAPSIBLE GEMINI API KEY DRAWER -->
+                <div id="chat-gemini-key-drawer" class="hidden mt-2 p-2.5 bg-amber-50/90 border border-amber-200 rounded-xl space-y-1.5">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-[10.5px] font-bold text-amber-950">Gemini API Key (ใช้ได้ทั้งแชทและสแกนใบเสร็จ)</span>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="text-[10px] font-semibold text-rose-600 hover:underline shrink-0">
+                            รับ Key ฟรี &rarr;
+                        </a>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <input type="password"
+                               id="chat-gemini-key-input"
+                               placeholder="วาง API Key เช่น AIzaSy..."
+                               class="flex-1 min-w-0 bg-white border border-amber-300 rounded-lg px-2.5 py-1.5 text-[11px] font-mono text-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                        <button type="button"
+                                onclick="saveChatGeminiKey()"
+                                id="chat-gemini-save-btn"
+                                class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-bold transition cursor-pointer shrink-0 active:scale-95">
+                            บันทึก
+                        </button>
+                    </div>
+                </div>
+
                 <!-- 1.2 SEARCH INPUT -->
                 <div class="mt-2.5 relative">
                     <input type="text"
@@ -278,12 +342,22 @@
                         </div>
                     </div>
 
-                    <!-- Right Action: Queue tag -->
-                    @if($activeOrder)
-                        <span class="px-2 py-0.5 rounded-md bg-rose-600 text-white font-black text-xs shrink-0 tracking-tight" id="room-header-queue">
-                            คิว {{ $activeOrder->queue_number }}
-                        </span>
-                    @endif
+                    <!-- Right Action: AI Toggle + Queue tag -->
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button type="button"
+                                onclick="toggleAiAutoReply()"
+                                id="ai-auto-reply-toggle-room"
+                                class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full border text-[10px] font-bold transition cursor-pointer {{ ($aiAutoReplyEnabled ?? true) ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200' }}"
+                                title="เปิด/ปิดตอบแชท AI อัตโนมัติ">
+                            <span id="ai-room-dot" class="w-2 h-2 rounded-full {{ ($aiAutoReplyEnabled ?? true) ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400' }}"></span>
+                            <span id="ai-room-label">{{ ($aiAutoReplyEnabled ?? true) ? 'AI เปิด' : 'AI ปิด' }}</span>
+                        </button>
+                        @if($activeOrder)
+                            <span class="px-2 py-0.5 rounded-md bg-rose-600 text-white font-black text-xs shrink-0 tracking-tight" id="room-header-queue">
+                                คิว {{ $activeOrder->queue_number }}
+                            </span>
+                        @endif
+                    </div>
                 </div>
             </header>
 
@@ -485,6 +559,146 @@
         let currentAttachedImageUrl = null;
         let lastMessageCount = {{ $messages->count() }};
         let currentTabFilter = 'online'; // 'online', 'offline', 'all'
+        let aiAutoReplyEnabled = {{ ($aiAutoReplyEnabled ?? true) ? 'true' : 'false' }};
+        let hasGeminiKey = {{ ($hasGeminiKey ?? false) ? 'true' : 'false' }};
+        let isTogglingAi = false;
+
+        function toggleChatGeminiKeyDrawer() {
+            const drawer = document.getElementById('chat-gemini-key-drawer');
+            if (drawer) {
+                drawer.classList.toggle('hidden');
+                if (!drawer.classList.contains('hidden')) {
+                    document.getElementById('chat-gemini-key-input')?.focus();
+                }
+            }
+        }
+
+        async function saveChatGeminiKey() {
+            const input = document.getElementById('chat-gemini-key-input');
+            const btn = document.getElementById('chat-gemini-save-btn');
+            const keyVal = (input?.value || '').trim();
+            if (!keyVal) {
+                alert('กรุณากรอก Gemini API Key');
+                return;
+            }
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'กำลังบันทึก...';
+            }
+            try {
+                const response = await fetch("{{ route('kitchen.chat.save_gemini_key') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': CSRF_TOKEN,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ gemini_api_key: keyVal })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    hasGeminiKey = true;
+                    if (input) input.value = '';
+                    document.getElementById('chat-gemini-key-drawer')?.classList.add('hidden');
+                    const keyBtn = document.getElementById('chat-gemini-key-btn');
+                    if (keyBtn) {
+                        keyBtn.innerText = 'แก้ Key';
+                        keyBtn.className = 'px-2 py-1 rounded-lg border text-[10px] font-bold transition cursor-pointer bg-white/90 text-slate-600 border-slate-200 hover:bg-white';
+                    }
+                    renderAiToggleUI();
+                    alert(data.message || 'บันทึก Gemini API Key เรียบร้อยแล้ว');
+                } else {
+                    alert(data.message || 'ไม่สามารถบันทึก Key ได้');
+                }
+            } catch (err) {
+                console.error('Save Gemini key error:', err);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'บันทึก';
+                }
+            }
+        }
+
+        async function toggleAiAutoReply() {
+            if (isTogglingAi) return;
+            isTogglingAi = true;
+            const nextState = !aiAutoReplyEnabled;
+
+            try {
+                const response = await fetch("{{ route('kitchen.chat.toggle_ai') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': CSRF_TOKEN,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ enabled: nextState })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    aiAutoReplyEnabled = !!data.enabled;
+                    renderAiToggleUI();
+                } else {
+                    alert(data.message || 'ไม่สามารถเปลี่ยนสถานะ AI ได้');
+                }
+            } catch (err) {
+                console.error('Toggle AI error:', err);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง');
+            } finally {
+                isTogglingAi = false;
+            }
+        }
+
+        function renderAiToggleUI() {
+            const banner = document.getElementById('ai-toggle-banner-inbox');
+            const iconBox = document.getElementById('ai-toggle-icon-inbox');
+            const subtext = document.getElementById('ai-toggle-subtext-inbox');
+            const switchBtn = document.getElementById('ai-auto-reply-toggle-inbox');
+            const knob = document.getElementById('ai-auto-reply-knob-inbox');
+            const roomBtn = document.getElementById('ai-auto-reply-toggle-room');
+            const roomDot = document.getElementById('ai-room-dot');
+            const roomLabel = document.getElementById('ai-room-label');
+
+            if (aiAutoReplyEnabled) {
+                if (banner) banner.className = 'mt-2.5 px-3 py-2 rounded-xl border transition-all flex items-center justify-between gap-2 bg-emerald-50/80 border-emerald-200/90';
+                if (iconBox) iconBox.className = 'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-emerald-600 text-white';
+                if (subtext) {
+                    subtext.className = 'text-[10px] font-semibold truncate text-emerald-700';
+                    subtext.innerText = hasGeminiKey
+                        ? 'เปิดอยู่ • Gemini AI + คีย์เวิร์ดสำรอง'
+                        : 'เปิดอยู่ • ตอบอัตโนมัติตามคีย์เวิร์ด';
+                }
+                if (switchBtn) {
+                    switchBtn.setAttribute('aria-checked', 'true');
+                    switchBtn.className = 'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-emerald-600';
+                }
+                if (knob) {
+                    knob.className = 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out translate-x-5';
+                }
+                if (roomBtn) roomBtn.className = 'inline-flex items-center gap-1.5 px-2 py-1 rounded-full border text-[10px] font-bold transition cursor-pointer bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100';
+                if (roomDot) roomDot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+                if (roomLabel) roomLabel.innerText = 'AI เปิด';
+            } else {
+                if (banner) banner.className = 'mt-2.5 px-3 py-2 rounded-xl border transition-all flex items-center justify-between gap-2 bg-slate-50 border-slate-200';
+                if (iconBox) iconBox.className = 'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-slate-200 text-slate-500';
+                if (subtext) {
+                    subtext.className = 'text-[10px] font-semibold truncate text-slate-500';
+                    subtext.innerText = 'ปิดอยู่ • แอดมินตอบแชทเอง';
+                }
+                if (switchBtn) {
+                    switchBtn.setAttribute('aria-checked', 'false');
+                    switchBtn.className = 'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-slate-300';
+                }
+                if (knob) {
+                    knob.className = 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out translate-x-0';
+                }
+                if (roomBtn) roomBtn.className = 'inline-flex items-center gap-1.5 px-2 py-1 rounded-full border text-[10px] font-bold transition cursor-pointer bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200';
+                if (roomDot) roomDot.className = 'w-2 h-2 rounded-full bg-slate-400';
+                if (roomLabel) roomLabel.innerText = 'AI ปิด';
+            }
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             // Default filter to Online

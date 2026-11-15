@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PriceHistory;
 use App\Models\Product;
+use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -312,6 +313,8 @@ class PosController extends Controller
 
         // Unread count across all orders
         $totalUnread = ChatMessage::where('sender', 'customer')->where('is_read', false)->count();
+        $aiAutoReplyEnabled = filter_var(Setting::get('chat_ai_auto_reply_enabled', '1'), FILTER_VALIDATE_BOOLEAN);
+        $hasGeminiKey = !empty(env('GEMINI_API_KEY')) || !empty(config('services.gemini.key')) || !empty(Setting::get('gemini_api_key'));
 
         return view('pos.kitchen_chat', compact(
             'activeOrder',
@@ -321,8 +324,69 @@ class PosController extends Controller
             'messages',
             'targetIp',
             'totalUnread',
-            'orderNo'
+            'orderNo',
+            'aiAutoReplyEnabled',
+            'hasGeminiKey'
         ));
+    }
+
+    /**
+     * Toggle AI Auto-Reply for customer chat ON / OFF.
+     */
+    public function toggleChatAiAutoReply(Request $request): JsonResponse
+    {
+        $current = filter_var(Setting::get('chat_ai_auto_reply_enabled', '1'), FILTER_VALIDATE_BOOLEAN);
+        $enabled = $request->has('enabled') ? $request->boolean('enabled') : !$current;
+
+        Setting::set('chat_ai_auto_reply_enabled', $enabled ? '1' : '0', 'chat');
+
+        AuditLog::record(
+            'chat',
+            'update',
+            $enabled ? 'เปิดโหมดตอบแชท AI อัตโนมัติ' : 'ปิดโหมดตอบแชท AI อัตโนมัติ (แอดมินตอบเอง)',
+            'chat_ai_auto_reply_enabled',
+            'setting',
+            null,
+            ['enabled' => $enabled]
+        );
+
+        return response()->json([
+            'success' => true,
+            'enabled' => $enabled,
+            'message' => $enabled
+                ? 'เปิดใช้งานตอบแชท AI อัตโนมัติแล้ว'
+                : 'ปิดตอบแชท AI อัตโนมัติแล้ว (แอดมินตอบแชทเอง)',
+        ]);
+    }
+
+    /**
+     * Save Gemini API Key from Kitchen Chat panel into persistent Settings.
+     */
+    public function saveChatGeminiKey(Request $request): JsonResponse
+    {
+        $key = trim((string) $request->input('gemini_api_key', ''));
+        if ($key === '') {
+            return response()->json([
+                'success' => false,
+                'message' => 'กรุณาระบุ Gemini API Key',
+            ], 422);
+        }
+
+        Setting::set('gemini_api_key', $key, 'ai');
+
+        AuditLog::record(
+            'chat',
+            'update',
+            'บันทึก Gemini API Key สำหรับระบบตอบแชท AI',
+            'gemini_api_key',
+            'setting'
+        );
+
+        return response()->json([
+            'success' => true,
+            'has_key' => true,
+            'message' => 'บันทึก Gemini API Key เรียบร้อยแล้ว! ระบบแชท Gemini AI พร้อมใช้งานทันที',
+        ]);
     }
 
     /**
