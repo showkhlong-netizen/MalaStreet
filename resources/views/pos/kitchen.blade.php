@@ -213,11 +213,46 @@
                         <div class="p-4 xl:p-5">
                             <!-- Card Header (ทุกแท็บ/สถานะจัดเรียงอยู่ในบรรทัดเดียวอย่างเป็นระเบียบ) -->
                             <div class="border-b border-slate-100 pb-3.5 mb-3.5 space-y-2">
-                                <!-- Row 1: Queue Number + Order Status Pill -->
-                                <div class="flex items-center justify-between gap-2">
-                                    <span class="text-3xl font-black text-slate-900 tracking-tight leading-none whitespace-nowrap shrink-0">
-                                        {{ $order->queue_number }}
-                                    </span>
+                                <!-- Row 1: Queue Number (เล็กลงกว่าเดิมนิดหน่อย + ตัว G สีแดง) + แท็บ Delivery สีแดงสดข้อความขาว เสมอกันในแถวเดียว + Status Pill -->
+                                @php
+                                    $qRaw = (string) ($order->queue_number ?? '');
+                                    $qFirstChar = mb_substr($qRaw, 0, 1, 'UTF-8');
+                                    $qRestChars = mb_substr($qRaw, 1, null, 'UTF-8');
+                                    $badgeClass = match($orderChannel) {
+                                        'delivery' => 'bg-[#E50914] text-white border-[#E50914] shadow-2xs',
+                                        'online_pickup' => 'bg-emerald-50 text-emerald-800 border-emerald-200',
+                                        default => 'bg-slate-100 text-slate-700 border-slate-200',
+                                    };
+                                @endphp
+                                <div class="flex items-center justify-between gap-2 min-w-0">
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <span class="text-2xl font-black tracking-tight leading-none whitespace-nowrap shrink-0 inline-flex items-baseline">
+                                            @if(strtoupper($qFirstChar) === 'G')
+                                                <span class="text-[#E50914]">{{ $qFirstChar }}</span><span class="text-slate-900">{{ $qRestChars }}</span>
+                                            @else
+                                                <span class="text-slate-900">{{ $qRaw }}</span>
+                                            @endif
+                                        </span>
+
+                                        <span class="h-[24px] px-2.5 rounded-lg border text-[11px] font-extrabold leading-none inline-flex items-center gap-1 whitespace-nowrap shrink-0 {{ $badgeClass }}">
+                                            @if($orderChannel === 'delivery')
+                                                <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                                </svg>
+                                                <span>Delivery</span>
+                                            @elseif($orderChannel === 'online_pickup')
+                                                <svg class="w-3 h-3 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                </svg>
+                                                <span>สั่งรับหน้าร้าน</span>
+                                            @else
+                                                <svg class="w-3 h-3 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                                </svg>
+                                                <span>หน้าร้าน (POS)</span>
+                                            @endif
+                                        </span>
+                                    </div>
 
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black tracking-wide whitespace-nowrap shrink-0 {{ $order->status === 'ready' ? 'bg-emerald-100 text-emerald-800' : ($order->status === 'cooking' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800') }}">
                                         @if($order->status === 'cooking')
@@ -235,45 +270,17 @@
                                     </span>
                                 </div>
 
-                                <!-- Row 2: Order Channel Pill + Relative Time (1 บรรทัดเสมอ) -->
+                                <!-- Row 2: Customer Name + Phone ซ้าย & Relative Time ขวา (1 บรรทัดเสมอ) -->
                                 <div class="flex items-center justify-between gap-2 min-w-0">
-                                    @php
-                                        $badgeClass = match($orderChannel) {
-                                            'delivery' => 'bg-sky-50 text-sky-800 border-sky-200',
-                                            'online_pickup' => 'bg-emerald-50 text-emerald-800 border-emerald-200',
-                                            default => 'bg-slate-100 text-slate-700 border-slate-200',
-                                        };
-                                    @endphp
-                                    <span class="text-[10.5px] font-extrabold px-2 py-0.5 rounded-lg border inline-flex items-center gap-1 whitespace-nowrap shrink-0 {{ $badgeClass }}">
-                                        @if($orderChannel === 'delivery')
-                                            <svg class="w-3 h-3 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-                                            </svg>
-                                            <span>Delivery (จัดส่ง)</span>
-                                        @elseif($orderChannel === 'online_pickup')
-                                            <svg class="w-3 h-3 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                            </svg>
-                                            <span>สั่งรับหน้าร้าน (ออนไลน์)</span>
-                                        @else
-                                            <svg class="w-3 h-3 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                            </svg>
-                                            <span>หน้าร้าน (POS)</span>
+                                    <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5 min-w-0">
+                                        <span class="truncate">{{ $order->customer_name }}</span>
+                                        @if($order->customer_phone)
+                                            <span class="text-slate-400 font-normal whitespace-nowrap shrink-0">({{ $order->customer_phone }})</span>
                                         @endif
-                                    </span>
-
-                                    <span class="text-[10.5px] text-slate-400 font-medium whitespace-nowrap truncate">
+                                    </div>
+                                    <span class="text-[10.5px] text-slate-400 font-medium whitespace-nowrap shrink-0">
                                         {{ $order->created_at->diffForHumans() }}
                                     </span>
-                                </div>
-
-                                <!-- Row 3: Customer Name + Phone (1 บรรทัดเสมอ) -->
-                                <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5 min-w-0">
-                                    <span class="truncate">{{ $order->customer_name }}</span>
-                                    @if($order->customer_phone)
-                                        <span class="text-slate-400 font-normal whitespace-nowrap shrink-0">({{ $order->customer_phone }})</span>
-                                    @endif
                                 </div>
 
                                 <!-- Row 4: Payment Status + IP + Chat Action (แต่ละป้าย 1 บรรทัดเสมอ) -->
