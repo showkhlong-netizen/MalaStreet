@@ -349,8 +349,11 @@ class PosController extends Controller
 
         $completedCount = Order::whereDate('created_at', $today)->where('status', 'completed')->count();
         $unreadChatCount = ChatMessage::where('sender', 'customer')->where('is_read', false)->count();
+        $activeProducts = Product::where('is_available', true)
+            ->orderBy('sort_order')
+            ->get(['id', 'name', 'price_per_stick', 'image_url', 'supports_grill', 'supports_soup']);
 
-        return view('pos.kitchen', compact('activeOrders', 'completedCount', 'unreadChatCount'));
+        return view('pos.kitchen', compact('activeOrders', 'completedCount', 'unreadChatCount', 'activeProducts'));
     }
 
     /**
@@ -715,6 +718,253 @@ class PosController extends Controller
             'success' => true,
             'status' => $order->status,
             'completed_at' => $order->completed_at ? $order->completed_at->toTimeString() : null,
+        ]);
+    }
+
+    /**
+     * Advance or revert a Delivery order across Kitchen 3-step workflow.
+     */
+    public function updateDeliveryKitchenStep(Request $request, Order $order): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => 'required|in:accept,start_cooking,mark_ready,back_to_step1',
+        ]);
+
+        $oldStatus = $order->status;
+        $action = $validated['action'];
+
+        if ($action === 'accept') {
+            $order->kitchen_step = 2;
+            $order->cooking_started_at = null;
+            if (in_array($order->status, ['pending', 'ready'], true)) {
+                $order->status = 'confirmed';
+            }
+        } elseif ($action === 'start_cooking') {
+            $order->kitchen_step = 2;
+            $order->cooking_started_at = $order->cooking_started_at ?: Carbon::now();
+            $order->status = 'cooking';
+        } elseif ($action === 'mark_ready') {
+            $order->kitchen_step = 3;
+            $order->status = 'ready';
+        } elseif ($action === 'back_to_step1') {
+            $order->kitchen_step = 1;
+            $order->cooking_started_at = null;
+            if (in_array($order->status, ['confirmed', 'cooking', 'ready'], true)) {
+                $order->status = 'confirmed';
+            }
+        }
+
+        $order->save();
+
+        AuditLog::record(
+            'kitchen',
+            'status',
+            "อัปเดตขั้นตอน Delivery ({$action})",
+            "คิว {$order->queue_number} ({$order->order_no})",
+            [
+                'order_id' => $order->id,
+                'action' => $action,
+                'old_status' => $oldStatus,
+                'new_status' => $order->status,
+                'kitchen_step' => $order->kitchen_step,
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'kitchen_step' => $order->kitchen_step,
+            'status' => $order->status,
+            'cooking_started_at' => $order->cooking_started_at?->toIso8601String(),
+        ]);
+    }
+
+    /**
+     * Update order items and totals from Kitchen Step 1 Edit modal.
+     */
+    public function updateOrderItems(Request $request, Order $order): JsonResponse
+    {
+        $validated = $request->validate([
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'nullable|integer|exists:products,id',
+            'items.*.product_name' => 'required|string|max:255',
+            'items.*.quantity_sticks' => 'required|integer|min:1|max:999',
+            'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.cooking_type' => 'required|in:grill,soup',
+            'items.*.grill_style' => 'nullable|string|max:50',
+            'items.*.soup_style' => 'nullable|string|max:50',
+            'items.*.spiciness_level' => 'required|in:none,mild,medium,hot',
+            'items.*.special_instructions' => 'nullable|string|max:500',
+            'pickup_time' => 'nullable|string|max:255',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        DB::transaction(function () use ($order, $validated) {
+            $oldQtyByProduct = $order->items()
+                ->whereNotNull('product_id')
+                ->selectRaw('product_id, SUM(quantity_sticks) as qty')
+                ->groupBy('product_id')
+                ->pluck('qty', 'product_id')
+                ->all();
+
+            $newQtyByProduct = [];
+            $subtotal = 0;
+
+            $order->items()->delete();
+            foreach ($validated['items'] as $row) {
+                $qty = (int) $row['quantity_sticks'];
+                $unitPrice = (float) $row['unit_price'];
+                $lineSubtotal = round($qty * $unitPrice, 2);
+                $subtotal += $lineSubtotal;
+
+                if (!empty($row['product_id'])) {
+                    $pid = (int) $row['product_id'];
+                    $newQtyByProduct[$pid] = ($newQtyByProduct[$pid] ?? 0) + $qty;
+                }
+
+                $order->items()->create([
+                    'product_id' => $row['product_id'] ?? null,
+                    'product_name' => trim($row['product_name']),
+                    'quantity_sticks' => $qty,
+                    'unit_price' => $unitPrice,
+                    'subtotal' => $lineSubtotal,
+                    'cooking_type' => $row['cooking_type'],
+                    'grill_style' => $row['cooking_type'] === 'grill' ? ($row['grill_style'] ?? 'brush') : null,
+                    'soup_style' => $row['cooking_type'] === 'soup' ? ($row['soup_style'] ?? 'mala_rich') : null,
+                    'spiciness_level' => $row['spiciness_level'],
+                    'special_instructions' => $row['special_instructions'] ?? null,
+                ]);
+            }
+
+            // Reconcile product stock_sticks delta
+            $allProductIds = array_unique(array_merge(array_keys($oldQtyByProduct), array_keys($newQtyByProduct)));
+            foreach ($allProductIds as $pid) {
+                $delta = ($newQtyByProduct[$pid] ?? 0) - ($oldQtyByProduct[$pid] ?? 0);
+                if ($delta !== 0) {
+                    $product = Product::find($pid);
+                    if ($product) {
+                        $product->stock_sticks = max(0, (int) $product->stock_sticks - $delta);
+                        $product->save();
+                    }
+                }
+            }
+
+            if (array_key_exists('pickup_time', $validated) && $validated['pickup_time'] !== null) {
+                $order->pickup_time = trim($validated['pickup_time']);
+            }
+            if (array_key_exists('notes', $validated)) {
+                $order->notes = $validated['notes'] !== null ? trim($validated['notes']) : null;
+            }
+            $order->subtotal = round($subtotal, 2);
+            $order->total_amount = round(max(0, $subtotal + (float) $order->soup_extra - (float) $order->discount), 2);
+            $order->save();
+        });
+
+        $order->load('items');
+
+        AuditLog::record(
+            'kitchen',
+            'update',
+            'แก้ไขออเดอร์ Delivery ในครัว',
+            "คิว {$order->queue_number} ({$order->order_no}) ยอดใหม่ ฿" . number_format((float) $order->total_amount, 2),
+            ['order_id' => $order->id, 'total_amount' => (float) $order->total_amount]
+        );
+
+        return response()->json([
+            'success' => true,
+            'order' => $order,
+        ]);
+    }
+
+    /**
+     * Cancel/delete an order from Kitchen Step 1 using admin PIN (1122).
+     */
+    public function cancelOrderWithPin(Request $request, Order $order): JsonResponse
+    {
+        $validated = $request->validate([
+            'pin' => 'required|string|max:20',
+        ]);
+
+        if (trim($validated['pin']) !== '1122') {
+            return response()->json([
+                'success' => false,
+                'message' => 'รหัส PIN ไม่ถูกต้อง (กรุณากรอก 1122)',
+            ], 422);
+        }
+
+        if ($order->status !== 'cancelled') {
+            DB::transaction(function () use ($order) {
+                foreach ($order->items as $item) {
+                    if ($item->product_id) {
+                        Product::where('id', $item->product_id)->increment('stock_sticks', (int) $item->quantity_sticks);
+                    }
+                }
+                $order->status = 'cancelled';
+                $order->save();
+            });
+
+            AuditLog::record(
+                'kitchen',
+                'delete',
+                'ยกเลิก/ลบออเดอร์ด้วยรหัส PIN',
+                "คิว {$order->queue_number} ({$order->order_no})",
+                ['order_id' => $order->id]
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'ยกเลิกออเดอร์เรียบร้อยแล้ว',
+        ]);
+    }
+
+    /**
+     * Complete a Delivery order with cash/transfer split payment summary and note.
+     */
+    public function completeDeliveryOrder(Request $request, Order $order): JsonResponse
+    {
+        $validated = $request->validate([
+            'cash_amount' => 'required|numeric|min:0',
+            'transfer_amount' => 'required|numeric|min:0',
+            'delivery_note' => 'nullable|string|max:1000',
+        ]);
+
+        $cashAmount = round((float) $validated['cash_amount'], 2);
+        $transferAmount = round((float) $validated['transfer_amount'], 2);
+
+        $order->paid_cash_amount = $cashAmount;
+        $order->paid_transfer_amount = $transferAmount;
+        $order->delivery_note = isset($validated['delivery_note']) && trim((string) $validated['delivery_note']) !== ''
+            ? trim((string) $validated['delivery_note'])
+            : null;
+        if ($transferAmount > 0 && $cashAmount <= 0) {
+            $order->payment_method = 'promptpay';
+        } elseif ($cashAmount > 0 && $transferAmount <= 0) {
+            $order->payment_method = 'cash';
+        }
+        $order->payment_status = 'paid';
+        $order->paid_at = $order->paid_at ?: Carbon::now();
+        $order->status = 'completed';
+        $order->completed_at = Carbon::now();
+        $order->save();
+
+        AuditLog::record(
+            'kitchen',
+            'status',
+            'ปิดออเดอร์ Delivery สำเร็จ',
+            "คิว {$order->queue_number} (สด ฿" . number_format($cashAmount, 2) . " / โอน ฿" . number_format($transferAmount, 2) . ")",
+            [
+                'order_id' => $order->id,
+                'cash_amount' => $cashAmount,
+                'transfer_amount' => $transferAmount,
+                'delivery_note' => $order->delivery_note,
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'status' => $order->status,
+            'paid_cash_amount' => $cashAmount,
+            'paid_transfer_amount' => $transferAmount,
         ]);
     }
 

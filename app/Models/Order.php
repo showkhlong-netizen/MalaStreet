@@ -13,12 +13,16 @@ class Order extends Model
     protected $guarded = [];
 
     protected $casts = [
+        'kitchen_step' => 'integer',
+        'cooking_started_at' => 'datetime',
         'subtotal' => 'decimal:2',
         'soup_extra' => 'decimal:2',
         'discount' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'cash_received' => 'decimal:2',
         'change_amount' => 'decimal:2',
+        'paid_cash_amount' => 'decimal:2',
+        'paid_transfer_amount' => 'decimal:2',
         'paid_at' => 'datetime',
         'completed_at' => 'datetime',
     ];

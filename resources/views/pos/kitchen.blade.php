@@ -421,42 +421,133 @@
                         </div>
 
                         <!-- 3. Action Buttons & Details Modal Trigger -->
-                        <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center gap-2">
-                            <button onclick="openOrderModal({{ $order->id }})" 
-                                class="p-3 rounded-2xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold shadow-xs transition-colors flex items-center justify-center" title="ดูรายละเอียดแบบขยาย">
-                                <!-- Monochrome Eye / Expand SVG -->
-                                <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                            </button>
+                        @if($orderChannel === 'delivery')
+                            @php
+                                $deliveryStep = (int) ($order->kitchen_step ?: ($order->status === 'ready' ? 3 : ($order->status === 'cooking' ? 2 : 1)));
+                                $cookingStartedTs = $order->cooking_started_at ? $order->cooking_started_at->timestamp : null;
+                            @endphp
+                            <div class="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center gap-2">
+                                @if($deliveryStep === 1)
+                                    <!-- Step 1: 3 ปุ่ม -> 1.รับออร์เดอร์  2.แก้ไข  3.ยกเลิก (ไอคอนวงกลมมีกากบาท) -->
+                                    <button type="button" onclick="updateDeliveryStep({{ $order->id }}, 'accept')"
+                                        class="flex-1 py-2.5 px-3 rounded-2xl bg-[#E50914] hover:bg-[#C8102E] active:scale-[0.99] text-white text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer">
+                                        <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span>รับออร์เดอร์</span>
+                                    </button>
 
-                            @if($order->status === 'pending' || $order->status === 'confirmed')
-                                <button onclick="updateStatus({{ $order->id }}, 'cooking')"
-                                    class="flex-1 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-rose-600/20 transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap">
-                                    <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                                    <button type="button" onclick="openDeliveryEditModal({{ $order->id }})"
+                                        class="py-2.5 px-3.5 rounded-2xl bg-white hover:bg-slate-100 active:scale-[0.99] text-slate-800 border border-slate-200 text-xs font-bold shadow-2xs transition-all flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer">
+                                        <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                        <span>แก้ไข</span>
+                                    </button>
+
+                                    <button type="button" onclick="openPinCancelModal({{ $order->id }})"
+                                        class="w-10 h-10 rounded-full bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-300 hover:border-rose-400 shadow-2xs transition-all flex items-center justify-center shrink-0 cursor-pointer"
+                                        title="ยกเลิกออร์เดอร์">
+                                        <svg class="w-5 h-5 stroke-current" fill="none" stroke-width="1.8" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="9" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 9l-6 6M9 9l6 6" />
+                                        </svg>
+                                    </button>
+                                @elseif($deliveryStep === 2)
+                                    <!-- Step 2: 3 ปุ่ม -> 1.เริ่มทำออร์เดอร์ (สีเขียวเข้มสดใส -> หายเป็นนับถอยหลัง 10 นาที)  2.พร้อมส่ง  3.สี่เหลี่ยมมนย้อนกลับสเต็ป 1 -->
+                                    @if(!$cookingStartedTs)
+                                        <button type="button" onclick="updateDeliveryStep({{ $order->id }}, 'start_cooking')"
+                                            class="flex-1 py-2.5 px-2.5 rounded-2xl bg-[#059669] hover:bg-[#047857] active:scale-[0.99] text-white text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer">
+                                            <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                                            </svg>
+                                            <span>เริ่มทำออร์เดอร์</span>
+                                        </button>
+                                    @else
+                                        <div class="delivery-countdown-pill flex-1 py-2.5 px-2.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-black flex items-center justify-center gap-1.5 whitespace-nowrap"
+                                             data-started-ts="{{ $cookingStartedTs }}"
+                                             data-duration="600">
+                                            <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span class="countdown-text font-mono">10:00</span>
+                                        </div>
+                                    @endif
+
+                                    <button type="button" onclick="updateDeliveryStep({{ $order->id }}, 'mark_ready')"
+                                        class="flex-1 py-2.5 px-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer">
+                                        <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                        </svg>
+                                        <span>พร้อมส่ง</span>
+                                    </button>
+
+                                    <button type="button" onclick="updateDeliveryStep({{ $order->id }}, 'back_to_step1')"
+                                        class="w-10 h-10 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs transition-all flex items-center justify-center shrink-0 cursor-pointer"
+                                        title="ย้อนกลับไปแก้ไขในสเต็ปที่ 1">
+                                        <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 14l-4-4 4-4" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 10h11a4 4 0 110 8h-1" />
+                                        </svg>
+                                    </button>
+                                @else
+                                    <!-- Step 3: 2 ปุ่ม -> 1.ไปที่โลเคชั่น  2.ส่งออร์เดอร์สำเร็จ (เปิดป๊อปอัปสรุปยอดก่อนยืนยันปิดบิล) -->
+                                    <button type="button" onclick="openDeliveryLocation({{ $order->id }})"
+                                        class="flex-1 py-2.5 px-3 rounded-2xl bg-white hover:bg-slate-100 active:scale-[0.99] text-slate-800 border border-slate-200 text-xs font-bold shadow-2xs transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer">
+                                        <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        <span>ไปที่โลเคชั่น</span>
+                                    </button>
+
+                                    <button type="button" onclick="openDeliveryCompleteModal({{ $order->id }})"
+                                        class="flex-1 py-2.5 px-3 rounded-2xl bg-[#059669] hover:bg-[#047857] active:scale-[0.99] text-white text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer">
+                                        <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>ส่งออร์เดอร์สำเร็จ</span>
+                                    </button>
+                                @endif
+                            </div>
+                        @else
+                            <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center gap-2">
+                                <button onclick="openOrderModal({{ $order->id }})" 
+                                    class="p-3 rounded-2xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold shadow-xs transition-colors flex items-center justify-center" title="ดูรายละเอียดแบบขยาย">
+                                    <!-- Monochrome Eye / Expand SVG -->
+                                    <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                     </svg>
-                                    <span>เริ่มย่าง/ต้ม</span>
                                 </button>
-                            @elseif($order->status === 'cooking')
-                                <button onclick="updateStatus({{ $order->id }}, 'ready')"
-                                    class="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap">
-                                    <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                    </svg>
-                                    <span>พร้อมรับแล้ว</span>
-                                </button>
-                            @elseif($order->status === 'ready')
-                                <button onclick="updateStatus({{ $order->id }}, 'completed')"
-                                    class="flex-1 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap">
-                                    <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    <span>ส่งมอบอาหารแล้ว</span>
-                                </button>
-                            @endif
-                        </div>
+
+                                @if($order->status === 'pending' || $order->status === 'confirmed')
+                                    <button onclick="updateStatus({{ $order->id }}, 'cooking')"
+                                        class="flex-1 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-rose-600/20 transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap">
+                                        <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                                        </svg>
+                                        <span>เริ่มย่าง/ต้ม</span>
+                                    </button>
+                                @elseif($order->status === 'cooking')
+                                    <button onclick="updateStatus({{ $order->id }}, 'ready')"
+                                        class="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap">
+                                        <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                        </svg>
+                                        <span>พร้อมรับแล้ว</span>
+                                    </button>
+                                @elseif($order->status === 'ready')
+                                    <button onclick="updateStatus({{ $order->id }}, 'completed')"
+                                        class="flex-1 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap">
+                                        <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span>ส่งมอบอาหารแล้ว</span>
+                                    </button>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                 @endforeach
             </div>
@@ -799,6 +890,7 @@
             if (newOrders && curOrders && newOrders.innerHTML !== curOrders.innerHTML) {
                 curOrders.innerHTML = newOrders.innerHTML;
                 applyKitchenOrderFiltersAndLayout();
+                updateDeliveryCountdowns();
             }
 
             // 2. Update activeOrdersMap JSON in memory
@@ -984,10 +1076,691 @@
         const sortEl = document.getElementById('kitchen-sort-select');
         if (sortEl) sortEl.value = kitchenSortMode;
         applyKitchenOrderFiltersAndLayout();
+        updateDeliveryCountdowns();
     });
+
+    // Update 10-minute cooking countdown bars every second
+    function updateDeliveryCountdowns() {
+        const nowSec = Math.floor(Date.now() / 1000);
+        document.querySelectorAll('.delivery-countdown-pill').forEach((pill) => {
+            const startedTs = Number(pill.dataset.startedTs || 0);
+            const duration = Number(pill.dataset.duration || 600);
+            const textEl = pill.querySelector('.countdown-text');
+            if (!startedTs || !textEl) return;
+
+            const remaining = (startedTs + duration) - nowSec;
+            if (remaining >= 0) {
+                const mins = Math.floor(remaining / 60);
+                const secs = remaining % 60;
+                textEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                pill.className = remaining <= 120
+                    ? 'delivery-countdown-pill flex-1 py-2.5 px-2.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-800 text-xs font-black flex items-center justify-center gap-1.5 whitespace-nowrap'
+                    : 'delivery-countdown-pill flex-1 py-2.5 px-2.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-black flex items-center justify-center gap-1.5 whitespace-nowrap';
+            } else {
+                const over = Math.abs(remaining);
+                const mins = Math.floor(over / 60);
+                const secs = over % 60;
+                textEl.textContent = `+${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                pill.className = 'delivery-countdown-pill flex-1 py-2.5 px-2.5 rounded-2xl bg-rose-50 border border-rose-300 text-rose-700 text-xs font-black flex items-center justify-center gap-1.5 whitespace-nowrap';
+            }
+        });
+    }
+    setInterval(updateDeliveryCountdowns, 1000);
+
+    // === DELIVERY STEP 1 / 2 / 3 WORKFLOW CONTROLLERS ===
+    const kitchenActiveProducts = @json($activeProducts ?? []);
+    const csrfMetaToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    async function updateDeliveryStep(orderId, action) {
+        try {
+            const res = await fetch(`/pos/orders/${orderId}/kitchen-step`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfMetaToken(),
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ action }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                await syncKitchenOrdersSilently(true);
+                updateDeliveryCountdowns();
+            } else {
+                alert(data.message || 'ไม่สามารถอัปเดตขั้นตอนได้');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        }
+    }
+
+    // 1) STEP 1: Edit Delivery Order Items Modal
+    let editingDeliveryOrderId = null;
+    let editingDeliveryItems = [];
+    let editingDeliveryOriginalTotal = 0;
+
+    function openDeliveryEditModal(orderId) {
+        const order = activeOrdersMap[orderId];
+        if (!order) return;
+
+        editingDeliveryOrderId = orderId;
+        editingDeliveryOriginalTotal = Number(order.total_amount || 0);
+        editingDeliveryItems = (order.items || []).map((it) => ({
+            product_id: it.product_id || null,
+            product_name: it.product_name,
+            quantity_sticks: Number(it.quantity_sticks || 1),
+            unit_price: Number(it.unit_price || 0),
+            cooking_type: it.cooking_type || 'grill',
+            grill_style: it.grill_style || 'brush',
+            soup_style: it.soup_style || 'mala_rich',
+            spiciness_level: it.spiciness_level || 'medium',
+            special_instructions: it.special_instructions || '',
+        }));
+
+        document.getElementById('edit-deliv-queue-tag').textContent = order.queue_number || '-';
+        document.getElementById('edit-deliv-order-no').textContent = order.order_no || '-';
+        document.getElementById('edit-deliv-address').value = order.pickup_time || '';
+        document.getElementById('edit-deliv-notes').value = order.notes || '';
+        document.getElementById('edit-deliv-product-search').value = '';
+
+        filterDeliveryEditProducts();
+        renderDeliveryEditItems();
+
+        const modal = document.getElementById('delivery-edit-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeDeliveryEditModal() {
+        const modal = document.getElementById('delivery-edit-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        editingDeliveryOrderId = null;
+    }
+
+    function filterDeliveryEditProducts() {
+        const query = (document.getElementById('edit-deliv-product-search')?.value || '').trim().toLowerCase();
+        const container = document.getElementById('edit-deliv-product-results');
+        if (!container) return;
+
+        const filtered = (kitchenActiveProducts || []).filter((p) =>
+            !query || String(p.name || '').toLowerCase().includes(query)
+        ).slice(0, 18);
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<div class="col-span-full text-center text-xs text-slate-400 py-3">ไม่พบเมนูที่ค้นหา</div>`;
+            return;
+        }
+
+        container.innerHTML = filtered.map((p) => `
+            <button type="button" onclick="addProductToEditingOrder(${p.id})"
+                class="flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl bg-white hover:bg-rose-50/70 border border-slate-200 hover:border-rose-300 text-left transition cursor-pointer">
+                <div class="min-w-0 flex-1">
+                    <div class="text-xs font-bold text-slate-800 truncate">${String(p.name || '').replace(/</g, '&lt;')}</div>
+                    <div class="text-[10.5px] text-slate-500 font-semibold">฿${Number(p.price_per_stick || 0).toFixed(0)}/ไม้</div>
+                </div>
+                <span class="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0">
+                    <svg class="w-3.5 h-3.5 stroke-current" fill="none" stroke-width="2.4" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                </span>
+            </button>
+        `).join('');
+    }
+
+    function addProductToEditingOrder(productId) {
+        const prod = (kitchenActiveProducts || []).find((p) => Number(p.id) === Number(productId));
+        if (!prod) return;
+
+        const existingIdx = editingDeliveryItems.findIndex(
+            (it) => Number(it.product_id) === Number(prod.id) && it.cooking_type === 'grill' && it.spiciness_level === 'medium'
+        );
+        if (existingIdx >= 0) {
+            editingDeliveryItems[existingIdx].quantity_sticks += 1;
+        } else {
+            editingDeliveryItems.push({
+                product_id: prod.id,
+                product_name: prod.name,
+                quantity_sticks: 1,
+                unit_price: Number(prod.price_per_stick || 0),
+                cooking_type: 'grill',
+                grill_style: 'brush',
+                soup_style: 'mala_rich',
+                spiciness_level: 'medium',
+                special_instructions: '',
+            });
+        }
+        renderDeliveryEditItems();
+    }
+
+    function changeEditingItemQty(idx, delta) {
+        if (!editingDeliveryItems[idx]) return;
+        const nextQty = editingDeliveryItems[idx].quantity_sticks + delta;
+        if (nextQty <= 0) {
+            editingDeliveryItems.splice(idx, 1);
+        } else {
+            editingDeliveryItems[idx].quantity_sticks = nextQty;
+        }
+        renderDeliveryEditItems();
+    }
+
+    function removeEditingItem(idx) {
+        editingDeliveryItems.splice(idx, 1);
+        renderDeliveryEditItems();
+    }
+
+    function updateEditingItemField(idx, field, val) {
+        if (!editingDeliveryItems[idx]) return;
+        editingDeliveryItems[idx][field] = val;
+        if (field === 'cooking_type') {
+            renderDeliveryEditItems();
+        }
+    }
+
+    function renderDeliveryEditItems() {
+        const listEl = document.getElementById('edit-deliv-items-list');
+        if (!listEl) return;
+
+        if (editingDeliveryItems.length === 0) {
+            listEl.innerHTML = `<div class="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">ยังไม่มีรายการอาหาร กรุณาค้นหาเมนูด้านบนเพื่อเพิ่ม</div>`;
+        } else {
+            listEl.innerHTML = editingDeliveryItems.map((it, idx) => {
+                const lineTotal = Number(it.unit_price || 0) * Number(it.quantity_sticks || 0);
+                return `
+                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="min-w-0 flex-1">
+                                <div class="text-xs font-extrabold text-slate-900 truncate">${String(it.product_name || '').replace(/</g, '&lt;')}</div>
+                                <div class="text-[11px] text-slate-500">฿${Number(it.unit_price || 0).toFixed(0)}/ไม้ • รวม <strong class="text-slate-900">฿${lineTotal.toFixed(2)}</strong></div>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <button type="button" onclick="changeEditingItemQty(${idx}, -1)"
+                                    class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-bold flex items-center justify-center cursor-pointer">-</button>
+                                <span class="w-7 text-center text-xs font-black text-slate-900">${it.quantity_sticks}</span>
+                                <button type="button" onclick="changeEditingItemQty(${idx}, 1)"
+                                    class="w-7 h-7 rounded-lg bg-slate-900 text-white hover:bg-slate-800 font-bold flex items-center justify-center cursor-pointer">+</button>
+                                <button type="button" onclick="removeEditingItem(${idx})"
+                                    class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-300 flex items-center justify-center ml-1 cursor-pointer" title="ลบรายการนี้">
+                                    <svg class="w-3.5 h-3.5 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-[11px]">
+                            <select onchange="updateEditingItemField(${idx}, 'cooking_type', this.value)"
+                                class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold">
+                                <option value="grill" ${it.cooking_type === 'grill' ? 'selected' : ''}>ปิ้งย่าง</option>
+                                <option value="soup" ${it.cooking_type === 'soup' ? 'selected' : ''}>ต้มน้ำซุป</option>
+                            </select>
+                            <select onchange="updateEditingItemField(${idx}, 'spiciness_level', this.value)"
+                                class="px-2 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold">
+                                <option value="none" ${it.spiciness_level === 'none' ? 'selected' : ''}>ไม่เผ็ด</option>
+                                <option value="mild" ${it.spiciness_level === 'mild' ? 'selected' : ''}>เผ็ดน้อย</option>
+                                <option value="medium" ${it.spiciness_level === 'medium' ? 'selected' : ''}>เผ็ดกลาง</option>
+                                <option value="hot" ${it.spiciness_level === 'hot' ? 'selected' : ''}>เผ็ดมาก</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        const totalSticks = editingDeliveryItems.reduce((acc, it) => acc + Number(it.quantity_sticks || 0), 0);
+        const order = activeOrdersMap[editingDeliveryOrderId] || {};
+        const subtotal = editingDeliveryItems.reduce((acc, it) => acc + (Number(it.unit_price || 0) * Number(it.quantity_sticks || 0)), 0);
+        const newTotal = Math.max(0, subtotal + Number(order.soup_extra || 0) - Number(order.discount || 0));
+
+        document.getElementById('edit-deliv-total-sticks').textContent = `${totalSticks} ไม้`;
+        document.getElementById('edit-deliv-old-total').textContent = `฿${editingDeliveryOriginalTotal.toFixed(2)}`;
+        document.getElementById('edit-deliv-new-total').textContent = `฿${newTotal.toFixed(2)}`;
+    }
+
+    async function saveDeliveryEditModal() {
+        if (!editingDeliveryOrderId) return;
+        if (editingDeliveryItems.length === 0) {
+            alert('กรุณาเพิ่มรายการอาหารอย่างน้อย 1 รายการ');
+            return;
+        }
+        const btn = document.getElementById('btn-save-delivery-edit');
+        if (btn) btn.disabled = true;
+
+        try {
+            const res = await fetch(`/pos/orders/${editingDeliveryOrderId}/items`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfMetaToken(),
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    items: editingDeliveryItems,
+                    pickup_time: document.getElementById('edit-deliv-address')?.value || '',
+                    notes: document.getElementById('edit-deliv-notes')?.value || '',
+                }),
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                closeDeliveryEditModal();
+                await syncKitchenOrdersSilently(true);
+            } else {
+                alert(data.message || 'ไม่สามารถบันทึกการแก้ไขออเดอร์ได้');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    // 2) STEP 1: Admin PIN (1122) Cancel Order Modal
+    let pinCancelOrderId = null;
+
+    function openPinCancelModal(orderId) {
+        pinCancelOrderId = orderId;
+        const input = document.getElementById('kitchen-cancel-pin-input');
+        const err = document.getElementById('kitchen-cancel-pin-error');
+        if (input) input.value = '';
+        if (err) err.classList.add('hidden');
+        const modal = document.getElementById('kitchen-pin-cancel-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => input?.focus(), 60);
+    }
+
+    function closePinCancelModal() {
+        const modal = document.getElementById('kitchen-pin-cancel-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        pinCancelOrderId = null;
+    }
+
+    async function submitPinCancelOrder() {
+        if (!pinCancelOrderId) return;
+        const input = document.getElementById('kitchen-cancel-pin-input');
+        const err = document.getElementById('kitchen-cancel-pin-error');
+        const pin = (input?.value || '').trim();
+
+        if (pin !== '1122') {
+            if (err) {
+                err.textContent = 'รหัส PIN ไม่ถูกต้อง (กรุณากรอก 1122)';
+                err.classList.remove('hidden');
+            }
+            input?.focus();
+            return;
+        }
+
+        const btn = document.getElementById('btn-confirm-pin-cancel');
+        if (btn) btn.disabled = true;
+
+        try {
+            const res = await fetch(`/pos/orders/${pinCancelOrderId}/cancel-with-pin`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfMetaToken(),
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ pin }),
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                closePinCancelModal();
+                await syncKitchenOrdersSilently(true);
+            } else if (err) {
+                err.textContent = data.message || 'ไม่สามารถยกเลิกออเดอร์ได้';
+                err.classList.remove('hidden');
+            }
+        } catch (e) {
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    // 3) STEP 3: Open Delivery Location in Google Maps + Complete Summary Modal
+    function openDeliveryLocation(orderId) {
+        const order = activeOrdersMap[orderId];
+        if (!order) return;
+
+        let rawAddress = String(order.pickup_time || '').replace(/^เดลิเวอรี่\s*:\s*/i, '').trim();
+        if (!rawAddress || rawAddress === 'ทันที (~15-20 นาที)') {
+            rawAddress = String(order.notes || '').trim();
+        }
+        if (!rawAddress) {
+            alert('ไม่พบข้อมูลที่อยู่จัดส่งสำหรับออเดอร์นี้');
+            return;
+        }
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rawAddress)}`;
+        window.open(mapsUrl, '_blank', 'noopener');
+    }
+
+    let completeDeliveryOrderId = null;
+    let completeDeliveryExpectedTotal = 0;
+
+    function openDeliveryCompleteModal(orderId) {
+        const order = activeOrdersMap[orderId];
+        if (!order) return;
+
+        completeDeliveryOrderId = orderId;
+        completeDeliveryExpectedTotal = Number(order.total_amount || 0);
+
+        document.getElementById('complete-deliv-queue-tag').textContent = order.queue_number || '-';
+        document.getElementById('complete-deliv-customer').textContent = order.customer_name || '-';
+        document.getElementById('complete-deliv-total').textContent = `฿${completeDeliveryExpectedTotal.toFixed(2)}`;
+        document.getElementById('complete-deliv-note').value = order.delivery_note || '';
+
+        const isCash = order.payment_method === 'cash';
+        setCompletePaymentMode(isCash ? 'cash' : 'transfer');
+
+        const modal = document.getElementById('delivery-complete-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeDeliveryCompleteModal() {
+        const modal = document.getElementById('delivery-complete-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        completeDeliveryOrderId = null;
+    }
+
+    function setCompletePaymentMode(mode) {
+        const cashInput = document.getElementById('complete-deliv-cash');
+        const transferInput = document.getElementById('complete-deliv-transfer');
+        if (!cashInput || !transferInput) return;
+
+        const total = completeDeliveryExpectedTotal;
+        if (mode === 'cash') {
+            cashInput.value = total.toFixed(2);
+            transferInput.value = '0.00';
+        } else if (mode === 'transfer') {
+            cashInput.value = '0.00';
+            transferInput.value = total.toFixed(2);
+        } else {
+            const halfCash = Math.floor(total / 2);
+            cashInput.value = halfCash.toFixed(2);
+            transferInput.value = Math.max(0, total - halfCash).toFixed(2);
+        }
+
+        document.querySelectorAll('.deliv-pay-mode-btn').forEach((btn) => {
+            const active = btn.dataset.mode === mode;
+            btn.className = active
+                ? 'deliv-pay-mode-btn py-2 px-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold border border-slate-900 transition cursor-pointer whitespace-nowrap'
+                : 'deliv-pay-mode-btn py-2 px-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold border border-slate-200 transition cursor-pointer whitespace-nowrap';
+        });
+
+        recalcCompletePaymentSummary();
+    }
+
+    function onCompletePaymentInput(changedField) {
+        const cashInput = document.getElementById('complete-deliv-cash');
+        const transferInput = document.getElementById('complete-deliv-transfer');
+        if (!cashInput || !transferInput) return;
+
+        const total = completeDeliveryExpectedTotal;
+        if (changedField === 'cash') {
+            const c = Math.max(0, parseFloat(cashInput.value || '0'));
+            if (c <= total) {
+                transferInput.value = Math.max(0, total - c).toFixed(2);
+            }
+        }
+        recalcCompletePaymentSummary();
+    }
+
+    function recalcCompletePaymentSummary() {
+        const cashVal = Math.max(0, parseFloat(document.getElementById('complete-deliv-cash')?.value || '0'));
+        const transferVal = Math.max(0, parseFloat(document.getElementById('complete-deliv-transfer')?.value || '0'));
+        const sum = cashVal + transferVal;
+        const diff = sum - completeDeliveryExpectedTotal;
+
+        const sumEl = document.getElementById('complete-deliv-received-sum');
+        const statusEl = document.getElementById('complete-deliv-match-status');
+        if (sumEl) sumEl.textContent = `฿${sum.toFixed(2)}`;
+        if (statusEl) {
+            if (Math.abs(diff) < 0.01) {
+                statusEl.textContent = 'ยอดตรงตามบิลครบถ้วน ✓';
+                statusEl.className = 'text-[11px] font-bold text-emerald-700';
+            } else if (diff > 0) {
+                statusEl.textContent = `รับเกินบิล +฿${diff.toFixed(2)}`;
+                statusEl.className = 'text-[11px] font-bold text-amber-700';
+            } else {
+                statusEl.textContent = `ยังขาดอีก ฿${Math.abs(diff).toFixed(2)}`;
+                statusEl.className = 'text-[11px] font-bold text-rose-600';
+            }
+        }
+    }
+
+    async function confirmDeliveryCompleteModal() {
+        if (!completeDeliveryOrderId) return;
+        const cashAmount = Math.max(0, parseFloat(document.getElementById('complete-deliv-cash')?.value || '0'));
+        const transferAmount = Math.max(0, parseFloat(document.getElementById('complete-deliv-transfer')?.value || '0'));
+        const note = document.getElementById('complete-deliv-note')?.value || '';
+
+        const btn = document.getElementById('btn-confirm-delivery-complete');
+        if (btn) btn.disabled = true;
+
+        try {
+            const res = await fetch(`/pos/orders/${completeDeliveryOrderId}/complete-delivery`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfMetaToken(),
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    cash_amount: cashAmount,
+                    transfer_amount: transferAmount,
+                    delivery_note: note,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                closeDeliveryCompleteModal();
+                await syncKitchenOrdersSilently(true);
+            } else {
+                alert(data.message || 'ไม่สามารถยืนยันปิดออเดอร์ได้');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
 
     // Background silent sync every 4 seconds - ZERO screen flickering, ZERO iframe reload!
     setInterval(() => syncKitchenOrdersSilently(false), 4000);
 </script>
+
+<!-- MODAL A: Delivery Step 1 - Edit Order Items Modal -->
+<div id="delivery-edit-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/65 backdrop-blur-xs p-4"
+     onclick="if(event.target === this) closeDeliveryEditModal()">
+    <div class="bg-white rounded-3xl max-w-xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+        <!-- Header -->
+        <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-3">
+                <span id="edit-deliv-queue-tag" class="px-3 py-1 rounded-xl bg-slate-900 text-white font-black text-lg">-</span>
+                <div>
+                    <h3 class="font-black text-sm text-slate-900">แก้ไขรายการออร์เดอร์ (Delivery)</h3>
+                    <p class="text-[11px] text-slate-500">เลขบิล: <span id="edit-deliv-order-no" class="font-mono font-bold">-</span></p>
+                </div>
+            </div>
+            <button type="button" onclick="closeDeliveryEditModal()" class="w-8 h-8 rounded-full bg-white border border-slate-200 text-slate-500 hover:text-slate-900 flex items-center justify-center cursor-pointer">
+                <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Top Search Bar to Add More Menu Items -->
+        <div class="px-5 pt-3.5 pb-3 border-b border-slate-100 bg-slate-50/50 space-y-2.5 shrink-0">
+            <div class="relative">
+                <input type="text" id="edit-deliv-product-search" oninput="filterDeliveryEditProducts()"
+                    placeholder="ค้นหาเมนูอาหารเพื่อเพิ่มเข้าออร์เดอร์..."
+                    class="w-full pl-9 pr-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-slate-900">
+                <svg class="w-4 h-4 text-slate-400 stroke-current absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+            <div id="edit-deliv-product-results" class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto pr-0.5"></div>
+        </div>
+
+        <!-- Middle Existing Order Items + Address/Notes -->
+        <div class="p-5 overflow-y-auto flex-1 space-y-3">
+            <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wide">รายการในออร์เดอร์</div>
+            <div id="edit-deliv-items-list" class="space-y-2"></div>
+
+            <div class="pt-2 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-600 block mb-1">ที่อยู่จัดส่ง / นัดรับ</label>
+                    <input type="text" id="edit-deliv-address" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800">
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-600 block mb-1">หมายเหตุออร์เดอร์</label>
+                    <input type="text" id="edit-deliv-notes" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800">
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom New Summary Bar -->
+        <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 space-y-3 shrink-0">
+            <div class="flex items-center justify-between text-xs">
+                <div class="flex items-center gap-3">
+                    <span class="text-slate-500">รวม <strong id="edit-deliv-total-sticks" class="text-slate-900">0 ไม้</strong></span>
+                    <span class="text-slate-400">ยอดเดิม: <span id="edit-deliv-old-total" class="line-through">฿0.00</span></span>
+                </div>
+                <div class="text-right">
+                    <span class="text-slate-600 font-bold mr-1">ยอดใหม่สุทธิ:</span>
+                    <span id="edit-deliv-new-total" class="text-lg font-black text-[#E50914] font-mono">฿0.00</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+                <button type="button" onclick="closeDeliveryEditModal()"
+                    class="py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs cursor-pointer">
+                    ยกเลิก
+                </button>
+                <button type="button" id="btn-save-delivery-edit" onclick="saveDeliveryEditModal()"
+                    class="py-2.5 rounded-2xl bg-[#E50914] hover:bg-[#C8102E] text-white font-bold text-xs shadow-sm cursor-pointer">
+                    บันทึกการแก้ไขออร์เดอร์
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL B: Delivery Step 1 - Admin PIN Cancel Modal (ตรงตามภาพที่ 2 เป๊ะ) -->
+<div id="kitchen-pin-cancel-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4"
+     onclick="if(event.target === this) closePinCancelModal()">
+    <div class="bg-white rounded-[28px] max-w-sm w-full p-6 sm:p-7 shadow-2xl border border-slate-100 text-center">
+        <div class="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-center mx-auto mb-3 text-slate-800">
+            <svg class="w-6 h-6 stroke-current" fill="none" stroke-width="1.9" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.97-3.05 9.15-7 10-3.95-.85-7-5.03-7-10V6l7-3z" />
+                <circle cx="12" cy="11" r="1.3" fill="currentColor" stroke="none" />
+                <path stroke-linecap="round" d="M12 12.3v2.4" />
+            </svg>
+        </div>
+        <h3 class="text-lg font-black text-slate-900 tracking-tight">รหัส PIN ผู้ดูแลระบบ</h3>
+        <p class="text-xs text-slate-500 mt-1">กรอกรหัส PIN (1122) เพื่อยืนยันการลบและยกเลิกออร์เดอร์</p>
+
+        <input type="password"
+               id="kitchen-cancel-pin-input"
+               maxlength="10"
+               inputmode="numeric"
+               autocomplete="off"
+               placeholder="••••"
+               onkeydown="if(event.key === 'Enter'){ event.preventDefault(); submitPinCancelOrder(); }"
+               class="mt-4 w-full px-4 py-3 rounded-2xl border border-slate-300 text-center text-lg font-bold tracking-[0.45em] text-slate-900 focus:outline-none focus:border-slate-900">
+
+        <p id="kitchen-cancel-pin-error" class="hidden text-xs font-bold text-rose-600 mt-2"></p>
+
+        <div class="grid grid-cols-2 gap-3 mt-4">
+            <button type="button" onclick="closePinCancelModal()"
+                class="py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm cursor-pointer">
+                ยกเลิก
+            </button>
+            <button type="button" id="btn-confirm-pin-cancel" onclick="submitPinCancelOrder()"
+                class="py-2.5 rounded-2xl bg-[#0F172A] hover:bg-slate-800 text-white font-bold text-sm shadow-md cursor-pointer">
+                ยืนยัน
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL C: Delivery Step 3 - Complete Delivery Summary & Payment Split Modal -->
+<div id="delivery-complete-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/65 backdrop-blur-xs p-4"
+     onclick="if(event.target === this) closeDeliveryCompleteModal()">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2.5">
+                <span id="complete-deliv-queue-tag" class="px-3 py-1 rounded-xl bg-emerald-600 text-white font-black text-base">-</span>
+                <div>
+                    <h3 class="text-sm font-black text-slate-900">สรุปยอดก่อนยืนยันส่งสำเร็จ</h3>
+                    <p class="text-[11px] text-slate-500">ลูกค้า: <span id="complete-deliv-customer" class="font-bold text-slate-700">-</span></p>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="text-[10.5px] text-slate-400 block">ยอดตามบิล</span>
+                <strong id="complete-deliv-total" class="text-lg font-black text-[#E50914] font-mono">฿0.00</strong>
+            </div>
+        </div>
+
+        <!-- Quick Split Mode Selector -->
+        <div class="grid grid-cols-3 gap-2">
+            <button type="button" data-mode="transfer" onclick="setCompletePaymentMode('transfer')"
+                class="deliv-pay-mode-btn py-2 px-2.5 rounded-xl text-xs font-bold border transition cursor-pointer whitespace-nowrap">
+                เงินโอนทั้งหมด
+            </button>
+            <button type="button" data-mode="cash" onclick="setCompletePaymentMode('cash')"
+                class="deliv-pay-mode-btn py-2 px-2.5 rounded-xl text-xs font-bold border transition cursor-pointer whitespace-nowrap">
+                เงินสดทั้งหมด
+            </button>
+            <button type="button" data-mode="split" onclick="setCompletePaymentMode('split')"
+                class="deliv-pay-mode-btn py-2 px-2.5 rounded-xl text-xs font-bold border transition cursor-pointer whitespace-nowrap">
+                แบ่งจ่าย
+            </button>
+        </div>
+
+        <!-- Cash & Transfer Inputs -->
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="text-[11px] font-bold text-slate-700 block mb-1">เงินสด (บาท)</label>
+                <input type="number" step="0.01" min="0" id="complete-deliv-cash" oninput="onCompletePaymentInput('cash')"
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-slate-900">
+            </div>
+            <div>
+                <label class="text-[11px] font-bold text-slate-700 block mb-1">เงินโอน (บาท)</label>
+                <input type="number" step="0.01" min="0" id="complete-deliv-transfer" oninput="recalcCompletePaymentSummary()"
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-slate-900">
+            </div>
+        </div>
+
+        <div class="px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-600">ยอดรับรวม: <strong id="complete-deliv-received-sum" class="font-mono text-slate-900">฿0.00</strong></span>
+            <span id="complete-deliv-match-status" class="text-[11px] font-bold text-emerald-700">ยอดตรงตามบิลครบถ้วน ✓</span>
+        </div>
+
+        <!-- Delivery Note Textbox -->
+        <div>
+            <label class="text-[11px] font-bold text-slate-700 block mb-1">หมายเหตุ</label>
+            <textarea id="complete-deliv-note" rows="2" placeholder="ระบุหมายเหตุเพิ่มเติม (ถ้ามี)..."
+                class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-slate-900"></textarea>
+        </div>
+
+        <!-- 2 Bottom Buttons -->
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+            <button type="button" onclick="closeDeliveryCompleteModal()"
+                class="py-2.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs cursor-pointer whitespace-nowrap">
+                กลับไปหน้าทำรายการ
+            </button>
+            <button type="button" id="btn-confirm-delivery-complete" onclick="confirmDeliveryCompleteModal()"
+                class="py-2.5 rounded-2xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-sm cursor-pointer whitespace-nowrap">
+                ยืนยันถูกต้องแล้ว
+            </button>
+        </div>
+    </div>
+</div>
 @endpush
 @endsection

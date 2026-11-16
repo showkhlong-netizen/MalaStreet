@@ -52,6 +52,10 @@ Route::prefix('pos')->name('pos.')->middleware(['auth', EnforceDailyEmployeeLand
     Route::get('/settings/webhook-status', [PaymentWebhookController::class, 'getWebhookStatusJson'])->name('settings.webhook_status');
     Route::get('/kitchen', [PosController::class, 'kitchen'])->name('kitchen');
     Route::post('/orders/{order}/status', [PosController::class, 'updateStatus'])->name('order.status');
+    Route::post('/orders/{order}/kitchen-step', [PosController::class, 'updateDeliveryKitchenStep'])->name('order.kitchen_step');
+    Route::post('/orders/{order}/items', [PosController::class, 'updateOrderItems'])->name('order.update_items');
+    Route::post('/orders/{order}/cancel-with-pin', [PosController::class, 'cancelOrderWithPin'])->name('order.cancel_pin');
+    Route::post('/orders/{order}/complete-delivery', [PosController::class, 'completeDeliveryOrder'])->name('order.complete_delivery');
     Route::get('/kitchen/chat', [PosController::class, 'kitchenChat'])->name('kitchen.chat');
     Route::post('/kitchen/chat/send', [PosController::class, 'sendAdminChatMessage'])->name('kitchen.chat.send');
     Route::get('/kitchen/chat/messages', [PosController::class, 'getAdminChatMessages'])->name('kitchen.chat.messages');
