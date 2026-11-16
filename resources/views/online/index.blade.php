@@ -2454,7 +2454,7 @@
         }
 
         async function checkOnlinePaymentOnce(orderNo, queueNumber, expectedAmount) {
-            const statusBaseUrl = @json(url('/order/payment-status'));
+            const statusBaseUrl = '/order/payment-status';
             try {
                 const res = await fetch(`${statusBaseUrl}/${encodeURIComponent(orderNo)}`, {
                     headers: { 'Accept': 'application/json' },
