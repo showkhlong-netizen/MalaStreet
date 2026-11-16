@@ -33,6 +33,7 @@ class PaymentWebhookController extends Controller
             'last_amount' => Setting::get('android_webhook_last_amount', ''),
             'last_message' => Setting::get('android_webhook_last_message', ''),
             'last_matched_order_no' => Setting::get('android_webhook_last_matched_order_no', ''),
+            'last_result' => Setting::get('android_webhook_last_result', ''),
         ];
     }
 
@@ -70,13 +71,23 @@ class PaymentWebhookController extends Controller
         $config = self::getWebhookConfig();
         $rawBody = (string) $request->getContent();
 
+        $decodedFallback = null;
+        if ($rawBody !== '' && empty($request->all())) {
+            $sanitizedJson = preg_replace('/[\r\n\t]+/', ' ', $rawBody);
+            $decoded = json_decode($sanitizedJson, true);
+            if (is_array($decoded)) {
+                $decodedFallback = $decoded;
+            }
+        }
+
         $providedSecret = (string) (
             $request->header('X-Webhook-Secret')
             ?: $request->input('secret')
+            ?: ($decodedFallback['secret'] ?? '')
             ?: $request->query('secret', '')
         );
 
-        // Fallback if Android MacroDroid sent unescaped newlines inside JSON body
+        // Fallback if Android MacroDroid sent raw JSON text
         if ($providedSecret === '' && preg_match('/"secret"\s*:\s*"([^"]+)"/', $rawBody, $sm)) {
             $providedSecret = $sm[1];
         }
@@ -93,7 +104,7 @@ class PaymentWebhookController extends Controller
             ?? $request->input('text')
             ?? $request->input('notification')
             ?? $request->input('body')
-            ?? ''
+            ?? ($decodedFallback['message'] ?? $decodedFallback['text'] ?? $decodedFallback['notification'] ?? $decodedFallback['body'] ?? '')
         ));
 
         if ($rawMessage === '' && preg_match('/"message"\s*:\s*"([\s\S]*)"\s*\}?\s*$/', $rawBody, $mm)) {
@@ -103,18 +114,35 @@ class PaymentWebhookController extends Controller
             $rawMessage = trim($rawBody);
         }
 
-        $explicitAmount = $request->input('amount');
-        $parsedAmount = is_numeric($explicitAmount)
-            ? (float) $explicitAmount
-            : $this->extractAmountFromNotificationText($rawMessage);
+        $explicitAmount = $request->input('amount') ?? ($decodedFallback['amount'] ?? null);
+        $isOutgoingTransfer = $this->looksLikeOutgoingTransfer($rawMessage);
+        $parsedAmount = $isOutgoingTransfer
+            ? null
+            : (is_numeric($explicitAmount)
+                ? (float) $explicitAmount
+                : $this->extractAmountFromNotificationText($rawMessage));
 
         $nowStr = Carbon::now('Asia/Bangkok')->format('d/m/Y H:i:s');
         Setting::set('android_webhook_last_received_at', $nowStr, 'payment');
         Setting::set('android_webhook_last_message', Str::limit($rawMessage ?: ('Amount: ' . $parsedAmount), 250), 'payment');
         Setting::set('android_webhook_last_amount', $parsedAmount !== null ? number_format($parsedAmount, 2, '.', '') : '', 'payment');
 
+        if ($isOutgoingTransfer) {
+            Setting::set('android_webhook_last_matched_order_no', '', 'payment');
+            Setting::set('android_webhook_last_result', 'ℹ️ ข้ามรายการโอนออก (ไม่ใช่เงินเข้าจากลูกค้า)', 'payment');
+
+            return response()->json([
+                'success' => true,
+                'matched' => false,
+                'ignored_outgoing' => true,
+                'message' => 'ข้ามรายการโอนออก (ไม่ใช่เงินเข้า)',
+                'parsed_amount' => null,
+            ]);
+        }
+
         if ($parsedAmount === null || $parsedAmount <= 0) {
             Setting::set('android_webhook_last_matched_order_no', '', 'payment');
+            Setting::set('android_webhook_last_result', '⚠️ ไม่พบตัวเลขยอดเงินในข้อความแจ้งเตือน', 'payment');
 
             return response()->json([
                 'success' => true,
@@ -125,8 +153,9 @@ class PaymentWebhookController extends Controller
         }
 
         $parsedSatang = (int) round($parsedAmount * 100);
+        $mismatchHint = '';
 
-        $matchedOrder = DB::transaction(function () use ($parsedSatang) {
+        $matchedOrder = DB::transaction(function () use ($parsedSatang, $parsedAmount, &$mismatchHint) {
             $candidates = Order::where('payment_method', 'promptpay')
                 ->where('payment_status', 'unpaid')
                 ->whereIn('status', ['pending', 'confirmed'])
@@ -140,6 +169,14 @@ class PaymentWebhookController extends Controller
             });
 
             if (!$found) {
+                if ($candidates->isNotEmpty()) {
+                    $closest = $candidates->sortBy(fn (Order $o) => abs((float) $o->total_amount - $parsedAmount))->first();
+                    $diff = round($parsedAmount - (float) $closest->total_amount, 2);
+                    $diffLabel = $diff < 0
+                        ? ('ขาด ฿' . number_format(abs($diff), 2))
+                        : ('เกิน ฿' . number_format($diff, 2));
+                    $mismatchHint = "⚠️ ยอดไม่ตรง! เงินเข้า ฿" . number_format($parsedAmount, 2) . " แต่บิล {$closest->order_no} (คิว {$closest->queue_number}) ยอด ฿" . number_format((float) $closest->total_amount, 2) . " ({$diffLabel})";
+                }
                 return null;
             }
 
@@ -155,16 +192,20 @@ class PaymentWebhookController extends Controller
 
         if (!$matchedOrder) {
             Setting::set('android_webhook_last_matched_order_no', '', 'payment');
+            $resultMsg = $mismatchHint !== '' ? $mismatchHint : ('ℹ️ ได้รับยอด ฿' . number_format($parsedAmount, 2) . ' (ยังไม่มีบิลรอโอนที่ยอดตรงกัน)');
+            Setting::set('android_webhook_last_result', $resultMsg, 'payment');
 
             return response()->json([
                 'success' => true,
                 'matched' => false,
-                'message' => 'ได้รับแจ้งเตือนแล้ว แต่ยังไม่พบบิลรอโอนที่ยอดตรงกัน',
+                'message' => $resultMsg,
                 'parsed_amount' => round($parsedAmount, 2),
             ]);
         }
 
+        $okResult = "✅ ยอดตรงครบถ้วน! รับเงิน ฿" . number_format((float) $matchedOrder->total_amount, 2) . " -> ยืนยันบิล {$matchedOrder->order_no} (คิว {$matchedOrder->queue_number}) อัตโนมัติแล้ว";
         Setting::set('android_webhook_last_matched_order_no', $matchedOrder->order_no, 'payment');
+        Setting::set('android_webhook_last_result', $okResult, 'payment');
 
         AuditLog::record(
             'payment',
@@ -208,6 +249,18 @@ class PaymentWebhookController extends Controller
             'queue_number' => $order->queue_number,
             'total_amount' => (float) $order->total_amount,
         ]);
+    }
+
+    private function looksLikeOutgoingTransfer(string $text): bool
+    {
+        if ($text === '') {
+            return false;
+        }
+        $hasIncomingKeyword = (bool) preg_match('/(?:เงินเข้า|ได้รับ|รับเงิน|เข้าพร้อมเพย์|เข้าบัญชี|received)/u', $text);
+        if ($hasIncomingKeyword) {
+            return false;
+        }
+        return (bool) preg_match('/(?:โอนเงินสำเร็จ|โอนออก|ชำระเงินสำเร็จ|จ่ายบิล|หักบัญชี)/u', $text);
     }
 
     /**

@@ -212,5 +212,32 @@ class AndroidPaymentWebhookTest extends TestCase
         ]);
 
         $posOrderRes->assertStatus(200)->assertJson(['success' => true]);
+
+        // 6. Outgoing transfer message is ignored, and underpaid message reports exact diff
+        $unpaid57 = Order::create([
+            'order_no' => 'MS-ONL-20261116-100-MMT',
+            'queue_number' => 'G98',
+            'order_type' => 'online',
+            'customer_name' => 'เทสต์ยอดไม่ครบ',
+            'status' => 'pending',
+            'payment_method' => 'promptpay',
+            'payment_status' => 'unpaid',
+            'subtotal' => 57,
+            'total_amount' => 57,
+        ]);
+
+        $config = PaymentWebhookController::getWebhookConfig();
+        $this->postJson('/webhooks/android-payment', [
+            'secret' => $config['secret'],
+            'message' => 'K PLUS: โอนเงินสำเร็จ 57.00 บาท ไปยัง นายสมชาย',
+        ])->assertStatus(200)->assertJson(['matched' => false, 'ignored_outgoing' => true]);
+
+        $mismatchRes = $this->postJson('/webhooks/android-payment', [
+            'secret' => $config['secret'],
+            'message' => 'K PLUS: เงินเข้าบัญชี จำนวน 50.00 บาท',
+        ]);
+        $mismatchRes->assertStatus(200)->assertJson(['matched' => false, 'parsed_amount' => 50]);
+        $this->assertStringContainsString('ขาด ฿7.00', (string) $mismatchRes->json('message'));
+        $this->assertEquals('unpaid', $unpaid57->fresh()->payment_status);
     }
 }

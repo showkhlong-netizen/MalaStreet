@@ -160,6 +160,9 @@
                         @if(!empty($wh['last_received_at']))
                             ล่าสุด: {{ $wh['last_received_at'] }} (฿{{ $wh['last_amount'] ?: '-' }})
                             @if(!empty($wh['last_matched_order_no'])) • จับคู่บิล {{ $wh['last_matched_order_no'] }} @endif
+                            @if(!empty($wh['last_result']))
+                                <span class="block font-bold {{ str_contains($wh['last_result'], '✅') ? 'text-emerald-700' : 'text-amber-700' }}">{{ $wh['last_result'] }}</span>
+                            @endif
                             @if(!empty($wh['last_message']))
                                 <span class="block text-[10px] text-slate-500 truncate">ข้อความ: {{ $wh['last_message'] }}</span>
                             @endif

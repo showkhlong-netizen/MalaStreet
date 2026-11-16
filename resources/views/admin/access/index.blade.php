@@ -4392,7 +4392,11 @@
         }
     }
 
-    async function confirmCashierPendingOrder(orderId) {
+    async function confirmCashierPendingOrder(orderId, btnEl = null) {
+        if (btnEl) {
+            btnEl.disabled = true;
+            btnEl.textContent = 'กำลังยืนยัน...';
+        }
         try {
             const res = await fetch(`/pos/orders/${orderId}/status`, {
                 method: 'POST',
@@ -4406,9 +4410,16 @@
             const data = await res.json();
             if (res.ok && data.success) {
                 showToast('✅ ยืนยันรับยอดโอนแล้ว หน้าลูกค้าจะเด้งสำเร็จใน 1 วินาที');
-                refreshCashierWebhookStatus();
+                await refreshCashierWebhookStatus();
+            } else if (btnEl) {
+                btnEl.disabled = false;
+                btnEl.textContent = 'ยืนยันรับเงิน';
             }
         } catch (e) {
+            if (btnEl) {
+                btnEl.disabled = false;
+                btnEl.textContent = 'ยืนยันรับเงิน';
+            }
             showToast('ยืนยันไม่สำเร็จ');
         }
     }
@@ -4431,8 +4442,8 @@
                 </div>
                 <div class="flex items-center gap-1.5 shrink-0">
                     <span class="font-mono font-black text-rose-600">฿${Number(o.total_amount).toFixed(2)}</span>
-                    <button type="button" onclick="confirmCashierPendingOrder(${o.id})"
-                            class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] cursor-pointer">
+                    <button type="button" onclick="confirmCashierPendingOrder(${o.id}, this)"
+                            class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] cursor-pointer">
                         ยืนยันรับเงิน
                     </button>
                 </div>
@@ -4455,8 +4466,10 @@
             const cfg = data?.config;
             if (!cfg || !cfg.last_received_at) return;
             const matchPart = cfg.last_matched_order_no ? ` • จับคู่บิล ${cfg.last_matched_order_no}` : '';
+            const resCls = String(cfg.last_result || '').includes('✅') ? 'text-emerald-700' : 'text-amber-700';
+            const resPart = cfg.last_result ? `<span class="block font-bold ${resCls}">${String(cfg.last_result).replace(/</g, '&lt;')}</span>` : '';
             const msgPart = cfg.last_message ? `<span class="block text-[10px] text-slate-500 truncate">ข้อความ: ${String(cfg.last_message).replace(/</g, '&lt;')}</span>` : '';
-            statusEl.innerHTML = `ล่าสุด: ${cfg.last_received_at} (฿${cfg.last_amount || '-'})${matchPart}${msgPart}`;
+            statusEl.innerHTML = `ล่าสุด: ${cfg.last_received_at} (฿${cfg.last_amount || '-'})${matchPart}${resPart}${msgPart}`;
         } catch (e) {}
     }
 
