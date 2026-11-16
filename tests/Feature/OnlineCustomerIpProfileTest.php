@@ -97,4 +97,59 @@ class OnlineCustomerIpProfileTest extends TestCase
         $pageRes->assertSee('value="คุณพลอย"', false);
         $pageRes->assertSee('value="082-333-4444"', false);
     }
+
+    public function test_get_customer_profile_checks_ip_on_entry_and_recovers_via_cloud_device_key_when_ip_changes(): void
+    {
+        $proxyHeaders = [
+            'REMOTE_ADDR' => '10.0.0.5',
+            'HTTP_X_REAL_IP' => '10.20.30.40',
+            'HTTP_X_FORWARDED_FOR' => '10.0.0.5, 183.88.52.188',
+        ];
+
+        $saveRes = $this->withServerVariables($proxyHeaders)->postJson('/order/customer-profile', [
+            'customer_name' => 'คุณต้น',
+            'customer_phone' => '086-555-7777',
+            'customer_address' => '88/9 หมู่บ้านสุขใจ',
+            'device_key' => 'ms_device_cloud_test_01',
+        ]);
+        $saveRes->assertStatus(200)->assertJsonFragment([
+            'success' => true,
+            'ip' => '183.88.52.188',
+        ]);
+
+        // Immediate IP check on /order entry from same IP behind Render proxy
+        $checkSameIp = $this->withServerVariables($proxyHeaders)
+            ->getJson('/order/customer-profile?device_key=ms_device_cloud_test_01');
+        $checkSameIp->assertStatus(200)->assertJson([
+            'success' => true,
+            'ip' => '183.88.52.188',
+            'found' => true,
+            'profile' => [
+                'customer_name' => 'คุณต้น',
+                'customer_phone' => '086-555-7777',
+                'customer_address' => '88/9 หมู่บ้านสุขใจ',
+            ],
+        ]);
+
+        // Customer switches to 5G/new IP -> still recovers from Cloud DB via device_key and re-binds to new IP
+        $newIpHeaders = ['REMOTE_ADDR' => '49.228.10.25'];
+        $checkNewIp = $this->withServerVariables($newIpHeaders)
+            ->getJson('/order/customer-profile?device_key=ms_device_cloud_test_01');
+        $checkNewIp->assertStatus(200)->assertJson([
+            'success' => true,
+            'ip' => '49.228.10.25',
+            'found' => true,
+            'profile' => [
+                'customer_name' => 'คุณต้น',
+                'customer_phone' => '086-555-7777',
+                'customer_address' => '88/9 หมู่บ้านสุขใจ',
+            ],
+        ]);
+
+        // Subsequent /order load on the new IP even without device_key query now resolves directly by new IP
+        $reloadedNewIp = $this->withServerVariables($newIpHeaders)->get('/order');
+        $reloadedNewIp->assertStatus(200);
+        $reloadedNewIp->assertSee('value="คุณต้น"', false);
+        $reloadedNewIp->assertSee('value="086-555-7777"', false);
+    }
 }

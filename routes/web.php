@@ -78,6 +78,7 @@ Route::prefix('order')->name('online.')->group(function () {
     Route::get('/', [OnlineOrderController::class, 'index'])->name('index');
     Route::get('/hub', [OnlineOrderController::class, 'hub'])->name('hub');
     Route::get('/checkout', [OnlineOrderController::class, 'checkout'])->name('checkout');
+    Route::get('/customer-profile', [OnlineOrderController::class, 'getCustomerProfile'])->name('customer_profile.show');
     Route::post('/customer-profile', [OnlineOrderController::class, 'saveCustomerProfile'])->name('customer_profile.save');
     Route::post('/submit', [OnlineOrderController::class, 'storeOrder'])->name('submit');
     Route::get('/payment-status/{orderNo}', [PaymentWebhookController::class, 'checkOrderPaymentStatus'])->name('payment_status');

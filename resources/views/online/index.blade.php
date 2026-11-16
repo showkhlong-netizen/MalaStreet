@@ -1805,9 +1805,121 @@
         document.addEventListener('DOMContentLoaded', () => {
             updateCartUI();
             initAutoSaveCustomerProfileByIp();
+            verifyCustomerProfileByIpOnLoad();
         });
 
         let customerProfileSaveTimer = null;
+        let customerProfileDirty = false;
+        const CUST_DEVICE_KEY_STORAGE = 'mala_customer_device_key';
+        const CUST_PROFILE_BACKUP_STORAGE = 'mala_customer_profile_backup';
+
+        function getOrCreateCustomerDeviceKey() {
+            let key = '';
+            try {
+                key = localStorage.getItem(CUST_DEVICE_KEY_STORAGE) || '';
+            } catch (e) {}
+            if (!key) {
+                const match = document.cookie.match(/(?:^|;\s*)mala_device_key=([^;]+)/);
+                if (match && match[1]) key = decodeURIComponent(match[1]);
+            }
+            if (!key) {
+                key = 'ms_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+            }
+            try {
+                localStorage.setItem(CUST_DEVICE_KEY_STORAGE, key);
+            } catch (e) {}
+            document.cookie = `mala_device_key=${encodeURIComponent(key)}; path=/; max-age=${60 * 60 * 24 * 180}; SameSite=Lax`;
+            return key;
+        }
+
+        function saveCustomerProfileBackupLocal(profile) {
+            if (!profile) return;
+            try {
+                if (profile.customer_name || profile.customer_phone || profile.customer_address) {
+                    localStorage.setItem(CUST_PROFILE_BACKUP_STORAGE, JSON.stringify({
+                        customer_name: profile.customer_name || '',
+                        customer_phone: profile.customer_phone || '',
+                        customer_address: profile.customer_address || '',
+                    }));
+                }
+            } catch (e) {}
+        }
+
+        function loadCustomerProfileBackupLocal() {
+            try {
+                const raw = localStorage.getItem(CUST_PROFILE_BACKUP_STORAGE);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (parsed && (parsed.customer_name || parsed.customer_phone || parsed.customer_address)) {
+                    return parsed;
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        function applyCustomerProfileToFields(profile) {
+            if (!profile) return;
+            const nameEl = document.getElementById('cust-name');
+            const phoneEl = document.getElementById('cust-phone');
+            const addrEl = document.getElementById('cust-address');
+            const badge = document.getElementById('cust-profile-save-badge');
+
+            if (nameEl && !customerProfileDirty && !nameEl.value.trim() && profile.customer_name) {
+                nameEl.value = profile.customer_name;
+            }
+            if (phoneEl && !customerProfileDirty && !phoneEl.value.trim() && profile.customer_phone) {
+                phoneEl.value = profile.customer_phone;
+            }
+            if (addrEl && !customerProfileDirty && !addrEl.value.trim() && profile.customer_address) {
+                addrEl.value = profile.customer_address;
+            }
+            if (badge && ((nameEl && nameEl.value.trim()) || (phoneEl && phoneEl.value.trim()))) {
+                badge.textContent = 'จำข้อมูลตาม IP แล้ว ✓';
+                badge.classList.remove('hidden');
+            }
+        }
+
+        async function verifyCustomerProfileByIpOnLoad() {
+            const deviceKey = getOrCreateCustomerDeviceKey();
+            try {
+                const url = '{{ route("online.customer_profile.show") }}?device_key=' + encodeURIComponent(deviceKey);
+                const res = await fetch(url, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Device-Key': deviceKey,
+                    },
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data && data.success && data.profile && data.found) {
+                    applyCustomerProfileToFields(data.profile);
+                    saveCustomerProfileBackupLocal(data.profile);
+                    return;
+                }
+            } catch (e) {}
+
+            // Fallback: if current fields already have server-rendered values or local backup, sync up to Cloud DB for current IP
+            const nameVal = document.getElementById('cust-name')?.value.trim() || '';
+            const phoneVal = document.getElementById('cust-phone')?.value.trim() || '';
+            const addrVal = document.getElementById('cust-address')?.value.trim() || '';
+            if (nameVal || phoneVal || addrVal) {
+                saveCustomerProfileBackupLocal({
+                    customer_name: nameVal,
+                    customer_phone: phoneVal,
+                    customer_address: addrVal,
+                });
+                persistCustomerProfileNow();
+                return;
+            }
+
+            const localBackup = loadCustomerProfileBackupLocal();
+            if (localBackup) {
+                applyCustomerProfileToFields(localBackup);
+                persistCustomerProfileNow();
+            }
+        }
 
         function initAutoSaveCustomerProfileByIp() {
             const fields = ['cust-name', 'cust-phone', 'cust-address']
@@ -1816,10 +1928,12 @@
 
             fields.forEach((el) => {
                 el.addEventListener('input', () => {
+                    customerProfileDirty = true;
                     clearTimeout(customerProfileSaveTimer);
                     customerProfileSaveTimer = setTimeout(persistCustomerProfileNow, 350);
                 });
                 el.addEventListener('change', () => {
+                    customerProfileDirty = true;
                     clearTimeout(customerProfileSaveTimer);
                     persistCustomerProfileNow();
                 });
@@ -1836,24 +1950,34 @@
             const address = document.getElementById('cust-address')?.value.trim() || '';
             const badge = document.getElementById('cust-profile-save-badge');
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            const deviceKey = getOrCreateCustomerDeviceKey();
+
+            saveCustomerProfileBackupLocal({
+                customer_name: name,
+                customer_phone: phone,
+                customer_address: address,
+            });
 
             try {
                 const res = await fetch('{{ route("online.customer_profile.save") }}', {
                     method: 'POST',
+                    keepalive: true,
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': csrfToken,
+                        'X-Device-Key': deviceKey,
                     },
                     body: JSON.stringify({
                         customer_name: name,
                         customer_phone: phone,
                         customer_address: address,
+                        device_key: deviceKey,
                     }),
                 });
                 if (res.ok && badge) {
                     if (name || phone || address) {
-                        badge.textContent = 'บันทึกล่าสุดตาม IP แล้ว ✓';
+                        badge.textContent = 'จำข้อมูลตาม IP แล้ว ✓';
                         badge.classList.remove('hidden');
                     } else {
                         badge.classList.add('hidden');
@@ -2323,6 +2447,9 @@
                 return;
             }
             updateCartUI();
+            if (!document.getElementById('cust-name')?.value.trim() || !document.getElementById('cust-phone')?.value.trim()) {
+                verifyCustomerProfileByIpOnLoad();
+            }
             document.getElementById('checkout-modal').classList.remove('hidden');
         }
 

@@ -154,7 +154,10 @@ class OnlineOrderController extends Controller
             ->take(6)
             ->get();
 
-        $savedCustomerProfile = $this->getSavedCustomerProfileByIp($this->getClientIp($request));
+        $savedCustomerProfile = $this->getSavedCustomerProfileByIp(
+            $this->getClientIp($request),
+            $this->resolveCustomerDeviceKey($request)
+        );
         $promptPaySettings = PosController::getStorePromptPaySettings();
 
         return view('online.index', compact('categories', 'featuredProducts', 'recommendedProducts', 'heroBannerImage', 'heroBannerPosition', 'heroBannerHistory', 'profileLogoImage', 'profileLogoPosition', 'profileLogoHistory', 'showPromoBanner', 'savedCustomerProfile', 'promptPaySettings'));
@@ -332,7 +335,7 @@ class OnlineOrderController extends Controller
                 'customer_name' => $validated['customer_name'],
                 'customer_phone' => $validated['customer_phone'],
                 'customer_address' => (string) $request->input('customer_address', ''),
-            ]);
+            ], $this->resolveCustomerDeviceKey($request));
 
             foreach ($orderItemsData as $itemData) {
                 $order->items()->create($itemData);
@@ -1433,7 +1436,24 @@ class OnlineOrderController extends Controller
     }
 
     /**
-     * Auto-save latest customer order profile keyed by client device IP.
+     * Immediately inspect client IP (and Cloud device backup) when entering /order.
+     */
+    public function getCustomerProfile(Request $request): JsonResponse
+    {
+        $clientIp = $this->getClientIp($request);
+        $deviceKey = $this->resolveCustomerDeviceKey($request);
+        $profile = $this->getSavedCustomerProfileByIp($clientIp, $deviceKey);
+
+        return response()->json([
+            'success' => true,
+            'ip' => $clientIp,
+            'found' => !empty($profile['customer_name']) || !empty($profile['customer_phone']) || !empty($profile['customer_address']),
+            'profile' => $profile,
+        ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    }
+
+    /**
+     * Auto-save latest customer order profile keyed by client device IP (and Cloud device key).
      */
     public function saveCustomerProfile(Request $request): JsonResponse
     {
@@ -1441,19 +1461,39 @@ class OnlineOrderController extends Controller
             'customer_name' => 'nullable|string|max:100',
             'customer_phone' => 'nullable|string|max:30',
             'customer_address' => 'nullable|string|max:500',
+            'device_key' => 'nullable|string|max:120',
         ]);
 
         $clientIp = $this->getClientIp($request);
-        $profile = $this->saveCustomerProfileByIp($clientIp, $validated);
+        $deviceKey = $this->resolveCustomerDeviceKey($request, $validated['device_key'] ?? null);
+        $profile = $this->saveCustomerProfileByIp($clientIp, $validated, $deviceKey);
         if (!empty($profile['customer_phone'])) {
             session(['customer_phone' => $profile['customer_phone']]);
         }
 
-        return response()->json([
+        $response = response()->json([
             'success' => true,
             'ip' => $clientIp,
             'profile' => $profile,
         ]);
+
+        if ($deviceKey !== '') {
+            $response->withCookie(cookie('mala_device_key', $deviceKey, 60 * 24 * 180, '/', null, false, false));
+        }
+
+        return $response;
+    }
+
+    private function resolveCustomerDeviceKey(Request $request, ?string $explicitKey = null): string
+    {
+        $raw = $explicitKey
+            ?: $request->input('device_key')
+            ?: $request->query('device_key')
+            ?: $request->header('X-Device-Key')
+            ?: $request->cookie('mala_device_key');
+
+        $clean = preg_replace('/[^a-zA-Z0-9_-]/', '', trim((string) $raw));
+        return substr((string) $clean, 0, 80);
     }
 
     private function customerProfileSettingKey(string $ip): string
@@ -1461,35 +1501,82 @@ class OnlineOrderController extends Controller
         return 'online_customer_profile_' . md5(trim($ip));
     }
 
-    private function getSavedCustomerProfileByIp(string $ip): array
+    private function customerDeviceSettingKey(string $deviceKey): string
     {
-        $raw = Setting::get($this->customerProfileSettingKey($ip));
-        if ($raw) {
-            $decoded = json_decode((string) $raw, true);
-            if (is_array($decoded)) {
-                return [
-                    'customer_name' => (string) ($decoded['customer_name'] ?? ''),
-                    'customer_phone' => (string) ($decoded['customer_phone'] ?? ''),
-                    'customer_address' => (string) ($decoded['customer_address'] ?? ''),
-                ];
-            }
+        return 'online_customer_device_' . md5(trim($deviceKey));
+    }
+
+    private function decodeSavedCustomerProfile(?string $raw): ?array
+    {
+        if (!$raw) {
+            return null;
+        }
+        $decoded = json_decode((string) $raw, true);
+        if (!is_array($decoded)) {
+            return null;
+        }
+        $name = (string) ($decoded['customer_name'] ?? '');
+        $phone = (string) ($decoded['customer_phone'] ?? '');
+        $address = (string) ($decoded['customer_address'] ?? '');
+        if ($name === '' && $phone === '' && $address === '') {
+            return null;
         }
 
+        return [
+            'customer_name' => $name,
+            'customer_phone' => $phone,
+            'customer_address' => $address,
+        ];
+    }
+
+    private function getSavedCustomerProfileByIp(string $ip, string $deviceKey = ''): array
+    {
+        $fromIp = $this->decodeSavedCustomerProfile(Setting::get($this->customerProfileSettingKey($ip)));
+        if ($fromIp !== null) {
+            return $fromIp;
+        }
+
+        // Fallback 1: Latest online order from this exact IP
         $latestOrder = Order::where('ip_address', $ip)
             ->where('order_type', 'online')
             ->latest('id')
             ->first(['customer_name', 'customer_phone']);
 
+        if ($latestOrder && (!empty($latestOrder->customer_name) || !empty($latestOrder->customer_phone))) {
+            return [
+                'customer_name' => (string) ($latestOrder->customer_name ?? ''),
+                'customer_phone' => (string) ($latestOrder->customer_phone ?? ''),
+                'customer_address' => '',
+            ];
+        }
+
+        // Fallback 2: Cloud DB device backup (for mobile 4G/5G dynamic IP changes) -> re-bind to current IP automatically
+        if ($deviceKey !== '') {
+            $fromDevice = $this->decodeSavedCustomerProfile(Setting::get($this->customerDeviceSettingKey($deviceKey)));
+            if ($fromDevice !== null) {
+                $rebound = array_merge($fromDevice, [
+                    'ip' => $ip,
+                    'updated_at' => Carbon::now('Asia/Bangkok')->toIso8601String(),
+                ]);
+                Setting::set(
+                    $this->customerProfileSettingKey($ip),
+                    json_encode($rebound, JSON_UNESCAPED_UNICODE),
+                    'customer_profile'
+                );
+                return $fromDevice;
+            }
+        }
+
         return [
-            'customer_name' => (string) ($latestOrder?->customer_name ?? ''),
-            'customer_phone' => (string) ($latestOrder?->customer_phone ?? ''),
+            'customer_name' => '',
+            'customer_phone' => '',
             'customer_address' => '',
         ];
     }
 
-    private function saveCustomerProfileByIp(string $ip, array $data): array
+    private function saveCustomerProfileByIp(string $ip, array $data, string $deviceKey = ''): array
     {
-        $existing = $this->getSavedCustomerProfileByIp($ip);
+        $existing = $this->getSavedCustomerProfileByIp($ip, $deviceKey);
 
         $profile = [
             'customer_name' => array_key_exists('customer_name', $data) ? trim((string) ($data['customer_name'] ?? '')) : $existing['customer_name'],
@@ -1499,29 +1586,53 @@ class OnlineOrderController extends Controller
             'updated_at' => Carbon::now('Asia/Bangkok')->toIso8601String(),
         ];
 
+        $encoded = json_encode($profile, JSON_UNESCAPED_UNICODE);
         Setting::set(
             $this->customerProfileSettingKey($ip),
-            json_encode($profile, JSON_UNESCAPED_UNICODE),
+            $encoded,
             'customer_profile'
         );
+
+        if ($deviceKey !== '') {
+            Setting::set(
+                $this->customerDeviceSettingKey($deviceKey),
+                $encoded,
+                'customer_profile_device'
+            );
+        }
 
         return $profile;
     }
 
     /**
-     * Resolve true client device IP address behind Cloudflare / reverse proxy.
+     * Resolve true client device IP address behind Cloudflare / Render reverse proxy.
      */
     public function getClientIp(Request $request): string
     {
-        $ip = $request->header('cf-connecting-ip')
-            ?: $request->header('x-real-ip')
-            ?: $request->header('x-forwarded-for')
-            ?: $request->ip();
-
-        if (str_contains($ip, ',')) {
-            $ip = trim(explode(',', $ip)[0]);
+        $candidates = [];
+        foreach (['cf-connecting-ip', 'true-client-ip', 'x-forwarded-for', 'x-real-ip'] as $header) {
+            $val = (string) $request->header($header, '');
+            if ($val !== '') {
+                foreach (explode(',', $val) as $part) {
+                    $trimmed = trim($part);
+                    if (filter_var($trimmed, FILTER_VALIDATE_IP)) {
+                        $candidates[] = $trimmed;
+                    }
+                }
+            }
         }
 
-        return $ip ?: '127.0.0.1';
+        $laravelIp = (string) ($request->ip() ?? '');
+        if ($laravelIp !== '' && filter_var($laravelIp, FILTER_VALIDATE_IP)) {
+            $candidates[] = $laravelIp;
+        }
+
+        foreach ($candidates as $ip) {
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                return $ip;
+            }
+        }
+
+        return $candidates[0] ?? '127.0.0.1';
     }
 }
