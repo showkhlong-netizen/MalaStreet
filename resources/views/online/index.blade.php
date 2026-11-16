@@ -2428,6 +2428,7 @@
         let pendingOnlineOrder = null;
         let onlinePaymentPollTimer = null;
         let verifyTransitionTimer = null;
+        let isCheckingOnlinePayment = false;
 
         function getCurrentCartSignature() {
             return JSON.stringify({
@@ -2454,6 +2455,8 @@
         }
 
         async function checkOnlinePaymentOnce(orderNo, queueNumber, expectedAmount) {
+            if (isCheckingOnlinePayment || !orderNo) return false;
+            isCheckingOnlinePayment = true;
             const statusBaseUrl = '/order/payment-status';
             try {
                 const res = await fetch(`${statusBaseUrl}/${encodeURIComponent(orderNo)}`, {
@@ -2474,6 +2477,8 @@
                 }
             } catch (e) {
                 // Silent background poll
+            } finally {
+                isCheckingOnlinePayment = false;
             }
             return false;
         }
@@ -2486,8 +2491,20 @@
             checkOnlinePaymentOnce(orderNo, queueNumber, expectedAmount);
             onlinePaymentPollTimer = setInterval(() => {
                 checkOnlinePaymentOnce(orderNo, queueNumber, expectedAmount);
-            }, 2000);
+            }, 1000);
         }
+
+        // Instant check when customer switches back from banking app
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && pendingOnlineOrder?.order_no) {
+                checkOnlinePaymentOnce(pendingOnlineOrder.order_no, pendingOnlineOrder.queue_number, pendingOnlineOrder.total_amount);
+            }
+        });
+        window.addEventListener('focus', () => {
+            if (pendingOnlineOrder?.order_no) {
+                checkOnlinePaymentOnce(pendingOnlineOrder.order_no, pendingOnlineOrder.queue_number, pendingOnlineOrder.total_amount);
+            }
+        });
 
         function openPaymentVerifyingModal(orderNo, queueNumber, expectedAmount) {
             document.getElementById('promptpay-scan-modal')?.classList.add('hidden');

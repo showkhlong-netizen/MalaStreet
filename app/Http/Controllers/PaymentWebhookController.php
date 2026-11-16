@@ -8,6 +8,7 @@ use App\Models\Setting;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class PaymentWebhookController extends Controller
@@ -20,14 +21,27 @@ class PaymentWebhookController extends Controller
             Setting::set('android_payment_webhook_secret', $secret, 'payment');
         }
 
+        $webhookUrl = url('/webhooks/android-payment');
+        if (str_contains($webhookUrl, 'onrender.com') && str_starts_with($webhookUrl, 'http://')) {
+            $webhookUrl = 'https://' . substr($webhookUrl, 7);
+        }
+
         return [
-            'webhook_url' => url('/webhooks/android-payment'),
+            'webhook_url' => $webhookUrl,
             'secret' => $secret,
             'last_received_at' => Setting::get('android_webhook_last_received_at', ''),
             'last_amount' => Setting::get('android_webhook_last_amount', ''),
             'last_message' => Setting::get('android_webhook_last_message', ''),
             'last_matched_order_no' => Setting::get('android_webhook_last_matched_order_no', ''),
         ];
+    }
+
+    public function getWebhookStatusJson(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'config' => self::getWebhookConfig(),
+        ]);
     }
 
     /**
@@ -92,16 +106,33 @@ class PaymentWebhookController extends Controller
             ]);
         }
 
-        $candidates = Order::where('payment_method', 'promptpay')
-            ->where('payment_status', 'unpaid')
-            ->whereIn('status', ['pending', 'confirmed'])
-            ->where('created_at', '>=', Carbon::now()->subMinutes(30))
-            ->latest('id')
-            ->get();
-
         $parsedSatang = (int) round($parsedAmount * 100);
-        $matchedOrder = $candidates->first(function (Order $order) use ($parsedSatang) {
-            return (int) round(((float) $order->total_amount) * 100) === $parsedSatang;
+
+        $matchedOrder = DB::transaction(function () use ($parsedSatang) {
+            $candidates = Order::where('payment_method', 'promptpay')
+                ->where('payment_status', 'unpaid')
+                ->whereIn('status', ['pending', 'confirmed'])
+                ->where('created_at', '>=', Carbon::now()->subMinutes(60))
+                ->latest('id')
+                ->lockForUpdate()
+                ->get();
+
+            $found = $candidates->first(function (Order $order) use ($parsedSatang) {
+                return (int) round(((float) $order->total_amount) * 100) === $parsedSatang;
+            });
+
+            if (!$found) {
+                return null;
+            }
+
+            $found->payment_status = 'paid';
+            $found->paid_at = Carbon::now();
+            if ($found->status === 'pending') {
+                $found->status = 'confirmed';
+            }
+            $found->save();
+
+            return $found;
         });
 
         if (!$matchedOrder) {
@@ -114,13 +145,6 @@ class PaymentWebhookController extends Controller
                 'parsed_amount' => round($parsedAmount, 2),
             ]);
         }
-
-        $matchedOrder->payment_status = 'paid';
-        $matchedOrder->paid_at = Carbon::now();
-        if ($matchedOrder->status === 'pending') {
-            $matchedOrder->status = 'confirmed';
-        }
-        $matchedOrder->save();
 
         Setting::set('android_webhook_last_matched_order_no', $matchedOrder->order_no, 'payment');
 
@@ -150,7 +174,9 @@ class PaymentWebhookController extends Controller
      */
     public function checkOrderPaymentStatus(string $orderNo): JsonResponse
     {
-        $order = Order::where('order_no', $orderNo)->first();
+        $order = Order::where('order_no', $orderNo)
+            ->select(['id', 'order_no', 'queue_number', 'payment_status', 'status', 'total_amount'])
+            ->first();
         if (!$order) {
             return response()->json(['success' => false, 'paid' => false], 404);
         }

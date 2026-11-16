@@ -156,12 +156,15 @@
                         <input type="text" id="cashier-wh-macrodroid-body" readonly value='{"secret":"{{ $wh['secret'] }}","message":"[not_title] [notification]"}' class="flex-1 px-2 py-1 rounded-lg bg-white border border-emerald-200 font-mono text-[10px]">
                         <button type="button" onclick="copyCashierText('cashier-wh-macrodroid-body')" class="px-2 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[10px] cursor-pointer">คัดลอกไปวางเลย</button>
                     </div>
-                    <div id="cashier-wh-status" class="text-[10.5px] text-emerald-800 font-medium">
+                    <div id="cashier-wh-status" class="text-[10.5px] text-emerald-800 font-medium leading-relaxed">
                         @if(!empty($wh['last_received_at']))
                             ล่าสุด: {{ $wh['last_received_at'] }} (฿{{ $wh['last_amount'] ?: '-' }})
                             @if(!empty($wh['last_matched_order_no'])) • จับคู่บิล {{ $wh['last_matched_order_no'] }} @endif
+                            @if(!empty($wh['last_message']))
+                                <span class="block text-[10px] text-slate-500 truncate">ข้อความ: {{ $wh['last_message'] }}</span>
+                            @endif
                         @else
-                            พร้อมรับแจ้งเตือนจาก K PLUS / LINE บนแท็บเล็ต Android
+                            พร้อมรับแจ้งเตือนจาก K PLUS / LINE / NEXT บนมือถือ Android
                         @endif
                     </div>
                 </div>

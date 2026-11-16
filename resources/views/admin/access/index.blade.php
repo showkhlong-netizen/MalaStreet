@@ -4355,13 +4355,12 @@
     }
 
     async function testCashierWebhook() {
-        const url = document.getElementById('cashier-wh-url')?.value;
         const secret = document.getElementById('cashier-wh-secret')?.value;
         const statusEl = document.getElementById('cashier-wh-status');
-        if (!url || !secret) return;
+        if (!secret) return;
         const amt = (parseFloat(document.getElementById('cashier-preview-amount')?.value || '35') || 35).toFixed(2);
         try {
-            const res = await fetch(url, {
+            const res = await fetch('/webhooks/android-payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Webhook-Secret': secret },
                 body: JSON.stringify({ secret, message: `KBank: เงินเข้าบัญชี จำนวน ${amt} บาท` }),
@@ -4377,6 +4376,27 @@
             if (statusEl) statusEl.textContent = '❌ ทดสอบไม่สำเร็จ';
         }
     }
+
+    async function refreshCashierWebhookStatus() {
+        const panel = document.getElementById('panel-cashier');
+        const statusEl = document.getElementById('cashier-wh-status');
+        if (!panel || panel.classList.contains('hidden') || !statusEl) return;
+        try {
+            const res = await fetch('{{ route("pos.settings.webhook_status") }}', {
+                headers: { 'Accept': 'application/json' },
+                cache: 'no-store',
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            const cfg = data?.config;
+            if (!cfg || !cfg.last_received_at) return;
+            const matchPart = cfg.last_matched_order_no ? ` • จับคู่บิล ${cfg.last_matched_order_no}` : '';
+            const msgPart = cfg.last_message ? `<span class="block text-[10px] text-slate-500 truncate">ข้อความ: ${String(cfg.last_message).replace(/</g, '&lt;')}</span>` : '';
+            statusEl.innerHTML = `ล่าสุด: ${cfg.last_received_at} (฿${cfg.last_amount || '-'})${matchPart}${msgPart}`;
+        } catch (e) {}
+    }
+
+    setInterval(refreshCashierWebhookStatus, 3000);
 </script>
 @endsection
 

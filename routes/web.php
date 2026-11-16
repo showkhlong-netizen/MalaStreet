@@ -48,6 +48,7 @@ Route::prefix('pos')->name('pos.')->middleware(['auth', EnforceDailyEmployeeLand
     Route::post('/settings/promptpay-qr', [PosController::class, 'savePromptPayQr'])->name('settings.promptpay_qr');
     Route::post('/settings/promptpay-qr/activate', [PosController::class, 'activatePromptPayQrPreset'])->name('settings.promptpay_qr.activate');
     Route::post('/settings/promptpay-qr/delete', [PosController::class, 'deletePromptPayQrPreset'])->name('settings.promptpay_qr.delete');
+    Route::get('/settings/webhook-status', [PaymentWebhookController::class, 'getWebhookStatusJson'])->name('settings.webhook_status');
     Route::get('/kitchen', [PosController::class, 'kitchen'])->name('kitchen');
     Route::post('/orders/{order}/status', [PosController::class, 'updateStatus'])->name('order.status');
     Route::get('/kitchen/chat', [PosController::class, 'kitchenChat'])->name('kitchen.chat');
