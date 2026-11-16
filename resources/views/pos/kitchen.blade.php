@@ -254,7 +254,21 @@
                                         @endif
                                     </div>
 
-                                    <div class="flex items-center gap-1.5 mt-1.5">
+                                    <div class="flex items-center flex-wrap gap-1.5 mt-1.5">
+                                        @if($order->payment_status === 'paid')
+                                            <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">
+                                                <span>✓ ชำระแล้ว ฿{{ number_format((float) $order->total_amount, 2) }}</span>
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-300 animate-pulse">
+                                                <span>⏳ รอยอดโอน ฿{{ number_format((float) $order->total_amount, 2) }}</span>
+                                            </span>
+                                            <button type="button"
+                                                    onclick="updateStatus({{ $order->id }}, 'confirmed', true)"
+                                                    class="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-0.5 rounded-lg shadow-2xs transition cursor-pointer">
+                                                <span>ยืนยันรับเงินแล้ว</span>
+                                            </button>
+                                        @endif
                                         @if($order->ip_address)
                                             <span class="text-[9.5px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
                                                 🌐 IP: {{ $order->ip_address }}
@@ -693,7 +707,7 @@
         document.getElementById('order-detail-modal').classList.add('hidden');
     }
 
-    async function updateStatus(orderId, nextStatus) {
+    async function updateStatus(orderId, nextStatus, markPaid = false) {
         try {
             const res = await fetch(`/pos/orders/${orderId}/status`, {
                 method: 'POST',
@@ -702,7 +716,7 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({ status: nextStatus })
+                body: JSON.stringify({ status: nextStatus, mark_paid: Boolean(markPaid) })
             });
 
             const data = await res.json();

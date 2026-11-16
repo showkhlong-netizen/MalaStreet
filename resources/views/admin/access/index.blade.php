@@ -2925,6 +2925,7 @@
                 if (btnCashier) btnCashier.className = activeClasses;
                 refreshCashierLiveQrPreview();
                 renderCashierQrHistory();
+                refreshCashierWebhookStatus();
                 showToast("เปิดหน้าต่าง: จัดการแคชเชียร์ & QR พร้อมเพย์");
             } else if (tab === 'audit') {
                 if (pCashier) pCashier.classList.add('hidden');
@@ -4230,6 +4231,7 @@
                 cashierPendingImageData = '';
                 renderCashierQrHistory();
                 refreshCashierLiveQrPreview();
+                broadcastPosQrSync(data.settings);
                 showToast(data.message || 'บันทึกจัดการแคชเชียร์แล้ว');
             } else {
                 showToast(data.message || 'บันทึกไม่สำเร็จ');
@@ -4271,6 +4273,7 @@
                 }
                 renderCashierQrHistory();
                 refreshCashierLiveQrPreview();
+                broadcastPosQrSync(data.settings);
                 showToast(data.message || 'สลับใช้งาน QR เรียบร้อยแล้ว');
             }
         } catch (err) {
@@ -4354,6 +4357,17 @@
         showToast('คัดลอกแล้ว: ' + el.value);
     }
 
+    function broadcastPosQrSync(settings) {
+        try {
+            if ('BroadcastChannel' in window) {
+                const ch = new BroadcastChannel('mala_pos_sync_channel');
+                ch.postMessage({ action: 'qr_updated', settings });
+                ch.close();
+            }
+            localStorage.setItem('mala_qr_sync_ts', String(Date.now()));
+        } catch (e) {}
+    }
+
     async function testCashierWebhook() {
         const secret = document.getElementById('cashier-wh-secret')?.value;
         const statusEl = document.getElementById('cashier-wh-status');
@@ -4371,10 +4385,59 @@
                     ? `✅ ทดสอบสำเร็จ! จับคู่บิล ${data.order_no} (฿${data.amount})`
                     : `✅ เชื่อมต่อ Webhook สำเร็จ! (อ่านยอด ฿${data.parsed_amount ?? amt} ได้ปกติ)`;
             }
+            refreshCashierWebhookStatus();
             showToast('ทดสอบ Webhook สำเร็จ');
         } catch (err) {
             if (statusEl) statusEl.textContent = '❌ ทดสอบไม่สำเร็จ';
         }
+    }
+
+    async function confirmCashierPendingOrder(orderId) {
+        try {
+            const res = await fetch(`/pos/orders/${orderId}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({ status: 'confirmed', mark_paid: true }),
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                showToast('✅ ยืนยันรับยอดโอนแล้ว หน้าลูกค้าจะเด้งสำเร็จใน 1 วินาที');
+                refreshCashierWebhookStatus();
+            }
+        } catch (e) {
+            showToast('ยืนยันไม่สำเร็จ');
+        }
+    }
+
+    function renderCashierPendingOrders(list) {
+        const listEl = document.getElementById('cashier-pending-orders-list');
+        const countEl = document.getElementById('cashier-pending-count');
+        if (!listEl) return;
+        const orders = Array.isArray(list) ? list : [];
+        if (countEl) countEl.textContent = `${orders.length} บิล`;
+        if (orders.length === 0) {
+            listEl.innerHTML = '<div class="text-slate-400">ไม่มีบิลค้างรอตรวจยอดในขณะนี้</div>';
+            return;
+        }
+        listEl.innerHTML = orders.map((o) => `
+            <div class="flex items-center justify-between gap-2 bg-white rounded-xl border border-amber-200 px-2.5 py-1.5">
+                <div class="min-w-0">
+                    <div class="font-bold text-slate-900 truncate">คิว ${o.queue_number} • ${o.customer_name}</div>
+                    <div class="font-mono text-[9.5px] text-slate-500">${o.order_no} • ${o.created_at_hm} น.</div>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <span class="font-mono font-black text-rose-600">฿${Number(o.total_amount).toFixed(2)}</span>
+                    <button type="button" onclick="confirmCashierPendingOrder(${o.id})"
+                            class="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] cursor-pointer">
+                        ยืนยันรับเงิน
+                    </button>
+                </div>
+            </div>
+        `).join('');
     }
 
     async function refreshCashierWebhookStatus() {
@@ -4388,6 +4451,7 @@
             });
             if (!res.ok) return;
             const data = await res.json();
+            renderCashierPendingOrders(data?.pending_orders || []);
             const cfg = data?.config;
             if (!cfg || !cfg.last_received_at) return;
             const matchPart = cfg.last_matched_order_no ? ` • จับคู่บิล ${cfg.last_matched_order_no}` : '';
@@ -4396,6 +4460,9 @@
         } catch (e) {}
     }
 
+    document.addEventListener('DOMContentLoaded', () => {
+        refreshCashierWebhookStatus();
+    });
     setInterval(refreshCashierWebhookStatus, 3000);
 </script>
 @endsection

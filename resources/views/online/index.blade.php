@@ -1238,11 +1238,11 @@
                         <img id="online-promptpay-qr-img" src="" alt="PromptPay QR Code" class="w-full h-full object-contain rounded-lg">
                     </div>
                     <div class="mt-2.5 text-xs text-slate-600">
-                        <div class="font-bold text-slate-800">{{ $promptPaySettings['store_name'] ?? 'ร้านหม่าล่าสตรีท (Mala Street)' }}</div>
-                        บัญชี: <strong class="text-slate-900 font-mono">{{ $promptPaySettings['account_no'] ?? '098-1-53225-2 (กสิกรไทย)' }}</strong>
-                        <span class="block text-[11px] text-slate-500 mt-0.5">ชื่อบัญชี: {{ $promptPaySettings['account_name'] ?? 'มูนีบ สและแม' }}</span>
+                        <div id="qr-store-name" class="font-bold text-slate-800">{{ $promptPaySettings['store_name'] ?? 'ร้านหม่าล่าสตรีท (Mala Street)' }}</div>
+                        บัญชี: <strong id="qr-account-no" class="text-slate-900 font-mono">{{ $promptPaySettings['account_no'] ?? '098-1-53225-2 (กสิกรไทย)' }}</strong>
+                        <span class="block text-[11px] text-slate-500 mt-0.5">ชื่อบัญชี: <span id="qr-account-name">{{ $promptPaySettings['account_name'] ?? 'มูนีบ สและแม' }}</span></span>
                     </div>
-                    <p class="text-[10.5px] text-slate-400 mt-1">{{ $promptPaySettings['receipt_note'] ?? 'สแกนได้ทุกแอปธนาคารไทย ยอดเงินจะขึ้นตรงอัตโนมัติ' }}</p>
+                    <p id="qr-receipt-note" class="text-[10.5px] text-slate-400 mt-1">{{ $promptPaySettings['receipt_note'] ?? 'สแกนได้ทุกแอปธนาคารไทย ยอดเงินจะขึ้นตรงอัตโนมัติ' }}</p>
                 </div>
 
                 <!-- Actions -->
@@ -2329,7 +2329,20 @@
             document.getElementById('checkout-modal').classList.add('hidden');
         }
 
-        const STORE_PROMPTPAY_PAYLOAD = @json($promptPaySettings['payload'] ?? '0891234567');
+        let STORE_PROMPTPAY_PAYLOAD = @json($promptPaySettings['payload'] ?? '0891234567');
+
+        function syncOnlinePromptPaySettings(pp) {
+            if (!pp || !pp.payload) return;
+            STORE_PROMPTPAY_PAYLOAD = pp.payload;
+            const elStore = document.getElementById('qr-store-name');
+            const elNo = document.getElementById('qr-account-no');
+            const elName = document.getElementById('qr-account-name');
+            const elNote = document.getElementById('qr-receipt-note');
+            if (elStore && pp.store_name) elStore.textContent = pp.store_name;
+            if (elNo && pp.account_no) elNo.textContent = pp.account_no;
+            if (elName && pp.account_name) elName.textContent = pp.account_name;
+            if (elNote && pp.receipt_note) elNote.textContent = pp.receipt_note;
+        }
 
         function getOnlineOrderTotals() {
             const totalSticks = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -2711,6 +2724,9 @@
                 });
                 const result = await res.json();
                 if (res.ok && result.success) {
+                    if (result.promptpay_settings) {
+                        syncOnlinePromptPaySettings(result.promptpay_settings);
+                    }
                     if (awaitingPayment && result.awaiting_payment) {
                         pendingOnlineOrder = {
                             order_no: result.order_no,

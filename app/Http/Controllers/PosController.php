@@ -655,10 +655,15 @@ class PosController extends Controller
     {
         $validated = $request->validate([
             'status' => 'required|in:pending,confirmed,cooking,ready,completed,cancelled',
+            'mark_paid' => 'nullable|boolean',
         ]);
 
         $oldStatus = $order->status;
         $order->status = $validated['status'];
+        if (!empty($validated['mark_paid']) && $order->payment_status !== 'paid') {
+            $order->payment_status = 'paid';
+            $order->paid_at = Carbon::now();
+        }
         if ($validated['status'] === 'completed') {
             $order->completed_at = Carbon::now();
         }

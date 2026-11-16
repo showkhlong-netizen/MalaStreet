@@ -160,5 +160,31 @@ class AndroidPaymentWebhookTest extends TestCase
 
         $activateRes->assertStatus(200)->assertJson(['success' => true]);
         $this->assertEquals('098-1-53225-2 (กสิกรไทย)', $activateRes->json('settings.account_no'));
+
+        // 4. Live webhook status endpoint returns pending unpaid orders and allows 1-click mark_paid
+        $pendingOrder = Order::create([
+            'order_no' => 'MS-ONL-20261116-099-TST',
+            'queue_number' => 'G99',
+            'order_type' => 'online',
+            'customer_name' => 'รอลูกค้าโอน',
+            'status' => 'pending',
+            'payment_method' => 'promptpay',
+            'payment_status' => 'unpaid',
+            'subtotal' => 45,
+            'total_amount' => 45,
+        ]);
+
+        $statusRes = $this->actingAs($admin)->getJson('/pos/settings/webhook-status');
+        $statusRes->assertStatus(200)
+            ->assertJsonFragment(['order_no' => 'MS-ONL-20261116-099-TST']);
+
+        $this->actingAs($admin)->postJson('/pos/orders/' . $pendingOrder->id . '/status', [
+            'status' => 'confirmed',
+            'mark_paid' => true,
+        ])->assertStatus(200)->assertJson(['success' => true]);
+
+        $this->getJson('/order/payment-status/MS-ONL-20261116-099-TST')
+            ->assertStatus(200)
+            ->assertJson(['paid' => true, 'payment_status' => 'paid']);
     }
 }

@@ -167,6 +167,15 @@
                             พร้อมรับแจ้งเตือนจาก K PLUS / LINE / NEXT บนมือถือ Android
                         @endif
                     </div>
+                    <div id="cashier-pending-orders-wrap" class="pt-2 mt-2 border-t border-emerald-200/80 space-y-1.5">
+                        <div class="flex items-center justify-between text-[10.5px] font-extrabold text-amber-900">
+                            <span>⏳ บิลรอตรวจยอดโอนขณะนี้</span>
+                            <span id="cashier-pending-count" class="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800">0 บิล</span>
+                        </div>
+                        <div id="cashier-pending-orders-list" class="space-y-1.5 text-[10.5px] text-slate-600">
+                            <div class="text-slate-400">กำลังซิงค์รายการรอโอน...</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

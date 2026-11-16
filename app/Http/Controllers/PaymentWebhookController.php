@@ -38,9 +38,27 @@ class PaymentWebhookController extends Controller
 
     public function getWebhookStatusJson(): JsonResponse
     {
+        $pendingOrders = Order::where('payment_method', 'promptpay')
+            ->where('payment_status', 'unpaid')
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where('created_at', '>=', Carbon::now()->subMinutes(60))
+            ->latest('id')
+            ->take(10)
+            ->get(['id', 'order_no', 'queue_number', 'customer_name', 'total_amount', 'status', 'created_at'])
+            ->map(fn (Order $o) => [
+                'id' => $o->id,
+                'order_no' => $o->order_no,
+                'queue_number' => $o->queue_number,
+                'customer_name' => $o->customer_name ?: 'ลูกค้าออนไลน์',
+                'total_amount' => (float) $o->total_amount,
+                'created_at_hm' => $o->created_at ? $o->created_at->timezone('Asia/Bangkok')->format('H:i') : '',
+            ])
+            ->values();
+
         return response()->json([
             'success' => true,
             'config' => self::getWebhookConfig(),
+            'pending_orders' => $pendingOrders,
         ]);
     }
 
@@ -201,12 +219,17 @@ class PaymentWebhookController extends Controller
             return null;
         }
 
-        // Priority 1: Amount right before บาท / บ. / THB (e.g., "เงินเข้า 35.00 บาท", "1,250.50 บ.")
+        // Priority 1: Amount right before บาท / บ. / THB (e.g., "เงินเข้า 35.00 บาท", "ได้รับ +37.00 บาท", "1,250.50 บ.")
         if (preg_match('/(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)\s*(?:บาท|บ\.|THB)/u', $text, $m)) {
             return (float) str_replace(',', '', $m[1]);
         }
 
-        // Priority 2: Decimal amount like 35.00 or 1,250.50 (ignores times like 08:14 or phone/account numbers with hyphens)
+        // Priority 2: Currency before amount (e.g., "฿37.00", "THB 37.00", "จำนวน 37.00")
+        if (preg_match('/(?:฿|THB|จำนวน|ยอด|เงินเข้า)\s*\+?(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)/u', $text, $m)) {
+            return (float) str_replace(',', '', $m[1]);
+        }
+
+        // Priority 3: Decimal amount like 35.00 or 1,250.50 (ignores times like 08:14 or account numbers with hyphens)
         if (preg_match('/(?<![\d:-])(\d{1,3}(?:,\d{3})*\.\d{2}|\d+\.\d{2})(?![\d:-])/', $text, $m)) {
             return (float) str_replace(',', '', $m[1]);
         }

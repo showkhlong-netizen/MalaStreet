@@ -182,11 +182,29 @@ class OnlineOrderController extends Controller
         ]);
 
         return DB::transaction(function () use ($validated, $request) {
-            $today = Carbon::today();
-            $onlineCountToday = Order::whereDate('created_at', $today)->where('order_type', 'online')->count();
-            $queueNumber = 'G' . str_pad($onlineCountToday + 1, 2, '0', STR_PAD_LEFT);
+            $today = Carbon::today('Asia/Bangkok');
+            $dayStart = $today->copy()->startOfDay();
+            $dayEnd = $today->copy()->endOfDay();
+            $datePrefix = 'MS-ONL-' . $today->format('Ymd') . '-';
+
+            $existingTodayOrders = Order::where('order_type', 'online')
+                ->where(function ($q) use ($dayStart, $dayEnd, $datePrefix) {
+                    $q->whereBetween('created_at', [$dayStart, $dayEnd])
+                        ->orWhere('order_no', 'like', $datePrefix . '%');
+                })
+                ->lockForUpdate()
+                ->get(['id', 'order_no']);
+
+            $maxSeq = $existingTodayOrders->count();
+            foreach ($existingTodayOrders as $existing) {
+                if (preg_match('/^' . preg_quote($datePrefix, '/') . '(\d+)/', (string) $existing->order_no, $m)) {
+                    $maxSeq = max($maxSeq, (int) $m[1]);
+                }
+            }
+            $nextSeq = $maxSeq + 1;
+            $queueNumber = 'G' . str_pad($nextSeq, 2, '0', STR_PAD_LEFT);
             $uniqueSuffix = strtoupper(Str::random(3));
-            $orderNo = 'MS-ONL-' . $today->format('Ymd') . '-' . str_pad($onlineCountToday + 1, 3, '0', STR_PAD_LEFT) . '-' . $uniqueSuffix;
+            $orderNo = $datePrefix . str_pad($nextSeq, 3, '0', STR_PAD_LEFT) . '-' . $uniqueSuffix;
 
             $subtotal = 0;
             $soupExtraTotal = (float) ($validated['soup_extra'] ?? 0);
@@ -369,6 +387,7 @@ class OnlineOrderController extends Controller
                 'queue_number' => $order->queue_number,
                 'total_amount' => (float) $order->total_amount,
                 'awaiting_payment' => $awaitingPayment,
+                'promptpay_settings' => PosController::getStorePromptPaySettings(),
                 'redirect_url' => route('online.track', ['order_no' => $order->order_no]),
             ]);
         });

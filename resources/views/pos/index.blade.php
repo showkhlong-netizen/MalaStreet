@@ -1111,6 +1111,18 @@
                     const data = ev.data;
                     if (data && data.action === 'material_updated') {
                         syncPosItemFromPriceTracker(data.material_id, data.name, data.image_url);
+                    } else if (data && data.action === 'qr_updated' && data.settings) {
+                        STORE_PROMPTPAY_SETTINGS = data.settings;
+                        const sEl = document.getElementById('pos-qr-store-name');
+                        const nEl = document.getElementById('pos-qr-account-no');
+                        const aEl = document.getElementById('pos-qr-account-name');
+                        if (sEl && data.settings.store_name) sEl.textContent = data.settings.store_name;
+                        if (nEl && data.settings.account_no) nEl.textContent = data.settings.account_no;
+                        if (aEl && data.settings.account_name) aEl.textContent = data.settings.account_name;
+                        if (typeof refreshPosPromptPayQrImage === 'function') {
+                            refreshPosPromptPayQrImage(getCartTotal());
+                        }
+                        showPosSyncToast('ซิงค์ QR พร้อมเพย์และข้อมูลร้านจากหน้าจัดการแคชเชียร์แล้ว');
                     }
                 };
 
