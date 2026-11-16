@@ -254,20 +254,33 @@
                                         </span>
                                     </div>
 
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black tracking-wide whitespace-nowrap shrink-0 {{ $order->status === 'ready' ? 'bg-emerald-100 text-emerald-800' : ($order->status === 'cooking' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800') }}">
-                                        @if($order->status === 'cooking')
-                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse shrink-0"></span>
-                                        @endif
-                                        <span>
-                                            {{ match($order->status) {
-                                                'pending' => 'รอยืนยัน',
-                                                'confirmed' => 'รับออเดอร์',
-                                                'cooking' => 'กำลังปรุง',
-                                                'ready' => 'พร้อมรับ',
-                                                default => $order->status
-                                            } }}
+                                    <div class="flex items-center gap-2 shrink-0">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black tracking-wide whitespace-nowrap shrink-0 {{ $order->status === 'ready' ? 'bg-emerald-100 text-emerald-800' : ($order->status === 'cooking' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800') }}">
+                                            @if($order->status === 'cooking')
+                                                <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse shrink-0"></span>
+                                            @endif
+                                            <span>
+                                                {{ match($order->status) {
+                                                    'pending' => 'รอยืนยัน',
+                                                    'confirmed' => 'รับออเดอร์',
+                                                    'cooking' => 'กำลังปรุง',
+                                                    'ready' => 'พร้อมรับ',
+                                                    default => $order->status
+                                                } }}
+                                            </span>
                                         </span>
-                                    </span>
+
+                                        <!-- ไอคอนแชทเปล่า (ใหญ่ขึ้น ~30%) อยู่ขวามือสุดของบรรทัดเดียวกับแถบสถานะ -->
+                                        <button type="button"
+                                                onclick="openOrderInSideChat('{{ $order->order_no }}')"
+                                                class="text-rose-600 hover:text-rose-700 p-0.5 transition active:scale-90 cursor-pointer shrink-0 flex items-center justify-center"
+                                                title="เปิดแชทกับลูกค้ารายนี้ในหน้าต่างแชทขวามือสุด"
+                                                aria-label="เปิดแชทกับลูกค้า">
+                                            <svg class="w-[19px] h-[19px] stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <!-- Row 2: ชื่อลูกค้า (เด่นใหญ่ขึ้น) + เบอร์โทร + แถบชำระแล้ว ต่อท้ายในบรรทัดเดียวกัน -->
@@ -287,7 +300,7 @@
                                     @endif
                                 </div>
 
-                                <!-- Row 3: ปุ่มแชท / ยืนยันรับเงิน (ซ้าย) + เวลาที่ผ่านมา (ขวา) โดยตัดเลขไอพีออกแล้ว -->
+                                <!-- Row 3: ยืนยันรับเงิน (ถ้ายังไม่จ่าย) + เวลาที่ผ่านมา -->
                                 <div class="flex items-center justify-between gap-2 min-w-0">
                                     <div class="flex items-center gap-1.5 min-w-0">
                                         @if($order->payment_status !== 'paid')
@@ -297,15 +310,6 @@
                                                 <span>ยืนยันรับเงินแล้ว</span>
                                             </button>
                                         @endif
-                                        <button type="button"
-                                           onclick="openOrderInSideChat('{{ $order->order_no }}')" 
-                                           class="inline-flex items-center gap-1 text-[10.5px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-lg border border-rose-200 transition active:scale-95 cursor-pointer whitespace-nowrap shrink-0" 
-                                           title="เปิดแชทกับลูกค้ารายนี้ในหน้าต่างแชทขวามือสุด">
-                                            <svg class="w-3 h-3 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                            </svg>
-                                            <span>แชท</span>
-                                        </button>
                                     </div>
                                     <span class="text-[10.5px] text-slate-400 font-medium whitespace-nowrap shrink-0">
                                         {{ $order->created_at->diffForHumans() }}
