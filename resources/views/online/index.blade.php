@@ -1137,7 +1137,7 @@
                         </label>
                     </div>
                     <div id="promptpay-preview-trigger-wrap" class="mt-2">
-                        <button type="button" onclick="openPromptPayScanModal(false)"
+                        <button type="button" onclick="openOrCreatePromptPayOrder()"
                                 class="w-full py-2 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-800 text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer">
                             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h6v6H3V3zm12 0h6v6h-6V3zM3 15h6v6H3v-6zm12 4h6m-3-3v6" />
@@ -1149,6 +1149,10 @@
 
                 <!-- Price Breakdown -->
                 <div class="border-t border-slate-200 pt-2.5 space-y-1 text-xs text-[#596272]">
+                    <div class="flex justify-between items-center pb-1 mb-1 border-b border-dashed border-slate-200">
+                        <span class="font-bold text-slate-600">เลขออเดอร์</span>
+                        <span id="checkout-order-no-badge" class="font-mono font-extrabold text-[11px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">ออกเลขใหม่อัตโนมัติเมื่อยืนยัน</span>
+                    </div>
                     <div class="flex justify-between">
                         <span>ค่าอาหาร (<span id="summary-total-sticks">0</span> ไม้)</span>
                         <span class="font-bold text-[#101114]" id="summary-subtotal">฿0</span>
@@ -1193,7 +1197,7 @@
                     </div>
                     <div>
                         <h3 class="text-sm font-black tracking-tight">สแกนจ่าย PromptPay</h3>
-                        <p class="text-[11px] text-sky-100">ระบบล็อคยอดชำระใน QR Code อัตโนมัติ</p>
+                        <p class="text-[11px] text-sky-100">ออเดอร์: <span id="qr-header-order-no" class="font-mono font-bold text-white">-</span></p>
                     </div>
                 </div>
                 <button type="button" onclick="closePromptPayScanModal()" class="w-7 h-7 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center text-xs cursor-pointer">✕</button>
@@ -1202,6 +1206,10 @@
             <div class="p-4 space-y-3.5">
                 <!-- แถบสรุปราคา (Price Summary Bar) -->
                 <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 space-y-1 text-xs text-[#596272]">
+                    <div class="flex justify-between items-center pb-1.5 mb-1 border-b border-slate-200/80">
+                        <span class="font-bold text-slate-600">เลขออเดอร์ / คิว</span>
+                        <span class="font-mono font-black text-slate-900 text-[11px]"><span id="qr-order-no">-</span> • คิว <span id="qr-queue-no" class="text-[#D90012]">-</span></span>
+                    </div>
                     <div class="flex justify-between">
                         <span>ค่าอาหาร (<span id="qr-summary-sticks">0</span> ไม้)</span>
                         <span class="font-bold text-[#101114]" id="qr-summary-subtotal">฿0</span>
@@ -1253,6 +1261,58 @@
                         กลับไปแก้ไขข้อมูล
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 11.7 PAYMENT VERIFICATION MODAL (รอตรวจยอดเงิน -> ยืนยันยอดครบ)         -->
+    <!-- ========================================================================= -->
+    <div id="payment-verifying-modal" class="hidden fixed inset-0 z-[70] bg-black/75 backdrop-blur-2xs flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-[380px] rounded-[26px] p-6 text-center shadow-2xl border border-slate-100 space-y-4">
+            <!-- State 1: Verifying -->
+            <div id="verify-state-waiting" class="space-y-3">
+                <div class="w-16 h-16 rounded-full bg-amber-50 border-2 border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
+                    <svg class="w-8 h-8 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"></path>
+                    </svg>
+                </div>
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-mono text-[11px] font-bold">
+                    <span>ออเดอร์ <span id="verify-order-no">-</span></span>
+                    <span>•</span>
+                    <span>คิว <span id="verify-queue-no" class="text-[#D90012]">-</span></span>
+                </div>
+                <h3 class="text-base font-black text-slate-900">โปรดรอตรวจสอบเพื่อการชำระเงินของท่าน</h3>
+                <p class="text-xs text-slate-500 leading-relaxed">
+                    ระบบกำลังตรวจสอบยอดเงินเข้าจริงและความครบถ้วนของยอด
+                    <strong id="verify-expected-amount" class="text-[#D90012] font-mono">฿0.00</strong>
+                </p>
+                <div class="pt-1">
+                    <button type="button" onclick="reopenQrFromVerifying()"
+                            class="w-full py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer transition-colors">
+                        กลับไปหน้า QR สแกนจ่าย
+                    </button>
+                </div>
+            </div>
+
+            <!-- State 2: Verified Full Amount -->
+            <div id="verify-state-success" class="hidden space-y-3">
+                <div class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-300 text-emerald-600 flex items-center justify-center mx-auto text-3xl font-black animate-bounce">
+                    ✓
+                </div>
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono text-[11px] font-bold">
+                    <span>รับยอดสำเร็จ</span>
+                    <span>•</span>
+                    <span id="verified-order-no">-</span>
+                </div>
+                <h3 class="text-base font-black text-emerald-700 leading-snug">
+                    เราได้รับยอดครบเต็มจำนวนแล้ว <span id="verified-paid-amount" class="font-mono underline decoration-2">0.00</span> บาท
+                </h3>
+                <p class="text-sm font-bold text-slate-800">
+                    โปรดรอสักครู่ ทีมงานกำลังทำออเดอร์ของคุณ
+                </p>
+                <p class="text-[11px] text-slate-400">กำลังพาไปยังหน้าสรุปคิว...</p>
             </div>
         </div>
     </div>
@@ -2367,6 +2427,24 @@
 
         let pendingOnlineOrder = null;
         let onlinePaymentPollTimer = null;
+        let verifyTransitionTimer = null;
+
+        function getCurrentCartSignature() {
+            return JSON.stringify({
+                items: cart.map(i => [i.product_id, i.quantity, i.cooking_type, i.spice_level, i.soup_style, i.notes]),
+                coupon: activeCoupon,
+                method: orderingMethod,
+            });
+        }
+
+        function resetPendingOrderIfCartChanged() {
+            if (pendingOnlineOrder && pendingOnlineOrder.cartSignature !== getCurrentCartSignature()) {
+                stopOnlinePaymentPolling();
+                pendingOnlineOrder = null;
+                const badge = document.getElementById('checkout-order-no-badge');
+                if (badge) badge.textContent = 'ออกเลขใหม่อัตโนมัติเมื่อยืนยัน';
+            }
+        }
 
         function stopOnlinePaymentPolling() {
             if (onlinePaymentPollTimer) {
@@ -2375,37 +2453,91 @@
             }
         }
 
-        function startOnlinePaymentPolling(orderNo, queueNumber) {
+        async function checkOnlinePaymentOnce(orderNo, queueNumber, expectedAmount) {
+            const statusBaseUrl = @json(url('/order/payment-status'));
+            try {
+                const res = await fetch(`${statusBaseUrl}/${encodeURIComponent(orderNo)}`, {
+                    headers: { 'Accept': 'application/json' },
+                    cache: 'no-store'
+                });
+                if (!res.ok) return false;
+                const data = await res.json();
+                if (data && data.paid) {
+                    stopOnlinePaymentPolling();
+                    pendingOnlineOrder = null;
+                    showVerifiedFullAmountThenSuccess(
+                        data.order_no || orderNo,
+                        data.queue_number || queueNumber,
+                        data.total_amount ?? expectedAmount
+                    );
+                    return true;
+                }
+            } catch (e) {
+                // Silent background poll
+            }
+            return false;
+        }
+
+        function startOnlinePaymentPolling(orderNo, queueNumber, expectedAmount = null) {
             stopOnlinePaymentPolling();
             const banner = document.getElementById('qr-auto-wait-banner');
             if (banner) banner.classList.remove('hidden');
 
-            const statusBaseUrl = @json(url('/order/payment-status'));
-            onlinePaymentPollTimer = setInterval(async () => {
-                try {
-                    const res = await fetch(`${statusBaseUrl}/${encodeURIComponent(orderNo)}`, {
-                        headers: { 'Accept': 'application/json' },
-                        cache: 'no-store'
-                    });
-                    if (!res.ok) return;
-                    const data = await res.json();
-                    if (data && data.paid) {
-                        stopOnlinePaymentPolling();
-                        pendingOnlineOrder = null;
-                        showOnlineOrderSuccess(data.order_no || orderNo, data.queue_number || queueNumber);
-                        showToast('✅ ยืนยันยอดโอนอัตโนมัติเรียบร้อยแล้ว!');
-                    }
-                } catch (e) {
-                    // Silent background poll
-                }
+            checkOnlinePaymentOnce(orderNo, queueNumber, expectedAmount);
+            onlinePaymentPollTimer = setInterval(() => {
+                checkOnlinePaymentOnce(orderNo, queueNumber, expectedAmount);
             }, 2000);
         }
 
+        function openPaymentVerifyingModal(orderNo, queueNumber, expectedAmount) {
+            document.getElementById('promptpay-scan-modal')?.classList.add('hidden');
+            document.getElementById('verify-order-no').innerText = orderNo || '-';
+            document.getElementById('verify-queue-no').innerText = queueNumber || '-';
+            document.getElementById('verify-expected-amount').innerText = '฿' + Number(expectedAmount || 0).toFixed(2);
+            document.getElementById('verify-state-waiting')?.classList.remove('hidden');
+            document.getElementById('verify-state-success')?.classList.add('hidden');
+            document.getElementById('payment-verifying-modal')?.classList.remove('hidden');
+        }
+
+        function reopenQrFromVerifying() {
+            document.getElementById('payment-verifying-modal')?.classList.add('hidden');
+            if (pendingOnlineOrder) {
+                openPromptPayScanModal(pendingOnlineOrder.total_amount);
+            }
+        }
+
+        function showVerifiedFullAmountThenSuccess(orderNo, queueNumber, paidAmount) {
+            clearTimeout(verifyTransitionTimer);
+            document.getElementById('promptpay-scan-modal')?.classList.add('hidden');
+            document.getElementById('verified-order-no').innerText = orderNo || '-';
+            document.getElementById('verified-paid-amount').innerText = Number(paidAmount || 0).toFixed(2);
+            document.getElementById('verify-state-waiting')?.classList.add('hidden');
+            document.getElementById('verify-state-success')?.classList.remove('hidden');
+            document.getElementById('payment-verifying-modal')?.classList.remove('hidden');
+
+            cart = [];
+            pendingOnlineOrder = null;
+            updateCartUI();
+            const badge = document.getElementById('checkout-order-no-badge');
+            if (badge) badge.textContent = 'ออกเลขใหม่อัตโนมัติเมื่อยืนยัน';
+
+            verifyTransitionTimer = setTimeout(() => {
+                document.getElementById('payment-verifying-modal')?.classList.add('hidden');
+                showOnlineOrderSuccess(orderNo, queueNumber);
+            }, 2500);
+        }
+
         function showOnlineOrderSuccess(orderNo, queueNumber) {
-            closePromptPayScanModal();
+            stopOnlinePaymentPolling();
+            pendingOnlineOrder = null;
+            closePromptPayScanModal(false);
+            document.getElementById('payment-verifying-modal')?.classList.add('hidden');
             closeCheckoutModal();
             cart = [];
             updateCartUI();
+            const badge = document.getElementById('checkout-order-no-badge');
+            if (badge) badge.textContent = 'ออกเลขใหม่อัตโนมัติเมื่อยืนยัน';
+
             document.getElementById('success-queue-tag').innerText = queueNumber || 'G01';
             document.getElementById('success-order-no').innerText = orderNo || '-';
             const chatTrackParams = new URLSearchParams({ order_no: orderNo || '' });
@@ -2420,6 +2552,15 @@
             if (cart.length === 0) return;
             const { totalSticks, subtotal, discount, shipping, grandTotal } = getOnlineOrderTotals();
             const finalAmount = lockedAmountOverride !== null ? Number(lockedAmountOverride) : grandTotal;
+
+            const orderNoText = pendingOnlineOrder?.order_no || '-';
+            const queueText = pendingOnlineOrder?.queue_number || '-';
+            const elHeaderOrder = document.getElementById('qr-header-order-no');
+            const elOrder = document.getElementById('qr-order-no');
+            const elQueue = document.getElementById('qr-queue-no');
+            if (elHeaderOrder) elHeaderOrder.innerText = orderNoText;
+            if (elOrder) elOrder.innerText = orderNoText;
+            if (elQueue) elQueue.innerText = queueText;
 
             document.getElementById('qr-summary-sticks').innerText = totalSticks;
             document.getElementById('qr-summary-subtotal').innerText = '฿' + subtotal.toFixed(0);
@@ -2441,8 +2582,8 @@
             document.getElementById('promptpay-scan-modal')?.classList.remove('hidden');
         }
 
-        function closePromptPayScanModal() {
-            stopOnlinePaymentPolling();
+        function closePromptPayScanModal(stopPoll = true) {
+            if (stopPoll) stopOnlinePaymentPolling();
             document.getElementById('promptpay-scan-modal')?.classList.add('hidden');
         }
 
@@ -2457,12 +2598,31 @@
             return true;
         }
 
+        async function openOrCreatePromptPayOrder() {
+            if (cart.length === 0) return;
+            if (!validateOnlineOrderFields()) return;
+            resetPendingOrderIfCartChanged();
+
+            if (pendingOnlineOrder && pendingOnlineOrder.order_no) {
+                openPromptPayScanModal(pendingOnlineOrder.total_amount);
+                startOnlinePaymentPolling(pendingOnlineOrder.order_no, pendingOnlineOrder.queue_number, pendingOnlineOrder.total_amount);
+                return;
+            }
+            await executeSubmitOnlineOrder(true);
+        }
+
         async function submitOnlineOrder() {
             if (cart.length === 0) return;
             if (!validateOnlineOrderFields()) return;
+            resetPendingOrderIfCartChanged();
 
             const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'promptpay';
             if (paymentMethod === 'promptpay') {
+                if (pendingOnlineOrder && pendingOnlineOrder.order_no) {
+                    openPromptPayScanModal(pendingOnlineOrder.total_amount);
+                    startOnlinePaymentPolling(pendingOnlineOrder.order_no, pendingOnlineOrder.queue_number, pendingOnlineOrder.total_amount);
+                    return;
+                }
                 await executeSubmitOnlineOrder(true);
                 return;
             }
@@ -2472,16 +2632,16 @@
 
         async function confirmPromptPayAndSubmit() {
             if (pendingOnlineOrder && pendingOnlineOrder.order_no) {
-                const { order_no, queue_number } = pendingOnlineOrder;
-                pendingOnlineOrder = null;
-                showOnlineOrderSuccess(order_no, queue_number);
+                const { order_no, queue_number, total_amount } = pendingOnlineOrder;
+                openPaymentVerifyingModal(order_no, queue_number, total_amount);
+                startOnlinePaymentPolling(order_no, queue_number, total_amount);
                 return;
             }
             if (!validateOnlineOrderFields()) {
                 closePromptPayScanModal();
                 return;
             }
-            await executeSubmitOnlineOrder(false);
+            await executeSubmitOnlineOrder(true);
         }
 
         async function executeSubmitOnlineOrder(awaitingPayment = false) {
@@ -2539,9 +2699,12 @@
                             order_no: result.order_no,
                             queue_number: result.queue_number || 'G01',
                             total_amount: result.total_amount,
+                            cartSignature: getCurrentCartSignature(),
                         };
+                        const badge = document.getElementById('checkout-order-no-badge');
+                        if (badge) badge.textContent = result.order_no;
                         openPromptPayScanModal(result.total_amount);
-                        startOnlinePaymentPolling(result.order_no, result.queue_number || 'G01');
+                        startOnlinePaymentPolling(result.order_no, result.queue_number || 'G01', result.total_amount);
                     } else {
                         pendingOnlineOrder = null;
                         showOnlineOrderSuccess(result.order_no, result.queue_number || 'G01');
