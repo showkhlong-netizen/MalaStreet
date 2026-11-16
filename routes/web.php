@@ -8,6 +8,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\OnlineOrderController;
+use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\SystemSyncController;
@@ -45,6 +46,8 @@ Route::prefix('pos')->name('pos.')->middleware(['auth', EnforceDailyEmployeeLand
     Route::get('/orders/live', [PosController::class, 'liveOrders'])->name('orders.live');
     Route::post('/order', [PosController::class, 'storeOrder'])->name('order.store');
     Route::post('/settings/promptpay-qr', [PosController::class, 'savePromptPayQr'])->name('settings.promptpay_qr');
+    Route::post('/settings/promptpay-qr/activate', [PosController::class, 'activatePromptPayQrPreset'])->name('settings.promptpay_qr.activate');
+    Route::post('/settings/promptpay-qr/delete', [PosController::class, 'deletePromptPayQrPreset'])->name('settings.promptpay_qr.delete');
     Route::get('/kitchen', [PosController::class, 'kitchen'])->name('kitchen');
     Route::post('/orders/{order}/status', [PosController::class, 'updateStatus'])->name('order.status');
     Route::get('/kitchen/chat', [PosController::class, 'kitchenChat'])->name('kitchen.chat');
@@ -55,6 +58,8 @@ Route::prefix('pos')->name('pos.')->middleware(['auth', EnforceDailyEmployeeLand
 });
 
 // Top-level alias for Kitchen Chat
+Route::post('/webhooks/android-payment', [PaymentWebhookController::class, 'handleAndroidPayment'])->name('webhooks.android_payment');
+
 Route::get('/kitchen/chat', [PosController::class, 'kitchenChat'])->name('kitchen.chat')->middleware('auth');
 Route::post('/kitchen/chat/send', [PosController::class, 'sendAdminChatMessage'])->name('kitchen.chat.send')->middleware('auth');
 Route::get('/kitchen/chat/messages', [PosController::class, 'getAdminChatMessages'])->name('kitchen.chat.messages')->middleware('auth');
@@ -68,6 +73,7 @@ Route::prefix('order')->name('online.')->group(function () {
     Route::get('/checkout', [OnlineOrderController::class, 'checkout'])->name('checkout');
     Route::post('/customer-profile', [OnlineOrderController::class, 'saveCustomerProfile'])->name('customer_profile.save');
     Route::post('/submit', [OnlineOrderController::class, 'storeOrder'])->name('submit');
+    Route::get('/payment-status/{orderNo}', [PaymentWebhookController::class, 'checkOrderPaymentStatus'])->name('payment_status');
     Route::get('/track/{order_no}', [OnlineOrderController::class, 'track'])->name('track');
     Route::get('/status/{order_no}', [OnlineOrderController::class, 'statusJson'])->name('status');
 

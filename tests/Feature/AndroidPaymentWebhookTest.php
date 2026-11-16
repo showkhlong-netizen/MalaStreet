@@ -1,0 +1,150 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Http\Controllers\PaymentWebhookController;
+use App\Models\Category;
+use App\Models\Order;
+use App\Models\Product;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class AndroidPaymentWebhookTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_android_notification_webhook_auto_confirms_unpaid_promptpay_order(): void
+    {
+        $category = Category::create([
+            'name' => 'เนื้อสัตว์',
+            'slug' => 'meat',
+            'sort_order' => 1,
+        ]);
+
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'หมูสามชั้น',
+            'price_per_stick' => 35,
+            'is_available' => true,
+            'stock_sticks' => 50,
+        ]);
+
+        $submitRes = $this->postJson('/order/submit', [
+            'customer_name' => 'ลูกค้าทดสอบ',
+            'customer_phone' => '0812345678',
+            'pickup_time' => 'ทันที (~15-20 นาที)',
+            'payment_method' => 'promptpay',
+            'awaiting_payment' => true,
+            'items' => [
+                [
+                    'product_id' => $product->id,
+                    'quantity' => 1,
+                    'cooking_type' => 'grill',
+                    'spiciness_level' => 'medium',
+                ],
+            ],
+        ]);
+
+        $submitRes->assertStatus(200)->assertJson([
+            'success' => true,
+            'awaiting_payment' => true,
+            'total_amount' => 35.0,
+        ]);
+
+        $orderNo = $submitRes->json('order_no');
+
+        // Second simultaneous order with same 35 THB gets unique satang 35.01
+        $submitRes2 = $this->postJson('/order/submit', [
+            'customer_name' => 'ลูกค้าคนที่สอง',
+            'customer_phone' => '0898765432',
+            'pickup_time' => 'ทันที (~15-20 นาที)',
+            'payment_method' => 'promptpay',
+            'awaiting_payment' => true,
+            'items' => [
+                [
+                    'product_id' => $product->id,
+                    'quantity' => 1,
+                    'cooking_type' => 'grill',
+                    'spiciness_level' => 'medium',
+                ],
+            ],
+        ]);
+
+        $submitRes2->assertStatus(200)->assertJson([
+            'success' => true,
+            'awaiting_payment' => true,
+            'total_amount' => 35.01,
+        ]);
+
+        // Status polling initially returns unpaid
+        $this->getJson('/order/payment-status/' . $orderNo)
+            ->assertStatus(200)
+            ->assertJson(['paid' => false, 'payment_status' => 'unpaid']);
+
+        $config = PaymentWebhookController::getWebhookConfig();
+
+        // Invalid secret is rejected
+        $this->postJson('/webhooks/android-payment', [
+            'secret' => 'wrong-secret',
+            'message' => 'K PLUS: เงินเข้าบัญชี 098-1-53225-2 จำนวน 35.00 บาท',
+        ])->assertStatus(401);
+
+        // Valid secret + KBank notification confirms the matching order automatically
+        $webhookRes = $this->postJson('/webhooks/android-payment', [
+            'secret' => $config['secret'],
+            'message' => 'K PLUS: เงินเข้าบัญชี 098-1-53225-2 จำนวน 35.00 บาท เวลา 08:15 น.',
+        ]);
+
+        $webhookRes->assertStatus(200)->assertJson([
+            'success' => true,
+            'matched' => true,
+            'order_no' => $orderNo,
+            'amount' => 35.0,
+        ]);
+
+        $this->getJson('/order/payment-status/' . $orderNo)
+            ->assertStatus(200)
+            ->assertJson(['paid' => true, 'payment_status' => 'paid', 'status' => 'confirmed']);
+
+        $this->assertEquals('unpaid', Order::where('order_no', $submitRes2->json('order_no'))->value('payment_status'));
+    }
+
+    public function test_access_page_cashier_tab_saves_qr_history_and_switches_presets(): void
+    {
+        $admin = \App\Models\User::create([
+            'name' => 'Admin Cashier',
+            'email' => 'cashier-admin@malastreet.com',
+            'password' => \Illuminate\Support\Facades\Hash::make('password123'),
+        ]);
+
+        // 1. Access page renders จัดการแคชเชียร์ tab
+        $accessRes = $this->actingAs($admin)->get('/admin/access?tab=cashier');
+        $accessRes->assertStatus(200);
+        $accessRes->assertSee('จัดการแคชเชียร์');
+        $accessRes->assertSee('คลังภาพ QR พร้อมเพย์ที่บันทึกไว้ทั้งหมด');
+
+        // 2. Save a new QR preset with uploaded base64 image & custom store name
+        $saveRes = $this->actingAs($admin)->postJson('/pos/settings/promptpay-qr', [
+            'label' => 'บัญชีสำรอง SCB',
+            'store_name' => 'หม่าล่าสตรีท สาขา 2',
+            'account_no' => '123-4-56789-0 (ไทยพาณิชย์)',
+            'account_name' => 'ทดสอบ บัญชีสำรอง',
+            'receipt_note' => 'โอนแล้วรอรับคิวได้เลย',
+            'payload' => '0812345678',
+            'image_data' => 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/',
+        ]);
+
+        $saveRes->assertStatus(200)->assertJson(['success' => true]);
+        $history = $saveRes->json('settings.history');
+        $this->assertGreaterThanOrEqual(2, count($history));
+        $this->assertEquals('หม่าล่าสตรีท สาขา 2', $saveRes->json('settings.store_name'));
+
+        // 3. Switch back to the original default QR preset in history
+        $activateRes = $this->actingAs($admin)->postJson('/pos/settings/promptpay-qr/activate', [
+            'id' => 'qr_default',
+        ]);
+
+        $activateRes->assertStatus(200)->assertJson(['success' => true]);
+        $this->assertEquals('098-1-53225-2 (กสิกรไทย)', $activateRes->json('settings.account_no'));
+    }
+}

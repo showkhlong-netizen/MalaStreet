@@ -32,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'order/rewards/*',
             'admin/receipts/upload-image',
             'admin/receipts/scan-ocr',
+            'webhooks/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

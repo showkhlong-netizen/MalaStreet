@@ -883,6 +883,7 @@
                 <div class="p-4 bg-white border-2 border-dashed border-rose-300 rounded-2xl flex flex-col items-center">
                     <img id="promptpay-qr-img" src="" alt="PromptPay QR" class="w-48 h-48 object-contain rounded-lg shadow-xs">
                     <div class="mt-2 text-xs text-slate-600 mala-font-mid-bold">
+                        <div id="pos-qr-store-name" class="font-black text-slate-900 mb-0.5">{{ $promptPaySettings['store_name'] ?? 'ร้านหม่าล่าสตรีท (Mala Street)' }}</div>
                         บัญชี: <strong id="pos-qr-account-no" class="text-slate-800">{{ $promptPaySettings['account_no'] ?? '098-1-53225-2 (กสิกรไทย)' }}</strong>
                         <span class="block text-[11px] text-slate-500 mt-0.5">ชื่อบัญชี: <span id="pos-qr-account-name">{{ $promptPaySettings['account_name'] ?? 'มูนีบ สและแม' }}</span></span>
                     </div>
@@ -951,8 +952,36 @@
                 </div>
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">รหัส QR (EMVCo Payload) หรือเบอร์พร้อมเพย์</label>
-                    <textarea id="pos-qr-input-payload" rows="3"
+                    <textarea id="pos-qr-input-payload" rows="2"
                               class="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono text-[10.5px] text-slate-700 focus:border-rose-500 focus:outline-none">{{ $promptPaySettings['payload'] ?? '' }}</textarea>
+                </div>
+            </div>
+
+            <!-- Android Notification Webhook (Auto Confirm Paid Without Slip) -->
+            <div class="rounded-2xl bg-emerald-50/70 border border-emerald-200 p-3.5 space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="font-extrabold text-emerald-900 text-xs">🤖 ยืนยันเงินเข้าอัตโนมัติ (Android / MacroDroid)</span>
+                    <button type="button" onclick="testAndroidPaymentWebhook()" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[10.5px] font-bold cursor-pointer">ทดสอบ Webhook</button>
+                </div>
+                <div class="space-y-1.5 text-[11px]">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-slate-600 shrink-0 font-bold">URL:</span>
+                        <input type="text" id="pos-webhook-url" readonly value="{{ $webhookConfig['webhook_url'] ?? url('/webhooks/android-payment') }}" class="flex-1 px-2 py-1 rounded-lg bg-white border border-emerald-200 font-mono text-[10px] text-slate-700">
+                        <button type="button" onclick="copyPosField('pos-webhook-url')" class="px-2 py-1 rounded-lg bg-white border border-emerald-200 text-emerald-800 font-bold text-[10px] cursor-pointer hover:bg-emerald-100">คัดลอก</button>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-slate-600 shrink-0 font-bold">Secret:</span>
+                        <input type="text" id="pos-webhook-secret" readonly value="{{ $webhookConfig['secret'] ?? '' }}" class="flex-1 px-2 py-1 rounded-lg bg-white border border-emerald-200 font-mono text-[10px] text-slate-700">
+                        <button type="button" onclick="copyPosField('pos-webhook-secret')" class="px-2 py-1 rounded-lg bg-white border border-emerald-200 text-emerald-800 font-bold text-[10px] cursor-pointer hover:bg-emerald-100">คัดลอก</button>
+                    </div>
+                    <div id="pos-webhook-last-status" class="text-[10.5px] text-emerald-800 font-medium">
+                        @if(!empty($webhookConfig['last_received_at']))
+                            ล่าสุด: {{ $webhookConfig['last_received_at'] }} (฿{{ $webhookConfig['last_amount'] ?: '-' }})
+                            @if(!empty($webhookConfig['last_matched_order_no'])) • จับคู่บิล {{ $webhookConfig['last_matched_order_no'] }} @endif
+                        @else
+                            สถานะ: พร้อมรับแจ้งเตือนจากมือถือ/แท็บเล็ต Android (ส่ง JSON: secret, message)
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
@@ -1764,6 +1793,46 @@
         }
     }
 
+    function copyPosField(inputId) {
+        const el = document.getElementById(inputId);
+        if (!el) return;
+        el.select();
+        navigator.clipboard?.writeText(el.value);
+        showPosSyncToast('คัดลอกแล้ว: ' + el.value);
+    }
+
+    async function testAndroidPaymentWebhook() {
+        const url = document.getElementById('pos-webhook-url')?.value;
+        const secret = document.getElementById('pos-webhook-secret')?.value;
+        const statusEl = document.getElementById('pos-webhook-last-status');
+        if (!url || !secret) return;
+
+        const testAmount = getCartTotal() > 0 ? getCartTotal().toFixed(2) : '35.00';
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Webhook-Secret': secret,
+                },
+                body: JSON.stringify({
+                    secret,
+                    message: `KBank: เงินเข้าบัญชี 098-1-53225-2 จำนวน ${testAmount} บาท`,
+                }),
+            });
+            const data = await res.json();
+            if (statusEl) {
+                statusEl.textContent = data.matched
+                    ? `✅ ทดสอบสำเร็จ! จับคู่บิล ${data.order_no} (฿${data.amount})`
+                    : `✅ เชื่อมต่อ Webhook สำเร็จ! (อ่านยอด ฿${data.parsed_amount ?? testAmount} ได้ปกติ)`;
+            }
+            showPosSyncToast(data.matched ? `ยืนยันบิล ${data.order_no} แล้ว` : 'ทดสอบ Webhook สำเร็จ');
+        } catch (err) {
+            if (statusEl) statusEl.textContent = '❌ ทดสอบเชื่อมต่อ Webhook ไม่สำเร็จ';
+        }
+    }
+
     function closePaymentModal() {
         document.getElementById('payment-modal').classList.add('hidden');
     }
@@ -2371,6 +2440,46 @@
             if (typeof showToast === 'function') showToast('เกิดข้อผิดพลาดในการบันทึก');
         } finally {
             if (btn) btn.disabled = false;
+        }
+    }
+
+    function copyPosField(inputId) {
+        const el = document.getElementById(inputId);
+        if (!el) return;
+        el.select();
+        navigator.clipboard?.writeText(el.value);
+        showPosSyncToast('คัดลอกแล้ว: ' + el.value);
+    }
+
+    async function testAndroidPaymentWebhook() {
+        const url = document.getElementById('pos-webhook-url')?.value;
+        const secret = document.getElementById('pos-webhook-secret')?.value;
+        const statusEl = document.getElementById('pos-webhook-last-status');
+        if (!url || !secret) return;
+
+        const testAmount = getCartTotal() > 0 ? getCartTotal().toFixed(2) : '35.00';
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Webhook-Secret': secret,
+                },
+                body: JSON.stringify({
+                    secret,
+                    message: `KBank: เงินเข้าบัญชี 098-1-53225-2 จำนวน ${testAmount} บาท`,
+                }),
+            });
+            const data = await res.json();
+            if (statusEl) {
+                statusEl.textContent = data.matched
+                    ? `✅ ทดสอบสำเร็จ! จับคู่บิล ${data.order_no} (฿${data.amount})`
+                    : `✅ เชื่อมต่อ Webhook สำเร็จ! (อ่านยอด ฿${data.parsed_amount ?? testAmount} ได้ปกติ)`;
+            }
+            showPosSyncToast(data.matched ? `ยืนยันบิล ${data.order_no} แล้ว` : 'ทดสอบ Webhook สำเร็จ');
+        } catch (err) {
+            if (statusEl) statusEl.textContent = '❌ ทดสอบเชื่อมต่อ Webhook ไม่สำเร็จ';
         }
     }
 </script>

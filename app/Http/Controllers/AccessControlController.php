@@ -446,6 +446,9 @@ class AccessControlController extends Controller
             $resetBranches = collect();
         }
 
+        $promptPaySettings = PosController::getStorePromptPaySettings();
+        $webhookConfig = PaymentWebhookController::getWebhookConfig();
+
         return view('admin.access.index', compact(
             'currentTab',
             'users',
@@ -460,7 +463,9 @@ class AccessControlController extends Controller
             'pendingRegistrations',
             'resetBranches',
             'allBranches',
-            'selectedUserBranchIds'
+            'selectedUserBranchIds',
+            'promptPaySettings',
+            'webhookConfig'
         ));
     }
 

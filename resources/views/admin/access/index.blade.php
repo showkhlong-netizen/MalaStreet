@@ -152,6 +152,18 @@
                 <span>ระบบรีเซ็ทข้อมูล</span>
                 <span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 text-[10px] font-bold">สำรอง 30 วัน</span>
             </button>
+
+            <!-- 7. จัดการแคชเชียร์ & QR พร้อมเพย์ -->
+            <button type="button"
+                    id="subtab-btn-cashier"
+                    onclick="switchSubTab('cashier')"
+                    class="subtab-btn shrink-0 py-2 px-3.5 rounded-xl text-xs font-semibold {{ $currentTab === 'cashier' ? 'text-[#2563EB] bg-[#EFF6FF] border border-[#BFDBFE] shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-transparent' }} flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap">
+                <svg class="w-4 h-4 {{ $currentTab === 'cashier' ? 'text-[#2563EB]' : 'text-emerald-600' }}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h6v6H3V3zm12 0h6v6h-6V3zM3 15h6v6H3v-6zm12 0h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm4 0h2v2h-2v-2z" />
+                </svg>
+                <span>จัดการแคชเชียร์</span>
+                <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">QR พร้อมเพย์</span>
+            </button>
         </div>
 
         <!-- ========================================================================= -->
@@ -164,8 +176,8 @@
             <!-- การ์ดผู้ใช้งานลอยตามเมื่อเลื่อนหน้าต่างสิทธิ์การเข้าถึง (Sticky Floating Card) -->
             <!-- --------------------------------------------------------------------- -->
             <div id="col-users-list" 
-                 class="{{ in_array($currentTab, ['autologout', 'audit', 'register', 'reset']) ? 'hidden ' : '' }}lg:col-span-4 xl:col-span-3 lg:sticky lg:top-[88px] self-start bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-sm space-y-3.5 z-20 transition-all"
-                 style="{{ in_array($currentTab, ['autologout', 'audit', 'register', 'reset']) ? 'display: none;' : '' }}">
+                 class="{{ in_array($currentTab, ['autologout', 'audit', 'register', 'reset', 'cashier']) ? 'hidden ' : '' }}lg:col-span-4 xl:col-span-3 lg:sticky lg:top-[88px] self-start bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-sm space-y-3.5 z-20 transition-all"
+                 style="{{ in_array($currentTab, ['autologout', 'audit', 'register', 'reset', 'cashier']) ? 'display: none;' : '' }}">
                 <!-- Header with count badge and quick actions -->
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
@@ -305,8 +317,8 @@
             <!-- RIGHT COLUMN: สิทธิ์การเข้าถึง & หน้าต่างจัดการ (Col-span-8 หรือ Col-span-12) -->
             <!-- --------------------------------------------------------------------- -->
             <div id="col-main-content" 
-                 class="{{ in_array($currentTab, ['autologout', 'audit', 'register', 'reset']) ? 'w-full ' : 'lg:col-span-8 xl:col-span-9 w-full ' }}space-y-4"
-                 style="{{ in_array($currentTab, ['autologout', 'audit', 'register', 'reset']) ? 'grid-column: 1 / -1; width: 100%;' : '' }}">
+                 class="{{ in_array($currentTab, ['autologout', 'audit', 'register', 'reset', 'cashier']) ? 'w-full ' : 'lg:col-span-8 xl:col-span-9 w-full ' }}space-y-4"
+                 style="{{ in_array($currentTab, ['autologout', 'audit', 'register', 'reset', 'cashier']) ? 'grid-column: 1 / -1; width: 100%;' : '' }}">
 
                 <!-- ================================================================= -->
                 <!-- PANEL 1: สิทธิ์การเข้าถึง (Permission Matrix)                       -->
@@ -2378,6 +2390,17 @@
             </div>
             <!-- END PANEL 6: ระบบรีเซ็ทข้อมูล -->
 
+            <!-- ================================================================= -->
+            <!-- PANEL 7: จัดการแคชเชียร์ & QR พร้อมเพย์ (Cashier & QR Hub)        -->
+            <!-- ================================================================= -->
+            <div id="panel-cashier" class="w-full max-w-full bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-sm space-y-4 {{ $currentTab === 'cashier' ? '' : 'hidden' }}">
+                @include('access.partials.cashier_tab', [
+                    'promptPaySettings' => $promptPaySettings ?? null,
+                    'webhookConfig' => $webhookConfig ?? null,
+                ])
+            </div>
+            <!-- END PANEL 7: จัดการแคชเชียร์ -->
+
         </div>
         <!-- END RIGHT COLUMN -->
     </div>
@@ -2852,6 +2875,7 @@
         const pAutoLogout = document.getElementById('panel-autologout');
         const pAudit = document.getElementById('panel-audit');
         const pReset = document.getElementById('panel-reset');
+        const pCashier = document.getElementById('panel-cashier');
 
         const colUsersList = document.getElementById('col-users-list');
         const colMainContent = document.getElementById('col-main-content');
@@ -2862,6 +2886,7 @@
         const btnAutoLogout = document.getElementById('subtab-btn-autologout');
         const btnAudit = document.getElementById('subtab-btn-audit');
         const btnReset = document.getElementById('subtab-btn-reset');
+        const btnCashier = document.getElementById('subtab-btn-cashier');
 
         const activeClasses = "subtab-btn shrink-0 py-2 px-3.5 rounded-xl text-xs font-bold text-[#2563EB] bg-[#EFF6FF] border border-[#BFDBFE] shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap";
         const inactiveClasses = "subtab-btn shrink-0 py-2 px-3.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap border-transparent";
@@ -2872,8 +2897,9 @@
         if (btnAutoLogout) btnAutoLogout.className = inactiveClasses;
         if (btnAudit) btnAudit.className = inactiveClasses;
         if (btnReset) btnReset.className = inactiveClasses;
+        if (btnCashier) btnCashier.className = inactiveClasses;
 
-        if (tab === 'autologout' || tab === 'audit' || tab === 'register' || tab === 'reset') {
+        if (tab === 'autologout' || tab === 'audit' || tab === 'register' || tab === 'reset' || tab === 'cashier') {
             if (colUsersList) {
                 colUsersList.classList.add('hidden');
                 colUsersList.style.display = 'none';
@@ -2887,7 +2913,21 @@
             if (pPermissions) pPermissions.classList.add('hidden');
             if (pUsers) pUsers.classList.add('hidden');
 
-            if (tab === 'audit') {
+            if (tab === 'cashier') {
+                if (pAutoLogout) pAutoLogout.classList.add('hidden');
+                if (pRegister) pRegister.classList.add('hidden');
+                if (pAudit) pAudit.classList.add('hidden');
+                if (pReset) pReset.classList.add('hidden');
+                if (pCashier) {
+                    pCashier.classList.remove('hidden');
+                    pCashier.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+                if (btnCashier) btnCashier.className = activeClasses;
+                refreshCashierLiveQrPreview();
+                renderCashierQrHistory();
+                showToast("เปิดหน้าต่าง: จัดการแคชเชียร์ & QR พร้อมเพย์");
+            } else if (tab === 'audit') {
+                if (pCashier) pCashier.classList.add('hidden');
                 if (pAutoLogout) pAutoLogout.classList.add('hidden');
                 if (pRegister) pRegister.classList.add('hidden');
                 if (pReset) pReset.classList.add('hidden');
@@ -2899,6 +2939,7 @@
                 loadAuditLogsLive();
                 showToast("เปิดหน้าต่าง: ประวัติการทำงานของระบบ (Audit Trail)");
             } else if (tab === 'reset') {
+                if (pCashier) pCashier.classList.add('hidden');
                 if (pAutoLogout) pAutoLogout.classList.add('hidden');
                 if (pRegister) pRegister.classList.add('hidden');
                 if (pAudit) pAudit.classList.add('hidden');
@@ -2912,6 +2953,7 @@
                 }
                 showToast("เปิดหน้าต่าง: ระบบรีเซ็ทข้อมูล & ถังสำรอง 30 วัน");
             } else if (tab === 'register') {
+                if (pCashier) pCashier.classList.add('hidden');
                 if (pAutoLogout) pAutoLogout.classList.add('hidden');
                 if (pAudit) pAudit.classList.add('hidden');
                 if (pReset) pReset.classList.add('hidden');
@@ -2922,6 +2964,7 @@
                 if (btnRegister) btnRegister.className = activeClasses;
                 showToast("เปิดหน้าต่าง: ลงทะเบียนขอสิทธิ์ & สร้างบัญชีจริง (2 แถบ)");
             } else {
+                if (pCashier) pCashier.classList.add('hidden');
                 if (pAudit) pAudit.classList.add('hidden');
                 if (pRegister) pRegister.classList.add('hidden');
                 if (pReset) pReset.classList.add('hidden');
@@ -2933,6 +2976,7 @@
                 showToast("เปิดหน้าต่าง: ระบบเช็คเอาท์อัตโนมัติ (การตั้งค่าความปลอดภัยส่วนกลาง)");
             }
         } else {
+            if (pCashier) pCashier.classList.add('hidden');
             if (colUsersList) {
                 colUsersList.classList.remove('hidden');
                 colUsersList.style.display = '';
@@ -4024,8 +4068,315 @@
             switchSubTab('audit');
         } else if (tab === 'reset') {
             switchSubTab('reset');
+        } else if (tab === 'cashier') {
+            switchSubTab('cashier');
         }
+        refreshCashierLiveQrPreview();
+        renderCashierQrHistory();
     });
+
+    // === Cashier & PromptPay QR Archive Manager ===
+    let CASHIER_QR_SETTINGS = @json($promptPaySettings ?? \App\Http\Controllers\PosController::getStorePromptPaySettings());
+    let cashierPendingImageData = '';
+
+    function cashierCrc16Ccitt(payload) {
+        let crc = 0xFFFF;
+        for (let i = 0; i < payload.length; i++) {
+            crc ^= (payload.charCodeAt(i) & 0xFF) << 8;
+            for (let bit = 0; bit < 8; bit++) {
+                crc = ((crc & 0x8000) !== 0) ? (((crc << 1) ^ 0x1021) & 0xFFFF) : ((crc << 1) & 0xFFFF);
+            }
+        }
+        return crc.toString(16).toUpperCase().padStart(4, '0');
+    }
+
+    function cashierEmvTlv(tag, value) {
+        return `${tag}${String(value.length).padStart(2, '0')}${value}`;
+    }
+
+    function buildCashierLockedQrPayload(basePayloadOrPhone, amount) {
+        const raw = String(basePayloadOrPhone || '').trim();
+        const numericAmount = Number(amount || 0);
+        if (raw.startsWith('000201') && raw.length > 20) {
+            const tags = [];
+            let i = 0;
+            while (i + 4 <= raw.length) {
+                const tag = raw.slice(i, i + 2);
+                const len = parseInt(raw.slice(i + 2, i + 4), 10);
+                if (Number.isNaN(len) || i + 4 + len > raw.length) break;
+                tags.push({ tag, val: raw.slice(i + 4, i + 4 + len) });
+                i += 4 + len;
+            }
+            let out = '';
+            let inserted = false;
+            for (const t of tags.filter(x => x.tag !== '54' && x.tag !== '63')) {
+                const val = (t.tag === '01') ? (numericAmount > 0 ? '12' : '11') : t.val;
+                out += cashierEmvTlv(t.tag, val);
+                if (t.tag === '53' && numericAmount > 0) {
+                    out += cashierEmvTlv('54', numericAmount.toFixed(2));
+                    inserted = true;
+                }
+            }
+            if (!inserted && numericAmount > 0) out += cashierEmvTlv('54', numericAmount.toFixed(2));
+            out += '6304';
+            return out + cashierCrc16Ccitt(out);
+        }
+        const clean = raw.replace(/[^0-9]/g, '') || '0891234567';
+        const formatted = clean.startsWith('0') ? ('0066' + clean.slice(1)) : clean;
+        const merchantInfo = cashierEmvTlv('00', 'A000000677010111') + cashierEmvTlv('01', formatted);
+        let payload = cashierEmvTlv('00', '01') + cashierEmvTlv('01', numericAmount > 0 ? '12' : '11') + cashierEmvTlv('29', merchantInfo) + cashierEmvTlv('53', '764');
+        if (numericAmount > 0) payload += cashierEmvTlv('54', numericAmount.toFixed(2));
+        payload += cashierEmvTlv('58', 'TH') + '6304';
+        return payload + cashierCrc16Ccitt(payload);
+    }
+
+    function refreshCashierLiveQrPreview() {
+        const payload = document.getElementById('cashier-qr-payload')?.value.trim() || CASHIER_QR_SETTINGS.payload || '';
+        const amount = parseFloat(document.getElementById('cashier-preview-amount')?.value || '35') || 35;
+        const locked = buildCashierLockedQrPayload(payload, amount);
+        const qrImg = document.getElementById('cashier-live-qr-img');
+        if (qrImg) {
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=${encodeURIComponent(locked)}`;
+        }
+        const storeName = document.getElementById('cashier-store-name')?.value.trim() || CASHIER_QR_SETTINGS.store_name || '';
+        const accNo = document.getElementById('cashier-account-no')?.value.trim() || CASHIER_QR_SETTINGS.account_no || '';
+        const accName = document.getElementById('cashier-account-name')?.value.trim() || CASHIER_QR_SETTINGS.account_name || '';
+        const elStore = document.getElementById('cashier-preview-store-name');
+        const elNo = document.getElementById('cashier-preview-account-no');
+        const elName = document.getElementById('cashier-preview-account-name');
+        if (elStore) elStore.textContent = storeName;
+        if (elNo) elNo.textContent = accNo;
+        if (elName) elName.textContent = 'ชื่อบัญชี: ' + accName;
+    }
+
+    function handleCashierQrUpload(input) {
+        const file = input.files?.[0];
+        if (!file) return;
+        const statusEl = document.getElementById('cashier-qr-decode-status');
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                // 1. Decode full-res image with jsQR
+                const decodeCanvas = document.createElement('canvas');
+                decodeCanvas.width = img.width;
+                decodeCanvas.height = img.height;
+                const dCtx = decodeCanvas.getContext('2d');
+                dCtx.drawImage(img, 0, 0);
+                const imgData = dCtx.getImageData(0, 0, decodeCanvas.width, decodeCanvas.height);
+                const decoded = (typeof jsQR === 'function')
+                    ? jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'attemptBoth' })
+                    : null;
+
+                // 2. Compress uploaded QR image to Base64 for permanent DB storage
+                const maxSide = 600;
+                const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+                const compCanvas = document.createElement('canvas');
+                compCanvas.width = Math.max(1, Math.round(img.width * scale));
+                compCanvas.height = Math.max(1, Math.round(img.height * scale));
+                compCanvas.getContext('2d').drawImage(img, 0, 0, compCanvas.width, compCanvas.height);
+                cashierPendingImageData = compCanvas.toDataURL('image/jpeg', 0.85);
+
+                const thumbWrap = document.getElementById('cashier-uploaded-thumb-wrap');
+                const thumbImg = document.getElementById('cashier-uploaded-thumb');
+                if (thumbWrap && thumbImg) {
+                    thumbImg.src = cashierPendingImageData;
+                    thumbWrap.classList.remove('hidden');
+                }
+
+                if (decoded && decoded.data) {
+                    document.getElementById('cashier-qr-payload').value = decoded.data;
+                    refreshCashierLiveQrPreview();
+                    if (statusEl) {
+                        statusEl.textContent = '✅ ถอดรหัส QR และเตรียมภาพสำหรับเก็บลงระบบเรียบร้อยแล้ว! กด "บันทึก & เก็บภาพ QR เข้าระบบ"';
+                        statusEl.className = 'text-[11px] font-bold text-emerald-600';
+                    }
+                } else if (statusEl) {
+                    statusEl.textContent = '⚠️ เก็บภาพไว้แล้ว แต่ไม่พบ QR ในภาพ (ลองครอปเฉพาะ QR หรือกรอกรหัส/เบอร์พร้อมเพย์เองได้)';
+                    statusEl.className = 'text-[11px] font-bold text-amber-600';
+                }
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function saveCashierQrSettings() {
+        const btn = document.getElementById('btn-cashier-save-qr');
+        if (btn) btn.disabled = true;
+        try {
+            const res = await fetch('{{ route("pos.settings.promptpay_qr") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({
+                    label: document.getElementById('cashier-qr-label')?.value.trim() || '',
+                    store_name: document.getElementById('cashier-store-name')?.value.trim() || '',
+                    store_phone: document.getElementById('cashier-store-phone')?.value.trim() || '',
+                    receipt_note: document.getElementById('cashier-receipt-note')?.value.trim() || '',
+                    account_no: document.getElementById('cashier-account-no')?.value.trim() || '',
+                    account_name: document.getElementById('cashier-account-name')?.value.trim() || '',
+                    payload: document.getElementById('cashier-qr-payload')?.value.trim() || '',
+                    image_data: cashierPendingImageData || '',
+                }),
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                CASHIER_QR_SETTINGS = data.settings;
+                cashierPendingImageData = '';
+                renderCashierQrHistory();
+                refreshCashierLiveQrPreview();
+                showToast(data.message || 'บันทึกจัดการแคชเชียร์แล้ว');
+            } else {
+                showToast(data.message || 'บันทึกไม่สำเร็จ');
+            }
+        } catch (err) {
+            showToast('เกิดข้อผิดพลาดในการบันทึก');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    async function activateCashierQrPreset(id) {
+        try {
+            const res = await fetch('{{ route("pos.settings.promptpay_qr.activate") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({ id }),
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                CASHIER_QR_SETTINGS = data.settings;
+                document.getElementById('cashier-qr-payload').value = data.settings.payload || '';
+                document.getElementById('cashier-store-name').value = data.settings.store_name || '';
+                document.getElementById('cashier-account-no').value = data.settings.account_no || '';
+                document.getElementById('cashier-account-name').value = data.settings.account_name || '';
+                const thumbWrap = document.getElementById('cashier-uploaded-thumb-wrap');
+                const thumbImg = document.getElementById('cashier-uploaded-thumb');
+                if (thumbWrap && thumbImg) {
+                    if (data.settings.active_image) {
+                        thumbImg.src = data.settings.active_image;
+                        thumbWrap.classList.remove('hidden');
+                    } else {
+                        thumbWrap.classList.add('hidden');
+                    }
+                }
+                renderCashierQrHistory();
+                refreshCashierLiveQrPreview();
+                showToast(data.message || 'สลับใช้งาน QR เรียบร้อยแล้ว');
+            }
+        } catch (err) {
+            showToast('สลับ QR ไม่สำเร็จ');
+        }
+    }
+
+    async function deleteCashierQrPreset(id) {
+        if (!confirm('ลบรายการ QR นี้ออกจากคลัง?')) return;
+        try {
+            const res = await fetch('{{ route("pos.settings.promptpay_qr.delete") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({ id }),
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                CASHIER_QR_SETTINGS = data.settings;
+                renderCashierQrHistory();
+                showToast(data.message || 'ลบออกจากคลังแล้ว');
+            }
+        } catch (err) {
+            showToast('ลบไม่สำเร็จ');
+        }
+    }
+
+    function renderCashierQrHistory() {
+        const grid = document.getElementById('cashier-qr-history-grid');
+        const countEl = document.getElementById('cashier-history-count');
+        if (!grid) return;
+
+        const list = CASHIER_QR_SETTINGS.history || [];
+        if (countEl) countEl.textContent = `${list.length} รายการ`;
+
+        if (list.length === 0) {
+            grid.innerHTML = '<div class="col-span-full text-center py-6 text-xs text-slate-400">ยังไม่มีประวัติภาพ QR ในคลัง</div>';
+            return;
+        }
+
+        grid.innerHTML = list.map((item) => {
+            const isActive = item.id === CASHIER_QR_SETTINGS.active_qr_id || item.payload === CASHIER_QR_SETTINGS.payload;
+            const imgSrc = item.image_data || `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=6&data=${encodeURIComponent(buildCashierLockedQrPayload(item.payload, 0))}`;
+            return `
+                <div class="rounded-2xl border ${isActive ? 'border-emerald-400 bg-emerald-50/40 ring-2 ring-emerald-200/70' : 'border-slate-200 bg-white'} p-3.5 flex flex-col justify-between gap-3">
+                    <div class="flex items-start gap-3">
+                        <img src="${imgSrc}" alt="QR" class="w-16 h-16 rounded-xl border border-slate-200 object-contain bg-white p-1 shrink-0">
+                        <div class="min-w-0 flex-1 text-xs">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="font-black text-slate-900 truncate">${item.label || item.account_no || 'QR พร้อมเพย์'}</span>
+                                ${isActive ? '<span class="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[9.5px] font-bold">กำลังใช้งาน</span>' : ''}
+                            </div>
+                            <div class="text-[11px] text-slate-600 truncate mt-0.5">${item.store_name || ''}</div>
+                            <div class="text-[11px] font-mono text-slate-700 truncate">${item.account_no || ''}</div>
+                            <div class="text-[10px] text-slate-400 truncate">${item.account_name || ''} • ${item.created_at || ''}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
+                        <button type="button" onclick="activateCashierQrPreset('${item.id}')"
+                                class="flex-1 py-1.5 px-2.5 rounded-xl ${isActive ? 'bg-emerald-600 text-white' : 'bg-slate-900 hover:bg-slate-800 text-white'} text-[11px] font-bold cursor-pointer transition-colors">
+                            ${isActive ? 'ใช้งานอยู่ (เจนซ้ำ)' : 'สลับมาใช้ QR นี้'}
+                        </button>
+                        <button type="button" onclick="deleteCashierQrPreset('${item.id}')"
+                                class="py-1.5 px-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold cursor-pointer transition-colors">
+                            ลบ
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function copyCashierText(inputId) {
+        const el = document.getElementById(inputId);
+        if (!el) return;
+        el.select();
+        navigator.clipboard?.writeText(el.value);
+        showToast('คัดลอกแล้ว: ' + el.value);
+    }
+
+    async function testCashierWebhook() {
+        const url = document.getElementById('cashier-wh-url')?.value;
+        const secret = document.getElementById('cashier-wh-secret')?.value;
+        const statusEl = document.getElementById('cashier-wh-status');
+        if (!url || !secret) return;
+        const amt = (parseFloat(document.getElementById('cashier-preview-amount')?.value || '35') || 35).toFixed(2);
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Webhook-Secret': secret },
+                body: JSON.stringify({ secret, message: `KBank: เงินเข้าบัญชี จำนวน ${amt} บาท` }),
+            });
+            const data = await res.json();
+            if (statusEl) {
+                statusEl.textContent = data.matched
+                    ? `✅ ทดสอบสำเร็จ! จับคู่บิล ${data.order_no} (฿${data.amount})`
+                    : `✅ เชื่อมต่อ Webhook สำเร็จ! (อ่านยอด ฿${data.parsed_amount ?? amt} ได้ปกติ)`;
+            }
+            showToast('ทดสอบ Webhook สำเร็จ');
+        } catch (err) {
+            if (statusEl) statusEl.textContent = '❌ ทดสอบไม่สำเร็จ';
+        }
+    }
 </script>
 @endsection
 

@@ -77,6 +77,7 @@ class PosController extends Controller
         ));
 
         $promptPaySettings = self::getStorePromptPaySettings();
+        $webhookConfig = PaymentWebhookController::getWebhookConfig();
 
         return view('pos.index', compact(
             'categories',
@@ -90,7 +91,8 @@ class PosController extends Controller
             'posHeroBannerImage',
             'posHeroBannerPosition',
             'posHeroBannerHistory',
-            'promptPaySettings'
+            'promptPaySettings',
+            'webhookConfig'
         ));
     }
 
@@ -695,47 +697,201 @@ class PosController extends Controller
     {
         $defaultPayload = '0002010102110216478772000407574704155303920004076001531343007640052044640122194421100130810016A00000067701011201150107536000315010214KB0000020757060320KPS004KB00000207570631690016A00000067701011301030040214KB0000020757060420KPS004KB00000207570651430014A000000004101001064169710211123456789015204731153037645802TH5913CHAWKLONG.PRO6004CITY622505094548452260708421944216304D288';
 
+        $payload = Setting::get('store_promptpay_qr_payload', $defaultPayload) ?: $defaultPayload;
+        $storeName = Setting::get('store_name', 'ร้านหม่าล่าสตรีท (Mala Street)') ?: 'ร้านหม่าล่าสตรีท (Mala Street)';
+        $storePhone = Setting::get('store_phone', '089-123-4567') ?: '089-123-4567';
+        $receiptNote = Setting::get('store_receipt_note', 'สแกนได้ทุกแอปธนาคารไทย ยอดเงินจะขึ้นตรงอัตโนมัติ') ?: 'สแกนได้ทุกแอปธนาคารไทย ยอดเงินจะขึ้นตรงอัตโนมัติ';
+        $accountName = Setting::get('store_promptpay_account_name', 'มูนีบ สและแม') ?: 'มูนีบ สและแม';
+        $accountNo = Setting::get('store_promptpay_account_no', '098-1-53225-2 (กสิกรไทย)') ?: '098-1-53225-2 (กสิกรไทย)';
+        $activeImage = Setting::get('store_promptpay_active_image', '');
+        $activeQrId = Setting::get('store_promptpay_active_qr_id', 'qr_default');
+
+        $history = json_decode(Setting::get('store_promptpay_qr_history', '[]'), true);
+        if (!is_array($history) || empty($history)) {
+            $history = [
+                [
+                    'id' => 'qr_default',
+                    'label' => 'QR หลักของร้าน',
+                    'store_name' => $storeName,
+                    'account_name' => $accountName,
+                    'account_no' => $accountNo,
+                    'payload' => $payload,
+                    'image_data' => $activeImage,
+                    'created_at' => Carbon::now('Asia/Bangkok')->format('d/m/Y H:i'),
+                ],
+            ];
+            Setting::set('store_promptpay_qr_history', json_encode($history, JSON_UNESCAPED_UNICODE), 'payment');
+        }
+
         return [
-            'payload' => Setting::get('store_promptpay_qr_payload', $defaultPayload) ?: $defaultPayload,
-            'account_name' => Setting::get('store_promptpay_account_name', 'มูนีบ สและแม') ?: 'มูนีบ สและแม',
-            'account_no' => Setting::get('store_promptpay_account_no', '098-1-53225-2 (กสิกรไทย)') ?: '098-1-53225-2 (กสิกรไทย)',
+            'payload' => $payload,
+            'store_name' => $storeName,
+            'store_phone' => $storePhone,
+            'receipt_note' => $receiptNote,
+            'account_name' => $accountName,
+            'account_no' => $accountNo,
+            'active_image' => $activeImage,
+            'active_qr_id' => $activeQrId,
+            'history' => array_values($history),
         ];
     }
 
     /**
-     * Save or replace the store's PromptPay EMVCo QR payload & display account info.
+     * Save or replace the store's PromptPay EMVCo QR payload, uploaded QR image archive & store/cashier info.
      */
     public function savePromptPayQr(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'payload' => 'required|string|min:10|max:1000',
+            'store_name' => 'nullable|string|max:150',
+            'store_phone' => 'nullable|string|max:50',
+            'receipt_note' => 'nullable|string|max:250',
             'account_name' => 'nullable|string|max:120',
             'account_no' => 'nullable|string|max:120',
+            'label' => 'nullable|string|max:120',
+            'image_data' => 'nullable|string|max:900000',
         ]);
 
         $payload = trim($validated['payload']);
+        $storeName = trim((string) ($validated['store_name'] ?? ''));
+        $storePhone = trim((string) ($validated['store_phone'] ?? ''));
+        $receiptNote = trim((string) ($validated['receipt_note'] ?? ''));
         $accountName = trim((string) ($validated['account_name'] ?? ''));
         $accountNo = trim((string) ($validated['account_no'] ?? ''));
+        $label = trim((string) ($validated['label'] ?? ''));
+        $imageData = trim((string) ($validated['image_data'] ?? ''));
+
+        $current = self::getStorePromptPaySettings();
+        $finalStoreName = $storeName !== '' ? $storeName : $current['store_name'];
+        $finalStorePhone = $storePhone !== '' ? $storePhone : $current['store_phone'];
+        $finalReceiptNote = $receiptNote !== '' ? $receiptNote : $current['receipt_note'];
+        $finalAccountName = $accountName !== '' ? $accountName : $current['account_name'];
+        $finalAccountNo = $accountNo !== '' ? $accountNo : $current['account_no'];
 
         Setting::set('store_promptpay_qr_payload', $payload, 'payment');
-        if ($accountName !== '') {
-            Setting::set('store_promptpay_account_name', $accountName, 'payment');
+        Setting::set('store_name', $finalStoreName, 'payment');
+        Setting::set('store_phone', $finalStorePhone, 'payment');
+        Setting::set('store_receipt_note', $finalReceiptNote, 'payment');
+        Setting::set('store_promptpay_account_name', $finalAccountName, 'payment');
+        Setting::set('store_promptpay_account_no', $finalAccountNo, 'payment');
+
+        $history = $current['history'];
+        $existingIndex = null;
+        foreach ($history as $idx => $item) {
+            if (($item['payload'] ?? '') === $payload) {
+                $existingIndex = $idx;
+                break;
+            }
         }
-        if ($accountNo !== '') {
-            Setting::set('store_promptpay_account_no', $accountNo, 'payment');
+
+        $finalImage = $imageData !== ''
+            ? $imageData
+            : ($existingIndex !== null ? ($history[$existingIndex]['image_data'] ?? '') : $current['active_image']);
+
+        $presetId = $existingIndex !== null
+            ? ($history[$existingIndex]['id'] ?? ('qr_' . uniqid()))
+            : ('qr_' . uniqid());
+
+        $entry = [
+            'id' => $presetId,
+            'label' => $label !== '' ? $label : ($finalAccountNo ?: 'QR พร้อมเพย์'),
+            'store_name' => $finalStoreName,
+            'account_name' => $finalAccountName,
+            'account_no' => $finalAccountNo,
+            'payload' => $payload,
+            'image_data' => $finalImage,
+            'created_at' => Carbon::now('Asia/Bangkok')->format('d/m/Y H:i'),
+        ];
+
+        if ($existingIndex !== null) {
+            unset($history[$existingIndex]);
         }
+        array_unshift($history, $entry);
+        $history = array_values(array_slice($history, 0, 30));
+
+        Setting::set('store_promptpay_qr_history', json_encode($history, JSON_UNESCAPED_UNICODE), 'payment');
+        Setting::set('store_promptpay_active_image', $finalImage, 'payment');
+        Setting::set('store_promptpay_active_qr_id', $presetId, 'payment');
 
         AuditLog::record(
             'pos',
             'settings',
-            'อัปเดต QR พร้อมเพย์ของร้าน',
-            $accountNo !== '' ? "{$accountName} ({$accountNo})" : 'อัปเดต EMVCo QR สำเร็จ',
-            ['payload_length' => strlen($payload)]
+            'อัปเดตจัดการแคชเชียร์ & QR พร้อมเพย์',
+            "{$finalStoreName} • {$finalAccountName} ({$finalAccountNo})",
+            ['payload_length' => strlen($payload), 'preset_id' => $presetId]
         );
 
         return response()->json([
             'success' => true,
-            'message' => 'บันทึก QR พร้อมเพย์ใหม่เรียบร้อยแล้ว (มีผลทั้งหน้า POS และหน้าสั่งออนไลน์)',
+            'message' => 'บันทึกการตั้งค่าแคชเชียร์ & QR พร้อมเพย์เรียบร้อยแล้ว (เก็บภาพเข้าคลังและมีผลทั้ง POS และออนไลน์)',
+            'settings' => self::getStorePromptPaySettings(),
+        ]);
+    }
+
+    /**
+     * Switch active PromptPay QR to a previously saved preset in history.
+     */
+    public function activatePromptPayQrPreset(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'id' => 'required|string|max:100',
+        ]);
+
+        $current = self::getStorePromptPaySettings();
+        $found = collect($current['history'])->firstWhere('id', $validated['id']);
+
+        if (!$found) {
+            return response()->json(['success' => false, 'message' => 'ไม่พบรายการ QR ที่เลือก'], 404);
+        }
+
+        Setting::set('store_promptpay_qr_payload', $found['payload'], 'payment');
+        if (!empty($found['store_name'])) {
+            Setting::set('store_name', $found['store_name'], 'payment');
+        }
+        if (!empty($found['account_name'])) {
+            Setting::set('store_promptpay_account_name', $found['account_name'], 'payment');
+        }
+        if (!empty($found['account_no'])) {
+            Setting::set('store_promptpay_account_no', $found['account_no'], 'payment');
+        }
+        Setting::set('store_promptpay_active_image', (string) ($found['image_data'] ?? ''), 'payment');
+        Setting::set('store_promptpay_active_qr_id', $found['id'], 'payment');
+
+        AuditLog::record(
+            'pos',
+            'settings',
+            'สลับใช้งาน QR พร้อมเพย์จากคลัง',
+            ($found['label'] ?? 'QR') . ' • ' . ($found['account_no'] ?? ''),
+            ['preset_id' => $found['id']]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'สลับมาใช้งาน QR "' . ($found['label'] ?? $found['account_no']) . '" เรียบร้อยแล้ว',
+            'settings' => self::getStorePromptPaySettings(),
+        ]);
+    }
+
+    /**
+     * Remove a saved QR preset from history.
+     */
+    public function deletePromptPayQrPreset(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'id' => 'required|string|max:100',
+        ]);
+
+        $current = self::getStorePromptPaySettings();
+        $filtered = array_values(array_filter(
+            $current['history'],
+            fn ($item) => ($item['id'] ?? '') !== $validated['id']
+        ));
+
+        Setting::set('store_promptpay_qr_history', json_encode($filtered, JSON_UNESCAPED_UNICODE), 'payment');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'ลบรายการออกจากคลัง QR แล้ว',
             'settings' => self::getStorePromptPaySettings(),
         ]);
     }

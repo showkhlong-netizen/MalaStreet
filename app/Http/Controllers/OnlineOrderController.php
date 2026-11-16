@@ -268,6 +268,25 @@ class OnlineOrderController extends Controller
             }
 
             $clientIp = $this->getClientIp($request);
+            $awaitingPayment = $request->boolean('awaiting_payment', false) && $paymentMethod === 'promptpay';
+
+            if ($awaitingPayment && $totalAmount > 0) {
+                $recentUnpaidAmounts = Order::where('payment_method', 'promptpay')
+                    ->where('payment_status', 'unpaid')
+                    ->whereIn('status', ['pending', 'confirmed'])
+                    ->where('created_at', '>=', Carbon::now()->subMinutes(15))
+                    ->pluck('total_amount')
+                    ->map(fn ($v) => round((float) $v, 2))
+                    ->all();
+
+                $candidateAmount = round((float) $totalAmount, 2);
+                $step = 0;
+                while (in_array($candidateAmount, $recentUnpaidAmounts, true) && $step < 99) {
+                    $step++;
+                    $candidateAmount = round((float) $totalAmount + ($step * 0.01), 2);
+                }
+                $totalAmount = $candidateAmount;
+            }
 
             $order = Order::create([
                 'order_no' => $orderNo,
@@ -277,16 +296,16 @@ class OnlineOrderController extends Controller
                 'customer_phone' => $validated['customer_phone'],
                 'ip_address' => $clientIp,
                 'pickup_time' => $validated['pickup_time'],
-                'status' => 'confirmed',
+                'status' => $awaitingPayment ? 'pending' : 'confirmed',
                 'payment_method' => $paymentMethod,
-                'payment_status' => 'paid',
+                'payment_status' => $awaitingPayment ? 'unpaid' : 'paid',
                 'subtotal' => $subtotal,
                 'soup_extra' => $soupExtraTotal,
                 'discount' => $discountAmount,
                 'total_amount' => $totalAmount,
                 'slip_image' => $slipPath,
                 'notes' => $validated['notes'] ?? null,
-                'paid_at' => Carbon::now(),
+                'paid_at' => $awaitingPayment ? null : Carbon::now(),
             ]);
 
             $this->saveCustomerProfileByIp($clientIp, [
@@ -345,8 +364,11 @@ class OnlineOrderController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'ส่งออเดอร์สำเร็จ ชำระเงินเรียบร้อยแล้ว',
+                'message' => $awaitingPayment ? 'สร้างรายการรอชำระเงินแล้ว' : 'ส่งออเดอร์สำเร็จ ชำระเงินเรียบร้อยแล้ว',
                 'order_no' => $order->order_no,
+                'queue_number' => $order->queue_number,
+                'total_amount' => (float) $order->total_amount,
+                'awaiting_payment' => $awaitingPayment,
                 'redirect_url' => route('online.track', ['order_no' => $order->order_no]),
             ]);
         });

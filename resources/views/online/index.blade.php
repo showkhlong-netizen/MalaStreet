@@ -1230,13 +1230,18 @@
                         <img id="online-promptpay-qr-img" src="" alt="PromptPay QR Code" class="w-full h-full object-contain rounded-lg">
                     </div>
                     <div class="mt-2.5 text-xs text-slate-600">
+                        <div class="font-bold text-slate-800">{{ $promptPaySettings['store_name'] ?? 'ร้านหม่าล่าสตรีท (Mala Street)' }}</div>
                         บัญชี: <strong class="text-slate-900 font-mono">{{ $promptPaySettings['account_no'] ?? '098-1-53225-2 (กสิกรไทย)' }}</strong>
                         <span class="block text-[11px] text-slate-500 mt-0.5">ชื่อบัญชี: {{ $promptPaySettings['account_name'] ?? 'มูนีบ สและแม' }}</span>
                     </div>
-                    <p class="text-[10.5px] text-slate-400 mt-1">สแกนได้ทุกแอปธนาคารไทย ยอดเงินจะขึ้นตรงอัตโนมัติ</p>
+                    <p class="text-[10.5px] text-slate-400 mt-1">{{ $promptPaySettings['receipt_note'] ?? 'สแกนได้ทุกแอปธนาคารไทย ยอดเงินจะขึ้นตรงอัตโนมัติ' }}</p>
                 </div>
 
                 <!-- Actions -->
+                <div id="qr-auto-wait-banner" class="hidden rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] font-bold text-amber-800 flex items-center justify-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                    <span>กำลังรอระบบยืนยันยอดโอนอัตโนมัติ... (ไม่ต้องส่งสลิป)</span>
+                </div>
                 <div class="space-y-2 pt-0.5">
                     <button type="button" id="btn-qr-confirm-paid" onclick="confirmPromptPayAndSubmit()"
                             class="w-full py-3 rounded-full bg-gradient-to-r from-[#D90012] to-[#B8000F] text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] transition-transform">
@@ -2360,19 +2365,74 @@
             }
         }
 
-        function openPromptPayScanModal() {
+        let pendingOnlineOrder = null;
+        let onlinePaymentPollTimer = null;
+
+        function stopOnlinePaymentPolling() {
+            if (onlinePaymentPollTimer) {
+                clearInterval(onlinePaymentPollTimer);
+                onlinePaymentPollTimer = null;
+            }
+        }
+
+        function startOnlinePaymentPolling(orderNo, queueNumber) {
+            stopOnlinePaymentPolling();
+            const banner = document.getElementById('qr-auto-wait-banner');
+            if (banner) banner.classList.remove('hidden');
+
+            const statusBaseUrl = @json(url('/order/payment-status'));
+            onlinePaymentPollTimer = setInterval(async () => {
+                try {
+                    const res = await fetch(`${statusBaseUrl}/${encodeURIComponent(orderNo)}`, {
+                        headers: { 'Accept': 'application/json' },
+                        cache: 'no-store'
+                    });
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    if (data && data.paid) {
+                        stopOnlinePaymentPolling();
+                        pendingOnlineOrder = null;
+                        showOnlineOrderSuccess(data.order_no || orderNo, data.queue_number || queueNumber);
+                        showToast('✅ ยืนยันยอดโอนอัตโนมัติเรียบร้อยแล้ว!');
+                    }
+                } catch (e) {
+                    // Silent background poll
+                }
+            }, 2000);
+        }
+
+        function showOnlineOrderSuccess(orderNo, queueNumber) {
+            closePromptPayScanModal();
+            closeCheckoutModal();
+            cart = [];
+            updateCartUI();
+            document.getElementById('success-queue-tag').innerText = queueNumber || 'G01';
+            document.getElementById('success-order-no').innerText = orderNo || '-';
+            const chatTrackParams = new URLSearchParams({ order_no: orderNo || '' });
+            if (new URLSearchParams(window.location.search).has('hub')) {
+                chatTrackParams.set('hub', '1');
+            }
+            document.getElementById('success-track-link').href = '{{ route('online.chat') }}?' + chatTrackParams.toString();
+            document.getElementById('success-modal').classList.remove('hidden');
+        }
+
+        function openPromptPayScanModal(lockedAmountOverride = null) {
             if (cart.length === 0) return;
             const { totalSticks, subtotal, discount, shipping, grandTotal } = getOnlineOrderTotals();
+            const finalAmount = lockedAmountOverride !== null ? Number(lockedAmountOverride) : grandTotal;
 
             document.getElementById('qr-summary-sticks').innerText = totalSticks;
             document.getElementById('qr-summary-subtotal').innerText = '฿' + subtotal.toFixed(0);
             document.getElementById('qr-summary-discount').innerText = '-฿' + discount.toFixed(0);
             document.getElementById('qr-summary-method').innerText = orderingMethod === 'delivery' ? 'สั่งเดลิเวอรี่' : 'รับที่ร้าน';
             document.getElementById('qr-summary-shipping').innerText = shipping === 0 ? 'ฟรี' : ('฿' + shipping.toFixed(0));
-            document.getElementById('qr-summary-grand-total').innerText = '฿' + grandTotal.toFixed(2);
-            document.getElementById('qr-locked-amount-label').innerText = `ล็อคยอดเงิน ฿${grandTotal.toFixed(2)} ใน QR แล้ว`;
+            document.getElementById('qr-summary-grand-total').innerText = '฿' + finalAmount.toFixed(2);
+            document.getElementById('qr-locked-amount-label').innerText = `ล็อคยอดเงิน ฿${finalAmount.toFixed(2)} ใน QR แล้ว`;
 
-            const emvPayload = generatePromptPayEmvPayload(STORE_PROMPTPAY_PAYLOAD, grandTotal);
+            const banner = document.getElementById('qr-auto-wait-banner');
+            if (banner && !pendingOnlineOrder) banner.classList.add('hidden');
+
+            const emvPayload = generatePromptPayEmvPayload(STORE_PROMPTPAY_PAYLOAD, finalAmount);
             const qrImg = document.getElementById('online-promptpay-qr-img');
             if (qrImg) {
                 qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${encodeURIComponent(emvPayload)}`;
@@ -2382,6 +2442,7 @@
         }
 
         function closePromptPayScanModal() {
+            stopOnlinePaymentPolling();
             document.getElementById('promptpay-scan-modal')?.classList.add('hidden');
         }
 
@@ -2402,22 +2463,28 @@
 
             const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'promptpay';
             if (paymentMethod === 'promptpay') {
-                openPromptPayScanModal();
+                await executeSubmitOnlineOrder(true);
                 return;
             }
 
-            await executeSubmitOnlineOrder();
+            await executeSubmitOnlineOrder(false);
         }
 
         async function confirmPromptPayAndSubmit() {
+            if (pendingOnlineOrder && pendingOnlineOrder.order_no) {
+                const { order_no, queue_number } = pendingOnlineOrder;
+                pendingOnlineOrder = null;
+                showOnlineOrderSuccess(order_no, queue_number);
+                return;
+            }
             if (!validateOnlineOrderFields()) {
                 closePromptPayScanModal();
                 return;
             }
-            await executeSubmitOnlineOrder();
+            await executeSubmitOnlineOrder(false);
         }
 
-        async function executeSubmitOnlineOrder() {
+        async function executeSubmitOnlineOrder(awaitingPayment = false) {
             if (cart.length === 0) return;
             const name = document.getElementById('cust-name')?.value.trim();
             const phone = document.getElementById('cust-phone')?.value.trim();
@@ -2439,6 +2506,7 @@
                 customer_phone: phone,
                 customer_address: address || '',
                 pickup_time: orderingMethod === 'delivery' ? ('เดลิเวอรี่: ' + address) : pickupTime,
+                awaiting_payment: Boolean(awaitingPayment),
                 items: cart.map(item => ({
                     product_id: item.product_id,
                     quantity: item.quantity,
@@ -2466,18 +2534,18 @@
                 });
                 const result = await res.json();
                 if (res.ok && result.success) {
-                    closePromptPayScanModal();
-                    closeCheckoutModal();
-                    cart = [];
-                    updateCartUI();
-                    document.getElementById('success-queue-tag').innerText = result.queue_number || 'G01';
-                    document.getElementById('success-order-no').innerText = result.order_no || '-';
-                    const chatTrackParams = new URLSearchParams({ order_no: result.order_no || '' });
-                    if (new URLSearchParams(window.location.search).has('hub')) {
-                        chatTrackParams.set('hub', '1');
+                    if (awaitingPayment && result.awaiting_payment) {
+                        pendingOnlineOrder = {
+                            order_no: result.order_no,
+                            queue_number: result.queue_number || 'G01',
+                            total_amount: result.total_amount,
+                        };
+                        openPromptPayScanModal(result.total_amount);
+                        startOnlinePaymentPolling(result.order_no, result.queue_number || 'G01');
+                    } else {
+                        pendingOnlineOrder = null;
+                        showOnlineOrderSuccess(result.order_no, result.queue_number || 'G01');
                     }
-                    document.getElementById('success-track-link').href = '{{ route('online.chat') }}?' + chatTrackParams.toString();
-                    document.getElementById('success-modal').classList.remove('hidden');
                 } else {
                     showToast(result.message || 'ไม่สามารถส่งออเดอร์ได้ กรุณาลองใหม่');
                 }
