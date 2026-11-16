@@ -89,6 +89,10 @@ class AndroidPaymentWebhookTest extends TestCase
             'message' => 'K PLUS: เงินเข้าบัญชี 098-1-53225-2 จำนวน 35.00 บาท',
         ])->assertStatus(401);
 
+        // Valid secret + multiline Krungthai/KBank notification (even with unescaped newline in JSON)
+        $multilineBody = "{\"secret\":\"" . $config['secret'] . "\",\"message\":\"รับเงินสำเร็จ\nได้รับ +30.00 บาท เข้าพร้อมเพย์ จากบัญชี\nกสิกรไทย XXX-X-XX539-3\"}";
+        $this->assertNotEmpty($multilineBody);
+
         // Valid secret + KBank notification confirms the matching order automatically
         $webhookRes = $this->postJson('/webhooks/android-payment', [
             'secret' => $config['secret'],
@@ -107,6 +111,16 @@ class AndroidPaymentWebhookTest extends TestCase
             ->assertJson(['paid' => true, 'payment_status' => 'paid', 'status' => 'confirmed']);
 
         $this->assertEquals('unpaid', Order::where('order_no', $submitRes2->json('order_no'))->value('payment_status'));
+
+        // Multiline notification with unescaped newline in raw JSON body (exact Krungthai NEXT format)
+        $multilineBody = "{\"secret\":\"" . $config['secret'] . "\",\"message\":\"รับเงินสำเร็จ\nได้รับ +35.01 บาท เข้าพร้อมเพย์ จากบัญชี\nกสิกรไทย XXX-X-XX539-3\"}";
+        $rawRes = $this->call('POST', '/webhooks/android-payment', [], [], [], ['CONTENT_TYPE' => 'application/json'], $multilineBody);
+        $rawRes->assertStatus(200)->assertJson([
+            'success' => true,
+            'matched' => true,
+            'order_no' => $submitRes2->json('order_no'),
+            'amount' => 35.01,
+        ]);
     }
 
     public function test_access_page_cashier_tab_saves_qr_history_and_switches_presets(): void

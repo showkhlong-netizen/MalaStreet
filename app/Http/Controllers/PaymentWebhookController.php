@@ -36,11 +36,18 @@ class PaymentWebhookController extends Controller
     public function handleAndroidPayment(Request $request): JsonResponse
     {
         $config = self::getWebhookConfig();
+        $rawBody = (string) $request->getContent();
+
         $providedSecret = (string) (
             $request->header('X-Webhook-Secret')
             ?: $request->input('secret')
             ?: $request->query('secret', '')
         );
+
+        // Fallback if Android MacroDroid sent unescaped newlines inside JSON body
+        if ($providedSecret === '' && preg_match('/"secret"\s*:\s*"([^"]+)"/', $rawBody, $sm)) {
+            $providedSecret = $sm[1];
+        }
 
         if ($providedSecret === '' || !hash_equals($config['secret'], $providedSecret)) {
             return response()->json([
@@ -56,6 +63,13 @@ class PaymentWebhookController extends Controller
             ?? $request->input('body')
             ?? ''
         ));
+
+        if ($rawMessage === '' && preg_match('/"message"\s*:\s*"([\s\S]*)"\s*\}?\s*$/', $rawBody, $mm)) {
+            $rawMessage = trim($mm[1]);
+        }
+        if ($rawMessage === '' && $rawBody !== '') {
+            $rawMessage = trim($rawBody);
+        }
 
         $explicitAmount = $request->input('amount');
         $parsedAmount = is_numeric($explicitAmount)
