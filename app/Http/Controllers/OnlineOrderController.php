@@ -12,6 +12,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\RewardRedemption;
 use App\Models\Setting;
+use App\Models\UploadedMedia;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -91,17 +92,36 @@ class OnlineOrderController extends Controller
 
         $showPromoBanner = Setting::get('online_show_promo_banner', '1') !== '0';
 
-        // Lightweight live-sync endpoint: active category names/icons & recommended products (synced with the stock page)
+        $categories = Category::where('is_active', true)
+            ->with(['products' => function ($query) {
+                $query->with(['rawMaterial', 'category'])
+                    ->where('is_available', true)
+                    ->orderBy('sort_order');
+            }])
+            ->orderBy('sort_order')
+            ->get();
+
+        // Lightweight live-sync endpoint: active category names/icons, products & recommended products (synced with the stock page)
         if ($request->boolean('categories_json')) {
             $emojiIcons = ['🥩', '🍗', '🍢', '🥬', '🍥', '🥤', '🍟'];
+            $activeProducts = $categories->flatMap(fn ($c) => $c->products)->sortBy('sort_order')->values();
             return response()->json([
                 'success' => true,
-                'categories' => Category::where('is_active', true)->orderBy('sort_order')->get()
+                'categories' => $categories
                     ->map(fn ($c) => [
                         'slug' => $c->slug,
                         'name' => $c->name,
                         'icon' => (empty($c->icon) || in_array($c->icon, $emojiIcons)) ? null : (str_starts_with($c->icon, 'http') ? $c->icon : asset($c->icon)),
                     ])->values(),
+                'products' => $activeProducts->map(fn ($p) => [
+                    'id' => $p->id,
+                    'raw_material_id' => $p->raw_material_id,
+                    'name' => $p->display_name ?: $p->name,
+                    'price_per_stick' => (float) $p->price_per_stick,
+                    'stock_sticks' => (int) $p->stock_sticks,
+                    'image_url' => $p->display_image,
+                    'category_slug' => $p->category?->slug ?? 'all',
+                ])->values(),
                 'recommended_products' => $recommendedProducts->map(fn ($p) => [
                     'id' => $p->id,
                     'raw_material_id' => $p->raw_material_id,
@@ -127,15 +147,6 @@ class OnlineOrderController extends Controller
                 'show_promo_banner' => $showPromoBanner,
             ]);
         }
-
-        $categories = Category::where('is_active', true)
-            ->with(['products' => function ($query) {
-                $query->with('rawMaterial')
-                    ->where('is_available', true)
-                    ->orderBy('sort_order');
-            }])
-            ->orderBy('sort_order')
-            ->get();
 
         $featuredProducts = Product::with('rawMaterial')
             ->where('is_available', true)
@@ -268,23 +279,13 @@ class OnlineOrderController extends Controller
             $paymentMethod = $validated['payment_method'] ?? 'promptpay';
             $slipPath = null;
 
-            // Save compressed slip if provided
+            // Save compressed slip if provided (persisted to Cloud DB)
             if (!empty($validated['slip_base64'])) {
-                $base64Image = $validated['slip_base64'];
-                if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type)) {
-                    $base64Image = substr($base64Image, strpos($base64Image, ',') + 1);
-                    $type = strtolower($type[1]);
-                    $imageDecoded = base64_decode($base64Image);
-                    $fileName = 'slip_' . time() . '_' . Str::random(8) . '.jpg';
-                    $targetPath = public_path('uploads/slips/' . $fileName);
-                    file_put_contents($targetPath, $imageDecoded);
-                    $slipPath = 'uploads/slips/' . $fileName;
-                }
+                $slipPath = UploadedMedia::storeBase64('slips', $validated['slip_base64'], 'slip');
             } elseif ($request->hasFile('slip_file')) {
                 $file = $request->file('slip_file');
-                $fileName = 'slip_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/slips'), $fileName);
-                $slipPath = 'uploads/slips/' . $fileName;
+                $fileName = 'slip_' . time() . '_' . Str::random(8) . '.' . ($file->getClientOriginalExtension() ?: 'jpg');
+                $slipPath = UploadedMedia::storeUploadedFile('slips/' . $fileName, $file);
             }
 
             $clientIp = $this->getClientIp($request);

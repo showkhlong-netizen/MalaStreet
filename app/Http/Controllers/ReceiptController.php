@@ -11,6 +11,7 @@ use App\Models\RawMaterial;
 use App\Models\Receipt;
 use App\Models\ReceiptItem;
 use App\Models\Setting;
+use App\Models\UploadedMedia;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -82,43 +83,40 @@ class ReceiptController extends Controller
     public function uploadImage(Request $request): JsonResponse
     {
         $fileName = 'receipt_' . date('Ymd_His') . '_' . Str::random(6) . '.jpg';
-        $targetDir = public_path('uploads/receipts');
-
-        if (!file_exists($targetDir)) {
-            mkdir($targetDir, 0755, true);
-        }
+        $relativeUrl = null;
+        $fileSizeKb = 0;
 
         if ($request->filled('image_base64')) {
-            $base64Image = $request->input('image_base64');
-            if (preg_match('/^data:image\/(\w+);base64,/', $base64Image)) {
-                $base64Image = substr($base64Image, strpos($base64Image, ',') + 1);
+            $relativeUrl = UploadedMedia::storeBase64('receipts', (string) $request->input('image_base64'), 'receipt');
+            if ($relativeUrl) {
+                $media = UploadedMedia::findByKey($relativeUrl);
+                $fileSizeKb = $media ? round(($media->size_bytes ?? 0) / 1024, 1) : 0;
             }
-            $imageDecoded = base64_decode($base64Image);
-            $fullPath = $targetDir . '/' . $fileName;
-            file_put_contents($fullPath, $imageDecoded);
-            $imagePath = 'uploads/receipts/' . $fileName;
         } elseif ($request->hasFile('receipt_image')) {
             $file = $request->file('receipt_image');
-            $file->move($targetDir, $fileName);
-            $imagePath = 'uploads/receipts/' . $fileName;
-        } else {
+            $ext = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
+            $fileName = 'receipt_' . date('Ymd_His') . '_' . Str::random(6) . '.' . $ext;
+            $fileSizeKb = round(($file->getSize() ?: 0) / 1024, 1);
+            $relativeUrl = UploadedMedia::storeUploadedFile('receipts/' . $fileName, $file);
+        }
+
+        if (!$relativeUrl) {
             return response()->json([
                 'success' => false,
                 'message' => 'ไม่พบไฟล์รูปภาพใบเสร็จ'
             ], 422);
         }
 
-        $url = asset($imagePath);
-        $relativeUrl = '/' . $imagePath;
-        $fileSizeKb = file_exists(public_path($imagePath)) ? round(filesize(public_path($imagePath)) / 1024, 1) : 0;
+        $imagePath = ltrim($relativeUrl, '/');
+        $url = $relativeUrl;
 
         return response()->json([
             'success' => true,
-            'message' => 'อัปโหลดและสร้าง URL ใบเสร็จเรียบร้อยแล้ว',
+            'message' => 'อัปโหลดและบันทึกลง Cloud DB เรียบร้อยแล้ว',
             'image_url' => $url,
             'relative_url' => $relativeUrl,
             'image_path' => $imagePath,
-            'filename' => $fileName,
+            'filename' => basename($imagePath),
             'size_kb' => $fileSizeKb,
         ]);
     }
@@ -743,21 +741,16 @@ class ReceiptController extends Controller
 
         return DB::transaction(function () use ($validated, $request) {
             $savedImagePaths = [];
-            $targetDir = public_path('uploads/receipts');
-            if (!file_exists($targetDir)) {
-                mkdir($targetDir, 0755, true);
-            }
 
-            // 1. Process multiple images array if provided
+            // 1. Process multiple images array if provided -> store persistently in Cloud DB
             if ($request->has('images') && is_array($request->input('images'))) {
                 foreach ($request->input('images') as $imgItem) {
                     if (is_string($imgItem) && preg_match('/^data:image\/(\w+);base64,/', $imgItem)) {
-                        $rawB64 = substr($imgItem, strpos($imgItem, ',') + 1);
-                        $decoded = base64_decode($rawB64);
-                        $fileName = 'receipt_' . date('Ymd_His') . '_' . Str::random(8) . '.jpg';
-                        file_put_contents($targetDir . '/' . $fileName, $decoded);
-                        $savedImagePaths[] = 'uploads/receipts/' . $fileName;
-                    } elseif (is_string($imgItem) && (str_starts_with($imgItem, 'uploads/') || str_starts_with($imgItem, '/uploads/'))) {
+                        $stored = UploadedMedia::storeBase64('receipts', $imgItem, 'receipt');
+                        if ($stored) {
+                            $savedImagePaths[] = ltrim($stored, '/');
+                        }
+                    } elseif (is_string($imgItem) && (str_starts_with($imgItem, 'uploads/') || str_starts_with($imgItem, '/uploads/') || str_starts_with($imgItem, 'media/') || str_starts_with($imgItem, '/media/'))) {
                         $savedImagePaths[] = ltrim($imgItem, '/');
                     }
                 }
@@ -768,19 +761,16 @@ class ReceiptController extends Controller
                 if (!empty($validated['image_path'])) {
                     $savedImagePaths[] = ltrim($validated['image_path'], '/');
                 } elseif (!empty($validated['image_base64'])) {
-                    $base64Image = $validated['image_base64'];
-                    if (preg_match('/^data:image\/(\w+);base64,/', $base64Image)) {
-                        $base64Image = substr($base64Image, strpos($base64Image, ',') + 1);
+                    $stored = UploadedMedia::storeBase64('receipts', (string) $validated['image_base64'], 'receipt');
+                    if ($stored) {
+                        $savedImagePaths[] = ltrim($stored, '/');
                     }
-                    $imageDecoded = base64_decode($base64Image);
-                    $fileName = 'receipt_' . date('Ymd_His') . '_' . Str::random(8) . '.jpg';
-                    file_put_contents($targetDir . '/' . $fileName, $imageDecoded);
-                    $savedImagePaths[] = 'uploads/receipts/' . $fileName;
                 } elseif ($request->hasFile('receipt_image')) {
                     $file = $request->file('receipt_image');
-                    $fileName = 'receipt_' . date('Ymd_His') . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
-                    $file->move($targetDir, $fileName);
-                    $savedImagePaths[] = 'uploads/receipts/' . $fileName;
+                    $ext = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
+                    $fileName = 'receipt_' . date('Ymd_His') . '_' . Str::random(8) . '.' . $ext;
+                    $stored = UploadedMedia::storeUploadedFile('receipts/' . $fileName, $file);
+                    $savedImagePaths[] = ltrim($stored, '/');
                 }
             }
 
@@ -818,10 +808,12 @@ class ReceiptController extends Controller
                 }
 
                 if (!$rawMaterial) {
+                    $validCategorySlugs = Category::orderBy('sort_order')->pluck('slug')->all();
                     $rawMaterial = RawMaterial::firstOrCreate(
                         ['name' => $itemData['item_name']],
                         [
                             'default_vendor' => $validated['vendor_name'],
+                            'category_slug' => self::inferCategorySlugFromName((string) $itemData['item_name'], $validCategorySlugs),
                             'purchase_unit' => $itemData['unit'],
                             'yield_sticks_per_unit' => $yieldPerUnit,
                             'latest_cost_price' => $unitPrice,
@@ -1103,6 +1095,10 @@ class ReceiptController extends Controller
         }
 
         $categories = Category::orderBy('sort_order')->get();
+        $validCategorySlugs = $categories->pluck('slug')->all();
+        foreach ($rawMaterials as $mat) {
+            $mat->resolved_category_slug = self::resolveEffectiveCategorySlug($mat, $validCategorySlugs);
+        }
 
         if ($request->wantsJson() || $request->boolean('json')) {
             return response()->json([
@@ -1119,6 +1115,8 @@ class ReceiptController extends Controller
                     return [
                         'id' => $mat->id,
                         'name' => $mat->name,
+                        'category_slug' => $mat->resolved_category_slug,
+                        'image_url' => self::sanitizeImageUrl($mat->image_url),
                         'purchase_unit' => $mat->purchase_unit,
                         'latest_cost_price' => (float) $mat->latest_cost_price,
                         'cost_per_stick' => (float) $mat->cost_per_stick,
@@ -1230,20 +1228,20 @@ class ReceiptController extends Controller
         if ($request->hasFile('image_file')) {
             $file = $request->file('image_file');
             if ($file && $file->isValid()) {
-                $destDir = public_path('assets/ingredients/custom');
-                if (!is_dir($destDir)) {
-                    mkdir($destDir, 0777, true);
-                }
-                $filename = 'mat_new_' . time() . '_' . Str::random(5) . '.' . $file->getClientOriginalExtension();
-                $file->move($destDir, $filename);
-                $imageUrl = '/assets/ingredients/custom/' . $filename;
+                $ext = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
+                $filename = 'mat_new_' . time() . '_' . Str::random(5) . '.' . $ext;
+                $imageUrl = UploadedMedia::storeUploadedFile('ingredients/' . $filename, $file);
             }
         }
+
+        $resolvedCategorySlug = !empty($validated['category_slug']) && $validated['category_slug'] !== 'uncategorized'
+            ? $validated['category_slug']
+            : (Category::orderBy('sort_order')->value('slug') ?: self::inferCategorySlugFromName($validated['name']));
 
         $rawMaterial = RawMaterial::create([
             'name' => $validated['name'],
             'image_url' => $imageUrl,
-            'category_slug' => ($validated['category_slug'] ?? null) ?: 'uncategorized',
+            'category_slug' => $resolvedCategorySlug,
             'default_vendor' => ($validated['default_vendor'] ?? null) ?: 'ไม่ระบุ',
             'purchase_unit' => $validated['purchase_unit'],
             'yield_sticks_per_unit' => $yieldSticks,
@@ -1255,13 +1253,16 @@ class ReceiptController extends Controller
 
         // TWO-WAY SYNCHRONIZATION WITH POS CASHIER: Create or link menu product with stock
         $categoryId = null;
-        if (!empty($validated['category_slug'])) {
-            $cat = Category::where('slug', $validated['category_slug'])->first();
+        if (!empty($resolvedCategorySlug)) {
+            $cat = Category::where('slug', $resolvedCategorySlug)->first();
             if ($cat) $categoryId = $cat->id;
         }
         if (!$categoryId) {
-            $cat = Category::where('is_active', true)->first();
-            if ($cat) $categoryId = $cat->id;
+            $cat = Category::where('is_active', true)->orderBy('sort_order')->first() ?: Category::orderBy('sort_order')->first();
+            if ($cat) {
+                $categoryId = $cat->id;
+                $rawMaterial->update(['category_slug' => $cat->slug]);
+            }
         }
 
         $sellingPrice = (float) ($request->input('selling_price') ?: max(15, ceil($costPerStick * 1.5)));
@@ -1430,15 +1431,18 @@ class ReceiptController extends Controller
         if ($request->hasFile('image_file')) {
             $file = $request->file('image_file');
             if ($file && $file->isValid()) {
-                $destDir = public_path('assets/ingredients/custom');
-                if (!is_dir($destDir)) {
-                    mkdir($destDir, 0777, true);
-                }
-                $filename = 'mat_' . $rawMaterial->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-                $file->move($destDir, $filename);
-                $imageUrl = '/assets/ingredients/custom/' . $filename;
+                $ext = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
+                $filename = 'mat_' . $rawMaterial->id . '_' . time() . '.' . $ext;
+                $imageUrl = UploadedMedia::storeUploadedFile('ingredients/' . $filename, $file);
             }
         }
+
+        $requestedCategorySlug = !empty($validated['category_slug']) && $validated['category_slug'] !== 'uncategorized'
+            ? trim((string) $validated['category_slug'])
+            : null;
+        $effectiveCategorySlug = $requestedCategorySlug ?: ($rawMaterial->category_slug && $rawMaterial->category_slug !== 'uncategorized'
+            ? $rawMaterial->category_slug
+            : self::resolveEffectiveCategorySlug($rawMaterial, Category::orderBy('sort_order')->pluck('slug')->all()));
 
         $rawMaterial->update([
             'name' => $validated['name'],
@@ -1448,16 +1452,30 @@ class ReceiptController extends Controller
             'yield_sticks_per_unit' => $yieldSticks,
             'cost_per_stick' => $costPerStick,
             'default_vendor' => ($validated['default_vendor'] ?? null) ?: $rawMaterial->default_vendor,
-            'category_slug' => ($validated['category_slug'] ?? null) ?: $rawMaterial->category_slug,
+            'category_slug' => $effectiveCategorySlug,
             'image_url' => $imageUrl,
         ]);
 
         // TWO-WAY SYNCHRONIZATION WITH POS CASHIER & ONLINE ORDER MENU ITEMS:
-        // Automatically sync all linked products in the Cashier and Online Order storefront with the updated name, image, and price!
+        // Automatically sync all linked products in the Cashier and Online Order storefront with the updated name, category, image, and price!
+        $targetCategory = $effectiveCategorySlug
+            ? Category::where('slug', $effectiveCategorySlug)->first()
+            : null;
+        if (!$targetCategory) {
+            $targetCategory = Category::orderBy('sort_order')->first();
+            if ($targetCategory) {
+                $effectiveCategorySlug = $targetCategory->slug;
+                $rawMaterial->update(['category_slug' => $effectiveCategorySlug]);
+            }
+        }
+
         $productUpdates = [
             'name' => $validated['name'],
             'image_url' => $imageUrl,
         ];
+        if ($targetCategory) {
+            $productUpdates['category_id'] = $targetCategory->id;
+        }
         if ($request->filled('selling_price')) {
             $productUpdates['price_per_stick'] = (float) $request->input('selling_price');
         } elseif ($request->filled('price_per_stick')) {
@@ -1469,10 +1487,8 @@ class ReceiptController extends Controller
                 $product->update($productUpdates);
             }
         } else {
-            $categorySlug = $rawMaterial->category_slug ?: 'pork-chicken';
-            $category = Category::where('slug', $categorySlug)->first() ?: Category::first();
             Product::create([
-                'category_id' => $category?->id ?: 1,
+                'category_id' => $targetCategory?->id ?: 1,
                 'raw_material_id' => $rawMaterial->id,
                 'name' => $validated['name'],
                 'description' => 'วัตถุดิบคัดพิเศษ ย่างหอมเครื่องเทศหม่าล่า หรือต้มซุปเข้มข้น',
@@ -1666,13 +1682,9 @@ class ReceiptController extends Controller
 
         if ($request->hasFile('hero_image_file')) {
             $file = $request->file('hero_image_file');
-            $destDir = public_path('assets/ingredients/custom');
-            if (!is_dir($destDir)) {
-                mkdir($destDir, 0777, true);
-            }
-            $filename = 'hero_price_' . time() . '.' . $file->getClientOriginalExtension();
-            $file->move($destDir, $filename);
-            $heroImage = '/assets/ingredients/custom/' . $filename;
+            $ext = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
+            $filename = 'hero_price_' . time() . '.' . $ext;
+            $heroImage = UploadedMedia::storeUploadedFile('hero/' . $filename, $file);
         }
 
         $updates = [];
@@ -1719,50 +1731,33 @@ class ReceiptController extends Controller
      */
     public function uploadMaterialImage(Request $request): JsonResponse
     {
-        $destDir = public_path('assets/ingredients/custom');
-        if (!is_dir($destDir)) {
-            mkdir($destDir, 0777, true);
-        }
-
-        // 1. Process client-compressed base64 first (guarantees fast, sharp upload without PHP file size limits)
+        // 1. Process client-compressed base64 first -> save permanently in Cloud DB (uploaded_media)
         if ($request->filled('image_base64')) {
-            $base64 = $request->input('image_base64');
-            $ext = 'jpg';
-            if (preg_match('/^data:image\/(\w+);base64,/', $base64, $matches)) {
-                $ext = strtolower($matches[1]);
-                if ($ext === 'jpeg') $ext = 'jpg';
-                $base64 = substr($base64, strpos($base64, ',') + 1);
-            }
-            $decoded = base64_decode($base64);
-            if ($decoded !== false && strlen($decoded) > 50) {
-                $filename = 'ingredient_' . time() . '_' . Str::random(6) . '.' . $ext;
-                file_put_contents($destDir . '/' . $filename, $decoded);
-                $url = asset('assets/ingredients/custom/' . $filename);
-
+            $url = UploadedMedia::storeBase64('ingredients', (string) $request->input('image_base64'), 'ingredient');
+            if ($url) {
                 return response()->json([
                     'success' => true,
                     'url' => $url,
-                    'filename' => $filename,
-                    'message' => 'อัปโหลดและแปลงเป็น URL เรียบร้อยแล้ว',
+                    'filename' => basename($url),
+                    'message' => 'อัปโหลดและบันทึกลง Cloud DB เรียบร้อยแล้ว',
                 ]);
             }
         }
 
-        // 2. Try uploaded file
+        // 2. Fallback to multipart uploaded file -> save permanently in Cloud DB
         if ($request->hasFile('image_file')) {
             $file = $request->file('image_file');
             if ($file->isValid()) {
                 $ext = strtolower($file->getClientOriginalExtension()) ?: 'png';
                 if ($ext === 'jpeg') $ext = 'jpg';
                 $filename = 'ingredient_' . time() . '_' . Str::random(6) . '.' . $ext;
-                $file->move($destDir, $filename);
-                $url = asset('assets/ingredients/custom/' . $filename);
+                $url = UploadedMedia::storeUploadedFile('ingredients/' . $filename, $file);
 
                 return response()->json([
                     'success' => true,
                     'url' => $url,
                     'filename' => $filename,
-                    'message' => 'อัปโหลดและแปลงเป็น URL เรียบร้อยแล้ว',
+                    'message' => 'อัปโหลดและบันทึกลง Cloud DB เรียบร้อยแล้ว',
                 ]);
             }
         }
@@ -1799,6 +1794,7 @@ class ReceiptController extends Controller
             ->get();
 
         $allMaterials = RawMaterial::all();
+        $validCategorySlugs = Category::orderBy('sort_order')->pluck('slug')->all();
         $syncedItemsCount = 0;
         $newMaterialsCount = 0;
         $todayBoughtMaterialIds = [];
@@ -1854,6 +1850,7 @@ class ReceiptController extends Controller
 
                     $matchedMaterial = RawMaterial::create([
                         'name' => $itemName,
+                        'category_slug' => self::inferCategorySlugFromName($itemName, $validCategorySlugs),
                         'purchase_unit' => $item->unit ?: 'แพ็ก',
                         'latest_cost_price' => $unitPrice,
                         'yield_sticks_per_unit' => $yield,
@@ -2011,13 +2008,9 @@ class ReceiptController extends Controller
         $iconPath = null;
         if ($request->hasFile('category_image')) {
             $file = $request->file('category_image');
-            $filename = 'cat_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
-            $destDir = public_path('uploads/categories');
-            if (!file_exists($destDir)) {
-                mkdir($destDir, 0755, true);
-            }
-            $file->move($destDir, $filename);
-            $iconPath = 'uploads/categories/' . $filename;
+            $ext = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
+            $filename = 'cat_' . time() . '_' . Str::random(8) . '.' . $ext;
+            $iconPath = UploadedMedia::storeUploadedFile('categories/' . $filename, $file);
         } elseif ($request->filled('category_image_url')) {
             $iconPath = trim($request->input('category_image_url'));
         } else {
@@ -2094,13 +2087,9 @@ class ReceiptController extends Controller
         $iconPath = $category->icon;
         if ($request->hasFile('category_image')) {
             $file = $request->file('category_image');
-            $filename = 'cat_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
-            $destDir = public_path('uploads/categories');
-            if (!file_exists($destDir)) {
-                mkdir($destDir, 0755, true);
-            }
-            $file->move($destDir, $filename);
-            $iconPath = 'uploads/categories/' . $filename;
+            $ext = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
+            $filename = 'cat_' . time() . '_' . Str::random(8) . '.' . $ext;
+            $iconPath = UploadedMedia::storeUploadedFile('categories/' . $filename, $file);
         } elseif ($request->filled('category_image_url')) {
             $iconPath = trim($request->input('category_image_url'));
         }
@@ -2385,12 +2374,82 @@ class ReceiptController extends Controller
         if (preg_match('#^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?(/.*)$#i', $url, $m)) {
             return $m[1];
         }
-        if (str_starts_with($url, '/assets/') || str_starts_with($url, '/uploads/')) {
+        if (str_starts_with($url, '/assets/') || str_starts_with($url, '/uploads/') || str_starts_with($url, '/media/')) {
             return $url;
         }
-        if (str_starts_with($url, 'assets/') || str_starts_with($url, 'uploads/')) {
+        if (str_starts_with($url, 'assets/') || str_starts_with($url, 'uploads/') || str_starts_with($url, 'media/')) {
             return '/' . $url;
         }
         return $url;
+    }
+
+    /**
+     * Resolve the authoritative category slug for a RawMaterial (matching both
+     * the edit-modal dropdown and category filter pills cleanly).
+     */
+    public static function resolveEffectiveCategorySlug(RawMaterial $mat, ?array $validSlugs = null): string
+    {
+        $hasValidList = is_array($validSlugs) && count($validSlugs) > 0;
+        $rawSlug = trim((string) ($mat->category_slug ?? ''));
+        if ($rawSlug !== '' && $rawSlug !== 'uncategorized') {
+            if (!$hasValidList || in_array($rawSlug, $validSlugs, true)) {
+                return $rawSlug;
+            }
+        }
+
+        if ($mat->relationLoaded('products') || $mat->products()->exists()) {
+            $linkedSlugs = $mat->products->pluck('category.slug')->filter()->unique()->values()->all();
+            foreach ($linkedSlugs as $linked) {
+                if (!$hasValidList || in_array($linked, $validSlugs, true)) {
+                    return $linked;
+                }
+            }
+        }
+
+        return self::inferCategorySlugFromName((string) ($mat->name ?? ''), $validSlugs);
+    }
+
+    /**
+     * Infer a default category slug from an ingredient name, constrained to active DB categories when provided.
+     */
+    public static function inferCategorySlugFromName(string $name, ?array $validSlugs = null): string
+    {
+        if (str_contains($name, 'เนื้อ') || str_contains($name, 'โคขุน')) {
+            $guessed = 'beef';
+        } elseif (str_contains($name, 'ฟองเต้าหู้') || str_contains($name, 'เต้าหู้') || str_contains($name, 'เส้น')) {
+            $guessed = 'tofu-noodles';
+        } elseif (str_contains($name, 'เห็ด') || str_contains($name, 'ผัก')) {
+            $guessed = 'vegetables';
+        } elseif (
+            str_contains($name, 'ลูกชิ้น') ||
+            str_contains($name, 'ไส้กรอก') ||
+            str_contains($name, 'ปูอัด') ||
+            str_contains($name, 'ปูไลน์') ||
+            str_contains($name, 'โบโลน่า') ||
+            str_contains($name, 'ค็อกเทล') ||
+            str_contains($name, 'เกี๊ยว') ||
+            str_contains($name, 'ทูนิมิ')
+        ) {
+            $guessed = 'meatball-sausage';
+        } elseif (
+            str_contains($name, 'หมู') ||
+            str_contains($name, 'ไก่') ||
+            str_contains($name, 'เอ็น') ||
+            str_contains($name, 'สามชั้น') ||
+            str_contains($name, 'สันใน') ||
+            str_contains($name, 'ไข่')
+        ) {
+            $guessed = 'pork-chicken';
+        } elseif (str_contains($name, 'น้ำ') || str_contains($name, 'เครื่องดื่ม')) {
+            $guessed = 'beverages';
+        } else {
+            $guessed = 'snacks';
+        }
+
+        if (is_array($validSlugs) && count($validSlugs) > 0 && !in_array($guessed, $validSlugs, true)) {
+            return $validSlugs[0];
+        }
+
+        return $guessed;
     }
 }

@@ -1110,7 +1110,7 @@
                 posSyncChannel.onmessage = function(ev) {
                     const data = ev.data;
                     if (data && data.action === 'material_updated') {
-                        syncPosItemFromPriceTracker(data.material_id, data.name, data.image_url);
+                        syncPosItemFromPriceTracker(data.material_id, data.name, data.image_url, data.category_slug);
                     } else if (data && data.action === 'qr_updated' && data.settings) {
                         STORE_PROMPTPAY_SETTINGS = data.settings;
                         const sEl = document.getElementById('pos-qr-store-name');
@@ -1957,7 +1957,7 @@
     }
 
     // 🔄 Sync helper functions connecting POS with Price Tracker
-    function syncPosItemFromPriceTracker(rawMaterialId, newName, newImageUrl) {
+    function syncPosItemFromPriceTracker(rawMaterialId, newName, newImageUrl, newCategorySlug) {
         if (!rawMaterialId) return;
         const cards = document.querySelectorAll(`.product-card[data-raw-id="${rawMaterialId}"]`);
         cards.forEach(card => {
@@ -1970,6 +1970,9 @@
                 const imgEl = card.querySelector('[data-role="product-img"]') || card.querySelector('img');
                 if (imgEl) imgEl.src = newImageUrl;
                 card.setAttribute('data-image', newImageUrl);
+            }
+            if (newCategorySlug) {
+                card.setAttribute('data-category', newCategorySlug);
             }
         });
 
@@ -1986,6 +1989,13 @@
             }
         }
 
+        if (newCategorySlug) {
+            const activePill = document.querySelector('.cat-pill.active');
+            if (activePill) {
+                filterCategory(activePill.getAttribute('data-cat') || 'all', activePill);
+            }
+        }
+
         showPosSyncToast(`ซิงค์ข้อมูล "${newName || 'วัตถุดิบ'}" จากหน้าตรวจจับราคาแล้ว`);
     }
 
@@ -1996,6 +2006,7 @@
             });
             const data = await res.json();
             if (data && data.success && Array.isArray(data.products)) {
+                let categoryChanged = false;
                 data.products.forEach(p => {
                     const card = document.querySelector(`.product-card[data-id="${p.id}"]`);
                     if (card) {
@@ -2008,8 +2019,18 @@
                         card.setAttribute('data-image', p.image_url);
 
                         card.setAttribute('data-stock', p.stock_sticks);
+                        if (p.category_slug && card.getAttribute('data-category') !== p.category_slug) {
+                            card.setAttribute('data-category', p.category_slug);
+                            categoryChanged = true;
+                        }
                     }
                 });
+                if (categoryChanged) {
+                    const activePill = document.querySelector('.cat-pill.active');
+                    if (activePill) {
+                        filterCategory(activePill.getAttribute('data-cat') || 'all', activePill);
+                    }
+                }
             }
             if (data && data.success && Array.isArray(data.categories)) {
                 syncPosCategoryPills(data.categories);

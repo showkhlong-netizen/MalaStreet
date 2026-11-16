@@ -16,52 +16,15 @@
         return number_format($num, $dec);
     };
 
-    // Helper to resolve accurate 1:1 ingredient photo + category slug for every RawMaterial
-    // Prioritizes custom database fields ($mat->image_url and $mat->category_slug) first!
-    $resolveMaterialMeta = function (\App\Models\RawMaterial $mat) {
+    $validCategorySlugs = $categories->pluck('slug')->all();
+    $categoryNamesBySlug = $categories->pluck('name', 'slug')->all();
+
+    // Helper to resolve accurate 1:1 ingredient photo + authoritative category slug for every RawMaterial
+    // Matches ReceiptController::resolveEffectiveCategorySlug so Edit Modal (#edit-mat-category) and Category Filter Pills (#category-pills-bar) are 100% synced!
+    $resolveMaterialMeta = function (\App\Models\RawMaterial $mat) use ($validCategorySlugs, $categoryNamesBySlug) {
         $name = $mat->name ?? '';
-        $linkedCatSlugs = $mat->products
-            ? $mat->products->pluck('category.slug')->filter()->unique()->values()->all()
-            : [];
-
-        $catSlug = $mat->category_slug ?: ($linkedCatSlugs[0] ?? null);
-        if (!$catSlug) {
-            if (str_contains($name, 'เนื้อ') || str_contains($name, 'โคขุน')) {
-                $catSlug = 'beef';
-            } elseif (str_contains($name, 'ฟองเต้าหู้') || str_contains($name, 'เต้าหู้') || str_contains($name, 'เส้น')) {
-                $catSlug = 'tofu-noodles';
-            } elseif (str_contains($name, 'เห็ด') || str_contains($name, 'ผัก')) {
-                $catSlug = 'vegetables';
-            } elseif (
-                str_contains($name, 'ลูกชิ้น') ||
-                str_contains($name, 'ไส้กรอก') ||
-                str_contains($name, 'ปูอัด') ||
-                str_contains($name, 'ปูไลน์') ||
-                str_contains($name, 'โบโลน่า') ||
-                str_contains($name, 'ค็อกเทล') ||
-                str_contains($name, 'เกี๊ยว') ||
-                str_contains($name, 'ทูนิมิ')
-            ) {
-                $catSlug = 'meatball-sausage';
-            } elseif (
-                str_contains($name, 'หมู') ||
-                str_contains($name, 'ไก่') ||
-                str_contains($name, 'เอ็น') ||
-                str_contains($name, 'สามชั้น') ||
-                str_contains($name, 'สันใน') ||
-                str_contains($name, 'ไข่')
-            ) {
-                $catSlug = 'pork-chicken';
-            } elseif (str_contains($name, 'น้ำ') || str_contains($name, 'เครื่องดื่ม')) {
-                $catSlug = 'beverages';
-            } else {
-                $catSlug = 'snacks';
-            }
-        }
-
-        if (!in_array($catSlug, $linkedCatSlugs, true)) {
-            array_unshift($linkedCatSlugs, $catSlug);
-        }
+        $catSlug = $mat->resolved_category_slug
+            ?? \App\Http\Controllers\ReceiptController::resolveEffectiveCategorySlug($mat, $validCategorySlugs);
 
         if (!empty($mat->image_url)) {
             $path = preg_replace('#^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?/#', '/', $mat->image_url);
@@ -96,8 +59,9 @@
         }
 
         return [
-            'cat_slugs' => $linkedCatSlugs,
+            'cat_slugs' => array_values(array_filter([$catSlug])),
             'primary_cat' => $catSlug,
+            'primary_cat_name' => $categoryNamesBySlug[$catSlug] ?? null,
             'image_url' => $img,
         ];
     };
@@ -122,6 +86,21 @@
         ['label' => 'เห็ดสด', 'url' => '/assets/ingredients/mushroom-fresh.png'],
         ['label' => 'ผักกาด / ผักสด', 'url' => '/assets/ingredients/vegetable-greens.png'],
     ];
+
+    try {
+        if (\Illuminate\Support\Facades\Schema::hasTable('uploaded_media')) {
+            $cloudCustomMedia = \App\Models\UploadedMedia::where('media_key', 'like', 'ingredients/%')
+                ->latest('id')
+                ->take(12)
+                ->get(['media_key']);
+            foreach ($cloudCustomMedia as $cm) {
+                $presetIngredientImages[] = [
+                    'label' => 'ภาพที่อัปโหลดบน Cloud',
+                    'url' => '/media/' . ltrim($cm->media_key, '/'),
+                ];
+            }
+        }
+    } catch (\Throwable $e) {}
 
     $heroImage = !empty($heroSettings['hero_image'])
         ? (preg_replace('#^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?/#', '/', $heroSettings['hero_image']))
@@ -791,9 +770,14 @@
                                 <h3 class="mat-title font-bold text-[15px] sm:text-[15.5px] text-[#14171F] leading-snug truncate" data-role="mat-name" title="{{ $mat->name }}">
                                     {{ $mat->name }}
                                 </h3>
-                                <span class="text-[11.5px] text-[#687082] font-normal block leading-tight mt-0.5 truncate" data-role="mat-unit">
-                                    หน่วยซื้อ: {{ $mat->purchase_unit }}
-                                </span>
+                                <div class="flex items-center gap-1.5 mt-0.5 min-w-0">
+                                    <span class="text-[11.5px] text-[#687082] font-normal leading-tight truncate" data-role="mat-unit">
+                                        หน่วยซื้อ: {{ $mat->purchase_unit }}
+                                    </span>
+                                    @if(!empty($meta['primary_cat_name']))
+                                        <span class="shrink-0 px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/70 text-[10px] font-semibold leading-none" data-role="mat-category-badge">{{ $meta['primary_cat_name'] }}</span>
+                                    @endif
+                                </div>
                             </div>
 
                             <!-- D. Status Badges Column: Price Change Badge + Availability Badge (Stacked neatly on right) -->
@@ -1267,8 +1251,8 @@
 
                     <!-- Quick Preset Image Picker -->
                     <div>
-                        <span class="text-[11px] text-slate-400 block mb-1">หรือเลือกรูปวัตถุดิบมาตรฐาน:</span>
-                        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                        <span class="text-[11px] text-slate-400 block mb-1">หรือเลือกรูปวัตถุดิบมาตรฐาน &amp; ภาพที่บันทึกบน Cloud:</span>
+                        <div id="preset-ingredient-picker" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
                             @foreach($presetIngredientImages as $preset)
                                 <button
                                     type="button"
@@ -3463,6 +3447,17 @@
         const sellingPriceInput = document.getElementById('edit-mat-selling-price');
         if (sellingPriceInput) sellingPriceInput.value = '';
 
+        const catSelect = document.getElementById('edit-mat-category');
+        if (catSelect && catSelect.options.length > 0) {
+            const hasActiveOpt = currentMatCategory && currentMatCategory !== 'all'
+                && Array.from(catSelect.options).some(opt => opt.value === currentMatCategory);
+            if (hasActiveOpt) {
+                catSelect.value = currentMatCategory;
+            } else {
+                catSelect.selectedIndex = 0;
+            }
+        }
+
         const modal = document.getElementById('mat-edit-modal');
         if (modal) {
             modal.classList.remove('hidden');
@@ -3522,8 +3517,14 @@
         }
 
         const catSelect = document.getElementById('edit-mat-category');
-        if (catSelect && data.category_slug) {
-            catSelect.value = data.category_slug;
+        if (catSelect) {
+            const hasOption = Boolean(data.category_slug)
+                && Array.from(catSelect.options).some(opt => opt.value === data.category_slug);
+            if (hasOption) {
+                catSelect.value = data.category_slug;
+            } else if (catSelect.options.length > 0) {
+                catSelect.selectedIndex = 0;
+            }
         }
 
         // Populate Scan Names & Store/Vendors (ฝั่งซ้าย: ชื่อสำหรับสแกน, ฝั่งขวา: ร้านที่สแกนตรงกัน)
@@ -3661,8 +3662,19 @@
                     urlInput.classList.remove('animate-pulse');
                 }
                 if (previewImg) previewImg.src = data.url;
+                const picker = document.getElementById('preset-ingredient-picker');
+                if (picker && !picker.querySelector(`button[data-url="${data.url}"]`)) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.dataset.url = data.url;
+                    btn.title = 'ภาพที่อัปโหลดบน Cloud';
+                    btn.onclick = () => selectPresetMaterialImage(data.url);
+                    btn.className = 'w-9 h-9 rounded-lg overflow-hidden border border-emerald-300 hover:border-[#E50914] shrink-0 transition-all cursor-pointer';
+                    btn.innerHTML = `<img src="${data.url}" alt="Cloud" class="w-full h-full object-cover">`;
+                    picker.appendChild(btn);
+                }
                 input.value = ''; // เคลียร์ไฟล์ต้นฉบับออกจาก input ป้องกันการส่งซ้ำตอนบันทึก
-                showPriceToast('บีบอัดภาพคมชัด & แปลงเป็น URL สำเร็จ');
+                showPriceToast('บีบอัดภาพ & บันทึกลง Cloud DB ถาวรสำเร็จ');
             } else {
                 if (urlInput) {
                     urlInput.value = prevUrl;
@@ -3715,7 +3727,7 @@
 
         // หากมี URL รูปภาพที่แปลงแล้ว ให้ใช้ URL นั้นเป็นหลัก และลบ image_file ดิบออก
         const currentImgUrl = document.getElementById('edit-mat-image-url')?.value;
-        if (currentImgUrl && (currentImgUrl.startsWith('http') || currentImgUrl.startsWith('assets/'))) {
+        if (currentImgUrl && (currentImgUrl.startsWith('http') || currentImgUrl.startsWith('assets/') || currentImgUrl.startsWith('/'))) {
             formData.set('image_url', currentImgUrl);
             formData.delete('image_file');
         }
@@ -3794,6 +3806,13 @@
                 card.setAttribute('data-change', String(Math.abs(item.price_change_amount || 0)));
                 if (item.category_slug) {
                     card.setAttribute('data-cats', item.category_slug);
+                    const catBadgeEl = card.querySelector('[data-role="mat-category-badge"]');
+                    if (catBadgeEl) {
+                        const catObj = typeof categoriesData !== 'undefined' ? categoriesData[item.category_slug] : null;
+                        const optEl = document.querySelector(`#edit-mat-category option[value="${item.category_slug}"]`);
+                        const catLabel = (catObj && catObj.name) ? catObj.name : (optEl ? optEl.textContent.trim() : '');
+                        if (catLabel) catBadgeEl.textContent = catLabel;
+                    }
                 }
 
                 const imgEl = card.querySelector('[data-role="mat-img"]');
@@ -3838,16 +3857,20 @@
             applyMaterialFilters();
             showPriceToast(result.message || 'บันทึกรายการเรียบร้อยแล้ว');
 
-            // 🔄 Broadcast to POS Cashier Screen to synchronize image & name immediately!
+            // 🔄 Broadcast to POS Cashier & Online Order screens to synchronize category, image & name immediately!
             if ('BroadcastChannel' in window) {
                 try {
-                    const posChannel = new BroadcastChannel('mala_pos_sync_channel');
-                    posChannel.postMessage({
+                    const msgPayload = {
                         action: 'material_updated',
                         material_id: item.id,
                         name: item.name,
+                        category_slug: item.category_slug || '',
                         image_url: resolvedImg,
-                    });
+                    };
+                    const posChannel = new BroadcastChannel('mala_pos_sync_channel');
+                    posChannel.postMessage(msgPayload);
+                    const catSyncChannel = new BroadcastChannel('mala_category_sync_channel');
+                    catSyncChannel.postMessage(msgPayload);
                 } catch (e) {}
             }
         } catch (err) {
@@ -4042,6 +4065,22 @@
                 card.dataset.bought = item.is_bought_today ? '1' : '0';
                 card.dataset.opening = String(item.today_opening_sticks || 0);
                 card.dataset.stock = String(item.today_stock_sticks || 0);
+                if (item.category_slug) {
+                    card.setAttribute('data-cats', item.category_slug);
+                    const catBadgeEl = card.querySelector('[data-role="mat-category-badge"]');
+                    if (catBadgeEl) {
+                        const catObj = typeof categoriesData !== 'undefined' ? categoriesData[item.category_slug] : null;
+                        const optEl = document.querySelector(`#edit-mat-category option[value="${item.category_slug}"]`);
+                        const catLabel = (catObj && catObj.name) ? catObj.name : (optEl ? optEl.textContent.trim() : '');
+                        if (catLabel) catBadgeEl.textContent = catLabel;
+                    }
+                }
+
+                const nameEl = card.querySelector('[data-role="mat-name"]');
+                if (nameEl && item.name) nameEl.textContent = item.name;
+
+                const imgEl = card.querySelector('[data-role="mat-img"]');
+                if (imgEl && item.image_url) imgEl.src = item.image_url;
 
                 const priceEl = card.querySelector('[data-role="latest-price"]');
                 if (priceEl) priceEl.textContent = `฿${formatLatestPrice(item.latest_cost_price)}`;
@@ -4070,15 +4109,18 @@
                     }
                 }
 
-                if (typeof item.is_approved_for_sale !== 'undefined') {
-                    const rawJson = card.getAttribute('data-modal');
-                    if (rawJson) {
-                        try {
-                            const d = JSON.parse(rawJson);
+                const rawJson = card.getAttribute('data-modal');
+                if (rawJson) {
+                    try {
+                        const d = JSON.parse(rawJson);
+                        if (item.name) d.name = item.name;
+                        if (item.category_slug) d.category_slug = item.category_slug;
+                        if (item.image_url) d.image_url = item.image_url;
+                        if (typeof item.is_approved_for_sale !== 'undefined') {
                             d.is_approved_for_sale = item.is_approved_for_sale;
-                            card.setAttribute('data-modal', JSON.stringify(d));
-                        } catch (e) {}
-                    }
+                        }
+                        card.setAttribute('data-modal', JSON.stringify(d));
+                    } catch (e) {}
                 }
             });
 
@@ -4218,6 +4260,15 @@
 
             const data = await res.json();
             if (res.ok && data.success) {
+                if (data.category) {
+                    broadcastCategorySync({
+                        action: 'category_created',
+                        slug: data.category.slug,
+                        name: data.category.name,
+                        icon: data.category.icon,
+                        is_active: !!data.category.is_active
+                    });
+                }
                 closeCreateCategoryModal();
                 showPriceToast(data.message || 'สร้างแถบหมวดหมู่เรียบร้อยแล้ว');
                 setTimeout(() => window.location.reload(), 600);
@@ -4526,7 +4577,26 @@
                     if (labelSpan) labelSpan.textContent = cat.name;
                 }
 
-                // 4. If this category was currently active in view, update active slug & title
+                // 4. Sync existing cards referencing oldSlug / category name
+                document.querySelectorAll('.mat-card').forEach(card => {
+                    const cats = (card.getAttribute('data-cats') || '').split(',').filter(Boolean);
+                    if (cats.includes(oldSlug) || cats.includes(newSlug)) {
+                        const updatedCats = cats.map(c => (c === oldSlug ? newSlug : c));
+                        card.setAttribute('data-cats', Array.from(new Set(updatedCats)).join(','));
+                        const badgeEl = card.querySelector('[data-role="mat-category-badge"]');
+                        if (badgeEl) badgeEl.textContent = cat.name;
+                        const rawJson = card.getAttribute('data-modal');
+                        if (rawJson) {
+                            try {
+                                const d = JSON.parse(rawJson);
+                                if (d.category_slug === oldSlug) d.category_slug = newSlug;
+                                card.setAttribute('data-modal', JSON.stringify(d));
+                            } catch (e) {}
+                        }
+                    }
+                });
+
+                // 5. If this category was currently active in view, update active slug & title
                 if (currentMatCategory === oldSlug) {
                     currentMatCategory = newSlug;
                     const headingEl = document.getElementById('section-heading-text');
@@ -4537,8 +4607,9 @@
                     }
                     updateCategoryApprovalButtonUI(cat.is_active);
                 }
+                applyMaterialFilters();
 
-                // 5. Broadcast live update to Online Order & POS Cashier tabs
+                // 6. Broadcast live update to Online Order & POS Cashier tabs
                 broadcastCategorySync({
                     action: 'category_updated',
                     slug: newSlug,
@@ -4635,12 +4706,38 @@
                 const pillBtn = document.querySelector(`.cat-pill-btn[data-cat="${slug}"]`);
                 if (pillBtn) pillBtn.remove();
 
-                // 4. If current view was this category, switch back to 'all'
-                if (currentMatCategory === slug) {
-                    filterMaterialsByCategory('all');
+                // 4. Reassign existing cards in deleted category to fallback_slug
+                const fallbackSlug = data.fallback_slug || '';
+                const fallbackCatObj = fallbackSlug && typeof categoriesData !== 'undefined' ? categoriesData[fallbackSlug] : null;
+                const fallbackOpt = fallbackSlug ? document.querySelector(`#edit-mat-category option[value="${fallbackSlug}"]`) : null;
+                const fallbackName = (fallbackCatObj && fallbackCatObj.name) ? fallbackCatObj.name : (fallbackOpt ? fallbackOpt.textContent.trim() : '');
+                if (fallbackSlug) {
+                    document.querySelectorAll('.mat-card').forEach(card => {
+                        const cats = (card.getAttribute('data-cats') || '').split(',').filter(Boolean);
+                        if (cats.includes(slug)) {
+                            card.setAttribute('data-cats', fallbackSlug);
+                            const badgeEl = card.querySelector('[data-role="mat-category-badge"]');
+                            if (badgeEl && fallbackName) badgeEl.textContent = fallbackName;
+                            const rawJson = card.getAttribute('data-modal');
+                            if (rawJson) {
+                                try {
+                                    const d = JSON.parse(rawJson);
+                                    d.category_slug = fallbackSlug;
+                                    card.setAttribute('data-modal', JSON.stringify(d));
+                                } catch (e) {}
+                            }
+                        }
+                    });
                 }
 
-                // 5. Broadcast deletion to Online Order & POS Cashier tabs
+                // 5. If current view was this category, switch back to 'all', else re-filter
+                if (currentMatCategory === slug) {
+                    filterMaterialsByCategory('all');
+                } else {
+                    applyMaterialFilters();
+                }
+
+                // 6. Broadcast deletion to Online Order & POS Cashier tabs
                 broadcastCategorySync({
                     action: 'category_deleted',
                     slug: slug,

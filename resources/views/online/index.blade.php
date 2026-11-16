@@ -366,7 +366,7 @@
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center justify-between gap-1">
                         <!-- สถานะร้าน: ย้ายมาจากขวาแทนที่ร้านแนะนำเดิม -->
-                        <span class="inline-flex items-center gap-1.5 text-[10.5px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/80 shadow-2xs">
+                        <span class="inline-flex items-center gap-1.5 text-[10.5px] font-bold text-[#101114]">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             <span>เปิดรับออเดอร์</span>
                         </span>
@@ -745,6 +745,7 @@
                     @endphp
                     <div class="product-item bg-white rounded-[15px] p-2 border border-[#ECEEF2] shadow-[0_2px_6px_rgba(0,0,0,0.03)] flex items-center justify-between gap-2.5 transition-all"
                          data-id="{{ $product->id }}"
+                         data-raw-id="{{ $product->raw_material_id }}"
                          data-name="{{ $productName }}"
                          data-price="{{ $productPrice }}"
                          data-category="{{ $catSlug }}"
@@ -2891,6 +2892,38 @@
                     if (Array.isArray(data.categories)) {
                         syncOnlineCategoryPills(data.categories);
                     }
+                    if (Array.isArray(data.products)) {
+                        let catChanged = false;
+                        data.products.forEach(p => {
+                            if (p && p.id && typeof productMap === 'object' && productMap[p.id]) {
+                                productMap[p.id] = { ...productMap[p.id], ...p };
+                            }
+                            const el = document.querySelector(`.product-item[data-id="${p.id}"]`);
+                            if (!el) return;
+                            if (p.name) {
+                                el.setAttribute('data-name', p.name);
+                                const h3 = el.querySelector('h3');
+                                if (h3) h3.textContent = p.name;
+                            }
+                            if (p.image_url) {
+                                const img = el.querySelector('img');
+                                if (img) img.src = p.image_url;
+                            }
+                            if (p.category_slug && el.getAttribute('data-category') !== p.category_slug) {
+                                el.setAttribute('data-category', p.category_slug);
+                                catChanged = true;
+                            }
+                            if (typeof p.stock_sticks !== 'undefined') {
+                                el.setAttribute('data-stock', String(p.stock_sticks));
+                            }
+                        });
+                        if (catChanged) {
+                            const activePill = document.querySelector('.online-cat-pill.active');
+                            if (activePill) {
+                                filterOnlineCategory(activePill.getAttribute('data-cat') || 'all', activePill);
+                            }
+                        }
+                    }
                     if (Array.isArray(data.recommended_products)) {
                         syncOnlineRecommendedProducts(data.recommended_products);
                     }
@@ -2932,6 +2965,28 @@
 
         function applyOnlineCategorySyncMessage(data) {
             if (!data || !data.action) return;
+            if (data.action === 'material_updated' && data.material_id) {
+                document.querySelectorAll(`.product-item[data-raw-id="${data.material_id}"]`).forEach(el => {
+                    if (data.name) {
+                        el.setAttribute('data-name', data.name);
+                        const h3 = el.querySelector('h3');
+                        if (h3) h3.textContent = data.name;
+                    }
+                    if (data.image_url) {
+                        const img = el.querySelector('img');
+                        if (img) img.src = data.image_url;
+                    }
+                    if (data.category_slug) {
+                        el.setAttribute('data-category', data.category_slug);
+                    }
+                });
+                const activePill = document.querySelector('.online-cat-pill.active');
+                if (activePill) {
+                    filterOnlineCategory(activePill.getAttribute('data-cat') || 'all', activePill);
+                }
+                refreshOnlineCategoriesLive();
+                return;
+            }
             if (data.action === 'hero_banner_updated' && data.hero) {
                 const bannerImg = document.getElementById('online-hero-banner-img');
                 if (bannerImg) {
@@ -3676,6 +3731,8 @@
                 try {
                     const catChannel = new BroadcastChannel('mala_category_sync_channel');
                     catChannel.onmessage = (ev) => applyOnlineCategorySyncMessage(ev.data);
+                    const posChannel = new BroadcastChannel('mala_pos_sync_channel');
+                    posChannel.onmessage = (ev) => applyOnlineCategorySyncMessage(ev.data);
                     const invChannel = new BroadcastChannel('mala_inventory_sync_channel');
                     invChannel.onmessage = () => refreshOnlineCategoriesLive();
                 } catch (e) {}

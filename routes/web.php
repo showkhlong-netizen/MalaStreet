@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\MediaController;
 use App\Http\Controllers\OnlineOrderController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\PosController;
@@ -60,6 +61,11 @@ Route::prefix('pos')->name('pos.')->middleware(['auth', EnforceDailyEmployeeLand
 
 // Top-level alias for Kitchen Chat
 Route::post('/webhooks/android-payment', [PaymentWebhookController::class, 'handleAndroidPayment'])->name('webhooks.android_payment');
+
+// Cloud DB-backed persistent media routes (survive ephemeral container restarts/redeploys)
+Route::get('/media/{path}', [MediaController::class, 'show'])->where('path', '.*')->name('media.show');
+Route::get('/assets/ingredients/custom/{filename}', [MediaController::class, 'customIngredient'])->where('filename', '.*');
+Route::get('/uploads/{folder}/{filename}', [MediaController::class, 'uploadFallback'])->where(['folder' => 'categories|receipts|slips|hero', 'filename' => '.*']);
 
 Route::get('/kitchen/chat', [PosController::class, 'kitchenChat'])->name('kitchen.chat')->middleware('auth');
 Route::post('/kitchen/chat/send', [PosController::class, 'sendAdminChatMessage'])->name('kitchen.chat.send')->middleware('auth');
