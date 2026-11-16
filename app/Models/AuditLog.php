@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Support\ThaiDate;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class AuditLog extends Model
@@ -113,21 +114,23 @@ class AuditLog extends Model
 
         try {
             if (Schema::hasTable('audit_logs')) {
-                $log = static::create([
-                    'user_id' => $actor['id'] ?? 'system',
-                    'user_name' => $actor['name'] ?? 'ผู้ใช้งานระบบ',
-                    'user_role' => $actor['role'] ?? 'Admin',
-                    'branch' => $actor['branch'] ?? 'สาขายะลา',
-                    'module' => $module,
-                    'action' => $action,
-                    'action_label' => $actionLabel,
-                    'target_name' => $targetName ?: '-',
-                    'details' => !empty($details) ? json_encode($details, JSON_UNESCAPED_UNICODE) : null,
-                    'ip_address' => request()->ip(),
-                ]);
+                $log = DB::transaction(function () use ($actor, $module, $action, $actionLabel, $targetName, $details) {
+                    return static::create([
+                        'user_id' => mb_substr((string) ($actor['id'] ?? 'system'), 0, 60, 'UTF-8'),
+                        'user_name' => mb_substr((string) ($actor['name'] ?? 'ผู้ใช้งานระบบ'), 0, 145, 'UTF-8'),
+                        'user_role' => mb_substr((string) ($actor['role'] ?? 'Admin'), 0, 75, 'UTF-8'),
+                        'branch' => mb_substr((string) ($actor['branch'] ?? 'สาขายะลา'), 0, 95, 'UTF-8'),
+                        'module' => mb_substr($module, 0, 75, 'UTF-8'),
+                        'action' => mb_substr($action, 0, 55, 'UTF-8'),
+                        'action_label' => mb_substr($actionLabel, 0, 145, 'UTF-8'),
+                        'target_name' => mb_substr((string) ($targetName ?: '-'), 0, 250, 'UTF-8'),
+                        'details' => !empty($details) ? json_encode($details, JSON_UNESCAPED_UNICODE) : null,
+                        'ip_address' => mb_substr((string) (request()->ip() ?? ''), 0, 60, 'UTF-8'),
+                    ]);
+                });
             }
         } catch (\Throwable $e) {
-            // Continue to sync bump even if table isn't migrated yet
+            // Continue safely via savepoint without aborting any outer PostgreSQL transaction
         }
 
         // Trigger Materialized View & Real-Time Cross-Device Sync

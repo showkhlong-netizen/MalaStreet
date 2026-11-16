@@ -181,7 +181,9 @@ class OnlineOrderController extends Controller
             'notes' => 'nullable|string|max:255',
         ]);
 
-        return DB::transaction(function () use ($validated, $request) {
+        $awaitingPayment = $request->boolean('awaiting_payment', false) && (($validated['payment_method'] ?? 'promptpay') === 'promptpay');
+
+        $order = DB::transaction(function () use ($validated, $request, $awaitingPayment) {
             $today = Carbon::today('Asia/Bangkok');
             $dayStart = $today->copy()->startOfDay();
             $dayEnd = $today->copy()->endOfDay();
@@ -286,7 +288,6 @@ class OnlineOrderController extends Controller
             }
 
             $clientIp = $this->getClientIp($request);
-            $awaitingPayment = $request->boolean('awaiting_payment', false) && $paymentMethod === 'promptpay';
 
             if ($awaitingPayment && $totalAmount > 0) {
                 $recentUnpaidAmounts = Order::where('payment_method', 'promptpay')
@@ -370,27 +371,29 @@ class OnlineOrderController extends Controller
                 'is_read' => false,
             ]);
 
-            \App\Models\AuditLog::record(
-                'online',
-                'create',
-                "รับออเดอร์ออนไลน์คิว {$order->queue_number} ({$order->order_no}) ลูกค้า: {$order->customer_name} ยอด ฿" . number_format($order->total_amount, 2),
-                "{$order->queue_number} ({$order->order_no})",
-                'order',
-                (string) $order->id,
-                ['queue' => $order->queue_number, 'customer' => $order->customer_name, 'total' => $order->total_amount]
-            );
-
-            return response()->json([
-                'success' => true,
-                'message' => $awaitingPayment ? 'สร้างรายการรอชำระเงินแล้ว' : 'ส่งออเดอร์สำเร็จ ชำระเงินเรียบร้อยแล้ว',
-                'order_no' => $order->order_no,
-                'queue_number' => $order->queue_number,
-                'total_amount' => (float) $order->total_amount,
-                'awaiting_payment' => $awaitingPayment,
-                'promptpay_settings' => PosController::getStorePromptPaySettings(),
-                'redirect_url' => route('online.track', ['order_no' => $order->order_no]),
-            ]);
+            return $order;
         });
+
+        \App\Models\AuditLog::record(
+            'online',
+            'create',
+            "รับออเดอร์ออนไลน์คิว {$order->queue_number} ({$order->order_no}) ลูกค้า: {$order->customer_name} ยอด ฿" . number_format($order->total_amount, 2),
+            "{$order->queue_number} ({$order->order_no})",
+            'order',
+            (string) $order->id,
+            ['queue' => $order->queue_number, 'customer' => $order->customer_name, 'total' => $order->total_amount]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => $awaitingPayment ? 'สร้างรายการรอชำระเงินแล้ว' : 'ส่งออเดอร์สำเร็จ ชำระเงินเรียบร้อยแล้ว',
+            'order_no' => $order->order_no,
+            'queue_number' => $order->queue_number,
+            'total_amount' => (float) $order->total_amount,
+            'awaiting_payment' => $awaitingPayment,
+            'promptpay_settings' => PosController::getStorePromptPaySettings(),
+            'redirect_url' => route('online.track', ['order_no' => $order->order_no]),
+        ]);
     }
 
     /**

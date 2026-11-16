@@ -186,5 +186,31 @@ class AndroidPaymentWebhookTest extends TestCase
         $this->getJson('/order/payment-status/MS-ONL-20261116-099-TST')
             ->assertStatus(200)
             ->assertJson(['paid' => true, 'payment_status' => 'paid']);
+
+        // 5. POS storeOrder also commits cleanly and executes AuditLog + MasterSummary outside transaction
+        $category = Category::create(['name' => 'ย่าง', 'slug' => 'grill', 'sort_order' => 1]);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'สามชั้น',
+            'price_per_stick' => 25,
+            'is_available' => true,
+            'stock_sticks' => 20,
+        ]);
+
+        $posOrderRes = $this->actingAs($admin)->postJson('/pos/order', [
+            'payment_method' => 'cash',
+            'cash_received' => 50,
+            'customer_name' => 'ลูกค้าหน้าร้าน',
+            'items' => [
+                [
+                    'product_id' => $product->id,
+                    'quantity' => 2,
+                    'cooking_type' => 'grill',
+                    'spiciness_level' => 'medium',
+                ],
+            ],
+        ]);
+
+        $posOrderRes->assertStatus(200)->assertJson(['success' => true]);
     }
 }

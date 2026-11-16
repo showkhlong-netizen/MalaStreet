@@ -185,12 +185,30 @@ class PosController extends Controller
             'notes' => 'nullable|string|max:255',
         ]);
 
-        return DB::transaction(function () use ($validated, $request) {
-            $today = Carbon::today();
-            $posCountToday = Order::whereDate('created_at', $today)->where('order_type', 'pos')->count();
-            $queueNumber = 'A' . str_pad($posCountToday + 1, 2, '0', STR_PAD_LEFT);
+        $order = DB::transaction(function () use ($validated, $request) {
+            $today = Carbon::today('Asia/Bangkok');
+            $dayStart = $today->copy()->startOfDay();
+            $dayEnd = $today->copy()->endOfDay();
+            $datePrefix = 'MS-POS-' . $today->format('Ymd') . '-';
+
+            $existingPosToday = Order::where('order_type', 'pos')
+                ->where(function ($q) use ($dayStart, $dayEnd, $datePrefix) {
+                    $q->whereBetween('created_at', [$dayStart, $dayEnd])
+                        ->orWhere('order_no', 'like', $datePrefix . '%');
+                })
+                ->lockForUpdate()
+                ->get(['id', 'order_no']);
+
+            $maxSeq = $existingPosToday->count();
+            foreach ($existingPosToday as $existing) {
+                if (preg_match('/^' . preg_quote($datePrefix, '/') . '(\d+)/', (string) $existing->order_no, $m)) {
+                    $maxSeq = max($maxSeq, (int) $m[1]);
+                }
+            }
+            $nextSeq = $maxSeq + 1;
+            $queueNumber = 'A' . str_pad($nextSeq, 2, '0', STR_PAD_LEFT);
             $uniqueSuffix = strtoupper(\Illuminate\Support\Str::random(3));
-            $orderNo = 'MS-POS-' . $today->format('Ymd') . '-' . str_pad($posCountToday + 1, 3, '0', STR_PAD_LEFT) . '-' . $uniqueSuffix;
+            $orderNo = $datePrefix . str_pad($nextSeq, 3, '0', STR_PAD_LEFT) . '-' . $uniqueSuffix;
 
             $subtotal = 0;
             $soupExtraTotal = 0;
@@ -294,26 +312,28 @@ class PosController extends Controller
 
             $order->load('items.product');
 
-            AuditLog::record(
-                'pos',
-                'create',
-                'เปิดบิลขายหน้าร้าน (POS)',
-                "คิว {$queueNumber} ({$orderNo}) ยอด ฿" . number_format($totalAmount, 2),
-                [
-                    'order_id' => $order->id,
-                    'order_no' => $orderNo,
-                    'queue_number' => $queueNumber,
-                    'total_amount' => $totalAmount,
-                    'payment_method' => $validated['payment_method'],
-                ]
-            );
-
-            return response()->json([
-                'success' => true,
-                'message' => 'บันทึกออเดอร์หน้าร้านเรียบร้อยแล้ว',
-                'order' => $order,
-            ]);
+            return $order;
         });
+
+        AuditLog::record(
+            'pos',
+            'create',
+            'เปิดบิลขายหน้าร้าน (POS)',
+            "คิว {$order->queue_number} ({$order->order_no}) ยอด ฿" . number_format((float) $order->total_amount, 2),
+            [
+                'order_id' => $order->id,
+                'order_no' => $order->order_no,
+                'queue_number' => $order->queue_number,
+                'total_amount' => $order->total_amount,
+                'payment_method' => $validated['payment_method'],
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'บันทึกออเดอร์หน้าร้านเรียบร้อยแล้ว',
+            'order' => $order,
+        ]);
     }
 
     /**

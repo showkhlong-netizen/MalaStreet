@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Support\ThaiDate;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class MasterSummary extends Model
 {
@@ -154,7 +156,7 @@ class MasterSummary extends Model
                 if ($doc) {
                     $doc->version = $newVersion;
                     $doc->payload = json_encode($updatedPayload, JSON_UNESCAPED_UNICODE);
-                    $doc->updated_by = $userName ?: 'System';
+                    $doc->updated_by = Str::limit((string) ($userName ?: 'System'), 140, '');
                     $doc->updated_at_ms = $nowMs;
                     $doc->save();
                 } else {
@@ -162,7 +164,7 @@ class MasterSummary extends Model
                         'doc_key' => 'global_sync_state',
                         'version' => 1,
                         'payload' => json_encode($updatedPayload, JSON_UNESCAPED_UNICODE),
-                        'updated_by' => $userName ?: 'System',
+                        'updated_by' => Str::limit((string) ($userName ?: 'System'), 140, ''),
                         'updated_at_ms' => $nowMs,
                     ]);
                 }
@@ -181,14 +183,18 @@ class MasterSummary extends Model
     public static function refreshMaterializedModule(string $module, ?string $updatedBy = null): void
     {
         try {
-            $today = ThaiDate::now()->toDateString();
+            $bangkokToday = Carbon::today('Asia/Bangkok');
+            $today = $bangkokToday->toDateString();
+            $dayStart = $bangkokToday->copy()->startOfDay();
+            $dayEnd = $bangkokToday->copy()->endOfDay();
+            $safeUpdatedBy = $updatedBy ? Str::limit($updatedBy, 140, '') : null;
 
             if (in_array($module, ['pos', 'kitchen', 'online', 'dashboard'])) {
-                $todayOrdersCount = Order::whereDate('created_at', $today)->count();
-                $todayRevenue = (float) Order::whereDate('created_at', $today)
+                $todayOrdersCount = Order::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $todayRevenue = (float) Order::whereBetween('created_at', [$dayStart, $dayEnd])
                     ->where('status', '!=', 'cancelled')
-                    ->sum('net_amount');
-                $pendingKitchen = Order::whereIn('status', ['pending', 'cooking', 'preparing'])->count();
+                    ->sum('total_amount');
+                $pendingKitchen = Order::whereIn('status', ['pending', 'confirmed', 'cooking', 'ready'])->count();
 
                 static::updateDocument('pos_kitchen_master', [
                     'date' => $today,
@@ -196,14 +202,14 @@ class MasterSummary extends Model
                     'today_orders_count' => $todayOrdersCount,
                     'today_revenue' => $todayRevenue,
                     'pending_kitchen_count' => $pendingKitchen,
-                    'updated_by' => $updatedBy,
-                ], $updatedBy);
+                    'updated_by' => $safeUpdatedBy,
+                ], $safeUpdatedBy);
             }
 
             if (in_array($module, ['price_tracker', 'receipts', 'inventory'])) {
                 $materialsCount = RawMaterial::count();
                 $totalStockSticks = (int) RawMaterial::sum('current_stock_sticks');
-                $todayReceiptsTotal = (float) Receipt::whereDate('receipt_date', $today)->sum('total_amount');
+                $todayReceiptsTotal = (float) Receipt::whereDate('purchase_date', $today)->sum('total_amount');
 
                 static::updateDocument('inventory_price_master', [
                     'date' => $today,
@@ -211,8 +217,8 @@ class MasterSummary extends Model
                     'materials_count' => $materialsCount,
                     'total_stock_sticks' => $totalStockSticks,
                     'today_receipts_total' => $todayReceiptsTotal,
-                    'updated_by' => $updatedBy,
-                ], $updatedBy);
+                    'updated_by' => $safeUpdatedBy,
+                ], $safeUpdatedBy);
             }
         } catch (\Throwable $e) {
             // Ignore if tables are migrating
