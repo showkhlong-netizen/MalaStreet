@@ -151,6 +151,11 @@
                         <input type="text" id="cashier-wh-secret" readonly value="{{ $wh['secret'] }}" class="flex-1 px-2 py-1 rounded-lg bg-white border border-emerald-200 font-mono text-[10px]">
                         <button type="button" onclick="copyCashierText('cashier-wh-secret')" class="px-2 py-1 rounded-lg bg-white border border-emerald-200 text-emerald-800 font-bold text-[10px] cursor-pointer">คัดลอก</button>
                     </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-slate-600 shrink-0">Body:</span>
+                        <input type="text" id="cashier-wh-macrodroid-body" readonly value='{"secret":"{{ $wh['secret'] }}","message":"[not_title] [notification]"}' class="flex-1 px-2 py-1 rounded-lg bg-white border border-emerald-200 font-mono text-[10px]">
+                        <button type="button" onclick="copyCashierText('cashier-wh-macrodroid-body')" class="px-2 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[10px] cursor-pointer">คัดลอกไปวางเลย</button>
+                    </div>
                     <div id="cashier-wh-status" class="text-[10.5px] text-emerald-800 font-medium">
                         @if(!empty($wh['last_received_at']))
                             ล่าสุด: {{ $wh['last_received_at'] }} (฿{{ $wh['last_amount'] ?: '-' }})
