@@ -270,21 +270,12 @@
                                     </span>
                                 </div>
 
-                                <!-- Row 2: Customer Name + Phone ซ้าย & Relative Time ขวา (1 บรรทัดเสมอ) -->
-                                <div class="flex items-center justify-between gap-2 min-w-0">
-                                    <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5 min-w-0">
-                                        <span class="truncate">{{ $order->customer_name }}</span>
-                                        @if($order->customer_phone)
-                                            <span class="text-slate-400 font-normal whitespace-nowrap shrink-0">({{ $order->customer_phone }})</span>
-                                        @endif
-                                    </div>
-                                    <span class="text-[10.5px] text-slate-400 font-medium whitespace-nowrap shrink-0">
-                                        {{ $order->created_at->diffForHumans() }}
-                                    </span>
-                                </div>
-
-                                <!-- Row 4: Payment Status + IP + Chat Action (แต่ละป้าย 1 บรรทัดเสมอ) -->
-                                <div class="flex items-center flex-wrap gap-1.5">
+                                <!-- Row 2: ชื่อลูกค้า (เด่นใหญ่ขึ้น) + เบอร์โทร + แถบชำระแล้ว ต่อท้ายในบรรทัดเดียวกัน -->
+                                <div class="flex items-center gap-1.5 min-w-0 flex-nowrap overflow-x-auto no-scrollbar">
+                                    <span class="text-[15px] font-black text-slate-900 leading-tight truncate min-w-0">{{ $order->customer_name }}</span>
+                                    @if($order->customer_phone)
+                                        <span class="text-[11.5px] text-slate-500 font-medium whitespace-nowrap shrink-0">({{ $order->customer_phone }})</span>
+                                    @endif
                                     @if($order->payment_status === 'paid')
                                         <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 whitespace-nowrap shrink-0">
                                             <span>✓ ชำระแล้ว ฿{{ number_format((float) $order->total_amount, 2) }}</span>
@@ -293,26 +284,32 @@
                                         <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-300 animate-pulse whitespace-nowrap shrink-0">
                                             <span>⏳ รอยอดโอน ฿{{ number_format((float) $order->total_amount, 2) }}</span>
                                         </span>
+                                    @endif
+                                </div>
+
+                                <!-- Row 3: ปุ่มแชท / ยืนยันรับเงิน (ซ้าย) + เวลาที่ผ่านมา (ขวา) โดยตัดเลขไอพีออกแล้ว -->
+                                <div class="flex items-center justify-between gap-2 min-w-0">
+                                    <div class="flex items-center gap-1.5 min-w-0">
+                                        @if($order->payment_status !== 'paid')
+                                            <button type="button"
+                                                    onclick="updateStatus({{ $order->id }}, 'confirmed', true)"
+                                                    class="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-0.5 rounded-lg shadow-2xs transition cursor-pointer whitespace-nowrap shrink-0">
+                                                <span>ยืนยันรับเงินแล้ว</span>
+                                            </button>
+                                        @endif
                                         <button type="button"
-                                                onclick="updateStatus({{ $order->id }}, 'confirmed', true)"
-                                                class="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-0.5 rounded-lg shadow-2xs transition cursor-pointer whitespace-nowrap shrink-0">
-                                            <span>ยืนยันรับเงินแล้ว</span>
+                                           onclick="openOrderInSideChat('{{ $order->order_no }}')" 
+                                           class="inline-flex items-center gap-1 text-[10.5px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-lg border border-rose-200 transition active:scale-95 cursor-pointer whitespace-nowrap shrink-0" 
+                                           title="เปิดแชทกับลูกค้ารายนี้ในหน้าต่างแชทขวามือสุด">
+                                            <svg class="w-3 h-3 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                            </svg>
+                                            <span>แชท</span>
                                         </button>
-                                    @endif
-                                    @if($order->ip_address)
-                                        <span class="text-[9.5px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 whitespace-nowrap shrink-0">
-                                            🌐 IP: {{ $order->ip_address }}
-                                        </span>
-                                    @endif
-                                    <button type="button"
-                                       onclick="openOrderInSideChat('{{ $order->order_no }}')" 
-                                       class="inline-flex items-center gap-1 text-[10.5px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-lg border border-rose-200 transition active:scale-95 cursor-pointer whitespace-nowrap shrink-0" 
-                                       title="เปิดแชทกับลูกค้ารายนี้ในหน้าต่างแชทขวามือสุด">
-                                        <svg class="w-3 h-3 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                        </svg>
-                                        <span>แชท</span>
-                                    </button>
+                                    </div>
+                                    <span class="text-[10.5px] text-slate-400 font-medium whitespace-nowrap shrink-0">
+                                        {{ $order->created_at->diffForHumans() }}
+                                    </span>
                                 </div>
                             </div>
 
