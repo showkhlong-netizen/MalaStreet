@@ -883,9 +883,17 @@
                 <div class="p-4 bg-white border-2 border-dashed border-rose-300 rounded-2xl flex flex-col items-center">
                     <img id="promptpay-qr-img" src="" alt="PromptPay QR" class="w-48 h-48 object-contain rounded-lg shadow-xs">
                     <div class="mt-2 text-xs text-slate-600 mala-font-mid-bold">
-                        พร้อมเพย์: <strong class="text-slate-800">089-123-4567</strong> (ร้านหม่าล่าสตรีท)
+                        บัญชี: <strong id="pos-qr-account-no" class="text-slate-800">{{ $promptPaySettings['account_no'] ?? '098-1-53225-2 (กสิกรไทย)' }}</strong>
+                        <span class="block text-[11px] text-slate-500 mt-0.5">ชื่อบัญชี: <span id="pos-qr-account-name">{{ $promptPaySettings['account_name'] ?? 'มูนีบ สและแม' }}</span></span>
                     </div>
-                    <span class="text-[11px] text-emerald-600 mt-1 mala-font-bold">● สแกน QR โอนชำระได้ทันที</span>
+                    <span class="text-[11px] text-emerald-600 mt-1 mala-font-bold">● สแกน QR โอนชำระได้ทันที (ล็อคยอดเงินอัตโนมัติ)</span>
+                    <button type="button" onclick="openPosQrSettingsModal()"
+                            class="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold border border-slate-200 transition-colors cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        <span>แก้ไข / เปลี่ยนภาพ QR พร้อมเพย์</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -898,6 +906,64 @@
         </div>
     </div>
 </div>
+
+<!-- ============================================================================= -->
+<!-- MODAL 3.5: EDIT / UPLOAD STORE PROMPTPAY QR SETTINGS                          -->
+<!-- ============================================================================= -->
+<div id="pos-qr-settings-modal" class="fixed inset-0 z-[60] bg-black/65 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden border border-slate-200">
+        <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-black">แก้ไข / เปลี่ยน QR พร้อมเพย์ของร้าน</h3>
+                <p class="text-[11px] text-slate-300 mt-0.5">อัปโหลดภาพ QR ใหม่ ระบบจะถอดรหัสและล็อคยอดเงินให้อัตโนมัติ</p>
+            </div>
+            <button type="button" onclick="closePosQrSettingsModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer">✕</button>
+        </div>
+
+        <div class="p-5 space-y-3.5 text-xs">
+            <div>
+                <label class="block font-bold text-slate-700 mb-1.5">อัปโหลดภาพ QR Code ใหม่ (PNG / JPG)</label>
+                <label class="flex flex-col items-center justify-center gap-1.5 p-4 rounded-2xl border-2 border-dashed border-sky-300 bg-sky-50/60 hover:bg-sky-50 cursor-pointer transition-colors">
+                    <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <span class="font-bold text-sky-800">คลิกเพื่อเลือกภาพ QR พร้อมเพย์จากเครื่อง</span>
+                    <span class="text-[10.5px] text-slate-500">รองรับภาพ QR ธนาคาร, แม่มณี, KShop หรือโปสเตอร์ร้าน</span>
+                    <input type="file" id="pos-qr-file-input" accept="image/*" class="hidden" onchange="decodeUploadedPromptPayQr(this)">
+                </label>
+                <div id="pos-qr-decode-status" class="mt-1.5 text-[11px] font-bold hidden"></div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-2.5">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">เลขบัญชี / ธนาคารที่แสดง</label>
+                    <input type="text" id="pos-qr-input-account-no"
+                           value="{{ $promptPaySettings['account_no'] ?? '098-1-53225-2 (กสิกรไทย)' }}"
+                           placeholder="เช่น 098-1-53225-2 (กสิกรไทย)"
+                           class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-rose-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">ชื่อบัญชีที่แสดง</label>
+                    <input type="text" id="pos-qr-input-account-name"
+                           value="{{ $promptPaySettings['account_name'] ?? 'มูนีบ สและแม' }}"
+                           placeholder="เช่น มูนีบ สและแม"
+                           class="w-full px-3 py-2 rounded-xl border border-slate-200 focus:border-rose-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">รหัส QR (EMVCo Payload) หรือเบอร์พร้อมเพย์</label>
+                    <textarea id="pos-qr-input-payload" rows="3"
+                              class="w-full px-3 py-2 rounded-xl border border-slate-200 font-mono text-[10.5px] text-slate-700 focus:border-rose-500 focus:outline-none">{{ $promptPaySettings['payload'] ?? '' }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+            <button type="button" onclick="closePosQrSettingsModal()" class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-700 cursor-pointer">ยกเลิก</button>
+            <button type="button" id="btn-save-pos-qr" onclick="savePosPromptPayQr()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm cursor-pointer">บันทึก QR พร้อมเพย์</button>
+        </div>
+    </div>
+</div>
+<script src="{{ asset('js/jsQR.js') }}"></script>
 
 <!-- ============================================================================= -->
 <!-- MODAL 4: 80MM THERMAL RECEIPT PREVIEW                                         -->
@@ -1528,11 +1594,174 @@
             document.getElementById('pay-modal-title').innerText = 'สแกนจ่าย PromptPay';
             qrSec.classList.remove('hidden');
             cashSec.classList.add('hidden');
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=PromptPay-0891234567-Amount-${total}`;
-            document.getElementById('promptpay-qr-img').src = qrUrl;
+            refreshPosPromptPayQrImage(total);
         }
 
         document.getElementById('payment-modal').classList.remove('hidden');
+    }
+
+    let STORE_PROMPTPAY_SETTINGS = @json($promptPaySettings ?? ['payload' => '', 'account_name' => '', 'account_no' => '']);
+
+    function posCrc16Ccitt(payload) {
+        let crc = 0xFFFF;
+        for (let i = 0; i < payload.length; i++) {
+            crc ^= (payload.charCodeAt(i) & 0xFF) << 8;
+            for (let bit = 0; bit < 8; bit++) {
+                crc = ((crc & 0x8000) !== 0) ? (((crc << 1) ^ 0x1021) & 0xFFFF) : ((crc << 1) & 0xFFFF);
+            }
+        }
+        return crc.toString(16).toUpperCase().padStart(4, '0');
+    }
+
+    function posEmvTlv(tag, value) {
+        return `${tag}${String(value.length).padStart(2, '0')}${value}`;
+    }
+
+    function buildPosLockedPromptPayPayload(basePayloadOrPhone, amount) {
+        const raw = String(basePayloadOrPhone || '').trim();
+        const numericAmount = Number(amount || 0);
+
+        if (raw.startsWith('000201') && raw.length > 20) {
+            const tags = [];
+            let i = 0;
+            while (i + 4 <= raw.length) {
+                const tag = raw.slice(i, i + 2);
+                const len = parseInt(raw.slice(i + 2, i + 4), 10);
+                if (Number.isNaN(len) || i + 4 + len > raw.length) break;
+                tags.push({ tag, val: raw.slice(i + 4, i + 4 + len) });
+                i += 4 + len;
+            }
+            let out = '';
+            let insertedAmount = false;
+            for (const t of tags.filter(x => x.tag !== '54' && x.tag !== '63')) {
+                const val = (t.tag === '01') ? (numericAmount > 0 ? '12' : '11') : t.val;
+                out += posEmvTlv(t.tag, val);
+                if (t.tag === '53' && numericAmount > 0) {
+                    out += posEmvTlv('54', numericAmount.toFixed(2));
+                    insertedAmount = true;
+                }
+            }
+            if (!insertedAmount && numericAmount > 0) {
+                out += posEmvTlv('54', numericAmount.toFixed(2));
+            }
+            out += '6304';
+            return out + posCrc16Ccitt(out);
+        }
+
+        const clean = raw.replace(/[^0-9]/g, '') || '0891234567';
+        const formattedTarget = clean.startsWith('0') ? ('0066' + clean.slice(1)) : clean;
+        const merchantInfo = posEmvTlv('00', 'A000000677010111') + posEmvTlv('01', formattedTarget);
+        let payload = posEmvTlv('00', '01') + posEmvTlv('01', numericAmount > 0 ? '12' : '11') + posEmvTlv('29', merchantInfo) + posEmvTlv('53', '764');
+        if (numericAmount > 0) payload += posEmvTlv('54', numericAmount.toFixed(2));
+        payload += posEmvTlv('58', 'TH') + '6304';
+        return payload + posCrc16Ccitt(payload);
+    }
+
+    function refreshPosPromptPayQrImage(total) {
+        const emv = buildPosLockedPromptPayPayload(STORE_PROMPTPAY_SETTINGS.payload, total);
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${encodeURIComponent(emv)}`;
+        const img = document.getElementById('promptpay-qr-img');
+        if (img) img.src = qrUrl;
+    }
+
+    function openPosQrSettingsModal() {
+        document.getElementById('pos-qr-input-account-no').value = STORE_PROMPTPAY_SETTINGS.account_no || '';
+        document.getElementById('pos-qr-input-account-name').value = STORE_PROMPTPAY_SETTINGS.account_name || '';
+        document.getElementById('pos-qr-input-payload').value = STORE_PROMPTPAY_SETTINGS.payload || '';
+        const statusEl = document.getElementById('pos-qr-decode-status');
+        if (statusEl) statusEl.classList.add('hidden');
+        document.getElementById('pos-qr-settings-modal')?.classList.remove('hidden');
+    }
+
+    function closePosQrSettingsModal() {
+        document.getElementById('pos-qr-settings-modal')?.classList.add('hidden');
+    }
+
+    function decodeUploadedPromptPayQr(input) {
+        const file = input.files?.[0];
+        if (!file) return;
+        const statusEl = document.getElementById('pos-qr-decode-status');
+
+        if (typeof jsQR !== 'function') {
+            if (statusEl) {
+                statusEl.textContent = 'ไม่พบตัวอ่าน QR (jsQR)';
+                statusEl.className = 'mt-1.5 text-[11px] font-bold text-rose-600';
+            }
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const decoded = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'attemptBoth' });
+                if (decoded && decoded.data) {
+                    document.getElementById('pos-qr-input-payload').value = decoded.data;
+                    if (statusEl) {
+                        statusEl.textContent = '✅ ถอดรหัส QR สำเร็จ! กด "บันทึก QR พร้อมเพย์" เพื่อใช้งานทันที';
+                        statusEl.className = 'mt-1.5 text-[11px] font-bold text-emerald-600';
+                    }
+                } else if (statusEl) {
+                    statusEl.textContent = '⚠️ ไม่พบ QR Code ในภาพ กรุณาครอปเฉพาะส่วน QR แล้วลองใหม่อีกครั้ง';
+                    statusEl.className = 'mt-1.5 text-[11px] font-bold text-amber-600';
+                }
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function savePosPromptPayQr() {
+        const payload = document.getElementById('pos-qr-input-payload')?.value.trim() || '';
+        const accountNo = document.getElementById('pos-qr-input-account-no')?.value.trim() || '';
+        const accountName = document.getElementById('pos-qr-input-account-name')?.value.trim() || '';
+
+        if (!payload) {
+            alert('กรุณาอัปโหลดภาพ QR หรือกรอกรหัส QR / เบอร์พร้อมเพย์');
+            return;
+        }
+
+        const btn = document.getElementById('btn-save-pos-qr');
+        if (btn) btn.disabled = true;
+
+        try {
+            const res = await fetch('{{ route("pos.settings.promptpay_qr") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({
+                    payload,
+                    account_no: accountNo,
+                    account_name: accountName,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                STORE_PROMPTPAY_SETTINGS = data.settings;
+                const accNoEl = document.getElementById('pos-qr-account-no');
+                const accNameEl = document.getElementById('pos-qr-account-name');
+                if (accNoEl) accNoEl.textContent = data.settings.account_no;
+                if (accNameEl) accNameEl.textContent = data.settings.account_name;
+                refreshPosPromptPayQrImage(getCartTotal());
+                closePosQrSettingsModal();
+                showPosSyncToast(data.message || 'บันทึก QR พร้อมเพย์ใหม่แล้ว');
+            } else {
+                alert(data.message || 'ไม่สามารถบันทึก QR ได้');
+            }
+        } catch (err) {
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
     }
 
     function closePaymentModal() {

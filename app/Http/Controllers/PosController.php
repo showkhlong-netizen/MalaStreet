@@ -76,6 +76,8 @@ class PosController extends Controller
             $rawHistory
         ));
 
+        $promptPaySettings = self::getStorePromptPaySettings();
+
         return view('pos.index', compact(
             'categories',
             'todayOrders',
@@ -87,7 +89,8 @@ class PosController extends Controller
             'onlineOrderStatus',
             'posHeroBannerImage',
             'posHeroBannerPosition',
-            'posHeroBannerHistory'
+            'posHeroBannerHistory',
+            'promptPaySettings'
         ));
     }
 
@@ -685,6 +688,55 @@ class PosController extends Controller
             'success' => true,
             'status' => $order->status,
             'completed_at' => $order->completed_at ? $order->completed_at->toTimeString() : null,
+        ]);
+    }
+
+    public static function getStorePromptPaySettings(): array
+    {
+        $defaultPayload = '0002010102110216478772000407574704155303920004076001531343007640052044640122194421100130810016A00000067701011201150107536000315010214KB0000020757060320KPS004KB00000207570631690016A00000067701011301030040214KB0000020757060420KPS004KB00000207570651430014A000000004101001064169710211123456789015204731153037645802TH5913CHAWKLONG.PRO6004CITY622505094548452260708421944216304D288';
+
+        return [
+            'payload' => Setting::get('store_promptpay_qr_payload', $defaultPayload) ?: $defaultPayload,
+            'account_name' => Setting::get('store_promptpay_account_name', 'มูนีบ สและแม') ?: 'มูนีบ สและแม',
+            'account_no' => Setting::get('store_promptpay_account_no', '098-1-53225-2 (กสิกรไทย)') ?: '098-1-53225-2 (กสิกรไทย)',
+        ];
+    }
+
+    /**
+     * Save or replace the store's PromptPay EMVCo QR payload & display account info.
+     */
+    public function savePromptPayQr(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'payload' => 'required|string|min:10|max:1000',
+            'account_name' => 'nullable|string|max:120',
+            'account_no' => 'nullable|string|max:120',
+        ]);
+
+        $payload = trim($validated['payload']);
+        $accountName = trim((string) ($validated['account_name'] ?? ''));
+        $accountNo = trim((string) ($validated['account_no'] ?? ''));
+
+        Setting::set('store_promptpay_qr_payload', $payload, 'payment');
+        if ($accountName !== '') {
+            Setting::set('store_promptpay_account_name', $accountName, 'payment');
+        }
+        if ($accountNo !== '') {
+            Setting::set('store_promptpay_account_no', $accountNo, 'payment');
+        }
+
+        AuditLog::record(
+            'pos',
+            'settings',
+            'อัปเดต QR พร้อมเพย์ของร้าน',
+            $accountNo !== '' ? "{$accountName} ({$accountNo})" : 'อัปเดต EMVCo QR สำเร็จ',
+            ['payload_length' => strlen($payload)]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'บันทึก QR พร้อมเพย์ใหม่เรียบร้อยแล้ว (มีผลทั้งหน้า POS และหน้าสั่งออนไลน์)',
+            'settings' => self::getStorePromptPaySettings(),
         ]);
     }
 }

@@ -1117,16 +1117,33 @@
 
                 <!-- Payment Method -->
                 <div>
-                    <label class="font-bold text-[#101114] block mb-1">วิธีชำระเงิน</label>
+                    <label class="font-bold text-[#101114] block mb-1.5">วิธีชำระเงิน</label>
                     <div class="grid grid-cols-2 gap-2">
-                        <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-200 cursor-pointer has-checked:border-[#D90012] has-checked:bg-[#FFF0F1]">
-                            <input type="radio" name="payment_method" value="promptpay" checked class="text-[#D90012]">
-                            <span class="font-bold text-[#101114]">📱 พร้อมเพย์</span>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 cursor-pointer has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] transition-colors">
+                            <input type="radio" name="payment_method" value="promptpay" checked onchange="onPaymentMethodChange()" class="text-[#D90012] shrink-0">
+                            <svg class="w-6 h-6 text-[#101114] shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h6v6H3V3zm12 0h6v6h-6V3zM3 15h6v6H3v-6zm12 0h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm4 0h2v2h-2v-2zm-2-2h2v2h-2v-2z" />
+                            </svg>
+                            <span class="font-bold text-[#101114]">พร้อมเพย์</span>
                         </label>
-                        <label class="flex items-center gap-2 p-2 rounded-xl border border-slate-200 cursor-pointer has-checked:border-[#D90012] has-checked:bg-[#FFF0F1]">
-                            <input type="radio" name="payment_method" value="cash" class="text-[#D90012]">
-                            <span class="font-bold text-[#101114]">💵 เงินสด</span>
+                        <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 cursor-pointer has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] transition-colors">
+                            <input type="radio" name="payment_method" value="cash" onchange="onPaymentMethodChange()" class="text-[#D90012] shrink-0">
+                            <svg class="w-6 h-6 text-[#101114] shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                <rect x="2" y="6" width="20" height="12" rx="2" />
+                                <circle cx="12" cy="12" r="2.5" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 10v4m12-4v4" />
+                            </svg>
+                            <span class="font-bold text-[#101114]">เงินสด</span>
                         </label>
+                    </div>
+                    <div id="promptpay-preview-trigger-wrap" class="mt-2">
+                        <button type="button" onclick="openPromptPayScanModal(false)"
+                                class="w-full py-2 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-800 text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h6v6H3V3zm12 0h6v6h-6V3zM3 15h6v6H3v-6zm12 4h6m-3-3v6" />
+                            </svg>
+                            <span>เปิดหน้าต่างสแกน QR พร้อมเพย์ (ล็อคยอดเงินอัตโนมัติ)</span>
+                        </button>
                     </div>
                 </div>
 
@@ -1157,6 +1174,80 @@
                     <span id="submit-btn-text">ยืนยันสั่งอาหาร • <span id="btn-final-amount">฿0</span></span>
                     <span id="submit-btn-spinner" class="hidden animate-spin">⏳</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 11.5 PROMPTPAY QR SCAN MODAL (LOCKED EXACT AMOUNT)                        -->
+    <!-- ========================================================================= -->
+    <div id="promptpay-scan-modal" class="hidden fixed inset-0 z-[60] bg-black/75 backdrop-blur-2xs flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-[390px] rounded-[26px] overflow-hidden shadow-2xl border border-slate-100">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-[#0F2C59] to-[#1B498A] px-4 py-3.5 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h6v6H3V3zm12 0h6v6h-6V3zM3 15h6v6H3v-6zm12 0h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm4 0h2v2h-2v-2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black tracking-tight">สแกนจ่าย PromptPay</h3>
+                        <p class="text-[11px] text-sky-100">ระบบล็อคยอดชำระใน QR Code อัตโนมัติ</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closePromptPayScanModal()" class="w-7 h-7 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center text-xs cursor-pointer">✕</button>
+            </div>
+
+            <div class="p-4 space-y-3.5">
+                <!-- แถบสรุปราคา (Price Summary Bar) -->
+                <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 space-y-1 text-xs text-[#596272]">
+                    <div class="flex justify-between">
+                        <span>ค่าอาหาร (<span id="qr-summary-sticks">0</span> ไม้)</span>
+                        <span class="font-bold text-[#101114]" id="qr-summary-subtotal">฿0</span>
+                    </div>
+                    <div class="flex justify-between text-[#D90012]">
+                        <span>ส่วนลดคูปอง</span>
+                        <span class="font-bold" id="qr-summary-discount">-฿0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>ค่าจัดส่ง (<span id="qr-summary-method">สั่งเดลิเวอรี่</span>)</span>
+                        <span class="font-bold text-[#101114]" id="qr-summary-shipping">ฟรี</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-1.5 mt-1 border-t border-slate-200">
+                        <span class="font-extrabold text-[#101114] text-sm">ยอดชำระสุทธิ</span>
+                        <span class="text-xl font-black text-[#D90012] font-mono" id="qr-summary-grand-total">฿0</span>
+                    </div>
+                </div>
+
+                <!-- QR Code Box -->
+                <div class="bg-white border-2 border-sky-100 rounded-2xl p-3.5 text-center shadow-xs">
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold mb-2.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="qr-locked-amount-label">ล็อคยอดเงิน ฿0.00 ใน QR แล้ว</span>
+                    </div>
+                    <div class="w-52 h-52 mx-auto bg-white p-2 rounded-2xl border border-slate-200 flex items-center justify-center">
+                        <img id="online-promptpay-qr-img" src="" alt="PromptPay QR Code" class="w-full h-full object-contain rounded-lg">
+                    </div>
+                    <div class="mt-2.5 text-xs text-slate-600">
+                        บัญชี: <strong class="text-slate-900 font-mono">{{ $promptPaySettings['account_no'] ?? '098-1-53225-2 (กสิกรไทย)' }}</strong>
+                        <span class="block text-[11px] text-slate-500 mt-0.5">ชื่อบัญชี: {{ $promptPaySettings['account_name'] ?? 'มูนีบ สและแม' }}</span>
+                    </div>
+                    <p class="text-[10.5px] text-slate-400 mt-1">สแกนได้ทุกแอปธนาคารไทย ยอดเงินจะขึ้นตรงอัตโนมัติ</p>
+                </div>
+
+                <!-- Actions -->
+                <div class="space-y-2 pt-0.5">
+                    <button type="button" id="btn-qr-confirm-paid" onclick="confirmPromptPayAndSubmit()"
+                            class="w-full py-3 rounded-full bg-gradient-to-r from-[#D90012] to-[#B8000F] text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] transition-transform">
+                        <span id="qr-confirm-btn-text">โอนเงินเรียบร้อย • ยืนยันสั่งอาหาร</span>
+                        <span id="qr-confirm-btn-spinner" class="hidden animate-spin">⏳</span>
+                    </button>
+                    <button type="button" onclick="closePromptPayScanModal()"
+                            class="w-full py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer transition-colors">
+                        กลับไปแก้ไขข้อมูล
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -2173,7 +2264,160 @@
             document.getElementById('checkout-modal').classList.add('hidden');
         }
 
+        const STORE_PROMPTPAY_PAYLOAD = @json($promptPaySettings['payload'] ?? '0891234567');
+
+        function getOnlineOrderTotals() {
+            const totalSticks = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const subtotal = cart.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+            let discount = 0;
+            if (activeCoupon === 'DISC10' && subtotal >= 150) discount = 10;
+            if (activeCoupon === 'DISC20' && subtotal >= 300) discount = 20;
+            const shipping = 0;
+            const grandTotal = Math.max(0, subtotal - discount + shipping);
+            return { totalSticks, subtotal, discount, shipping, grandTotal };
+        }
+
+        function crc16Ccitt(payload) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < payload.length; i++) {
+                crc ^= (payload.charCodeAt(i) & 0xFF) << 8;
+                for (let bit = 0; bit < 8; bit++) {
+                    if ((crc & 0x8000) !== 0) {
+                        crc = ((crc << 1) ^ 0x1021) & 0xFFFF;
+                    } else {
+                        crc = (crc << 1) & 0xFFFF;
+                    }
+                }
+            }
+            return crc.toString(16).toUpperCase().padStart(4, '0');
+        }
+
+        function emvTlv(tag, value) {
+            const len = String(value.length).padStart(2, '0');
+            return `${tag}${len}${value}`;
+        }
+
+        function parseEmvTlvTags(emv) {
+            const tags = [];
+            let i = 0;
+            while (i + 4 <= emv.length) {
+                const tag = emv.slice(i, i + 2);
+                const len = parseInt(emv.slice(i + 2, i + 4), 10);
+                if (Number.isNaN(len) || i + 4 + len > emv.length) break;
+                const val = emv.slice(i + 4, i + 4 + len);
+                tags.push({ tag, val });
+                i += 4 + len;
+            }
+            return tags;
+        }
+
+        function generatePromptPayEmvPayload(basePayloadOrPhone, amount) {
+            const raw = String(basePayloadOrPhone || '').trim();
+            const numericAmount = Number(amount || 0);
+
+            if (raw.startsWith('000201') && raw.length > 20) {
+                const tags = parseEmvTlvTags(raw).filter(t => t.tag !== '54' && t.tag !== '63');
+                let out = '';
+                let insertedAmount = false;
+                for (const t of tags) {
+                    const val = (t.tag === '01') ? (numericAmount > 0 ? '12' : '11') : t.val;
+                    out += emvTlv(t.tag, val);
+                    if (t.tag === '53' && numericAmount > 0) {
+                        out += emvTlv('54', numericAmount.toFixed(2));
+                        insertedAmount = true;
+                    }
+                }
+                if (!insertedAmount && numericAmount > 0) {
+                    out += emvTlv('54', numericAmount.toFixed(2));
+                }
+                out += '6304';
+                return out + crc16Ccitt(out);
+            }
+
+            const clean = raw.replace(/[^0-9]/g, '');
+            const formattedTarget = clean.startsWith('0') ? ('0066' + clean.slice(1)) : clean;
+            const merchantInfo = emvTlv('00', 'A000000677010111') + emvTlv('01', formattedTarget);
+
+            let payload = '';
+            payload += emvTlv('00', '01');
+            payload += emvTlv('01', numericAmount > 0 ? '12' : '11');
+            payload += emvTlv('29', merchantInfo);
+            payload += emvTlv('53', '764');
+            if (numericAmount > 0) {
+                payload += emvTlv('54', numericAmount.toFixed(2));
+            }
+            payload += emvTlv('58', 'TH');
+            payload += '6304';
+
+            return payload + crc16Ccitt(payload);
+        }
+
+        function onPaymentMethodChange() {
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'promptpay';
+            const wrap = document.getElementById('promptpay-preview-trigger-wrap');
+            if (wrap) {
+                wrap.classList.toggle('hidden', paymentMethod !== 'promptpay');
+            }
+        }
+
+        function openPromptPayScanModal() {
+            if (cart.length === 0) return;
+            const { totalSticks, subtotal, discount, shipping, grandTotal } = getOnlineOrderTotals();
+
+            document.getElementById('qr-summary-sticks').innerText = totalSticks;
+            document.getElementById('qr-summary-subtotal').innerText = '฿' + subtotal.toFixed(0);
+            document.getElementById('qr-summary-discount').innerText = '-฿' + discount.toFixed(0);
+            document.getElementById('qr-summary-method').innerText = orderingMethod === 'delivery' ? 'สั่งเดลิเวอรี่' : 'รับที่ร้าน';
+            document.getElementById('qr-summary-shipping').innerText = shipping === 0 ? 'ฟรี' : ('฿' + shipping.toFixed(0));
+            document.getElementById('qr-summary-grand-total').innerText = '฿' + grandTotal.toFixed(2);
+            document.getElementById('qr-locked-amount-label').innerText = `ล็อคยอดเงิน ฿${grandTotal.toFixed(2)} ใน QR แล้ว`;
+
+            const emvPayload = generatePromptPayEmvPayload(STORE_PROMPTPAY_PAYLOAD, grandTotal);
+            const qrImg = document.getElementById('online-promptpay-qr-img');
+            if (qrImg) {
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${encodeURIComponent(emvPayload)}`;
+            }
+
+            document.getElementById('promptpay-scan-modal')?.classList.remove('hidden');
+        }
+
+        function closePromptPayScanModal() {
+            document.getElementById('promptpay-scan-modal')?.classList.add('hidden');
+        }
+
+        function validateOnlineOrderFields() {
+            const name = document.getElementById('cust-name')?.value.trim();
+            const phone = document.getElementById('cust-phone')?.value.trim();
+            const address = document.getElementById('cust-address')?.value.trim();
+
+            if (!name) { showToast('กรุณาระบุชื่อผู้สั่งอาหาร'); document.getElementById('cust-name')?.focus(); return false; }
+            if (!phone) { showToast('กรุณาระบุเบอร์โทรศัพท์'); document.getElementById('cust-phone')?.focus(); return false; }
+            if (orderingMethod === 'delivery' && !address) { showToast('กรุณาระบุที่อยู่จัดส่ง'); document.getElementById('cust-address')?.focus(); return false; }
+            return true;
+        }
+
         async function submitOnlineOrder() {
+            if (cart.length === 0) return;
+            if (!validateOnlineOrderFields()) return;
+
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'promptpay';
+            if (paymentMethod === 'promptpay') {
+                openPromptPayScanModal();
+                return;
+            }
+
+            await executeSubmitOnlineOrder();
+        }
+
+        async function confirmPromptPayAndSubmit() {
+            if (!validateOnlineOrderFields()) {
+                closePromptPayScanModal();
+                return;
+            }
+            await executeSubmitOnlineOrder();
+        }
+
+        async function executeSubmitOnlineOrder() {
             if (cart.length === 0) return;
             const name = document.getElementById('cust-name')?.value.trim();
             const phone = document.getElementById('cust-phone')?.value.trim();
@@ -2181,14 +2425,14 @@
             const pickupTime = document.getElementById('cust-pickup-time')?.value || 'ทันที (~15-20 นาที)';
             const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'promptpay';
 
-            if (!name) { showToast('กรุณาระบุชื่อผู้สั่งอาหาร'); document.getElementById('cust-name')?.focus(); return; }
-            if (!phone) { showToast('กรุณาระบุเบอร์โทรศัพท์'); document.getElementById('cust-phone')?.focus(); return; }
-            if (orderingMethod === 'delivery' && !address) { showToast('กรุณาระบุที่อยู่จัดส่ง'); document.getElementById('cust-address')?.focus(); return; }
-
             const btn = document.getElementById('btn-submit-order');
             const spinner = document.getElementById('submit-btn-spinner');
-            btn.disabled = true;
-            spinner.classList.remove('hidden');
+            const qrBtn = document.getElementById('btn-qr-confirm-paid');
+            const qrSpinner = document.getElementById('qr-confirm-btn-spinner');
+            if (btn) btn.disabled = true;
+            if (spinner) spinner.classList.remove('hidden');
+            if (qrBtn) qrBtn.disabled = true;
+            if (qrSpinner) qrSpinner.classList.remove('hidden');
 
             const payload = {
                 customer_name: name,
@@ -2222,6 +2466,7 @@
                 });
                 const result = await res.json();
                 if (res.ok && result.success) {
+                    closePromptPayScanModal();
                     closeCheckoutModal();
                     cart = [];
                     updateCartUI();
@@ -2239,8 +2484,10 @@
             } catch (e) {
                 showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ');
             } finally {
-                btn.disabled = false;
-                spinner.classList.add('hidden');
+                if (btn) btn.disabled = false;
+                if (spinner) spinner.classList.add('hidden');
+                if (qrBtn) qrBtn.disabled = false;
+                if (qrSpinner) qrSpinner.classList.add('hidden');
             }
         }
 

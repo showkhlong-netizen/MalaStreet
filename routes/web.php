@@ -44,6 +44,7 @@ Route::prefix('pos')->name('pos.')->middleware(['auth', EnforceDailyEmployeeLand
     Route::post('/toggle-online-mode', [PosController::class, 'toggleOnlineMode'])->name('toggle_online');
     Route::get('/orders/live', [PosController::class, 'liveOrders'])->name('orders.live');
     Route::post('/order', [PosController::class, 'storeOrder'])->name('order.store');
+    Route::post('/settings/promptpay-qr', [PosController::class, 'savePromptPayQr'])->name('settings.promptpay_qr');
     Route::get('/kitchen', [PosController::class, 'kitchen'])->name('kitchen');
     Route::post('/orders/{order}/status', [PosController::class, 'updateStatus'])->name('order.status');
     Route::get('/kitchen/chat', [PosController::class, 'kitchenChat'])->name('kitchen.chat');

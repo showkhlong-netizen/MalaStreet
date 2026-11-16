@@ -144,8 +144,9 @@ class OnlineOrderController extends Controller
             ->get();
 
         $savedCustomerProfile = $this->getSavedCustomerProfileByIp($this->getClientIp($request));
+        $promptPaySettings = PosController::getStorePromptPaySettings();
 
-        return view('online.index', compact('categories', 'featuredProducts', 'recommendedProducts', 'heroBannerImage', 'heroBannerPosition', 'heroBannerHistory', 'profileLogoImage', 'profileLogoPosition', 'profileLogoHistory', 'showPromoBanner', 'savedCustomerProfile'));
+        return view('online.index', compact('categories', 'featuredProducts', 'recommendedProducts', 'heroBannerImage', 'heroBannerPosition', 'heroBannerHistory', 'profileLogoImage', 'profileLogoPosition', 'profileLogoHistory', 'showPromoBanner', 'savedCustomerProfile', 'promptPaySettings'));
     }
 
     /**
