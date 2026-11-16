@@ -25,18 +25,18 @@
 
             <!-- Stats & Quick Refresh -->
             <div id="kitchen-header-stats" class="flex flex-wrap items-center gap-2 sm:gap-3 text-xs w-full sm:w-auto justify-between sm:justify-end">
-                <div class="px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 font-medium flex items-center space-x-2">
-                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                <div class="px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 font-medium flex items-center space-x-2 whitespace-nowrap shrink-0">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0"></span>
                     <span>รอปรุง: <strong class="text-slate-900 font-black text-sm">{{ $activeOrders->count() }}</strong> บิล</span>
                 </div>
-                <div class="px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 font-medium flex items-center space-x-2">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <div class="px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 font-medium flex items-center space-x-2 whitespace-nowrap shrink-0">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
                     <span>เสร็จวันนี้: <strong class="text-slate-900 font-black text-sm">{{ $completedCount }}</strong> บิล</span>
                 </div>
                 <button onclick="syncKitchenOrdersSilently(true)" 
                     id="manual-refresh-btn"
-                    class="py-2 px-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer active:scale-95" title="รีเฟรชออเดอร์">
-                    <svg id="manual-refresh-icon" class="w-4 h-4 stroke-current transition-transform duration-500" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                    class="py-2 px-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer active:scale-95 whitespace-nowrap shrink-0" title="รีเฟรชออเดอร์">
+                    <svg id="manual-refresh-icon" class="w-4 h-4 stroke-current transition-transform duration-500 shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                     <span>รีเฟรช</span>
@@ -45,9 +45,9 @@
                 <!-- แถบหน้าต่างแชทลูกค้า (ฝั่งแอดมิน) - ตั้งฝั่งขวาสุดของแถบหน้าจอครัว -->
                 <button type="button" 
                     onclick="scrollToKitchenChat()" 
-                    class="py-2 px-4 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black transition-all shadow-md shadow-rose-950/20 flex items-center space-x-2 shrink-0 group active:scale-95 border border-rose-400/40 cursor-pointer" 
+                    class="py-2 px-4 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white font-black transition-all shadow-md shadow-rose-950/20 flex items-center space-x-2 shrink-0 group active:scale-95 border border-rose-400/40 cursor-pointer whitespace-nowrap" 
                     title="เลื่อนไปยังหน้าต่างแชทลูกค้า (ฝั่งแอดมิน) ฝั่งขวามือสุด">
-                    <div class="relative flex items-center justify-center">
+                    <div class="relative flex items-center justify-center shrink-0">
                         <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
@@ -55,7 +55,7 @@
                     </div>
                     <span>แชทลูกค้า (แอดมิน)</span>
                     @if(!empty($unreadChatCount) && $unreadChatCount > 0)
-                        <span class="text-[10px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.2 rounded-full animate-bounce shadow-2xs">
+                        <span class="text-[10px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.2 rounded-full animate-bounce shadow-2xs shrink-0">
                             {{ $unreadChatCount }}
                         </span>
                     @endif
@@ -65,13 +65,13 @@
 
         <!-- 1.5 Kitchen Search, 3/4 Column Toggle & Sort/Filter Bar (Floating Sticky Card) -->
         <section id="kitchen-floating-toolbar" class="sticky top-[88px] z-30 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-sm px-4 py-3 flex flex-wrap items-center justify-between gap-3 transition-shadow">
-            <div class="flex items-center gap-2.5">
-                <span class="w-1.5 h-5 rounded-full bg-[#E50914] block"></span>
-                <h2 class="text-[17px] font-black text-slate-900 tracking-tight">รายการออเดอร์ในครัว</h2>
-                <span class="text-[13px] font-medium text-slate-500">(<span id="kitchen-visible-count">{{ $activeOrders->count() }}</span> บิล)</span>
+            <div class="flex items-center gap-2.5 whitespace-nowrap shrink-0">
+                <span class="w-1.5 h-5 rounded-full bg-[#E50914] block shrink-0"></span>
+                <h2 class="text-[17px] font-black text-slate-900 tracking-tight whitespace-nowrap">รายการออเดอร์ในครัว</h2>
+                <span class="text-[13px] font-medium text-slate-500 whitespace-nowrap">(<span id="kitchen-visible-count">{{ $activeOrders->count() }}</span> บิล)</span>
             </div>
 
-            <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-nowrap overflow-x-auto no-scrollbar">
                 <!-- Quick Search Input -->
                 <div class="relative flex-1 sm:w-56 sm:flex-initial">
                     <input type="text" id="kitchen-search-input"
@@ -133,27 +133,27 @@
             <!-- Top Order Channel Tabs (แยกประเภทออเดอร์: ทั้งหมด / สั่งรับหน้าร้าน / Delivery / หน้าร้าน) -->
             <div id="kitchen-channel-tabs" class="w-full pt-2.5 mt-0.5 border-t border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar">
                 <button type="button" data-channel-tab="all" onclick="setKitchenChannelTab('all')"
-                        class="kitchen-channel-tab shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all bg-[#E50914] text-white shadow-xs cursor-pointer">
+                        class="kitchen-channel-tab shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all bg-[#E50914] text-white shadow-xs cursor-pointer">
                     <span>ทั้งหมด</span>
-                    <span id="tab-count-all" class="px-1.5 py-0.2 rounded-full text-[11px] bg-white/20 text-white">{{ $activeOrders->count() }}</span>
+                    <span id="tab-count-all" class="px-1.5 py-0.2 rounded-full text-[11px] bg-white/20 text-white whitespace-nowrap">{{ $activeOrders->count() }}</span>
                 </button>
                 <button type="button" data-channel-tab="online_pickup" onclick="setKitchenChannelTab('online_pickup')"
-                        class="kitchen-channel-tab shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/80 cursor-pointer">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        class="kitchen-channel-tab shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/80 cursor-pointer">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
                     <span>สั่งรับหน้าร้าน (ออนไลน์)</span>
-                    <span id="tab-count-online_pickup" class="px-1.5 py-0.2 rounded-full text-[11px] bg-white text-slate-700 border border-slate-200">0</span>
+                    <span id="tab-count-online_pickup" class="px-1.5 py-0.2 rounded-full text-[11px] bg-white text-slate-700 border border-slate-200 whitespace-nowrap">0</span>
                 </button>
                 <button type="button" data-channel-tab="delivery" onclick="setKitchenChannelTab('delivery')"
-                        class="kitchen-channel-tab shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-sky-50 hover:text-sky-800 border border-slate-200/80 cursor-pointer">
-                    <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                        class="kitchen-channel-tab shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-sky-50 hover:text-sky-800 border border-slate-200/80 cursor-pointer">
+                    <span class="w-2 h-2 rounded-full bg-sky-500 shrink-0"></span>
                     <span>Delivery (จัดส่ง)</span>
-                    <span id="tab-count-delivery" class="px-1.5 py-0.2 rounded-full text-[11px] bg-white text-slate-700 border border-slate-200">0</span>
+                    <span id="tab-count-delivery" class="px-1.5 py-0.2 rounded-full text-[11px] bg-white text-slate-700 border border-slate-200 whitespace-nowrap">0</span>
                 </button>
                 <button type="button" data-channel-tab="pos" onclick="setKitchenChannelTab('pos')"
-                        class="kitchen-channel-tab shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 cursor-pointer">
-                    <span class="w-2 h-2 rounded-full bg-slate-500"></span>
+                        class="kitchen-channel-tab shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 cursor-pointer">
+                    <span class="w-2 h-2 rounded-full bg-slate-500 shrink-0"></span>
                     <span>หน้าร้าน (POS)</span>
-                    <span id="tab-count-pos" class="px-1.5 py-0.2 rounded-full text-[11px] bg-white text-slate-700 border border-slate-200">0</span>
+                    <span id="tab-count-pos" class="px-1.5 py-0.2 rounded-full text-[11px] bg-white text-slate-700 border border-slate-200 whitespace-nowrap">0</span>
                 </button>
             </div>
         </section>
@@ -210,86 +210,18 @@
                          data-created-ts="{{ $order->created_at ? $order->created_at->timestamp : 0 }}"
                          data-search="{{ $searchText }}">
                         
-                        <div class="p-6">
-                            <!-- Card Header -->
-                            <div class="flex justify-between items-start border-b border-slate-100 pb-4 mb-4">
-                                <div>
-                                    <div class="flex items-center space-x-2.5">
-                                        <span class="text-4xl font-black text-slate-900 tracking-tight">
-                                            {{ $order->queue_number }}
-                                        </span>
-                                        @php
-                                            $badgeClass = match($orderChannel) {
-                                                'delivery' => 'bg-sky-50 text-sky-800 border-sky-200',
-                                                'online_pickup' => 'bg-emerald-50 text-emerald-800 border-emerald-200',
-                                                default => 'bg-slate-100 text-slate-700 border-slate-200',
-                                            };
-                                        @endphp
-                                        <span class="text-[11px] font-extrabold px-2.5 py-1 rounded-xl border flex items-center space-x-1.5 {{ $badgeClass }}">
-                                            @if($orderChannel === 'delivery')
-                                                <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-                                                </svg>
-                                                <span>Delivery (จัดส่ง)</span>
-                                            @elseif($orderChannel === 'online_pickup')
-                                                <!-- Monochrome Phone SVG -->
-                                                <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                </svg>
-                                                <span>สั่งรับหน้าร้าน (ออนไลน์)</span>
-                                            @else
-                                                <!-- Monochrome Store SVG -->
-                                                <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                                </svg>
-                                                <span>หน้าร้าน (POS)</span>
-                                            @endif
-                                        </span>
-                                    </div>
+                        <div class="p-4 xl:p-5">
+                            <!-- Card Header (ทุกแท็บ/สถานะจัดเรียงอยู่ในบรรทัดเดียวอย่างเป็นระเบียบ) -->
+                            <div class="border-b border-slate-100 pb-3.5 mb-3.5 space-y-2">
+                                <!-- Row 1: Queue Number + Order Status Pill -->
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-3xl font-black text-slate-900 tracking-tight leading-none whitespace-nowrap shrink-0">
+                                        {{ $order->queue_number }}
+                                    </span>
 
-                                    <div class="text-xs font-bold text-slate-800 mt-1.5 flex items-center space-x-1">
-                                        <span>{{ $order->customer_name }}</span>
-                                        @if($order->customer_phone)
-                                            <span class="text-slate-400 font-normal">({{ $order->customer_phone }})</span>
-                                        @endif
-                                    </div>
-
-                                    <div class="flex items-center flex-wrap gap-1.5 mt-1.5">
-                                        @if($order->payment_status === 'paid')
-                                            <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">
-                                                <span>✓ ชำระแล้ว ฿{{ number_format((float) $order->total_amount, 2) }}</span>
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-300 animate-pulse">
-                                                <span>⏳ รอยอดโอน ฿{{ number_format((float) $order->total_amount, 2) }}</span>
-                                            </span>
-                                            <button type="button"
-                                                    onclick="updateStatus({{ $order->id }}, 'confirmed', true)"
-                                                    class="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-0.5 rounded-lg shadow-2xs transition cursor-pointer">
-                                                <span>ยืนยันรับเงินแล้ว</span>
-                                            </button>
-                                        @endif
-                                        @if($order->ip_address)
-                                            <span class="text-[9.5px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
-                                                🌐 IP: {{ $order->ip_address }}
-                                            </span>
-                                        @endif
-                                        <button type="button"
-                                           onclick="openOrderInSideChat('{{ $order->order_no }}')" 
-                                           class="inline-flex items-center gap-1 text-[10.5px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-lg border border-rose-200 transition active:scale-95 cursor-pointer" 
-                                           title="เปิดแชทกับลูกค้ารายนี้ในหน้าต่างแชทขวามือสุด">
-                                            <svg class="w-3 h-3 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                            </svg>
-                                            <span>แชท</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="text-right">
-                                    <span class="inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider {{ $order->status === 'ready' ? 'bg-emerald-100 text-emerald-800' : ($order->status === 'cooking' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800') }}">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black tracking-wide whitespace-nowrap shrink-0 {{ $order->status === 'ready' ? 'bg-emerald-100 text-emerald-800' : ($order->status === 'cooking' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800') }}">
                                         @if($order->status === 'cooking')
-                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse mr-1"></span>
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse shrink-0"></span>
                                         @endif
                                         <span>
                                             {{ match($order->status) {
@@ -301,23 +233,93 @@
                                             } }}
                                         </span>
                                     </span>
-                                    <div class="text-[11px] text-slate-400 font-medium mt-1">
+                                </div>
+
+                                <!-- Row 2: Order Channel Pill + Relative Time (1 บรรทัดเสมอ) -->
+                                <div class="flex items-center justify-between gap-2 min-w-0">
+                                    @php
+                                        $badgeClass = match($orderChannel) {
+                                            'delivery' => 'bg-sky-50 text-sky-800 border-sky-200',
+                                            'online_pickup' => 'bg-emerald-50 text-emerald-800 border-emerald-200',
+                                            default => 'bg-slate-100 text-slate-700 border-slate-200',
+                                        };
+                                    @endphp
+                                    <span class="text-[10.5px] font-extrabold px-2 py-0.5 rounded-lg border inline-flex items-center gap-1 whitespace-nowrap shrink-0 {{ $badgeClass }}">
+                                        @if($orderChannel === 'delivery')
+                                            <svg class="w-3 h-3 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                            </svg>
+                                            <span>Delivery (จัดส่ง)</span>
+                                        @elseif($orderChannel === 'online_pickup')
+                                            <svg class="w-3 h-3 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                            </svg>
+                                            <span>สั่งรับหน้าร้าน (ออนไลน์)</span>
+                                        @else
+                                            <svg class="w-3 h-3 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                            </svg>
+                                            <span>หน้าร้าน (POS)</span>
+                                        @endif
+                                    </span>
+
+                                    <span class="text-[10.5px] text-slate-400 font-medium whitespace-nowrap truncate">
                                         {{ $order->created_at->diffForHumans() }}
-                                    </div>
+                                    </span>
+                                </div>
+
+                                <!-- Row 3: Customer Name + Phone (1 บรรทัดเสมอ) -->
+                                <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5 min-w-0">
+                                    <span class="truncate">{{ $order->customer_name }}</span>
+                                    @if($order->customer_phone)
+                                        <span class="text-slate-400 font-normal whitespace-nowrap shrink-0">({{ $order->customer_phone }})</span>
+                                    @endif
+                                </div>
+
+                                <!-- Row 4: Payment Status + IP + Chat Action (แต่ละป้าย 1 บรรทัดเสมอ) -->
+                                <div class="flex items-center flex-wrap gap-1.5">
+                                    @if($order->payment_status === 'paid')
+                                        <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 whitespace-nowrap shrink-0">
+                                            <span>✓ ชำระแล้ว ฿{{ number_format((float) $order->total_amount, 2) }}</span>
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-300 animate-pulse whitespace-nowrap shrink-0">
+                                            <span>⏳ รอยอดโอน ฿{{ number_format((float) $order->total_amount, 2) }}</span>
+                                        </span>
+                                        <button type="button"
+                                                onclick="updateStatus({{ $order->id }}, 'confirmed', true)"
+                                                class="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-0.5 rounded-lg shadow-2xs transition cursor-pointer whitespace-nowrap shrink-0">
+                                            <span>ยืนยันรับเงินแล้ว</span>
+                                        </button>
+                                    @endif
+                                    @if($order->ip_address)
+                                        <span class="text-[9.5px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 whitespace-nowrap shrink-0">
+                                            🌐 IP: {{ $order->ip_address }}
+                                        </span>
+                                    @endif
+                                    <button type="button"
+                                       onclick="openOrderInSideChat('{{ $order->order_no }}')" 
+                                       class="inline-flex items-center gap-1 text-[10.5px] font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded-lg border border-rose-200 transition active:scale-95 cursor-pointer whitespace-nowrap shrink-0" 
+                                       title="เปิดแชทกับลูกค้ารายนี้ในหน้าต่างแชทขวามือสุด">
+                                        <svg class="w-3 h-3 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                        </svg>
+                                        <span>แชท</span>
+                                    </button>
                                 </div>
                             </div>
 
                             <!-- Pickup Time Notice (If any) -->
                             @if($order->pickup_time)
-                                <div class="mb-3.5 p-2.5 rounded-2xl bg-amber-50/80 border border-amber-200/70 text-xs text-amber-950 flex items-center justify-between">
-                                    <div class="flex items-center space-x-1.5 font-medium">
+                                <div class="mb-3.5 p-2.5 rounded-2xl bg-amber-50/80 border border-amber-200/70 text-xs text-amber-950 flex items-center justify-between gap-2 min-w-0">
+                                    <div class="flex items-center space-x-1.5 font-medium whitespace-nowrap shrink-0">
                                         <!-- Monochrome Clock SVG -->
                                         <svg class="w-4 h-4 text-amber-700 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         <span>เวลานัดรับ:</span>
                                     </div>
-                                    <strong class="font-bold text-amber-900">{{ $order->pickup_time }}</strong>
+                                    <strong class="font-bold text-amber-900 truncate min-w-0 text-right">{{ $order->pickup_time }}</strong>
                                 </div>
                             @endif
 
@@ -336,33 +338,33 @@
                             <!-- Items List (Clean Light Theme Cards, Easy to Read) -->
                             <div class="space-y-2.5 my-3">
                                 @foreach($order->items as $item)
-                                    <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start justify-between gap-3">
-                                        <div class="space-y-1.5 flex-1">
-                                            <div class="font-bold text-sm text-slate-900 flex items-center">
-                                                <span class="text-rose-600 font-black text-base mr-1.5">{{ $item->quantity_sticks }}x</span> 
-                                                <span>{{ $item->product_name }}</span>
+                                    <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start justify-between gap-2.5">
+                                        <div class="space-y-1.5 flex-1 min-w-0">
+                                            <div class="font-bold text-sm text-slate-900 flex items-center min-w-0">
+                                                <span class="text-rose-600 font-black text-base mr-1.5 whitespace-nowrap shrink-0">{{ $item->quantity_sticks }}x</span> 
+                                                <span class="truncate">{{ $item->product_name }}</span>
                                             </div>
                                             
                                             <!-- Monochrome Cooking Style & Spiciness Badges -->
                                             <div class="flex flex-wrap gap-1.5">
                                                 @if($item->cooking_type === 'grill')
                                                     @if($item->grill_style === 'brush')
-                                                        <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200">
+                                                        <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200 whitespace-nowrap shrink-0">
                                                             <!-- Monochrome Brush SVG -->
-                                                            <svg class="w-3.5 h-3.5 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                            <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                                             <span>ย่างทาซอส</span>
                                                         </span>
                                                     @else
-                                                        <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-rose-50 text-rose-900 border border-rose-200">
+                                                        <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-rose-50 text-rose-900 border border-rose-200 whitespace-nowrap shrink-0">
                                                             <!-- Monochrome Dip Bowl SVG -->
-                                                            <svg class="w-3.5 h-3.5 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a7 7 0 01-7 7m7-7a7 7 0 00-7-7m-7 7a7 7 0 007 7m-7-7a7 7 0 017-7"/></svg>
+                                                            <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a7 7 0 01-7 7m7-7a7 7 0 00-7-7m-7 7a7 7 0 007 7m-7-7a7 7 0 017-7"/></svg>
                                                             <span>ย่างจุ่มซอส</span>
                                                         </span>
                                                     @endif
                                                 @else
-                                                    <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-50 text-red-900 border border-red-200">
+                                                    <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-50 text-red-900 border border-red-200 whitespace-nowrap shrink-0">
                                                         <!-- Monochrome Soup Bowl SVG -->
-                                                        <svg class="w-3.5 h-3.5 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 009-9H3a9 9 0 009 9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v2m4-3v3m4-2v2"/></svg>
+                                                        <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 009-9H3a9 9 0 009 9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v2m4-3v3m4-2v2"/></svg>
                                                         <span>
                                                             {{ match($item->soup_style) {
                                                                 'mala_rich' => 'ซุปหม่าล่าน้ำข้น',
@@ -375,24 +377,24 @@
                                                 @endif
 
                                                 <!-- Monochrome Spiciness Badge with Single-Color SVG Icons -->
-                                                <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-white border border-slate-200">
+                                                <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-white border border-slate-200 whitespace-nowrap shrink-0">
                                                     @if($item->spiciness_level === 'hot')
-                                                        <span class="flex items-center space-x-1 text-rose-600 font-extrabold">
+                                                        <span class="flex items-center space-x-1 text-rose-600 font-extrabold whitespace-nowrap">
                                                             <svg class="w-3.5 h-3.5 fill-rose-600 stroke-rose-600 shrink-0" viewBox="0 0 24 24"><path d="M12 2C11.5 2 11 2.2 10.6 2.6L9.2 4H7C5.3 4 4 5.3 4 7C4 8.7 5.3 10 7 10V11C7 16 10 21 16 22C16.6 22 17 21.6 17 21C17 20.4 16.6 20 16 20C11.8 19.2 9.2 15.6 9 11.7C10.1 11.9 11.2 12 12 12C16.4 12 20 8.4 20 4C20 3.4 19.8 2.8 19.4 2.4C19 2 18.4 1.8 17.8 1.9C16.8 2.1 15.6 2.7 14.5 3.5C13.8 2.6 12.9 2 12 2Z"/></svg>
                                                             <span>เผ็ดมาก</span>
                                                         </span>
                                                     @elseif($item->spiciness_level === 'medium')
-                                                        <span class="flex items-center space-x-1 text-amber-600 font-bold">
+                                                        <span class="flex items-center space-x-1 text-amber-600 font-bold whitespace-nowrap">
                                                             <svg class="w-3.5 h-3.5 fill-amber-500 stroke-amber-500 shrink-0" viewBox="0 0 24 24"><path d="M12 2C11.5 2 11 2.2 10.6 2.6L9.2 4H7C5.3 4 4 5.3 4 7C4 8.7 5.3 10 7 10V11C7 16 10 21 16 22C16.6 22 17 21.6 17 21C17 20.4 16.6 20 16 20C11.8 19.2 9.2 15.6 9 11.7C10.1 11.9 11.2 12 12 12C16.4 12 20 8.4 20 4C20 3.4 19.8 2.8 19.4 2.4C19 2 18.4 1.8 17.8 1.9C16.8 2.1 15.6 2.7 14.5 3.5C13.8 2.6 12.9 2 12 2Z"/></svg>
                                                             <span>เผ็ดกลาง</span>
                                                         </span>
                                                     @elseif($item->spiciness_level === 'mild')
-                                                        <span class="flex items-center space-x-1 text-slate-700 font-semibold">
+                                                        <span class="flex items-center space-x-1 text-slate-700 font-semibold whitespace-nowrap">
                                                             <svg class="w-3.5 h-3.5 text-slate-400 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /></svg>
                                                             <span>เผ็ดน้อย</span>
                                                         </span>
                                                     @else
-                                                        <span class="flex items-center space-x-1 text-slate-400">
+                                                        <span class="flex items-center space-x-1 text-slate-400 whitespace-nowrap">
                                                             <svg class="w-3.5 h-3.5 text-slate-400 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6"/></svg>
                                                             <span>ไม่เผ็ด</span>
                                                         </span>
@@ -410,7 +412,7 @@
                                             @endif
                                         </div>
 
-                                        <div class="text-right text-xs font-black text-slate-500 shrink-0">
+                                        <div class="text-right text-xs font-black text-slate-500 whitespace-nowrap shrink-0">
                                             {{ $item->quantity_sticks }} ไม้
                                         </div>
                                     </div>
@@ -431,24 +433,24 @@
 
                             @if($order->status === 'pending' || $order->status === 'confirmed')
                                 <button onclick="updateStatus({{ $order->id }}, 'cooking')"
-                                    class="flex-1 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-rose-600/20 transition-all flex items-center justify-center space-x-1.5">
-                                    <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                    class="flex-1 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-rose-600/20 transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap">
+                                    <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
                                     </svg>
                                     <span>เริ่มย่าง/ต้ม</span>
                                 </button>
                             @elseif($order->status === 'cooking')
                                 <button onclick="updateStatus({{ $order->id }}, 'ready')"
-                                    class="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center space-x-1.5">
-                                    <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                    class="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap">
+                                    <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                     </svg>
                                     <span>พร้อมรับแล้ว</span>
                                 </button>
                             @elseif($order->status === 'ready')
                                 <button onclick="updateStatus({{ $order->id }}, 'completed')"
-                                    class="flex-1 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center space-x-1.5">
-                                    <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                    class="flex-1 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap">
+                                    <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                                     </svg>
                                     <span>ส่งมอบอาหารแล้ว</span>
@@ -833,13 +835,13 @@
             const tab = btn.dataset.channelTab || 'all';
             const isActive = tab === kitchenChannelTab;
             btn.className = isActive
-                ? 'kitchen-channel-tab shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all bg-[#E50914] text-white shadow-xs cursor-pointer'
-                : 'kitchen-channel-tab shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 cursor-pointer';
+                ? 'kitchen-channel-tab shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all bg-[#E50914] text-white shadow-xs cursor-pointer'
+                : 'kitchen-channel-tab shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 cursor-pointer';
             const countBadge = btn.querySelector('span[id^="tab-count-"]');
             if (countBadge) {
                 countBadge.className = isActive
-                    ? 'px-1.5 py-0.2 rounded-full text-[11px] bg-white/20 text-white'
-                    : 'px-1.5 py-0.2 rounded-full text-[11px] bg-white text-slate-700 border border-slate-200';
+                    ? 'px-1.5 py-0.2 rounded-full text-[11px] bg-white/20 text-white whitespace-nowrap'
+                    : 'px-1.5 py-0.2 rounded-full text-[11px] bg-white text-slate-700 border border-slate-200 whitespace-nowrap';
             }
         });
     }

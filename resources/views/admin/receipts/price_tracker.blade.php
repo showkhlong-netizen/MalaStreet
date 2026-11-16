@@ -359,9 +359,9 @@
                     type="button"
                     data-cat="all"
                     onclick="filterMaterialsByCategory('all')"
-                    class="cat-pill-btn active-cat shrink-0 h-[44px] px-4 rounded-[14px] bg-[#E50914] text-white border border-[#E50914] shadow-sm flex items-center gap-2.5 transition-all cursor-pointer"
+                    class="cat-pill-btn active-cat shrink-0 whitespace-nowrap h-[44px] px-4 rounded-[14px] bg-[#E50914] text-white border border-[#E50914] shadow-sm flex items-center gap-2.5 transition-all cursor-pointer"
                 >
-                    <span class="w-6 h-6 rounded-lg bg-white/15 flex items-center justify-center">
+                    <span class="w-6 h-6 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
                         <svg class="w-4 h-4 text-white" viewBox="0 0 20 20" fill="currentColor">
                             <circle cx="5.5" cy="5.5" r="2.3"></circle>
                             <circle cx="14.5" cy="5.5" r="2.3"></circle>
@@ -369,7 +369,7 @@
                             <circle cx="14.5" cy="14.5" r="2.3"></circle>
                         </svg>
                     </span>
-                    <span class="text-[13.5px] font-semibold tracking-tight">ทั้งหมด</span>
+                    <span class="text-[13.5px] font-semibold tracking-tight whitespace-nowrap">ทั้งหมด</span>
                 </button>
 
                 @foreach($categories as $cat)
@@ -384,7 +384,7 @@
                         data-active="{{ $cat->is_active ? '1' : '0' }}"
                         data-cat-name="{{ $cat->name }}"
                         onclick="filterMaterialsByCategory('{{ $cat->slug }}')"
-                        class="cat-pill-btn shrink-0 h-[44px] px-4 rounded-[14px] bg-white hover:bg-rose-50/50 text-[#1F2430] border border-slate-200/90 shadow-2xs flex items-center gap-2.5 transition-all cursor-pointer"
+                        class="cat-pill-btn shrink-0 whitespace-nowrap h-[44px] px-4 rounded-[14px] bg-white hover:bg-rose-50/50 text-[#1F2430] border border-slate-200/90 shadow-2xs flex items-center gap-2.5 transition-all cursor-pointer"
                     >
                         <img
                             src="{{ $catImg }}"
@@ -392,7 +392,7 @@
                             class="w-7 h-7 rounded-full object-cover shrink-0 border border-slate-100"
                             onerror="this.onerror=null;this.src='{{ asset('assets/menu/food-fallback.svg') }}';"
                         >
-                        <span class="text-[13.5px] font-semibold tracking-tight">{{ $cat->name }}</span>
+                        <span class="text-[13.5px] font-semibold tracking-tight whitespace-nowrap">{{ $cat->name }}</span>
                         @if(!$cat->is_active)
                             <span class="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="ยังไม่อนุมัติแสดงผล"></span>
                         @endif
@@ -403,15 +403,15 @@
                 <button
                     type="button"
                     onclick="openCreateCategoryModal()"
-                    class="shrink-0 h-[44px] px-3.5 rounded-[14px] border-2 border-dashed border-slate-300 hover:border-[#E50914] bg-white/90 hover:bg-rose-50/60 text-slate-400 hover:text-[#E50914] shadow-2xs flex items-center gap-2 transition-all cursor-pointer group"
+                    class="shrink-0 whitespace-nowrap h-[44px] px-3.5 rounded-[14px] border-2 border-dashed border-slate-300 hover:border-[#E50914] bg-white/90 hover:bg-rose-50/60 text-slate-400 hover:text-[#E50914] shadow-2xs flex items-center gap-2 transition-all cursor-pointer group"
                     title="สร้างแถบหมวดหมู่เพิ่ม"
                 >
-                    <span class="w-6 h-6 rounded-lg bg-slate-100 group-hover:bg-[#E50914]/10 flex items-center justify-center transition-colors">
+                    <span class="w-6 h-6 rounded-lg bg-slate-100 group-hover:bg-[#E50914]/10 flex items-center justify-center transition-colors shrink-0">
                         <svg class="w-4 h-4 text-slate-500 group-hover:text-[#E50914] transition-colors" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
                         </svg>
                     </span>
-                    <span class="text-[13px] font-semibold text-slate-500 group-hover:text-[#E50914] transition-colors">เพิ่มหมวดหมู่</span>
+                    <span class="text-[13px] font-semibold text-slate-500 group-hover:text-[#E50914] transition-colors whitespace-nowrap">เพิ่มหมวดหมู่</span>
                 </button>
             </div>
 

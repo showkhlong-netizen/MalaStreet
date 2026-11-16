@@ -287,7 +287,7 @@
                                     <circle cx="14.5" cy="14.5" r="2.3"></circle>
                                 </svg>
                             </span>
-                            <span class="cat-label text-[13.5px] font-semibold tracking-tight">ทั้งหมด</span>
+                            <span class="cat-label text-[13.5px] font-semibold tracking-tight whitespace-nowrap">ทั้งหมด</span>
                         </button>
 
                         <!-- Items 2–8: Category Pills (matching Image 2) -->
