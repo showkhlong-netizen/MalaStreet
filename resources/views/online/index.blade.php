@@ -1186,31 +1186,27 @@
     <!-- ========================================================================= -->
     <!-- 11.5 PROMPTPAY QR SCAN MODAL (LOCKED EXACT AMOUNT)                        -->
     <!-- ========================================================================= -->
-    <div id="promptpay-scan-modal" class="hidden fixed inset-0 z-[60] bg-black/75 backdrop-blur-2xs flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-[390px] rounded-[26px] overflow-hidden shadow-2xl border border-slate-100">
+    <div id="promptpay-scan-modal" class="hidden fixed inset-0 z-[60] bg-black/75 backdrop-blur-2xs overflow-y-auto p-3 sm:p-4 flex items-start sm:items-center justify-center">
+        <div class="bg-white w-full max-w-[332px] my-auto max-h-[90dvh] flex flex-col rounded-[22px] overflow-hidden shadow-2xl border border-slate-100">
             <!-- Header -->
-            <div class="bg-gradient-to-r from-[#0F2C59] to-[#1B498A] px-4 py-3.5 text-white flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <div class="shrink-0 bg-gradient-to-r from-[#0F2C59] to-[#1B498A] px-3.5 py-2.5 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h6v6H3V3zm12 0h6v6h-6V3zM3 15h6v6H3v-6zm12 0h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm4 0h2v2h-2v-2z" />
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-sm font-black tracking-tight">สแกนจ่าย PromptPay</h3>
-                        <p class="text-[11px] text-sky-100">ออเดอร์: <span id="qr-header-order-no" class="font-mono font-bold text-white">-</span></p>
+                        <h3 class="text-[13px] font-black tracking-tight leading-tight">สแกนจ่าย PromptPay</h3>
+                        <p class="text-[10px] text-sky-100">ออเดอร์: <span id="qr-header-order-no" class="font-mono font-bold text-white">-</span></p>
                     </div>
                 </div>
-                <button type="button" onclick="closePromptPayScanModal()" class="w-7 h-7 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center text-xs cursor-pointer">✕</button>
+                <button type="button" onclick="closePromptPayScanModal()" class="w-6 h-6 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center text-[11px] cursor-pointer">✕</button>
             </div>
 
-            <div class="p-4 space-y-3.5">
+            <div class="flex-1 overflow-y-auto overscroll-contain p-3 space-y-2.5">
                 <!-- แถบสรุปราคา (Price Summary Bar) -->
-                <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 space-y-1 text-xs text-[#596272]">
-                    <div class="flex justify-between items-center pb-1.5 mb-1 border-b border-slate-200/80">
-                        <span class="font-bold text-slate-600">เลขออเดอร์ / คิว</span>
-                        <span class="font-mono font-black text-slate-900 text-[11px]"><span id="qr-order-no">-</span> • คิว <span id="qr-queue-no" class="text-[#D90012]">-</span></span>
-                    </div>
+                <div class="bg-slate-50 border border-slate-200/80 rounded-[14px] p-2.5 space-y-1 text-[11px] text-[#596272]">
                     <div class="flex justify-between">
                         <span>ค่าอาหาร (<span id="qr-summary-sticks">0</span> ไม้)</span>
                         <span class="font-bold text-[#101114]" id="qr-summary-subtotal">฿0</span>
@@ -1223,42 +1219,34 @@
                         <span>ค่าจัดส่ง (<span id="qr-summary-method">สั่งเดลิเวอรี่</span>)</span>
                         <span class="font-bold text-[#101114]" id="qr-summary-shipping">ฟรี</span>
                     </div>
-                    <div class="flex justify-between items-center pt-1.5 mt-1 border-t border-slate-200">
-                        <span class="font-extrabold text-[#101114] text-sm">ยอดชำระสุทธิ</span>
-                        <span class="text-xl font-black text-[#D90012] font-mono" id="qr-summary-grand-total">฿0</span>
+                    <div class="flex justify-between items-center pt-1 mt-1 border-t border-slate-200">
+                        <span class="font-extrabold text-[#101114] text-xs">ยอดชำระสุทธิ</span>
+                        <span class="text-lg font-black text-[#D90012] font-mono" id="qr-summary-grand-total">฿0</span>
                     </div>
                 </div>
 
                 <!-- QR Code Box -->
-                <div class="bg-white border-2 border-sky-100 rounded-2xl p-3.5 text-center shadow-xs">
-                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold mb-2.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span id="qr-locked-amount-label">ล็อคยอดเงิน ฿0.00 ใน QR แล้ว</span>
-                    </div>
-                    <div class="w-52 h-52 mx-auto bg-white p-2 rounded-2xl border border-slate-200 flex items-center justify-center">
+                <div class="bg-white border-2 border-sky-100 rounded-[14px] p-2.5 text-center shadow-xs">
+                    <div class="w-44 h-44 mx-auto bg-white p-1.5 rounded-xl border border-slate-200 flex items-center justify-center">
                         <img id="online-promptpay-qr-img" src="" alt="PromptPay QR Code" class="w-full h-full object-contain rounded-lg">
                     </div>
-                    <div class="mt-2.5 text-xs text-slate-600">
+                    <div class="mt-2 text-[11px] text-slate-600">
                         <div id="qr-store-name" class="font-bold text-slate-800">{{ $promptPaySettings['store_name'] ?? 'ร้านหม่าล่าสตรีท (Mala Street)' }}</div>
                         บัญชี: <strong id="qr-account-no" class="text-slate-900 font-mono">{{ $promptPaySettings['account_no'] ?? '098-1-53225-2 (กสิกรไทย)' }}</strong>
-                        <span class="block text-[11px] text-slate-500 mt-0.5">ชื่อบัญชี: <span id="qr-account-name">{{ $promptPaySettings['account_name'] ?? 'มูนีบ สและแม' }}</span></span>
+                        <span class="block text-[10px] text-slate-500 mt-0.5">ชื่อบัญชี: <span id="qr-account-name">{{ $promptPaySettings['account_name'] ?? 'มูนีบ สและแม' }}</span></span>
                     </div>
-                    <p id="qr-receipt-note" class="text-[10.5px] text-slate-400 mt-1">{{ $promptPaySettings['receipt_note'] ?? 'สแกนได้ทุกแอปธนาคารไทย ยอดเงินจะขึ้นตรงอัตโนมัติ' }}</p>
+                    <p id="qr-receipt-note" class="text-[9.5px] text-slate-400 mt-0.5">{{ $promptPaySettings['receipt_note'] ?? 'สแกนได้ทุกแอปธนาคารไทย ยอดเงินจะขึ้นตรงอัตโนมัติ' }}</p>
                 </div>
 
                 <!-- Actions -->
-                <div id="qr-auto-wait-banner" class="hidden rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] font-bold text-amber-800 flex items-center justify-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-                    <span>กำลังรอระบบยืนยันยอดโอนอัตโนมัติ... (ไม่ต้องส่งสลิป)</span>
-                </div>
-                <div class="space-y-2 pt-0.5">
+                <div class="space-y-1.5 pt-0.5">
                     <button type="button" id="btn-qr-confirm-paid" onclick="confirmPromptPayAndSubmit()"
-                            class="w-full py-3 rounded-full bg-gradient-to-r from-[#D90012] to-[#B8000F] text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] transition-transform">
+                            class="w-full py-2.5 rounded-full bg-gradient-to-r from-[#D90012] to-[#B8000F] text-white font-bold text-[13px] shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] transition-transform">
                         <span id="qr-confirm-btn-text">โอนเงินเรียบร้อย • ยืนยันสั่งอาหาร</span>
                         <span id="qr-confirm-btn-spinner" class="hidden animate-spin">⏳</span>
                     </button>
                     <button type="button" onclick="closePromptPayScanModal()"
-                            class="w-full py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer transition-colors">
+                            class="w-full py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] cursor-pointer transition-colors">
                         กลับไปแก้ไขข้อมูล
                     </button>
                 </div>
@@ -2626,8 +2614,6 @@
 
         function startOnlinePaymentPolling(orderNo, queueNumber, expectedAmount = null) {
             stopOnlinePaymentPolling();
-            const banner = document.getElementById('qr-auto-wait-banner');
-            if (banner) banner.classList.remove('hidden');
 
             checkOnlinePaymentOnce(orderNo, queueNumber, expectedAmount);
             onlinePaymentPollTimer = setInterval(() => {
@@ -2712,13 +2698,8 @@
             const finalAmount = lockedAmountOverride !== null ? Number(lockedAmountOverride) : grandTotal;
 
             const orderNoText = pendingOnlineOrder?.order_no || '-';
-            const queueText = pendingOnlineOrder?.queue_number || '-';
             const elHeaderOrder = document.getElementById('qr-header-order-no');
-            const elOrder = document.getElementById('qr-order-no');
-            const elQueue = document.getElementById('qr-queue-no');
             if (elHeaderOrder) elHeaderOrder.innerText = orderNoText;
-            if (elOrder) elOrder.innerText = orderNoText;
-            if (elQueue) elQueue.innerText = queueText;
 
             document.getElementById('qr-summary-sticks').innerText = totalSticks;
             document.getElementById('qr-summary-subtotal').innerText = '฿' + subtotal.toFixed(0);
@@ -2726,10 +2707,6 @@
             document.getElementById('qr-summary-method').innerText = orderingMethod === 'delivery' ? 'สั่งเดลิเวอรี่' : 'รับที่ร้าน';
             document.getElementById('qr-summary-shipping').innerText = shipping === 0 ? 'ฟรี' : ('฿' + shipping.toFixed(0));
             document.getElementById('qr-summary-grand-total').innerText = '฿' + finalAmount.toFixed(2);
-            document.getElementById('qr-locked-amount-label').innerText = `ล็อคยอดเงิน ฿${finalAmount.toFixed(2)} ใน QR แล้ว`;
-
-            const banner = document.getElementById('qr-auto-wait-banner');
-            if (banner && !pendingOnlineOrder) banner.classList.add('hidden');
 
             const emvPayload = generatePromptPayEmvPayload(STORE_PROMPTPAY_PAYLOAD, finalAmount);
             const qrImg = document.getElementById('online-promptpay-qr-img');
