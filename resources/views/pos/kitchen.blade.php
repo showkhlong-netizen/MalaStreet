@@ -335,88 +335,101 @@
                                 </div>
                             @endif
 
-                            <!-- Items List (Clean Light Theme Cards, Easy to Read) -->
-                            <div class="space-y-2.5 my-3">
-                                @foreach($order->items as $item)
-                                    <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start justify-between gap-2.5">
-                                        <div class="space-y-1.5 flex-1 min-w-0">
-                                            <div class="font-bold text-sm text-slate-900 flex items-center min-w-0">
-                                                <span class="text-rose-600 font-black text-base mr-1.5 whitespace-nowrap shrink-0">{{ $item->quantity_sticks }}x</span> 
-                                                <span class="truncate">{{ $item->product_name }}</span>
-                                            </div>
-                                            
-                                            <!-- Monochrome Cooking Style & Spiciness Badges -->
-                                            <div class="flex flex-wrap gap-1.5">
-                                                @if($item->cooking_type === 'grill')
-                                                    @if($item->grill_style === 'brush')
-                                                        <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200 whitespace-nowrap shrink-0">
-                                                            <!-- Monochrome Brush SVG -->
-                                                            <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                                            <span>ย่างทาซอส</span>
-                                                        </span>
-                                                    @else
-                                                        <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-rose-50 text-rose-900 border border-rose-200 whitespace-nowrap shrink-0">
-                                                            <!-- Monochrome Dip Bowl SVG -->
-                                                            <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a7 7 0 01-7 7m7-7a7 7 0 00-7-7m-7 7a7 7 0 007 7m-7-7a7 7 0 017-7"/></svg>
-                                                            <span>ย่างจุ่มซอส</span>
-                                                        </span>
-                                                    @endif
-                                                @else
-                                                    <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-red-50 text-red-900 border border-red-200 whitespace-nowrap shrink-0">
-                                                        <!-- Monochrome Soup Bowl SVG -->
-                                                        <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 009-9H3a9 9 0 009 9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 7v2m4-3v3m4-2v2"/></svg>
-                                                        <span>
-                                                            {{ match($item->soup_style) {
-                                                                'mala_rich' => 'ซุปหม่าล่าน้ำข้น',
-                                                                'tomyum_rich' => 'ซุปต้มยำน้ำข้น',
-                                                                'black_soup' => 'ซุปน้ำดำญี่ปุ่น',
-                                                                default => 'ต้มน้ำซุป'
-                                                            } }}
-                                                        </span>
-                                                    </span>
-                                                @endif
+                            <!-- Grouped Items List (1: น้ำซุปต้มยำ/น้ำดำ/หม่าล่า, 2: หม่าล่าย่างเผ็ดน้อย/กลาง/มาก + เรียงแบบบิลภาพที่ 4) -->
+                            @php
+                                $groupedSections = [];
+                                foreach ($order->items as $item) {
+                                    if ($item->cooking_type === 'soup') {
+                                        $soupKey = $item->soup_style ?: 'default';
+                                        $groupKey = 'soup_' . $soupKey;
+                                        $groupTitle = match($soupKey) {
+                                            'black_soup' => 'น้ำซุปน้ำดำ',
+                                            'tomyum_rich' => 'น้ำซุปต้มยำ',
+                                            'mala_rich' => 'น้ำซุปหม่าล่า',
+                                            default => 'น้ำซุป',
+                                        };
+                                        $isSoupGroup = true;
+                                    } else {
+                                        $spiceKey = $item->spiciness_level ?: 'medium';
+                                        $isDip = ($item->grill_style === 'dip');
+                                        $groupKey = 'grill_' . $spiceKey . ($isDip ? '_dip' : '');
+                                        $spiceText = match($spiceKey) {
+                                            'none' => 'ไม่เผ็ด',
+                                            'mild' => 'เผ็ดน้อย',
+                                            'medium' => 'เผ็ดกลาง',
+                                            'hot' => 'เผ็ดมาก',
+                                            default => 'เผ็ดกลาง',
+                                        };
+                                        $groupTitle = 'หม่าล่าย่าง' . $spiceText . ($isDip ? ' (จุ่มซอส)' : '');
+                                        $isSoupGroup = false;
+                                    }
 
-                                                <!-- Monochrome Spiciness Badge with Single-Color SVG Icons -->
-                                                <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg text-xs font-bold bg-white border border-slate-200 whitespace-nowrap shrink-0">
-                                                    @if($item->spiciness_level === 'hot')
-                                                        <span class="flex items-center space-x-1 text-rose-600 font-extrabold whitespace-nowrap">
-                                                            <svg class="w-3.5 h-3.5 fill-rose-600 stroke-rose-600 shrink-0" viewBox="0 0 24 24"><path d="M12 2C11.5 2 11 2.2 10.6 2.6L9.2 4H7C5.3 4 4 5.3 4 7C4 8.7 5.3 10 7 10V11C7 16 10 21 16 22C16.6 22 17 21.6 17 21C17 20.4 16.6 20 16 20C11.8 19.2 9.2 15.6 9 11.7C10.1 11.9 11.2 12 12 12C16.4 12 20 8.4 20 4C20 3.4 19.8 2.8 19.4 2.4C19 2 18.4 1.8 17.8 1.9C16.8 2.1 15.6 2.7 14.5 3.5C13.8 2.6 12.9 2 12 2Z"/></svg>
-                                                            <span>เผ็ดมาก</span>
-                                                        </span>
-                                                    @elseif($item->spiciness_level === 'medium')
-                                                        <span class="flex items-center space-x-1 text-amber-600 font-bold whitespace-nowrap">
-                                                            <svg class="w-3.5 h-3.5 fill-amber-500 stroke-amber-500 shrink-0" viewBox="0 0 24 24"><path d="M12 2C11.5 2 11 2.2 10.6 2.6L9.2 4H7C5.3 4 4 5.3 4 7C4 8.7 5.3 10 7 10V11C7 16 10 21 16 22C16.6 22 17 21.6 17 21C17 20.4 16.6 20 16 20C11.8 19.2 9.2 15.6 9 11.7C10.1 11.9 11.2 12 12 12C16.4 12 20 8.4 20 4C20 3.4 19.8 2.8 19.4 2.4C19 2 18.4 1.8 17.8 1.9C16.8 2.1 15.6 2.7 14.5 3.5C13.8 2.6 12.9 2 12 2Z"/></svg>
-                                                            <span>เผ็ดกลาง</span>
-                                                        </span>
-                                                    @elseif($item->spiciness_level === 'mild')
-                                                        <span class="flex items-center space-x-1 text-slate-700 font-semibold whitespace-nowrap">
-                                                            <svg class="w-3.5 h-3.5 text-slate-400 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /></svg>
-                                                            <span>เผ็ดน้อย</span>
-                                                        </span>
-                                                    @else
-                                                        <span class="flex items-center space-x-1 text-slate-400 whitespace-nowrap">
-                                                            <svg class="w-3.5 h-3.5 text-slate-400 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 12H6"/></svg>
-                                                            <span>ไม่เผ็ด</span>
-                                                        </span>
-                                                    @endif
-                                                </span>
-                                            </div>
+                                    if (!isset($groupedSections[$groupKey])) {
+                                        $groupedSections[$groupKey] = [
+                                            'title' => $groupTitle,
+                                            'is_soup' => $isSoupGroup,
+                                            'total_sticks' => 0,
+                                            'items' => [],
+                                        ];
+                                    }
+                                    $groupedSections[$groupKey]['total_sticks'] += (int) $item->quantity_sticks;
+                                    $groupedSections[$groupKey]['items'][] = $item;
+                                }
+                                $totalOrderSticks = (int) $order->items->sum('quantity_sticks');
+                            @endphp
 
-                                            @if($item->special_instructions)
-                                                <div class="text-[11px] text-amber-950 bg-amber-50/80 px-2.5 py-1.5 rounded-xl border border-amber-200/60 mt-1 flex items-start space-x-1.5">
-                                                    <svg class="w-3.5 h-3.5 text-amber-700 stroke-current shrink-0 mt-0.5" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                            <div class="space-y-3 my-3">
+                                @foreach($groupedSections as $section)
+                                    <div class="rounded-2xl border {{ $section['is_soup'] ? 'border-rose-200/90' : 'border-slate-200/90' }} bg-white overflow-hidden shadow-2xs">
+                                        <!-- หัวรายการใหญ่เด่น: น้ำซุป(ต้มยำ/น้ำดำ/หม่าล่า) หรือ หม่าล่าย่าง(เผ็ดน้อย/กลาง/มาก) -->
+                                        <div class="px-3.5 py-2 flex items-center justify-between gap-2 border-b {{ $section['is_soup'] ? 'bg-rose-50/90 border-rose-200/80 text-rose-900' : 'bg-amber-50/90 border-amber-200/80 text-slate-900' }}">
+                                            <div class="flex items-center gap-2 min-w-0">
+                                                @if($section['is_soup'])
+                                                    <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 009-9H3a9 9 0 009 9z"/>
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v2m4-3v3m4-2v2"/>
                                                     </svg>
-                                                    <span>{{ $item->special_instructions }}</span>
-                                                </div>
-                                            @endif
+                                                @else
+                                                    <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/>
+                                                    </svg>
+                                                @endif
+                                                <span class="text-[15.5px] sm:text-base font-black tracking-tight truncate">{{ $section['title'] }}</span>
+                                            </div>
+                                            <span class="px-2 py-0.5 rounded-full bg-white/90 border border-slate-200/80 text-[11px] font-black text-slate-800 whitespace-nowrap shrink-0">
+                                                {{ $section['total_sticks'] }} ไม้
+                                            </span>
                                         </div>
 
-                                        <div class="text-right text-xs font-black text-slate-500 whitespace-nowrap shrink-0">
-                                            {{ $item->quantity_sticks }} ไม้
+                                        <!-- รายการอาหารเรียงแนวตั้งแบบตัวอย่างภาพที่ 4 (ตัวอักษรใหญ่กว่าภาพที่ 4 เล็กน้อย) -->
+                                        <div class="px-3.5 py-1.5 divide-y divide-slate-100">
+                                            @foreach($section['items'] as $item)
+                                                <div class="py-1.5">
+                                                    <div class="flex items-baseline justify-between gap-2 text-[14px] leading-snug">
+                                                        <div class="flex items-baseline gap-2.5 min-w-0 flex-1">
+                                                            <span class="font-black text-[#E50914] min-w-[26px] shrink-0 whitespace-nowrap">x{{ $item->quantity_sticks }}</span>
+                                                            <span class="font-bold text-slate-900 truncate">{{ $item->product_name }}</span>
+                                                        </div>
+                                                        <div class="flex items-baseline gap-2 shrink-0 whitespace-nowrap text-[13px] font-bold text-slate-600">
+                                                            <span>{{ $item->quantity_sticks }} ไม้</span>
+                                                        </div>
+                                                    </div>
+                                                    @if($item->special_instructions)
+                                                        <div class="pl-8 mt-0.5 text-[11.5px] text-amber-800 font-medium leading-tight">
+                                                            หมายเหตุ: {{ $item->special_instructions }}
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endforeach
                                         </div>
                                     </div>
                                 @endforeach
+
+                                <!-- เส้นประสรุปจำนวนรวมด้านล่างรายการ (สไตล์เดียวกับด้านล่างของภาพที่ 4) -->
+                                <div class="pt-2 border-t border-dashed border-slate-300 flex items-center justify-between text-[13px] px-1">
+                                    <span class="font-bold text-slate-600">จำนวนรวม <strong class="text-slate-900 font-black ml-1">{{ $totalOrderSticks }} ไม้</strong></span>
+                                    <span class="font-bold text-slate-600">รวมทั้งสิ้น <strong class="text-slate-950 font-black text-[14.5px] ml-1">฿{{ number_format((float) $order->total_amount, 0) }}</strong></span>
+                                </div>
                             </div>
                         </div>
 
