@@ -13,8 +13,15 @@
         ));
     $resolvedChannel = $channel ?? ($isDeliveryOrder ? 'delivery' : ($isOnlineOrder ? 'online_pickup' : 'pos'));
     $isOnlinePickup = ($resolvedChannel === 'online_pickup');
+    $isPos = ($resolvedChannel === 'pos');
 
-    if ($isOnlinePickup) {
+    if ($isPos) {
+        $stage = match ($status) {
+            'completed' => 2,
+            'cancelled' => 0,
+            default => 1,
+        };
+    } elseif ($isOnlinePickup) {
         $stage = match ($status) {
             'pending' => 1,
             'confirmed' => 2,
@@ -63,12 +70,30 @@
     </div>
 
     <div class="flex items-center {{ $isCompact ? 'mt-2.5 mb-2' : 'mt-4 mb-3.5' }}">
-        {{-- Step 1: Shop / Order Received (M) --}}
-        <div data-tl-step="1" class="{{ $isCompact ? 'w-5 h-5 text-[10px]' : 'w-6 h-6 text-[11px]' }} rounded-[5px] flex items-center justify-center font-black shrink-0 transition-colors {{ $stage >= 1 ? 'bg-[#D90012] text-white shadow-xs shadow-rose-500/30' : 'bg-slate-200 text-slate-400' }}">
-            M
-        </div>
+        @if($isPos)
+            {{-- Step 1 (POS): Storefront / Shop --}}
+            <div data-tl-step="1" class="shrink-0 transition-colors {{ $stage >= 1 ? 'text-[#D90012]' : 'text-slate-300' }}">
+                <svg class="{{ $isCompact ? 'w-[19px] h-[19px]' : 'w-[22px] h-[22px]' }}" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M5.223 2.25c-.497 0-.974.198-1.325.55l-1.3 1.298A3.75 3.75 0 007.5 9.75c.627 0 1.224-.154 1.75-.426a3.75 3.75 0 005.5 0 3.75 3.75 0 001.75.426 3.75 3.75 0 004.902-5.652l-1.3-1.299a1.875 1.875 0 00-1.325-.549H5.223z"/>
+                    <path fill-rule="evenodd" d="M3 20.25v-8.755c1.42.674 3.08.673 4.5 0A5.234 5.234 0 009.75 12c.804 0 1.568-.182 2.25-.506a5.234 5.234 0 002.25.506c.804 0 1.567-.182 2.25-.506 1.42.674 3.08.675 4.5.001v8.755h.75a.75.75 0 010 1.5H2.25a.75.75 0 010-1.5H3zm3-6a.75.75 0 01.75-.75h3a.75.75 0 01.75.75v3a.75.75 0 01-.75.75h-3a.75.75 0 01-.75-.75v-3zm8.25-.75a.75.75 0 00-.75.75v5.25c0 .414.336.75.75.75h3a.75.75 0 00.75-.75v-5.25a.75.75 0 00-.75-.75h-3z" clip-rule="evenodd"/>
+                </svg>
+            </div>
 
-        <div data-tl-line="2" class="flex-1 h-[2.5px] rounded-full mx-1.5 transition-colors {{ $stage >= 2 ? 'bg-[#D90012]' : 'bg-slate-200' }}"></div>
+            <div data-tl-line="2" class="flex-1 h-[2.5px] rounded-full mx-1.5 transition-colors {{ $stage >= 2 ? 'bg-[#D90012]' : 'bg-slate-200' }}"></div>
+
+            {{-- Step 2 (POS): Handed Over / Delivered Successfully --}}
+            <div data-tl-step="2" class="shrink-0 transition-colors {{ $stage >= 2 ? 'text-[#D90012]' : 'text-slate-300' }}">
+                <svg class="{{ $isCompact ? 'w-[19px] h-[19px]' : 'w-[22px] h-[22px]' }}" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 013.498 1.307 4.491 4.491 0 011.307 3.497A4.49 4.49 0 0121.75 12a4.49 4.49 0 01-1.549 3.397 4.491 4.491 0 01-1.307 3.497 4.491 4.491 0 01-3.497 1.307A4.49 4.49 0 0112 21.75a4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-3.498-1.306 4.491 4.491 0 01-1.307-3.498A4.49 4.49 0 012.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 011.307-3.497 4.49 4.49 0 013.497-1.307zm7.007 6.387a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd"/>
+                </svg>
+            </div>
+        @else
+            {{-- Step 1: Shop / Order Received (M) --}}
+            <div data-tl-step="1" class="{{ $isCompact ? 'w-5 h-5 text-[10px]' : 'w-6 h-6 text-[11px]' }} rounded-[5px] flex items-center justify-center font-black shrink-0 transition-colors {{ $stage >= 1 ? 'bg-[#D90012] text-white shadow-xs shadow-rose-500/30' : 'bg-slate-200 text-slate-400' }}">
+                M
+            </div>
+
+            <div data-tl-line="2" class="flex-1 h-[2.5px] rounded-full mx-1.5 transition-colors {{ $stage >= 2 ? 'bg-[#D90012]' : 'bg-slate-200' }}"></div>
 
         @if($isOnlinePickup)
             {{-- Step 2 (Online Pickup): Storefront / Shop --}}
@@ -126,6 +151,7 @@
                     <path fill-rule="evenodd" d="M12 2.25c-4.142 0-7.5 3.28-7.5 7.326 0 4.92 6.082 10.973 7.015 11.87a.7.7 0 00.97 0C13.418 20.55 19.5 14.497 19.5 9.576 19.5 5.53 16.142 2.25 12 2.25zm0 9.826a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" clip-rule="evenodd"/>
                 </svg>
             </div>
+        @endif
         @endif
     </div>
 
