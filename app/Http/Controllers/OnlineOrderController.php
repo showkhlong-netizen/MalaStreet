@@ -145,6 +145,7 @@ class OnlineOrderController extends Controller
                     'history' => $profileLogoHistory,
                 ],
                 'show_promo_banner' => $showPromoBanner,
+                'show_loyalty_banner' => Setting::get('online_show_loyalty_banner', '1') !== '0',
             ]);
         }
 
@@ -160,7 +161,9 @@ class OnlineOrderController extends Controller
         );
         $promptPaySettings = PosController::getStorePromptPaySettings();
 
-        return view('online.index', compact('categories', 'featuredProducts', 'recommendedProducts', 'heroBannerImage', 'heroBannerPosition', 'heroBannerHistory', 'profileLogoImage', 'profileLogoPosition', 'profileLogoHistory', 'showPromoBanner', 'savedCustomerProfile', 'promptPaySettings'));
+        $showLoyaltyBanner = Setting::get('online_show_loyalty_banner', '1') !== '0';
+
+        return view('online.index', compact('categories', 'featuredProducts', 'recommendedProducts', 'heroBannerImage', 'heroBannerPosition', 'heroBannerHistory', 'profileLogoImage', 'profileLogoPosition', 'profileLogoHistory', 'showPromoBanner', 'showLoyaltyBanner', 'savedCustomerProfile', 'promptPaySettings'));
     }
 
     /**
@@ -1431,6 +1434,21 @@ class OnlineOrderController extends Controller
         return response()->json([
             'success' => true,
             'message' => $show ? 'เปิดการแสดงแถบโปรโมชั่นแล้ว' : 'ปิดการแสดงแถบโปรโมชั่นแล้ว',
+            'show' => $show,
+        ]);
+    }
+
+    /**
+     * Toggle storefront loyalty stamp banner visibility.
+     */
+    public function toggleLoyaltyBanner(Request $request): JsonResponse
+    {
+        $show = $request->has('show') ? $request->boolean('show') : (Setting::get('online_show_loyalty_banner', '1') === '0');
+        Setting::set('online_show_loyalty_banner', $show ? '1' : '0', 'storefront');
+
+        return response()->json([
+            'success' => true,
+            'message' => $show ? 'เปิดการแสดงแถบสะสมแต้มแล้ว' : 'ปิดการแสดงแถบสะสมแต้มแล้ว',
             'show' => $show,
         ]);
     }

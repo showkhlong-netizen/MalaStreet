@@ -111,6 +111,7 @@ Route::prefix('order')->name('online.')->group(function () {
     Route::post('/profile-logo/upload', [OnlineOrderController::class, 'uploadProfileLogoImage'])->name('profile_logo.upload');
     Route::delete('/profile-logo/history', [OnlineOrderController::class, 'deleteProfileLogoHistory'])->name('profile_logo.delete_history');
     Route::post('/toggle-promo-banner', [OnlineOrderController::class, 'togglePromoBanner'])->name('toggle_promo_banner');
+    Route::post('/toggle-loyalty-banner', [OnlineOrderController::class, 'toggleLoyaltyBanner'])->name('toggle_loyalty_banner');
 });
 
 // 3. ระบบหลังบ้าน (Backend Admin & Financial / Inventory Systems) - ต้องเข้าสู่ระบบ (Requires Auth + RBAC Enforcement)

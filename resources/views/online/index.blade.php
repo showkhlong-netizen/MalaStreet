@@ -340,6 +340,31 @@
                                         <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                                     </label>
                                 </div>
+
+                                <!-- Toggle Loyalty Banner Switch -->
+                                <div class="px-3 py-2 rounded-xl bg-slate-50/90 border border-slate-200/60 flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200/80 text-[#D90012] flex items-center justify-center shrink-0">
+                                            <svg class="w-4 h-4 text-[#D90012]" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M20 7h-2.087A3.989 3.989 0 0 0 18 6a4 4 0 0 0-7.071-2.543A3.99 3.99 0 0 0 4.087 7H2a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h1v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-8h1a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1zm-6-3a2 2 0 1 1 2 2h-2zm-6 2a2 2 0 1 1 2-2v2zm-5 4h8v2H3zm10 0h8v2h-8zm-8 4h6v7H5zm8 7v-7h6v7z"/>
+                                            </svg>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="text-xs font-bold text-slate-800">แสดงแถบสะสมแต้ม</div>
+                                            <div class="text-[10px] text-slate-500" id="loyalty-switch-status-text">{{ ($showLoyaltyBanner ?? true) ? 'กำลังแสดงแถบสะสมแต้ม' : 'ซ่อนแถบสะสมแต้มอยู่' }}</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Switch Toggle -->
+                                    <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                        <input type="checkbox"
+                                               id="loyalty-banner-switch"
+                                               class="sr-only peer"
+                                               {{ ($showLoyaltyBanner ?? true) ? 'checked' : '' }}
+                                               onchange="toggleLoyaltyBannerVisibility(this.checked)">
+                                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -484,7 +509,7 @@
             <!-- ================================================================= -->
             <!-- 3.1 LOYALTY CARD & STAMP PROMPT BANNER                             -->
             <!-- ================================================================= -->
-            <a href="{{ route('online.rewards') }}" class="mt-2 block bg-gradient-to-r from-slate-100 via-[#FFFBEB] to-[#FFEDD5] border-2 border-white rounded-[16px] p-2 transition-all animate-soft-glow group select-none shadow-xs">
+            <a id="online-loyalty-banner" href="{{ route('online.rewards') }}" class="mt-2 {{ ($showLoyaltyBanner ?? true) ? 'block' : 'hidden' }} bg-gradient-to-r from-slate-100 via-[#FFFBEB] to-[#FFEDD5] border-2 border-white rounded-[16px] p-2 transition-all animate-soft-glow group select-none shadow-xs">
                 <div class="flex items-center justify-between gap-2">
                     <div class="flex items-center gap-2 min-w-0">
                         <div class="w-7 h-7 rounded-full bg-white border border-slate-100 shadow-xs flex items-center justify-center shrink-0">
@@ -3063,6 +3088,17 @@
                         if (promoSwitch) promoSwitch.checked = Boolean(data.show_promo_banner);
                         if (statusText) statusText.textContent = data.show_promo_banner ? 'กำลังแสดงแถบคูปอง' : 'ซ่อนแถบคูปองอยู่';
                     }
+                    if (typeof data.show_loyalty_banner !== 'undefined') {
+                        const loyaltyBanner = document.getElementById('online-loyalty-banner');
+                        const loyaltySwitch = document.getElementById('loyalty-banner-switch');
+                        const loyaltyStatusText = document.getElementById('loyalty-switch-status-text');
+                        if (loyaltyBanner) {
+                            loyaltyBanner.classList.toggle('hidden', !data.show_loyalty_banner);
+                            loyaltyBanner.classList.toggle('block', Boolean(data.show_loyalty_banner));
+                        }
+                        if (loyaltySwitch) loyaltySwitch.checked = Boolean(data.show_loyalty_banner);
+                        if (loyaltyStatusText) loyaltyStatusText.textContent = data.show_loyalty_banner ? 'กำลังแสดงแถบสะสมแต้ม' : 'ซ่อนแถบสะสมแต้มอยู่';
+                    }
                 }
             } catch (e) {}
         }
@@ -3120,6 +3156,17 @@
                 }
                 if (promoSwitch) promoSwitch.checked = Boolean(data.show);
                 if (statusText) statusText.textContent = data.show ? 'กำลังแสดงแถบคูปอง' : 'ซ่อนแถบคูปองอยู่';
+            }
+            if (data.action === 'loyalty_banner_toggled') {
+                const loyaltyBanner = document.getElementById('online-loyalty-banner');
+                const loyaltySwitch = document.getElementById('loyalty-banner-switch');
+                const loyaltyStatusText = document.getElementById('loyalty-switch-status-text');
+                if (loyaltyBanner) {
+                    loyaltyBanner.classList.toggle('hidden', !data.show);
+                    loyaltyBanner.classList.toggle('block', Boolean(data.show));
+                }
+                if (loyaltySwitch) loyaltySwitch.checked = Boolean(data.show);
+                if (loyaltyStatusText) loyaltyStatusText.textContent = data.show ? 'กำลังแสดงแถบสะสมแต้ม' : 'ซ่อนแถบสะสมแต้มอยู่';
             }
             const oldSlug = data.old_slug || data.slug;
             const pill = document.querySelector(`.online-cat-pill[data-cat="${oldSlug}"]`);
@@ -3225,6 +3272,44 @@
                         try {
                             const catChannel = new BroadcastChannel('mala_category_sync_channel');
                             catChannel.postMessage({ action: 'promo_banner_toggled', show: shouldShow });
+                        } catch (e) {}
+                    }
+                } else {
+                    showToast(data.message || 'ตั้งค่าไม่สำเร็จ');
+                }
+            } catch (err) {
+                showToast('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            }
+        }
+
+        async function toggleLoyaltyBannerVisibility(shouldShow) {
+            const loyaltyBanner = document.getElementById('online-loyalty-banner');
+            const loyaltyStatusText = document.getElementById('loyalty-switch-status-text');
+            if (loyaltyBanner) {
+                loyaltyBanner.classList.toggle('hidden', !shouldShow);
+                loyaltyBanner.classList.toggle('block', Boolean(shouldShow));
+            }
+            if (loyaltyStatusText) {
+                loyaltyStatusText.textContent = shouldShow ? 'กำลังแสดงแถบสะสมแต้ม' : 'ซ่อนแถบสะสมแต้มอยู่';
+            }
+
+            try {
+                const res = await fetch('{{ route("online.toggle_loyalty_banner") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ show: shouldShow })
+                });
+                const data = await res.json();
+                if (data && data.success) {
+                    showToast(shouldShow ? 'เปิดแสดงแถบสะสมแต้มแล้ว' : 'ปิดการแสดงแถบสะสมแต้มแล้ว');
+                    if ('BroadcastChannel' in window) {
+                        try {
+                            const catChannel = new BroadcastChannel('mala_category_sync_channel');
+                            catChannel.postMessage({ action: 'loyalty_banner_toggled', show: shouldShow });
                         } catch (e) {}
                     }
                 } else {
