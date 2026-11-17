@@ -155,12 +155,23 @@
                     <span>หน้าร้าน (POS)</span>
                     <span id="tab-count-pos" class="px-1.5 py-0.2 rounded-full text-[11px] bg-white text-slate-700 border border-slate-200 whitespace-nowrap">0</span>
                 </button>
+                <button type="button" data-channel-tab="history" onclick="setKitchenChannelTab('history')"
+                        class="kitchen-channel-tab ml-auto shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>ประวัติทำรายการ</span>
+                    <span id="tab-count-history" class="px-1.5 py-0.2 rounded-full text-[11px] bg-white text-slate-700 border border-slate-200 whitespace-nowrap">{{ $completedOrders->count() }}</span>
+                </button>
             </div>
         </section>
 
         <div id="kitchen-orders-sync-container">
-        <!-- 2. Active Orders Grid (Light Theme, Luxury Modern Cards) -->
-        @if($activeOrders->isEmpty())
+        <!-- 2. Active & Completed History Orders Grid (Light Theme, Luxury Modern Cards) -->
+        @php
+            $allKitchenOrders = $activeOrders->concat($completedOrders ?? collect());
+        @endphp
+        @if($allKitchenOrders->isEmpty())
             <div class="bg-white border border-slate-200/90 rounded-3xl p-16 text-center text-slate-400 shadow-sm">
                 <div class="w-16 h-16 rounded-3xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4">
                     <svg class="w-8 h-8 stroke-current" fill="none" stroke-width="1.8" viewBox="0 0 24 24">
@@ -172,7 +183,7 @@
             </div>
         @else
             <div id="kitchen-orders-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                @foreach($activeOrders as $order)
+                @foreach($allKitchenOrders as $order)
                     @php
                         $isOnline = $order->order_type === 'online';
                         $channelHaystack = mb_strtolower(trim(($order->pickup_time ?? '') . ' ' . ($order->notes ?? '')), 'UTF-8');
@@ -199,14 +210,16 @@
                             ($order->notes ?? '') . ' ' .
                             $order->items->pluck('product_name')->implode(' ')
                         ), 'UTF-8');
+                        $isHistory = ($order->status === 'completed');
                     @endphp
 
-                    <div class="kitchen-order-card bg-white rounded-3xl border border-slate-200/90 {{ $statusBorder }} shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden" 
+                    <div class="kitchen-order-card bg-white rounded-3xl border border-slate-200/90 {{ $statusBorder }} shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden {{ $isHistory ? 'hidden' : '' }}" 
                          id="order-card-{{ $order->id }}"
                          data-order-id="{{ $order->id }}"
                          data-order-type="{{ $order->order_type ?? 'pos' }}"
                          data-channel="{{ $orderChannel }}"
                          data-status="{{ $order->status }}"
+                         data-is-history="{{ $isHistory ? '1' : '0' }}"
                          data-created-ts="{{ $order->created_at ? $order->created_at->timestamp : 0 }}"
                          data-search="{{ $searchText }}">
                         
@@ -408,7 +421,23 @@
                         </div>
 
                         <!-- 3. Action Buttons & Details Modal Trigger -->
-                        @if($orderChannel === 'delivery')
+                        @if($isHistory)
+                            <div class="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2">
+                                <button type="button" onclick="openOrderModal({{ $order->id }})"
+                                    class="p-2.5 rounded-2xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold shadow-xs transition-colors flex items-center justify-center cursor-pointer" title="ดูรายละเอียดแบบขยาย">
+                                    <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </button>
+                                <div class="flex-1 py-2.5 px-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-extrabold flex items-center justify-center gap-1.5 whitespace-nowrap">
+                                    <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>ทำรายการสำเร็จแล้ว{{ $order->updated_at ? ' • ' . $order->updated_at->timezone('Asia/Bangkok')->format('H:i') : '' }}</span>
+                                </div>
+                            </div>
+                        @elseif($orderChannel === 'delivery')
                             @php
                                 $deliveryStep = (int) ($order->kitchen_step ?: ($order->status === 'ready' ? 3 : ($order->status === 'cooking' ? 2 : 1)));
                                 $cookingStartedTs = $order->cooking_started_at ? $order->cooking_started_at->timestamp : null;
@@ -626,12 +655,15 @@
 </div>
 
 @push('scripts')
+@php
+    $allKitchenOrdersMap = $activeOrders->concat($completedOrders ?? collect())->keyBy('id');
+@endphp
 <script id="kitchen-data-script" type="application/json">
-@json($activeOrders->keyBy('id'))
+@json($allKitchenOrdersMap)
 </script>
 <script>
-    // All active orders data for modal preview
-    let activeOrdersMap = @json($activeOrders->keyBy('id'));
+    // All active & completed orders data for modal preview
+    let activeOrdersMap = @json($allKitchenOrdersMap);
 
     function openOrderModal(orderId) {
         const order = activeOrdersMap[orderId];
@@ -914,9 +946,10 @@
         document.querySelectorAll('.kitchen-channel-tab').forEach((btn) => {
             const tab = btn.dataset.channelTab || 'all';
             const isActive = tab === kitchenChannelTab;
+            const pushRight = tab === 'history' ? 'ml-auto ' : '';
             btn.className = isActive
-                ? 'kitchen-channel-tab shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all bg-[#E50914] text-white shadow-xs cursor-pointer'
-                : 'kitchen-channel-tab shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 cursor-pointer';
+                ? `kitchen-channel-tab ${pushRight}shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all bg-[#E50914] text-white shadow-xs cursor-pointer`
+                : `kitchen-channel-tab ${pushRight}shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80 cursor-pointer`;
             const countBadge = btn.querySelector('span[id^="tab-count-"]');
             if (countBadge) {
                 countBadge.className = isActive
@@ -966,8 +999,13 @@
     }
 
     function updateKitchenChannelTabCounts(cards) {
-        const counts = { all: cards.length, online_pickup: 0, delivery: 0, pos: 0 };
+        const counts = { all: 0, online_pickup: 0, delivery: 0, pos: 0, history: 0 };
         cards.forEach((card) => {
+            if (card.dataset.isHistory === '1') {
+                counts.history++;
+                return;
+            }
+            counts.all++;
             const ch = card.dataset.channel || 'pos';
             if (Object.prototype.hasOwnProperty.call(counts, ch)) {
                 counts[ch]++;
@@ -1041,17 +1079,23 @@
             const type = card.dataset.orderType || 'pos';
             const channel = card.dataset.channel || 'pos';
             const status = card.dataset.status || '';
+            const isHistory = (card.dataset.isHistory === '1');
 
-            const matchesChannelTab = (kitchenChannelTab === 'all') || (channel === kitchenChannelTab);
-
-            let matchesFilter = true;
-            if (kitchenSortMode === 'filter_online') matchesFilter = (type === 'online');
-            else if (kitchenSortMode === 'filter_pos') matchesFilter = (type === 'pos');
-            else if (kitchenSortMode === 'filter_cooking') matchesFilter = (status === 'cooking');
-            else if (kitchenSortMode === 'filter_pending') matchesFilter = (status === 'pending' || status === 'confirmed');
-
+            let show = false;
             const matchesQuery = !query || haystack.includes(query);
-            const show = matchesChannelTab && matchesFilter && matchesQuery;
+
+            if (kitchenChannelTab === 'history') {
+                show = isHistory && matchesQuery;
+            } else if (!isHistory) {
+                const matchesChannelTab = (kitchenChannelTab === 'all') || (channel === kitchenChannelTab);
+                let matchesFilter = true;
+                if (kitchenSortMode === 'filter_online') matchesFilter = (type === 'online');
+                else if (kitchenSortMode === 'filter_pos') matchesFilter = (type === 'pos');
+                else if (kitchenSortMode === 'filter_cooking') matchesFilter = (status === 'cooking');
+                else if (kitchenSortMode === 'filter_pending') matchesFilter = (status === 'pending' || status === 'confirmed');
+                show = matchesChannelTab && matchesFilter && matchesQuery;
+            }
+
             card.classList.toggle('hidden', !show);
             if (show) visibleCount++;
         });

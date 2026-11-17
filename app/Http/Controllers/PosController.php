@@ -369,13 +369,20 @@ class PosController extends Controller
             ->orderBy('created_at')
             ->get();
 
+        $completedOrders = Order::with('items')
+            ->where('status', 'completed')
+            ->orderByDesc('updated_at')
+            ->orderByDesc('id')
+            ->limit(60)
+            ->get();
+
         $completedCount = Order::whereDate('created_at', $today)->where('status', 'completed')->count();
         $unreadChatCount = ChatMessage::where('sender', 'customer')->where('is_read', false)->count();
         $activeProducts = Product::where('is_available', true)
             ->orderBy('sort_order')
             ->get(['id', 'name', 'price_per_stick', 'image_url', 'supports_grill', 'supports_soup']);
 
-        return view('pos.kitchen', compact('activeOrders', 'completedCount', 'unreadChatCount', 'activeProducts'));
+        return view('pos.kitchen', compact('activeOrders', 'completedOrders', 'completedCount', 'unreadChatCount', 'activeProducts'));
     }
 
     /**
