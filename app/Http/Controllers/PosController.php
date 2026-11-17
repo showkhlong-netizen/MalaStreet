@@ -922,9 +922,23 @@ class PosController extends Controller
 
         if ($order->status !== 'cancelled') {
             DB::transaction(function () use ($order) {
+                $invDate = $order->created_at
+                    ? $order->created_at->copy()->timezone('Asia/Bangkok')->toDateString()
+                    : Carbon::today('Asia/Bangkok')->toDateString();
+
                 foreach ($order->items as $item) {
                     if ($item->product_id) {
-                        Product::where('id', $item->product_id)->increment('stock_sticks', (int) $item->quantity_sticks);
+                        $qty = (int) $item->quantity_sticks;
+                        Product::where('id', $item->product_id)->increment('stock_sticks', $qty);
+
+                        $inv = InventoryDaily::whereDate('record_date', $invDate)
+                            ->where('product_id', $item->product_id)
+                            ->first();
+                        if ($inv) {
+                            $inv->sold_sticks = max(0, (int) $inv->sold_sticks - $qty);
+                            $inv->expected_closing_sticks = max(0, ($inv->opening_sticks + $inv->added_sticks) - $inv->sold_sticks - $inv->waste_sticks);
+                            $inv->save();
+                        }
                     }
                 }
                 $order->status = 'cancelled';

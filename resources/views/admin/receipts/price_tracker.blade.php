@@ -699,6 +699,7 @@
                         'is_bought_today' => (bool) $mat->is_bought_today,
                         'today_opening_sticks' => (int) $mat->today_opening_sticks,
                         'today_stock_sticks' => (int) $mat->today_stock_sticks,
+                        'today_sold_sticks' => (int) $mat->today_sold_sticks,
                         'selling_price' => $mat->products->first() ? (float) $mat->products->first()->price_per_stick : null,
                         'is_approved_for_sale' => $mat->products->isNotEmpty() ? (bool) $mat->products->every(fn ($p) => $p->is_available) : false,
                         'is_recommended' => in_array((int) $mat->id, $recommendedMaterialIds ?? [], true),
@@ -1452,18 +1453,30 @@
                     >
                 </div>
 
-                <div>
-                    <label class="text-[11.5px] font-bold text-slate-700 block mb-1">สต๊อกไม้ที่ขายได้ / รายวัน</label>
-                    <input
-                        type="number"
-                        step="1"
-                        min="0"
-                        id="edit-mat-sellable-sticks"
-                        name="sellable_sticks"
-                        placeholder="คำนวณอัตโนมัติ"
-                        oninput="recalculateModalProfit()"
-                        class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:border-[#E50914]"
-                    >
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[11px] font-bold text-slate-700 block mb-1 truncate">สต๊อกไม้มีขาย</label>
+                        <input
+                            type="number"
+                            step="1"
+                            min="0"
+                            id="edit-mat-sellable-sticks"
+                            name="sellable_sticks"
+                            placeholder="อัตโนมัติ"
+                            oninput="recalculateModalProfit()"
+                            class="w-full px-2.5 py-2 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:border-[#E50914]"
+                        >
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-sky-700 block mb-1 truncate">ขายได้/วัน</label>
+                        <input
+                            type="text"
+                            id="edit-mat-sold-today"
+                            readonly
+                            value="0"
+                            class="w-full px-2.5 py-2 rounded-xl bg-sky-50/70 border border-sky-200 text-sm font-bold text-sky-800 focus:outline-none cursor-default"
+                        >
+                    </div>
                 </div>
 
                 <div>
@@ -3492,6 +3505,8 @@
         if (packsInput) packsInput.value = '1';
         const sellableInput = document.getElementById('edit-mat-sellable-sticks');
         if (sellableInput) sellableInput.value = '10';
+        const soldTodayInput = document.getElementById('edit-mat-sold-today');
+        if (soldTodayInput) soldTodayInput.value = '0';
         const sellingPriceInput = document.getElementById('edit-mat-selling-price');
         if (sellingPriceInput) sellingPriceInput.value = '';
         recalculateModalProfit();
@@ -3568,7 +3583,9 @@
         const stockNum = Number(data.today_stock_sticks ?? 0);
         const packsInput = document.getElementById('edit-mat-packs');
         const sellableInput = document.getElementById('edit-mat-sellable-sticks');
+        const soldTodayInput = document.getElementById('edit-mat-sold-today');
         if (sellableInput) sellableInput.value = String(stockNum);
+        if (soldTodayInput) soldTodayInput.value = String(Number(data.today_sold_sticks ?? 0));
         if (packsInput) {
             packsInput.value = (yieldNum > 0 && stockNum > 0)
                 ? String(Number((stockNum / yieldNum).toFixed(2)))

@@ -1132,6 +1132,7 @@ class ReceiptController extends Controller
                         'is_bought_today' => (bool) $mat->is_bought_today,
                         'today_opening_sticks' => (int) $mat->today_opening_sticks,
                         'today_stock_sticks' => (int) $mat->today_stock_sticks,
+                        'today_sold_sticks' => (int) $mat->today_sold_sticks,
                         'is_approved_for_sale' => $mat->products->isNotEmpty() ? (bool) $mat->products->every(fn ($p) => $p->is_available) : false,
                         'selling_price' => $mat->products->first() ? (float) $mat->products->first()->price_per_stick : null,
                         'histories' => $mat->priceHistories->map(fn ($h) => [
