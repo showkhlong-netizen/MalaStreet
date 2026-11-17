@@ -172,11 +172,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', EnforceDailyEmployee
     Route::post('/access/settings', [AccessControlController::class, 'updateSettings'])->name('access.update_settings');
     Route::post('/access/register-requests/{id}/approve', [AccessControlController::class, 'approveRegistrationRequest'])->name('access.register_requests.approve');
     Route::post('/access/register-requests/{id}/reject', [AccessControlController::class, 'rejectRegistrationRequest'])->name('access.register_requests.reject');
-    Route::post('/pos/cart-panel-size', [PosController::class, 'saveCartPanelSize'])->name('pos.cart_panel_size');
 });
 
 // Shortcut alias for employees & access - ต้องเข้าสู่ระบบ (Requires Auth)
 Route::middleware(['auth'])->group(function () {
+    Route::post('/pos/cart-panel-size', [PosController::class, 'saveCartPanelSize'])->name('pos.cart_panel_size');
     Route::get('/attendance-photos/{filename}', [EmployeeController::class, 'showAttendancePhoto'])
         ->where('filename', '[A-Za-z0-9._-]+')
         ->name('attendance.photo');
