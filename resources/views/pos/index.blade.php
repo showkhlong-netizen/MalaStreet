@@ -195,70 +195,129 @@
                         </div>
                     </div>
 
-                    <!-- RIGHT FLOATING CARD: Compact Half-Size Price Tracker Card (ลอยอยู่ข้างบน) -->
-                    <div class="w-full lg:w-[345px] xl:w-[365px] shrink-0">
-                        <div class="relative bg-white/98 rounded-[18px] p-3 sm:p-3.5 shadow-lg border border-white flex flex-col justify-between gap-2.5">
-                            <!-- Top Info Row -->
-                            <div class="flex items-start gap-2.5">
-                                <!-- Soft Amber/Cream Chart Icon -->
-                                <div class="w-8 h-8 rounded-xl bg-[#FFF3D6] border border-[#FDE2A7] flex items-center justify-center shrink-0 shadow-2xs">
-                                    <svg class="w-4 h-4 text-[#E50914]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
-                                        <polyline points="16 7 22 7 22 13"></polyline>
-                                    </svg>
+                    <!-- RIGHT FLOATING CARD: รูปแบบการปรุงอาหาร (แบบย่าง -> ความเผ็ด / น้ำซุป -> ประเภทซุป) -->
+                    <div class="w-full lg:w-[445px] xl:w-[485px] shrink-0">
+                        <div id="pos-top-cooking-card" class="relative bg-white/98 rounded-[18px] p-3.5 shadow-lg border border-white space-y-3">
+                            <!-- 1. รูปแบบการปรุงอาหาร -->
+                            <div>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <span class="text-xs font-bold text-slate-800">
+                                        รูปแบบการปรุงอาหาร <span class="text-[#D90012]">*</span>
+                                    </span>
+                                    <span class="text-[10px] text-slate-400 font-normal">เลือกอย่างใดอย่างหนึ่ง</span>
                                 </div>
-                                <div class="min-w-0 flex-1">
-                                    <h2 class="text-[12px] sm:text-[13px] font-bold text-[#14171F] leading-snug tracking-tight">
-                                        ระบบตรวจจับราคาขึ้น-ลง &amp; ร้านค้าอ้างอิง
-                                    </h2>
-                                    <p class="text-[9.5px] sm:text-[10px] text-[#687082] font-normal leading-snug line-clamp-2 mt-0.5">
-                                        ติดตามความผันผวนของราคาวัตถุดิบสำคัญได้ ไม่ว่าจะขึ้นหรือลง เช่น เอ็นไก่, เนื้อวัว, ผักสด ฯลฯ เพื่อเลือกซื้อร้านที่ถูกที่สุด
-                                    </p>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <!-- Option 1: หม่าล่าย่าง -->
+                                    <button type="button" onclick="setPosTopCookingType('grill')" id="pos-top-btn-grill"
+                                            class="p-2.5 rounded-2xl border-2 text-left transition-all border-[#D90012] bg-[#FFF0F1] shadow-xs flex items-center gap-2 group cursor-pointer">
+                                        <div id="pos-top-radio-grill" class="w-4 h-4 rounded-full border-2 border-blue-600 flex items-center justify-center shrink-0 p-0.5">
+                                            <div class="w-2 h-2 rounded-full bg-blue-600"></div>
+                                        </div>
+                                        <div class="w-7 h-7 rounded-xl bg-white border border-rose-100 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                                            <svg class="w-4.5 h-4.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M5 19L19 5" stroke-width="2.6" />
+                                                <path d="M8 14l2 4" />
+                                                <path d="M11 11l2 4" />
+                                                <path d="M14 8l2 4" />
+                                            </svg>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="font-extrabold text-[#D90012] text-[12px] leading-tight">หม่าล่าย่าง</div>
+                                            <div class="text-[9.5px] text-[#596272] truncate mt-0.5">ทาซอสหม่าล่าต้นตำรับ</div>
+                                        </div>
+                                    </button>
+
+                                    <!-- Option 2: น้ำซุป -->
+                                    <button type="button" onclick="setPosTopCookingType('soup')" id="pos-top-btn-soup"
+                                            class="p-2.5 rounded-2xl border-2 text-left transition-all border-slate-200 bg-white flex items-center gap-2 hover:border-slate-300 group cursor-pointer">
+                                        <div id="pos-top-radio-soup" class="w-4 h-4 rounded-full border-2 border-slate-400 flex items-center justify-center shrink-0"></div>
+                                        <div class="w-7 h-7 rounded-xl bg-white border border-rose-100 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+                                            <svg class="w-4.5 h-4.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M4 11h16a1 1 0 0 1 1 1c0 5-3.5 8-9 8s-9-3-9-8a1 1 0 0 1 1-1z" />
+                                                <path d="M2 13h2M20 13h2" />
+                                                <path d="M4 11h16" />
+                                                <path d="M9 7c.5-1 1.5-1.5 2-1.5s1.5.5 2 1.5" />
+                                            </svg>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="font-extrabold text-[#101114] text-[12px] leading-tight">น้ำซุป</div>
+                                            <div class="text-[9.5px] text-[#596272] truncate mt-0.5">เลือกประเภทน้ำซุป</div>
+                                        </div>
+                                    </button>
                                 </div>
                             </div>
 
-                            <!-- 3 Buttons Row (ปุ่มแดงหน้าร้าน + ปุ่มแดงแสกนใบเสร็จเพิ่ม + ปุ่มตารางประวัติทั้งหมด) -->
-                            <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
-                                <!-- 1. NEW Red Button: หน้าร้าน -->
-                                <a href="{{ route('pos.index') }}"
-                                   class="py-1.5 px-3 rounded-lg bg-[#E50914] hover:bg-[#C8102E] text-white text-[10.5px] sm:text-[11px] font-semibold shadow-xs inline-flex items-center gap-1 transition-all active:scale-95"
-                                   title="หน้าร้าน POS">
-                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                                    </svg>
-                                    <span>หน้าร้าน</span>
-                                </a>
-
-                                <!-- 2. Red Button: แสกนใบเสร็จเพิ่ม -->
-                                <a href="{{ route('admin.receipts.index') }}"
-                                   class="py-1.5 px-2.5 rounded-lg bg-[#E50914] hover:bg-[#C8102E] text-white text-[10.5px] sm:text-[11px] font-semibold shadow-xs inline-flex items-center gap-1 transition-all active:scale-95"
-                                   title="แสกนใบเสร็จเพิ่ม">
-                                    <svg class="w-3.5 h-3.5 shrink-0 stroke-current" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                    <span>แสกนใบเสร็จเพิ่ม</span>
-                                </a>
-
-                                <!-- 3. Red Button: สต็อกไม้คงเหลือ (ต่อฝั่งขวาของปุ่ม แสกนใบเสร็จเพิ่ม) -->
-                                <a href="{{ route('admin.inventory.index') }}"
-                                   class="py-1.5 px-2.5 rounded-lg bg-[#E50914] hover:bg-[#C8102E] text-white text-[10.5px] sm:text-[11px] font-semibold shadow-xs inline-flex items-center gap-1 transition-all active:scale-95"
-                                   title="สต็อกไม้คงเหลือ">
-                                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                    </svg>
-                                    <span>สต็อกไม้คงเหลือ</span>
-                                </a>
-
-                                <!-- 4. Gray/White Button: ตารางประวัติทั้งหมด -->
-                                <a href="{{ route('admin.receipts.price_tracker') }}#price-ledger-section"
-                                   class="py-1.5 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-[#2E3440] text-[10px] sm:text-[10.5px] font-medium inline-flex items-center gap-1 transition-all active:scale-95"
-                                   title="ดูตารางประวัติราคาทั้งหมด">
-                                    <span>ตารางประวัติทั้งหมด</span>
-                                    <span class="px-1.5 py-0.2 rounded-full bg-white text-[#E50914] font-bold text-[9.5px] shadow-2xs border border-slate-200/60">
-                                        {{ $priceHistoriesCount ?? 29 }}
+                            <!-- 2.1 ระดับความเผ็ด (เมื่อเลือก หม่าล่าย่าง - ตามภาพที่ 2) -->
+                            <div id="pos-top-spiciness-section">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <span class="text-xs font-bold text-slate-800">
+                                        ระดับความเผ็ด <span class="text-[#D90012]">*</span>
                                     </span>
-                                </a>
+                                    <span class="text-[10px] text-slate-400 font-normal">รสชาติหม่าล่า</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                                        <input type="radio" name="pos_top_spiciness" value="mild" onchange="posTopSpiciness = this.value" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
+                                        <div class="h-5 flex items-center justify-center mb-0.5 group-hover:scale-110 transition-transform">
+                                            <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-5 w-auto object-contain shrink-0" alt="เผ็ดน้อย">
+                                        </div>
+                                        <span class="font-extrabold text-[#101114] text-[11px]">เผ็ดน้อย</span>
+                                    </label>
+                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                                        <input type="radio" name="pos_top_spiciness" value="medium" checked onchange="posTopSpiciness = this.value" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
+                                        <div class="h-5 flex items-center justify-center gap-1 mb-0.5 group-hover:scale-110 transition-transform">
+                                            <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4.5 w-auto object-contain shrink-0" alt="เผ็ดกลาง">
+                                            <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4.5 w-auto object-contain shrink-0" alt="เผ็ดกลาง">
+                                        </div>
+                                        <span class="font-extrabold text-[#101114] text-[11px]">เผ็ดกลาง</span>
+                                    </label>
+                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                                        <input type="radio" name="pos_top_spiciness" value="hot" onchange="posTopSpiciness = this.value" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
+                                        <div class="h-5 flex items-center justify-center gap-0.5 mb-0.5 group-hover:scale-110 transition-transform">
+                                            <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4 w-auto object-contain shrink-0" alt="เผ็ดมาก">
+                                            <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4 w-auto object-contain shrink-0" alt="เผ็ดมาก">
+                                            <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4 w-auto object-contain shrink-0" alt="เผ็ดมาก">
+                                        </div>
+                                        <span class="font-extrabold text-[#101114] text-[11px]">เผ็ดมาก</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- 2.2 เลือกประเภทน้ำซุป (เมื่อเลือก น้ำซุป - ตามภาพที่ 3) -->
+                            <div id="pos-top-soup-section" class="hidden">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <span class="text-xs font-bold text-slate-800">เลือกประเภทน้ำซุป <span class="text-[#D90012]">*</span></span>
+                                    <span class="text-[10px] text-slate-400 font-normal">รสชาติน้ำซุป</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                                        <input type="radio" name="pos_top_soup_style" value="black_soup" onchange="posTopSoupStyle = this.value" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
+                                        <div class="h-5 flex items-center justify-center mb-0.5 group-hover:scale-110 transition-transform">
+                                            <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M21 11H3a1 1 0 0 0-1 1c0 5 3.5 9 8.5 9.8V23h3v-1.2c5-.8 8.5-4.8 8.5-9.8a1 1 0 0 0-1-1zm-9 8.8C7.5 19.8 4.5 16.5 4.1 13h15.8c-.4 3.5-3.4 6.8-7.9 6.8zM6.5 8a1 1 0 0 1 1-1c1 0 1-1 1-1s0-1 1-1a1 1 0 0 1 2 0c0 1 1 2 2 2s1-1 1-1 0-1 1-1a1 1 0 0 1 2 0c0 1 1 2 2 2a1 1 0 1 1 0 2c-1.5 0-2.5-1-2.9-1.6-.4.6-1.4 1.6-2.9 1.6s-2.5-1-2.9-1.6c-.4.6-1.4 1.6-2.9 1.6a1 1 0 0 1-1-1z" />
+                                            </svg>
+                                        </div>
+                                        <span class="font-extrabold text-[#101114] text-[10.5px] leading-tight">ซุปน้ำดำ</span>
+                                    </label>
+                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                                        <input type="radio" name="pos_top_soup_style" value="tomyum_rich" checked onchange="posTopSoupStyle = this.value" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
+                                        <div class="h-5 flex items-center justify-center mb-0.5 group-hover:scale-110 transition-transform">
+                                            <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M12 2c-1.5 2.5-4 4.5-4 7a4 4 0 0 0 8 0c0-2.5-2.5-4.5-4-7zm0 9c-1.1 0-2-.9-2-2 0-1 .9-2 2-3.3 1.1 1.3 2 2.3 2 3.3 0 1.1-.9 2-2 2zM2 13h20c0 5-4.5 9-10 9S2 18 2 13z"/>
+                                            </svg>
+                                        </div>
+                                        <span class="font-extrabold text-[#101114] text-[10.5px] leading-tight">ซุปต้มยำ-น้ำข้น</span>
+                                    </label>
+                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                                        <input type="radio" name="pos_top_soup_style" value="mala_rich" onchange="posTopSoupStyle = this.value" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
+                                        <div class="h-5 flex items-center justify-center mb-0.5 group-hover:scale-110 transition-transform">
+                                            <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M12 1a3 3 0 0 0-3 3c0 2 2 3 3 5 1-2 3-3 3-5a3 3 0 0 0-3-3zm-6 4a2 2 0 0 0-2 2c0 1.5 1.5 2.5 2 4 .5-1.5 2-2.5 2-4a2 2 0 0 0-2-2zm12 0a2 2 0 0 0-2 2c0 1.5 1.5 2.5 2 4 .5-1.5 2-2.5 2-4a2 2 0 0 0-2-2zM2 13h20c0 5-4.5 9-10 9S2 18 2 13z"/>
+                                            </svg>
+                                        </div>
+                                        <span class="font-extrabold text-[#101114] text-[10.5px] leading-tight">ซุปหม่าล่า-น้ำข้น</span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1630,6 +1689,65 @@
         cards.forEach(c => grid.appendChild(c));
     }
 
+    // Top Cooking Style & Spice / Soup Quick Preset Controller
+    let posTopCookingType = 'grill';
+    let posTopSpiciness = 'medium';
+    let posTopSoupStyle = 'tomyum_rich';
+
+    function setPosTopCookingType(type) {
+        posTopCookingType = type === 'soup' ? 'soup' : 'grill';
+        const btnGrill = document.getElementById('pos-top-btn-grill');
+        const btnSoup = document.getElementById('pos-top-btn-soup');
+        const radioGrill = document.getElementById('pos-top-radio-grill');
+        const radioSoup = document.getElementById('pos-top-radio-soup');
+        const spiceSec = document.getElementById('pos-top-spiciness-section');
+        const soupSec = document.getElementById('pos-top-soup-section');
+
+        const activeBtnCls = 'p-2.5 rounded-2xl border-2 text-left transition-all border-[#D90012] bg-[#FFF0F1] shadow-xs flex items-center gap-2 group cursor-pointer';
+        const inactiveBtnCls = 'p-2.5 rounded-2xl border-2 text-left transition-all border-slate-200 bg-white flex items-center gap-2 hover:border-slate-300 group cursor-pointer';
+        const activeRadioHtml = '<div class="w-2 h-2 rounded-full bg-blue-600"></div>';
+
+        if (posTopCookingType === 'grill') {
+            if (btnGrill) {
+                btnGrill.className = activeBtnCls;
+                btnGrill.querySelector('.font-extrabold')?.classList.replace('text-[#101114]', 'text-[#D90012]');
+            }
+            if (btnSoup) {
+                btnSoup.className = inactiveBtnCls;
+                btnSoup.querySelector('.font-extrabold')?.classList.replace('text-[#D90012]', 'text-[#101114]');
+            }
+            if (radioGrill) {
+                radioGrill.className = 'w-4 h-4 rounded-full border-2 border-blue-600 flex items-center justify-center shrink-0 p-0.5';
+                radioGrill.innerHTML = activeRadioHtml;
+            }
+            if (radioSoup) {
+                radioSoup.className = 'w-4 h-4 rounded-full border-2 border-slate-400 flex items-center justify-center shrink-0';
+                radioSoup.innerHTML = '';
+            }
+            if (spiceSec) spiceSec.classList.remove('hidden');
+            if (soupSec) soupSec.classList.add('hidden');
+        } else {
+            if (btnSoup) {
+                btnSoup.className = activeBtnCls;
+                btnSoup.querySelector('.font-extrabold')?.classList.replace('text-[#101114]', 'text-[#D90012]');
+            }
+            if (btnGrill) {
+                btnGrill.className = inactiveBtnCls;
+                btnGrill.querySelector('.font-extrabold')?.classList.replace('text-[#D90012]', 'text-[#101114]');
+            }
+            if (radioSoup) {
+                radioSoup.className = 'w-4 h-4 rounded-full border-2 border-blue-600 flex items-center justify-center shrink-0 p-0.5';
+                radioSoup.innerHTML = activeRadioHtml;
+            }
+            if (radioGrill) {
+                radioGrill.className = 'w-4 h-4 rounded-full border-2 border-slate-400 flex items-center justify-center shrink-0';
+                radioGrill.innerHTML = '';
+            }
+            if (soupSec) soupSec.classList.remove('hidden');
+            if (spiceSec) spiceSec.classList.add('hidden');
+        }
+    }
+
     // Fast 1-Click Add from Card (+) Button
     function quickAddFromCard(card) {
         const id = parseInt(card.dataset.id);
@@ -1637,11 +1755,19 @@
         const price = parseFloat(card.dataset.price);
         const image = card.dataset.image;
         const supportsGrill = card.dataset.grill === '1';
+        const supportsSoup = card.dataset.soup === '1';
+
+        const chosenType = (posTopCookingType === 'soup' && supportsSoup)
+            ? 'soup'
+            : ((posTopCookingType === 'grill' && supportsGrill) ? 'grill' : (supportsGrill ? 'grill' : 'soup'));
+        const chosenSoup = chosenType === 'soup' ? posTopSoupStyle : null;
+        const chosenSpice = chosenType === 'grill' ? posTopSpiciness : 'medium';
 
         const existingIndex = cart.findIndex(i =>
             parseInt(i.product_id) === id &&
-            i.cooking_type === (supportsGrill ? 'grill' : 'soup') &&
-            i.spiciness_level === 'medium' &&
+            i.cooking_type === chosenType &&
+            (i.soup_style || null) === chosenSoup &&
+            i.spiciness_level === chosenSpice &&
             !i.special_instructions
         );
 
@@ -1654,10 +1780,10 @@
                 unit_price: price,
                 quantity: 1,
                 image: image,
-                cooking_type: supportsGrill ? 'grill' : 'soup',
-                grill_style: supportsGrill ? 'brush' : null,
-                soup_style: supportsGrill ? null : 'mala_rich',
-                spiciness_level: 'medium',
+                cooking_type: chosenType,
+                grill_style: chosenType === 'grill' ? 'brush' : null,
+                soup_style: chosenSoup,
+                spiciness_level: chosenSpice,
                 special_instructions: ''
             });
         }
@@ -1674,6 +1800,10 @@
         const supportsGrill = card.dataset.grill === '1';
         const supportsSoup = card.dataset.soup === '1';
 
+        const defaultType = (posTopCookingType === 'soup' && supportsSoup)
+            ? 'soup'
+            : ((posTopCookingType === 'grill' && supportsGrill) ? 'grill' : (supportsGrill ? 'grill' : 'soup'));
+
         currentItem = {
             product_id: id,
             name: name,
@@ -1682,10 +1812,10 @@
             image: image,
             supportsGrill: supportsGrill,
             supportsSoup: supportsSoup,
-            cooking_type: supportsGrill ? 'grill' : 'soup',
+            cooking_type: defaultType,
             grill_style: 'brush',
-            soup_style: 'mala_rich',
-            spiciness: 'medium',
+            soup_style: posTopSoupStyle,
+            spiciness: posTopSpiciness,
             quantity: 1,
             instruction: ''
         };
@@ -1696,12 +1826,17 @@
         document.getElementById('modal-instruction').value = '';
         document.getElementById('modal-subtotal-btn').innerText = `฿${price.toFixed(0)}`;
 
+        const spiceRadio = document.querySelector(`input[name="spiciness"][value="${posTopSpiciness}"]`);
+        if (spiceRadio) spiceRadio.checked = true;
+        const soupRadio = document.querySelector(`input[name="soup_style"][value="${posTopSoupStyle}"]`);
+        if (soupRadio) soupRadio.checked = true;
+
         const btnGrill = document.getElementById('type-btn-grill');
         const btnSoup = document.getElementById('type-btn-soup');
         btnGrill.style.display = supportsGrill ? 'flex' : 'none';
         btnSoup.style.display = supportsSoup ? 'flex' : 'none';
 
-        setCookingType(supportsGrill ? 'grill' : 'soup');
+        setCookingType(defaultType);
         document.getElementById('customize-modal').classList.remove('hidden');
     }
 
