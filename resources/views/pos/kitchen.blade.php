@@ -322,13 +322,11 @@
                                         <span>วิธีชำระเงิน</span>
                                         <span class="flex items-center gap-1.5 font-medium text-slate-800 flex-wrap justify-end">
                                             @if($order->payment_status !== 'paid')
-                                                <span class="px-2.5 py-0.5 rounded-md bg-[#B91C1C] text-white text-[11px] font-extrabold shadow-2xs whitespace-nowrap">
-                                                    รอยังไม่ได้ชำระยอด
-                                                </span>
                                                 <button type="button"
-                                                        onclick="updateStatus({{ $order->id }}, 'confirmed', true)"
-                                                        class="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-0.5 rounded-lg shadow-2xs transition cursor-pointer whitespace-nowrap shrink-0">
-                                                    <span>ยืนยันรับเงินแล้ว</span>
+                                                        onclick="if(confirm('ยืนยันได้รับยอดชำระเงินสำหรับคิว {{ $order->queue_number }} แล้วใช่หรือไม่?')) updateStatus({{ $order->id }}, 'confirmed', true)"
+                                                        title="คลิกเพื่อยืนยันรับเงินแล้ว"
+                                                        class="px-5 py-1.5 rounded-xl bg-[#C8102E] hover:bg-[#A80B24] active:scale-[0.98] text-white text-[16px] font-black tracking-wide shadow-md shadow-rose-700/25 whitespace-nowrap cursor-pointer transition-all">
+                                                    ยังไม่ได้ชำระ
                                                 </button>
                                             @elseif(($order->payment_method ?? 'promptpay') === 'promptpay')
                                                 <span class="px-1.5 py-0.5 rounded bg-rose-50 text-[#D90012] border border-rose-200 text-[10px] font-extrabold">PromptPay</span>
