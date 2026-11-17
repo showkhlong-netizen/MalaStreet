@@ -431,16 +431,31 @@
                                     </p>
                                 </div>
 
-                                <div class="flex items-center justify-between mt-3 pt-1">
-                                    <div class="flex items-baseline gap-1">
-                                        <span class="text-[18.5px] mala-font-bold text-[#E50914] leading-none">฿{{ number_format($product->price_per_stick, 0) }}</span>
-                                        <span class="text-[12px] mala-font-thin text-slate-500">/ไม้</span>
+                                <div class="flex items-center justify-between gap-2 mt-3 pt-1">
+                                    <div class="flex items-center flex-wrap gap-x-2 gap-y-1 min-w-0">
+                                        <div class="flex items-baseline gap-1 shrink-0">
+                                            <span class="text-[18.5px] mala-font-bold text-[#E50914] leading-none">฿{{ number_format($product->price_per_stick, 0) }}</span>
+                                            <span class="text-[12px] mala-font-thin text-slate-500">/ไม้</span>
+                                        </div>
+
+                                        @php
+                                            $stockQty = (int) $product->stock_sticks;
+                                            $stockBadgeClass = $stockQty <= 0
+                                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                                : ($stockQty <= 5
+                                                    ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200');
+                                        @endphp
+                                        <span data-role="stock-badge"
+                                              class="inline-flex items-center px-2 py-0.5 rounded-full border text-[10.5px] mala-font-mid-bold leading-tight whitespace-nowrap shrink-0 {{ $stockBadgeClass }}">
+                                            {{ $stockQty > 0 ? 'เหลือ ' . $stockQty . ' ไม้' : 'หมดชั่วคราว' }}
+                                        </span>
                                     </div>
 
                                     <!-- Quick Add (+) Circular Red Button -->
                                     <button type="button"
                                             onclick="event.stopPropagation(); quickAddFromCard(this.closest('.product-card'))"
-                                            class="w-8 h-8 rounded-full bg-[#E50914] hover:bg-[#C8102E] text-white flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                                            class="w-8 h-8 rounded-full bg-[#E50914] hover:bg-[#C8102E] text-white flex items-center justify-center shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
                                             title="เพิ่ม {{ $displayName }} ลงบิลทันที">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.6" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14"/>
@@ -2019,6 +2034,18 @@
                         card.setAttribute('data-image', p.image_url);
 
                         card.setAttribute('data-stock', p.stock_sticks);
+                        const stockBadgeEl = card.querySelector('[data-role="stock-badge"]');
+                        if (stockBadgeEl) {
+                            const qty = Number(p.stock_sticks || 0);
+                            stockBadgeEl.textContent = qty > 0 ? `เหลือ ${qty} ไม้` : 'หมดชั่วคราว';
+                            stockBadgeEl.className = 'inline-flex items-center px-2 py-0.5 rounded-full border text-[10.5px] mala-font-mid-bold leading-tight whitespace-nowrap shrink-0 ' + (
+                                qty <= 0
+                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                    : (qty <= 5
+                                        ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                        : 'bg-emerald-50 text-emerald-700 border-emerald-200')
+                            );
+                        }
                         if (p.category_slug && card.getAttribute('data-category') !== p.category_slug) {
                             card.setAttribute('data-category', p.category_slug);
                             categoryChanged = true;
