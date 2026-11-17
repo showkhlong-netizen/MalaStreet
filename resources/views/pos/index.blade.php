@@ -922,7 +922,7 @@
 <!-- ============================================================================= -->
 <div id="pos-confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/65 backdrop-blur-xs p-4"
      onclick="if(event.target === this) closePosConfirmModal()">
-    <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
+    <div class="bg-white rounded-3xl max-w-md w-full max-h-[92dvh] overflow-y-auto p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
             <div class="flex items-center gap-2.5">
                 <span id="pos-confirm-queue-tag" class="px-3 py-1 rounded-xl bg-emerald-600 text-white font-black text-base">{{ $nextQueueNumber }}</span>
@@ -962,7 +962,55 @@
             </button>
         </div>
 
-        <!-- Mode 1 & 3: Transfer / Split Inputs & Summary -->
+        <!-- Mode 1: Transfer All PromptPay Scan Section (ตรงตามภาพที่ 1 เป๊ะๆ) -->
+        <div id="pos-confirm-transfer-qr-section" class="hidden space-y-2.5">
+            <!-- แถบสรุปราคา (Price Summary Bar) -->
+            <div class="bg-slate-50 border border-slate-200/80 rounded-[14px] p-2.5 space-y-1 text-[11px] text-[#596272]">
+                <div class="flex justify-between">
+                    <span>ค่าอาหาร (<span id="pos-transfer-qr-sticks">0</span> ไม้)</span>
+                    <span class="font-bold text-[#101114]" id="pos-transfer-qr-subtotal">฿0</span>
+                </div>
+                <div class="flex justify-between text-[#D90012]">
+                    <span>ส่วนลดคูปอง</span>
+                    <span class="font-bold" id="pos-transfer-qr-discount">-฿0</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>ค่าจัดส่ง (<span id="pos-transfer-qr-method">บริการหน้าร้าน</span>)</span>
+                    <span class="font-bold text-[#101114]" id="pos-transfer-qr-shipping">ฟรี</span>
+                </div>
+                <div class="flex justify-between items-center pt-1 mt-1 border-t border-slate-200">
+                    <span class="font-extrabold text-[#101114] text-xs">ยอดชำระสุทธิ</span>
+                    <span class="text-lg font-black text-[#D90012] font-mono" id="pos-transfer-qr-total">฿0.00</span>
+                </div>
+            </div>
+
+            <!-- QR Code Box -->
+            <div class="bg-white border-2 border-sky-100 rounded-[14px] p-2.5 text-center shadow-xs">
+                <div class="w-44 h-44 mx-auto bg-white p-1.5 rounded-xl border border-slate-200 flex items-center justify-center">
+                    <img id="pos-transfer-qr-img" src="" alt="PromptPay QR Code" class="w-full h-full object-contain rounded-lg">
+                </div>
+                <div class="mt-2 text-[11px] text-slate-600">
+                    <div data-role="pos-qr-store-name" class="font-bold text-slate-800">{{ $promptPaySettings['store_name'] ?? 'ร้านหม่าล่าสตรีท (Mala Street)' }}</div>
+                    บัญชี: <strong data-role="pos-qr-account-no" class="text-slate-900 font-mono">{{ $promptPaySettings['account_no'] ?? '098-1-53225-2 (กสิกรไทย)' }}</strong>
+                    <span class="block text-[10px] text-slate-500 mt-0.5">ชื่อบัญชี: <span data-role="pos-qr-account-name">{{ $promptPaySettings['account_name'] ?? 'มูนีบ สและแม' }}</span></span>
+                </div>
+                <p class="text-[9.5px] text-slate-400 mt-0.5">{{ $promptPaySettings['receipt_note'] ?? 'สแกนได้ทุกแอปธนาคารไทย ยอดเงินจะขึ้นตรงอัตโนมัติ' }}</p>
+            </div>
+
+            <!-- Actions -->
+            <div class="space-y-1.5 pt-0.5">
+                <button type="button" id="btn-pos-transfer-qr-submit" onclick="submitPosConfirmedOrder()"
+                        class="w-full py-2.5 rounded-full bg-gradient-to-r from-[#D90012] to-[#B8000F] text-white font-bold text-[13px] shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] transition-transform">
+                    <span>โอนเงินเรียบร้อย • ยืนยันสั่งอาหาร</span>
+                </button>
+                <button type="button" onclick="closePosConfirmModal()"
+                        class="w-full py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] cursor-pointer transition-colors">
+                    กลับไปแก้ไขข้อมูล
+                </button>
+            </div>
+        </div>
+
+        <!-- Mode 3: Split Inputs & Summary -->
         <div id="pos-confirm-split-section" class="space-y-4">
             <!-- Cash & Transfer Inputs (พร้อมไอคอนสีเดียวเด่น) -->
             <div class="grid grid-cols-2 gap-3">
@@ -1026,7 +1074,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2.5 pt-1">
+        <div id="pos-confirm-default-footer" class="grid grid-cols-2 gap-2.5 pt-1">
             <button type="button" id="btn-pos-confirm-cancel" onclick="closePosConfirmModal()"
                 class="py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold cursor-pointer">
                 กลับไปหน้าทำรายการ
@@ -1035,6 +1083,73 @@
                 class="py-2.5 rounded-2xl bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold shadow-sm cursor-pointer">
                 ยืนยันถูกต้องแล้ว
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================================= -->
+<!-- MODAL 3.3: SPLIT PAYMENT FINAL PROMPTPAY QR SCAN MODAL (ตามภาพที่ 1 เป๊ะ)      -->
+<!-- ============================================================================= -->
+<div id="pos-split-qr-modal" class="hidden fixed inset-0 z-[55] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+     onclick="if(event.target === this) backFromSplitQrToConfirmModal()">
+    <div class="bg-white w-full max-w-[340px] my-auto max-h-[90dvh] flex flex-col rounded-[22px] overflow-hidden shadow-2xl border border-slate-100">
+        <!-- Header -->
+        <div class="shrink-0 bg-gradient-to-r from-[#0F2C59] to-[#1B498A] px-3.5 py-2.5 text-white flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h6v6H3V3zm12 0h6v6h-6V3zM3 15h6v6H3v-6zm12 0h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm4 0h2v2h-2v-2z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-[13px] font-black tracking-tight leading-tight">สแกนจ่าย PromptPay</h3>
+                    <p class="text-[10px] text-sky-100">คิวออเดอร์: <span id="pos-split-qr-queue" class="font-mono font-bold text-white">-</span> (แบ่งจ่าย)</p>
+                </div>
+            </div>
+            <button type="button" onclick="backFromSplitQrToConfirmModal()" class="w-6 h-6 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center text-[11px] cursor-pointer">✕</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto overscroll-contain p-3 space-y-2.5">
+            <!-- แถบสรุปราคาแบ่งจ่าย -->
+            <div class="bg-slate-50 border border-slate-200/80 rounded-[14px] p-2.5 space-y-1 text-[11px] text-[#596272]">
+                <div class="flex justify-between">
+                    <span>ยอดรวมตามบิล (<span id="pos-split-qr-sticks">0</span> ไม้)</span>
+                    <span class="font-bold text-[#101114]" id="pos-split-qr-bill-total">฿0.00</span>
+                </div>
+                <div class="flex justify-between text-emerald-700">
+                    <span>รับเงินสดแล้ว</span>
+                    <span class="font-bold" id="pos-split-qr-cash-paid">-฿0.00</span>
+                </div>
+                <div class="flex justify-between items-center pt-1 mt-1 border-t border-slate-200">
+                    <span class="font-extrabold text-[#101114] text-xs">ยอดชำระสุทธิ (โอน)</span>
+                    <span class="text-lg font-black text-[#D90012] font-mono" id="pos-split-qr-transfer-total">฿0.00</span>
+                </div>
+            </div>
+
+            <!-- QR Code Box -->
+            <div class="bg-white border-2 border-sky-100 rounded-[14px] p-2.5 text-center shadow-xs">
+                <div class="w-44 h-44 mx-auto bg-white p-1.5 rounded-xl border border-slate-200 flex items-center justify-center">
+                    <img id="pos-split-qr-img" src="" alt="PromptPay QR Code" class="w-full h-full object-contain rounded-lg">
+                </div>
+                <div class="mt-2 text-[11px] text-slate-600">
+                    <div data-role="pos-qr-store-name" class="font-bold text-slate-800">{{ $promptPaySettings['store_name'] ?? 'ร้านหม่าล่าสตรีท (Mala Street)' }}</div>
+                    บัญชี: <strong data-role="pos-qr-account-no" class="text-slate-900 font-mono">{{ $promptPaySettings['account_no'] ?? '098-1-53225-2 (กสิกรไทย)' }}</strong>
+                    <span class="block text-[10px] text-slate-500 mt-0.5">ชื่อบัญชี: <span data-role="pos-qr-account-name">{{ $promptPaySettings['account_name'] ?? 'มูนีบ สและแม' }}</span></span>
+                </div>
+                <p class="text-[9.5px] text-slate-400 mt-0.5">{{ $promptPaySettings['receipt_note'] ?? 'สแกนได้ทุกแอปธนาคารไทย ยอดเงินจะขึ้นตรงอัตโนมัติ' }}</p>
+            </div>
+
+            <!-- Actions -->
+            <div class="space-y-1.5 pt-0.5">
+                <button type="button" id="btn-pos-split-qr-submit" onclick="executePosConfirmedOrderSubmission()"
+                        class="w-full py-2.5 rounded-full bg-gradient-to-r from-[#D90012] to-[#B8000F] text-white font-bold text-[13px] shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] transition-transform">
+                    <span>โอนเงินเรียบร้อย • ยืนยันสั่งอาหาร</span>
+                </button>
+                <button type="button" onclick="backFromSplitQrToConfirmModal()"
+                        class="w-full py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] cursor-pointer transition-colors">
+                    กลับไปแก้ไขข้อมูล
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -1986,6 +2101,12 @@
     // === POS CONFIRM CHECKOUT MODAL & DRAFT ORDER LOGIC ===
     let posConfirmExpectedTotal = 0;
     let posConfirmCurrentMode = 'transfer';
+    let posPendingSubmission = null;
+
+    function buildPosQrImageUrl(amount) {
+        const emv = buildPosLockedPromptPayPayload(STORE_PROMPTPAY_SETTINGS.payload, amount);
+        return `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${encodeURIComponent(emv)}`;
+    }
 
     function openPosConfirmModal() {
         if (cart.length === 0) return;
@@ -2018,39 +2139,65 @@
         }
     }
 
+    function populatePosTransferQrView() {
+        const { totalSticks, subtotal, shipping, discount, total } = getCartPricing();
+        const sticksEl = document.getElementById('pos-transfer-qr-sticks');
+        const subEl = document.getElementById('pos-transfer-qr-subtotal');
+        const discEl = document.getElementById('pos-transfer-qr-discount');
+        const methodEl = document.getElementById('pos-transfer-qr-method');
+        const shipEl = document.getElementById('pos-transfer-qr-shipping');
+        const totEl = document.getElementById('pos-transfer-qr-total');
+        const imgEl = document.getElementById('pos-transfer-qr-img');
+
+        if (sticksEl) sticksEl.textContent = String(totalSticks);
+        if (subEl) subEl.textContent = `฿${subtotal.toFixed(0)}`;
+        if (discEl) discEl.textContent = `-฿${discount.toFixed(0)}`;
+        if (methodEl) methodEl.textContent = fulfillmentMode === 'delivery' ? 'สั่งเดลิเวอรี่' : 'บริการหน้าร้าน';
+        if (shipEl) shipEl.textContent = shipping > 0 ? `฿${shipping.toFixed(0)}` : 'ฟรี';
+        if (totEl) totEl.textContent = `฿${total.toFixed(2)}`;
+        if (imgEl) imgEl.src = buildPosQrImageUrl(total);
+    }
+
     function setPosConfirmMode(mode) {
         posConfirmCurrentMode = mode;
         const cashInput = document.getElementById('pos-confirm-cash');
         const transferInput = document.getElementById('pos-confirm-transfer');
+        const transferQrSection = document.getElementById('pos-confirm-transfer-qr-section');
         const splitSection = document.getElementById('pos-confirm-split-section');
         const cashTenderSection = document.getElementById('pos-confirm-cash-tender-section');
         const cashReceivedInput = document.getElementById('pos-confirm-cash-received');
+        const defaultFooter = document.getElementById('pos-confirm-default-footer');
         const cancelBtn = document.getElementById('btn-pos-confirm-cancel');
         const submitBtn = document.getElementById('btn-pos-confirm-submit');
 
         const total = posConfirmExpectedTotal;
 
-        if (mode === 'cash') {
+        if (mode === 'transfer') {
+            if (transferQrSection) transferQrSection.classList.remove('hidden');
+            if (splitSection) splitSection.classList.add('hidden');
+            if (cashTenderSection) cashTenderSection.classList.add('hidden');
+            if (defaultFooter) defaultFooter.classList.add('hidden');
+            populatePosTransferQrView();
+        } else if (mode === 'cash') {
+            if (transferQrSection) transferQrSection.classList.add('hidden');
             if (splitSection) splitSection.classList.add('hidden');
             if (cashTenderSection) cashTenderSection.classList.remove('hidden');
+            if (defaultFooter) defaultFooter.classList.remove('hidden');
             if (cashReceivedInput) cashReceivedInput.value = Number(total.toFixed(2)).toString();
             if (cancelBtn) cancelBtn.textContent = 'ยกเลิก';
             if (submitBtn) submitBtn.textContent = '✅ ยืนยันชำระเงิน & พิมพ์ใบเสร็จ';
             recalcPosConfirmCashChange();
         } else {
+            if (transferQrSection) transferQrSection.classList.add('hidden');
             if (splitSection) splitSection.classList.remove('hidden');
             if (cashTenderSection) cashTenderSection.classList.add('hidden');
+            if (defaultFooter) defaultFooter.classList.remove('hidden');
             if (cancelBtn) cancelBtn.textContent = 'กลับไปหน้าทำรายการ';
             if (submitBtn) submitBtn.textContent = 'ยืนยันถูกต้องแล้ว';
             if (cashInput && transferInput) {
-                if (mode === 'transfer') {
-                    cashInput.value = '0.00';
-                    transferInput.value = total.toFixed(2);
-                } else {
-                    const halfCash = Math.floor(total / 2);
-                    cashInput.value = halfCash.toFixed(2);
-                    transferInput.value = Math.max(0, total - halfCash).toFixed(2);
-                }
+                const halfCash = Math.floor(total / 2);
+                cashInput.value = halfCash.toFixed(2);
+                transferInput.value = Math.max(0, total - halfCash).toFixed(2);
             }
             recalcPosConfirmSummary();
         }
@@ -2129,6 +2276,47 @@
         }));
     }
 
+    function openSplitQrModal(cashVal, transferVal) {
+        const { totalSticks, total } = getCartPricing();
+        const qEl = document.getElementById('pos-split-qr-queue');
+        const sticksEl = document.getElementById('pos-split-qr-sticks');
+        const billEl = document.getElementById('pos-split-qr-bill-total');
+        const cashEl = document.getElementById('pos-split-qr-cash-paid');
+        const transferEl = document.getElementById('pos-split-qr-transfer-total');
+        const imgEl = document.getElementById('pos-split-qr-img');
+
+        if (qEl) qEl.textContent = currentQueue;
+        if (sticksEl) sticksEl.textContent = String(totalSticks);
+        if (billEl) billEl.textContent = `฿${total.toFixed(2)}`;
+        if (cashEl) cashEl.textContent = `-฿${cashVal.toFixed(2)}`;
+        if (transferEl) transferEl.textContent = `฿${transferVal.toFixed(2)}`;
+        if (imgEl) imgEl.src = buildPosQrImageUrl(transferVal);
+
+        closePosConfirmModal();
+        const splitModal = document.getElementById('pos-split-qr-modal');
+        if (splitModal) {
+            splitModal.classList.remove('hidden');
+            splitModal.classList.add('flex');
+        }
+    }
+
+    function closeSplitQrModal() {
+        const splitModal = document.getElementById('pos-split-qr-modal');
+        if (splitModal) {
+            splitModal.classList.add('hidden');
+            splitModal.classList.remove('flex');
+        }
+    }
+
+    function backFromSplitQrToConfirmModal() {
+        closeSplitQrModal();
+        const confirmModal = document.getElementById('pos-confirm-modal');
+        if (confirmModal) {
+            confirmModal.classList.remove('hidden');
+            confirmModal.classList.add('flex');
+        }
+    }
+
     async function submitPosConfirmedOrder() {
         if (cart.length === 0) return;
 
@@ -2143,6 +2331,10 @@
                 return;
             }
             payMethod = 'cash';
+        } else if (posConfirmCurrentMode === 'transfer') {
+            cashVal = 0;
+            transferVal = posConfirmExpectedTotal;
+            payMethod = 'promptpay';
         } else {
             cashVal = Math.max(0, parseFloat(document.getElementById('pos-confirm-cash')?.value || '0'));
             transferVal = Math.max(0, parseFloat(document.getElementById('pos-confirm-transfer')?.value || '0'));
@@ -2153,16 +2345,42 @@
             payMethod = transferVal > 0 ? 'promptpay' : 'cash';
         }
 
-        const btn = document.getElementById('btn-pos-confirm-submit');
-        if (btn) {
-            btn.disabled = true;
-            btn.textContent = 'กำลังบันทึก...';
+        const customerName = document.getElementById('customer-name-input')?.value.trim() || 'ลูกค้าหน้าร้าน';
+        const note = posConfirmCurrentMode === 'split'
+            ? (document.getElementById('pos-confirm-note')?.value.trim() || '')
+            : '';
+
+        posPendingSubmission = {
+            payment_method: payMethod,
+            cash_amount: cashVal,
+            transfer_amount: transferVal,
+            customer_name: customerName,
+            notes: note,
+        };
+
+        if (posConfirmCurrentMode === 'split' && transferVal > 0) {
+            openSplitQrModal(cashVal, transferVal);
+            return;
         }
 
-        const customerName = document.getElementById('customer-name-input')?.value.trim() || 'ลูกค้าหน้าร้าน';
-        const note = posConfirmCurrentMode === 'cash'
-            ? ''
-            : (document.getElementById('pos-confirm-note')?.value.trim() || '');
+        await executePosConfirmedOrderSubmission();
+    }
+
+    async function executePosConfirmedOrderSubmission() {
+        if (cart.length === 0 || !posPendingSubmission) return;
+
+        const btnDefault = document.getElementById('btn-pos-confirm-submit');
+        const btnTransfer = document.getElementById('btn-pos-transfer-qr-submit');
+        const btnSplitQr = document.getElementById('btn-pos-split-qr-submit');
+        const activeBtn = posConfirmCurrentMode === 'transfer'
+            ? btnTransfer
+            : (posConfirmCurrentMode === 'split' && posPendingSubmission.transfer_amount > 0 ? btnSplitQr : btnDefault);
+
+        const originalText = activeBtn ? activeBtn.textContent : '';
+        if (activeBtn) {
+            activeBtn.disabled = true;
+            activeBtn.textContent = 'กำลังบันทึก...';
+        }
 
         try {
             const response = await fetch("{{ route('pos.order.store') }}", {
@@ -2174,19 +2392,21 @@
                 },
                 body: JSON.stringify({
                     items: buildPosCheckoutItemsPayload(),
-                    payment_method: payMethod,
-                    cash_amount: cashVal,
-                    transfer_amount: transferVal,
+                    payment_method: posPendingSubmission.payment_method,
+                    cash_amount: posPendingSubmission.cash_amount,
+                    transfer_amount: posPendingSubmission.transfer_amount,
                     is_draft: false,
-                    customer_name: customerName,
+                    customer_name: posPendingSubmission.customer_name,
                     coupon_code: activeCoupon,
                     fulfillment_mode: fulfillmentMode,
-                    notes: note
+                    notes: posPendingSubmission.notes
                 })
             });
 
             const data = await response.json();
             if (data.success) {
+                posPendingSubmission = null;
+                closeSplitQrModal();
                 closePosConfirmModal();
                 showThermalReceipt(data.order);
                 cart = [];
@@ -2202,11 +2422,9 @@
             console.error(err);
             alert('เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย');
         } finally {
-            if (btn) {
-                btn.disabled = false;
-                btn.textContent = posConfirmCurrentMode === 'cash'
-                    ? '✅ ยืนยันชำระเงิน & พิมพ์ใบเสร็จ'
-                    : 'ยืนยันถูกต้องแล้ว';
+            if (activeBtn) {
+                activeBtn.disabled = false;
+                activeBtn.textContent = originalText;
             }
         }
     }
@@ -2343,7 +2561,7 @@
         document.getElementById('receipt-datetime').innerText = new Date(order.created_at).toLocaleString('th-TH');
         document.getElementById('receipt-order-no').innerText = order.order_no;
         document.getElementById('receipt-total-amount').innerText = `฿${parseFloat(order.total_amount).toFixed(2)}`;
-        document.getElementById('receipt-pay-method').innerText = order.payment_method === 'cash' ? 'เงินสด' : 'พร้อมเพย์ QR';
+        document.getElementById('receipt-pay-method').innerText = order.payment_method === 'cash' ? 'เงินสด' : 'เงินโอน';
 
         const listContainer = document.getElementById('receipt-items-list');
         let html = '';
