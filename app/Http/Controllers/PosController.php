@@ -176,8 +176,11 @@ class PosController extends Controller
             'items.*.soup_style' => 'nullable|in:mala_rich,tomyum_rich,black_soup',
             'items.*.spiciness_level' => 'required|in:none,mild,medium,hot',
             'items.*.special_instructions' => 'nullable|string|max:255',
-            'payment_method' => 'required|in:cash,promptpay',
+            'payment_method' => 'nullable|in:cash,promptpay',
             'cash_received' => 'nullable|numeric|min:0',
+            'cash_amount' => 'nullable|numeric|min:0',
+            'transfer_amount' => 'nullable|numeric|min:0',
+            'is_draft' => 'nullable|boolean',
             'customer_name' => 'nullable|string|max:100',
             'customer_phone' => 'nullable|string|max:20',
             'coupon_code' => 'nullable|string|max:30',
@@ -279,10 +282,28 @@ class PosController extends Controller
 
             $totalExtra = $soupExtraTotal + $deliveryFee;
             $totalAmount = max(0, $subtotal + $totalExtra - $discountAmount);
+            $isDraft = (bool) ($validated['is_draft'] ?? false);
+            $paymentMethod = $validated['payment_method'] ?? 'cash';
+
+            $cashAmountInput = isset($validated['cash_amount']) ? (float) $validated['cash_amount'] : null;
+            $transferAmountInput = isset($validated['transfer_amount']) ? (float) $validated['transfer_amount'] : null;
+
             $cashReceived = $validated['cash_received'] ?? null;
             $changeAmount = null;
 
-            if ($validated['payment_method'] === 'cash' && $cashReceived !== null) {
+            if ($cashAmountInput !== null || $transferAmountInput !== null) {
+                $cashVal = max(0, (float) ($cashAmountInput ?? 0));
+                $transferVal = max(0, (float) ($transferAmountInput ?? 0));
+                if ($transferVal > 0 && $cashVal <= 0) {
+                    $paymentMethod = 'promptpay';
+                } elseif ($cashVal > 0 && $transferVal <= 0) {
+                    $paymentMethod = 'cash';
+                } elseif ($transferVal > 0 && $cashVal > 0) {
+                    $paymentMethod = 'promptpay';
+                }
+                $cashReceived = $cashVal > 0 ? $cashVal : null;
+                $changeAmount = max(0, ($cashVal + $transferVal) - $totalAmount);
+            } elseif ($paymentMethod === 'cash' && $cashReceived !== null) {
                 $changeAmount = max(0, $cashReceived - $totalAmount);
             }
 
@@ -294,8 +315,8 @@ class PosController extends Controller
                 'customer_phone' => $validated['customer_phone'] ?? null,
                 'pickup_time' => $fulfillmentMode === 'delivery' ? 'เดลิเวอรี่ (ส่งที่บ้าน)' : ($fulfillmentMode === 'pickup' ? 'รับที่ร้าน' : 'บริการหน้าร้าน'),
                 'status' => 'cooking', // POS orders immediately start cooking
-                'payment_method' => $validated['payment_method'],
-                'payment_status' => 'paid',
+                'payment_method' => $paymentMethod,
+                'payment_status' => $isDraft ? 'unpaid' : 'paid',
                 'subtotal' => $subtotal,
                 'soup_extra' => $totalExtra,
                 'discount' => $discountAmount,
@@ -303,7 +324,7 @@ class PosController extends Controller
                 'cash_received' => $cashReceived,
                 'change_amount' => $changeAmount,
                 'notes' => $validated['notes'] ?? null,
-                'paid_at' => Carbon::now(),
+                'paid_at' => $isDraft ? null : Carbon::now(),
             ]);
 
             foreach ($orderItemsData as $itemData) {
@@ -318,14 +339,15 @@ class PosController extends Controller
         AuditLog::record(
             'pos',
             'create',
-            'เปิดบิลขายหน้าร้าน (POS)',
+            $order->payment_status === 'paid' ? 'เปิดบิลขายหน้าร้าน (POS)' : 'บันทึกร่างออเดอร์หน้าร้าน (POS)',
             "คิว {$order->queue_number} ({$order->order_no}) ยอด ฿" . number_format((float) $order->total_amount, 2),
             [
                 'order_id' => $order->id,
                 'order_no' => $order->order_no,
                 'queue_number' => $order->queue_number,
                 'total_amount' => $order->total_amount,
-                'payment_method' => $validated['payment_method'],
+                'payment_method' => $order->payment_method,
+                'payment_status' => $order->payment_status,
             ]
         );
 

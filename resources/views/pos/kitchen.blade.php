@@ -321,19 +321,21 @@
                                     <div class="flex items-center justify-between text-slate-600 gap-2">
                                         <span>วิธีชำระเงิน</span>
                                         <span class="flex items-center gap-1.5 font-medium text-slate-800 flex-wrap justify-end">
-                                            @if(($order->payment_method ?? 'promptpay') === 'promptpay')
+                                            @if($order->payment_status !== 'paid')
+                                                <span class="px-2.5 py-0.5 rounded-md bg-[#B91C1C] text-white text-[11px] font-extrabold shadow-2xs whitespace-nowrap">
+                                                    รอยังไม่ได้ชำระยอด
+                                                </span>
+                                                <button type="button"
+                                                        onclick="updateStatus({{ $order->id }}, 'confirmed', true)"
+                                                        class="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-0.5 rounded-lg shadow-2xs transition cursor-pointer whitespace-nowrap shrink-0">
+                                                    <span>ยืนยันรับเงินแล้ว</span>
+                                                </button>
+                                            @elseif(($order->payment_method ?? 'promptpay') === 'promptpay')
                                                 <span class="px-1.5 py-0.5 rounded bg-rose-50 text-[#D90012] border border-rose-200 text-[10px] font-extrabold">PromptPay</span>
                                                 <span>โอนจ่าย / QR</span>
                                             @else
                                                 <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-extrabold">เงินสด</span>
                                                 <span>ชำระหน้าร้าน</span>
-                                            @endif
-                                            @if($order->payment_status !== 'paid')
-                                                <button type="button"
-                                                        onclick="updateStatus({{ $order->id }}, 'confirmed', true)"
-                                                        class="ml-1 inline-flex items-center gap-1 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-0.5 rounded-lg shadow-2xs transition cursor-pointer whitespace-nowrap shrink-0">
-                                                    <span>ยืนยันรับเงินแล้ว</span>
-                                                </button>
                                             @endif
                                         </span>
                                     </div>

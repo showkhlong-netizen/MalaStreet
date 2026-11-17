@@ -582,30 +582,24 @@
                     </div>
                 </div>
 
-                <!-- 7. Bottom Dual Payment Buttons (Matches Image 1 100%) -->
-                <div class="p-4 pt-2 grid grid-cols-2 gap-2.5">
-                    <!-- Left: ชำระเงินสด (เมื่อรับสินค้า) -->
-                    <button type="button" onclick="openPaymentModal('cash')" id="btn-pay-cash"
-                            class="py-2.5 px-3 rounded-[14px] bg-[#5B6470] hover:bg-[#49505A] disabled:opacity-45 disabled:cursor-not-allowed text-white flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer">
-                        <span class="w-7 h-5 rounded bg-emerald-500/25 border border-emerald-400/50 flex items-center justify-center text-emerald-300 text-xs shrink-0">💵</span>
-                        <div class="text-left leading-tight">
-                            <span class="text-[13.5px] mala-font-bold block">ชำระเงินสด</span>
-                            <span class="text-[10px] mala-font-thin text-white/80 block">(เมื่อรับสินค้า)</span>
-                        </div>
+                <!-- 7. Bottom 2 Stacked Action Tabs: 1.ยืนยันทำรายการ  2.บันทึกร่าง -->
+                <div class="p-4 pt-2 flex flex-col gap-2">
+                    <!-- Tab 1: ยืนยันทำรายการ (เปิดป๊อปอัปสรุปยอดและวิธีชำระเงิน) -->
+                    <button type="button" onclick="openPosConfirmModal()" id="btn-pos-confirm"
+                            class="w-full py-3 px-4 rounded-[14px] bg-gradient-to-r from-[#E50914] to-[#C8102E] hover:from-[#C8102E] hover:to-[#A80B24] disabled:opacity-45 disabled:cursor-not-allowed text-white flex items-center justify-center gap-2 shadow-md shadow-rose-600/25 transition-all cursor-pointer">
+                        <svg class="w-[18px] h-[18px] stroke-current shrink-0" fill="none" stroke-width="2.3" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="text-[14.5px] mala-font-bold">ยืนยันทำรายการ</span>
                     </button>
 
-                    <!-- Right: สแกน PromptPay (โอนชำระได้ทันที) -->
-                    <button type="button" onclick="openPaymentModal('promptpay')" id="btn-pay-qr"
-                            class="py-2.5 px-3 rounded-[14px] bg-gradient-to-r from-[#E50914] to-[#C8102E] hover:from-[#C8102E] hover:to-[#A80B24] disabled:opacity-45 disabled:cursor-not-allowed text-white flex items-center justify-center gap-2 shadow-md shadow-rose-600/25 transition-all cursor-pointer">
-                        <span class="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center text-white shrink-0">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v2h-3v-2zm-3 0h2v3h-2v-3zm3 3h3v2h-3v-2zm-3 3h2v2h-2v-2zm3 0h3v2h-3v-2z"/>
-                            </svg>
-                        </span>
-                        <div class="text-left leading-tight">
-                            <span class="text-[13.5px] mala-font-bold block">สแกน PromptPay</span>
-                            <span class="text-[10px] mala-font-thin text-white/85 block">(โอนชำระได้ทันที)</span>
-                        </div>
+                    <!-- Tab 2 (Row 2): บันทึกร่าง (ย้ายไปหน้าจอครัว + แสดงรอยังไม่ได้ชำระยอด) -->
+                    <button type="button" onclick="submitPosDraftOrder()" id="btn-pos-draft"
+                            class="w-full py-2.5 px-4 rounded-[14px] bg-[#5B6470] hover:bg-[#49505A] disabled:opacity-45 disabled:cursor-not-allowed text-white flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer">
+                        <svg class="w-[17px] h-[17px] stroke-current shrink-0" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span class="text-[13.5px] mala-font-bold">บันทึกร่าง</span>
                     </button>
                 </div>
             </div>
@@ -918,6 +912,100 @@
             <button type="button" onclick="closePaymentModal()" class="w-1/3 py-3 rounded-xl border border-slate-300 text-xs mala-font-mid-bold text-slate-700 hover:bg-slate-100">ยกเลิก</button>
             <button type="button" onclick="submitOrder()" id="btn-confirm-submit" class="w-2/3 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs mala-font-bold shadow-md flex items-center justify-center space-x-1.5">
                 <span>✅ ยืนยันชำระเงิน & พิมพ์ใบเสร็จ</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================================= -->
+<!-- MODAL 3.2: POS CONFIRM CHECKOUT SUMMARY & PAYMENT SPLIT (ตามภาพที่ 2 เป๊ะ)    -->
+<!-- ============================================================================= -->
+<div id="pos-confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/65 backdrop-blur-xs p-4"
+     onclick="if(event.target === this) closePosConfirmModal()">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2.5">
+                <span id="pos-confirm-queue-tag" class="px-3 py-1 rounded-xl bg-emerald-600 text-white font-black text-base">{{ $nextQueueNumber }}</span>
+                <div>
+                    <h3 class="text-sm font-black text-slate-900">สรุปยอดก่อนยืนยันทำรายการ</h3>
+                    <p class="text-[11px] text-slate-500">ลูกค้า: <span id="pos-confirm-customer" class="font-bold text-slate-700">ลูกค้าหน้าร้าน</span></p>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="text-[10.5px] text-slate-400 block">ยอดตามบิล</span>
+                <strong id="pos-confirm-total" class="text-lg font-black text-[#E50914] font-mono">฿0.00</strong>
+            </div>
+        </div>
+
+        <!-- Quick Payment Mode Selector (พร้อมไอคอนสีเดียวเด่น) -->
+        <div class="grid grid-cols-3 gap-2">
+            <button type="button" data-mode="transfer" onclick="setPosConfirmMode('transfer')"
+                class="pos-confirm-mode-btn py-2 px-2.5 rounded-xl text-xs font-bold border transition cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5">
+                <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+                <span>เงินโอนทั้งหมด</span>
+            </button>
+            <button type="button" data-mode="cash" onclick="setPosConfirmMode('cash')"
+                class="pos-confirm-mode-btn py-2 px-2.5 rounded-xl text-xs font-bold border transition cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5">
+                <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span>เงินสดทั้งหมด</span>
+            </button>
+            <button type="button" data-mode="split" onclick="setPosConfirmMode('split')"
+                class="pos-confirm-mode-btn py-2 px-2.5 rounded-xl text-xs font-bold border transition cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5">
+                <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                <span>แบ่งจ่าย</span>
+            </button>
+        </div>
+
+        <!-- Cash & Transfer Inputs (พร้อมไอคอนสีเดียวเด่น) -->
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-slate-700 stroke-current shrink-0" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span>เงินสด (บาท)</span>
+                </label>
+                <input type="number" step="0.01" min="0" id="pos-confirm-cash" oninput="onPosConfirmInput('cash')"
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-slate-900">
+            </div>
+            <div>
+                <label class="text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-slate-700 stroke-current shrink-0" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    <span>เงินโอน (บาท)</span>
+                </label>
+                <input type="number" step="0.01" min="0" id="pos-confirm-transfer" oninput="recalcPosConfirmSummary()"
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-slate-900">
+            </div>
+        </div>
+
+        <div class="px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-600">ยอดรับรวม: <strong id="pos-confirm-received-sum" class="font-mono text-slate-900">฿0.00</strong></span>
+            <span id="pos-confirm-match-status" class="text-[11px] font-bold text-emerald-700">ยอดตรงตามบิลครบถ้วน ✓</span>
+        </div>
+
+        <!-- Order Note Textbox -->
+        <div>
+            <label class="text-[11px] font-bold text-slate-700 block mb-1">หมายเหตุ</label>
+            <textarea id="pos-confirm-note" rows="2" placeholder="ระบุหมายเหตุเพิ่มเติม (ถ้ามี)..."
+                class="w-full px-3 py-2 rounded-2xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-900"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+            <button type="button" onclick="closePosConfirmModal()"
+                class="py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold cursor-pointer">
+                กลับไปหน้าทำรายการ
+            </button>
+            <button type="button" id="btn-pos-confirm-submit" onclick="submitPosConfirmedOrder()"
+                class="py-2.5 rounded-2xl bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold shadow-sm cursor-pointer">
+                ยืนยันถูกต้องแล้ว
             </button>
         </div>
     </div>
@@ -1515,8 +1603,8 @@
     function renderCart() {
         const container = document.getElementById('cart-items-container');
         const emptyState = document.getElementById('cart-empty-state');
-        const btnCash = document.getElementById('btn-pay-cash');
-        const btnQr = document.getElementById('btn-pay-qr');
+        const btnConfirm = document.getElementById('btn-pos-confirm');
+        const btnDraft = document.getElementById('btn-pos-draft');
 
         const { totalSticks, subtotal, shipping, discount, total } = getCartPricing();
 
@@ -1538,14 +1626,14 @@
         if (cart.length === 0) {
             container.innerHTML = '';
             emptyState.classList.remove('hidden');
-            btnCash.disabled = true;
-            btnQr.disabled = true;
+            if (btnConfirm) btnConfirm.disabled = true;
+            if (btnDraft) btnDraft.disabled = true;
             return;
         }
 
         emptyState.classList.add('hidden');
-        btnCash.disabled = false;
-        btnQr.disabled = false;
+        if (btnConfirm) btnConfirm.disabled = false;
+        if (btnDraft) btnDraft.disabled = false;
 
         let html = '';
         cart.forEach((item, index) => {
@@ -1864,6 +1952,225 @@
             showPosSyncToast(data.matched ? `ยืนยันบิล ${data.order_no} แล้ว` : 'ทดสอบ Webhook สำเร็จ');
         } catch (err) {
             if (statusEl) statusEl.textContent = '❌ ทดสอบเชื่อมต่อ Webhook ไม่สำเร็จ';
+        }
+    }
+
+    // === POS CONFIRM CHECKOUT MODAL & DRAFT ORDER LOGIC ===
+    let posConfirmExpectedTotal = 0;
+
+    function openPosConfirmModal() {
+        if (cart.length === 0) return;
+        posConfirmExpectedTotal = getCartTotal();
+        const customerName = document.getElementById('customer-name-input')?.value.trim() || 'ลูกค้าหน้าร้าน';
+
+        const qEl = document.getElementById('pos-confirm-queue-tag');
+        const cEl = document.getElementById('pos-confirm-customer');
+        const tEl = document.getElementById('pos-confirm-total');
+        const nEl = document.getElementById('pos-confirm-note');
+        if (qEl) qEl.textContent = currentQueue;
+        if (cEl) cEl.textContent = customerName;
+        if (tEl) tEl.textContent = `฿${posConfirmExpectedTotal.toFixed(2)}`;
+        if (nEl) nEl.value = '';
+
+        setPosConfirmMode('transfer');
+
+        const modal = document.getElementById('pos-confirm-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+    }
+
+    function closePosConfirmModal() {
+        const modal = document.getElementById('pos-confirm-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
+    function setPosConfirmMode(mode) {
+        const cashInput = document.getElementById('pos-confirm-cash');
+        const transferInput = document.getElementById('pos-confirm-transfer');
+        if (!cashInput || !transferInput) return;
+
+        const total = posConfirmExpectedTotal;
+        if (mode === 'cash') {
+            cashInput.value = total.toFixed(2);
+            transferInput.value = '0.00';
+        } else if (mode === 'transfer') {
+            cashInput.value = '0.00';
+            transferInput.value = total.toFixed(2);
+        } else {
+            const halfCash = Math.floor(total / 2);
+            cashInput.value = halfCash.toFixed(2);
+            transferInput.value = Math.max(0, total - halfCash).toFixed(2);
+        }
+
+        document.querySelectorAll('.pos-confirm-mode-btn').forEach((btn) => {
+            const active = btn.dataset.mode === mode;
+            btn.className = active
+                ? 'pos-confirm-mode-btn py-2 px-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold border border-slate-900 transition cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5'
+                : 'pos-confirm-mode-btn py-2 px-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold border border-slate-200 transition cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5';
+        });
+
+        recalcPosConfirmSummary();
+    }
+
+    function onPosConfirmInput(changedField) {
+        const cashInput = document.getElementById('pos-confirm-cash');
+        const transferInput = document.getElementById('pos-confirm-transfer');
+        if (!cashInput || !transferInput) return;
+
+        const total = posConfirmExpectedTotal;
+        if (changedField === 'cash') {
+            const c = Math.max(0, parseFloat(cashInput.value || '0'));
+            if (c <= total) {
+                transferInput.value = Math.max(0, total - c).toFixed(2);
+            }
+        }
+        recalcPosConfirmSummary();
+    }
+
+    function recalcPosConfirmSummary() {
+        const cashVal = Math.max(0, parseFloat(document.getElementById('pos-confirm-cash')?.value || '0'));
+        const transferVal = Math.max(0, parseFloat(document.getElementById('pos-confirm-transfer')?.value || '0'));
+        const sum = cashVal + transferVal;
+        const diff = sum - posConfirmExpectedTotal;
+
+        const sumEl = document.getElementById('pos-confirm-received-sum');
+        const statusEl = document.getElementById('pos-confirm-match-status');
+        if (sumEl) sumEl.textContent = `฿${sum.toFixed(2)}`;
+        if (statusEl) {
+            if (Math.abs(diff) < 0.01) {
+                statusEl.textContent = 'ยอดตรงตามบิลครบถ้วน ✓';
+                statusEl.className = 'text-[11px] font-bold text-emerald-700';
+            } else if (diff > 0) {
+                statusEl.textContent = `เงินทอน / เกินบิล +฿${diff.toFixed(2)}`;
+                statusEl.className = 'text-[11px] font-bold text-amber-700';
+            } else {
+                statusEl.textContent = `ยังขาดอีก ฿${Math.abs(diff).toFixed(2)}`;
+                statusEl.className = 'text-[11px] font-bold text-rose-600';
+            }
+        }
+    }
+
+    function buildPosCheckoutItemsPayload() {
+        return cart.map(item => ({
+            product_id: item.product_id,
+            quantity: item.quantity,
+            cooking_type: item.cooking_type || 'grill',
+            grill_style: item.grill_style || 'brush',
+            soup_style: item.soup_style || null,
+            spiciness_level: item.spiciness_level || 'medium',
+            special_instructions: item.special_instructions || ''
+        }));
+    }
+
+    async function submitPosConfirmedOrder() {
+        if (cart.length === 0) return;
+        const cashVal = Math.max(0, parseFloat(document.getElementById('pos-confirm-cash')?.value || '0'));
+        const transferVal = Math.max(0, parseFloat(document.getElementById('pos-confirm-transfer')?.value || '0'));
+        if ((cashVal + transferVal) + 0.001 < posConfirmExpectedTotal) {
+            alert('ยอดรับรวมยังไม่ครบตามยอดบิล');
+            return;
+        }
+
+        const btn = document.getElementById('btn-pos-confirm-submit');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'กำลังบันทึก...';
+        }
+
+        const customerName = document.getElementById('customer-name-input')?.value.trim() || 'ลูกค้าหน้าร้าน';
+        const note = document.getElementById('pos-confirm-note')?.value.trim() || '';
+        const payMethod = transferVal > 0 ? 'promptpay' : 'cash';
+
+        try {
+            const response = await fetch("{{ route('pos.order.store') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    items: buildPosCheckoutItemsPayload(),
+                    payment_method: payMethod,
+                    cash_amount: cashVal,
+                    transfer_amount: transferVal,
+                    is_draft: false,
+                    customer_name: customerName,
+                    coupon_code: activeCoupon,
+                    fulfillment_mode: fulfillmentMode,
+                    notes: note
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                closePosConfirmModal();
+                showThermalReceipt(data.order);
+                cart = [];
+                renderCart();
+                document.getElementById('customer-name-input').value = '';
+                const num = parseInt(data.order.queue_number.replace(/\D/g, ''), 10) + 1;
+                currentQueue = 'A' + String(num).padStart(2, '0');
+                document.getElementById('current-queue-tag').innerText = currentQueue;
+            } else {
+                alert('เกิดข้อผิดพลาด: ' + (data.message || 'ไม่สามารถบันทึกออเดอร์ได้'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'ยืนยันถูกต้องแล้ว';
+            }
+        }
+    }
+
+    async function submitPosDraftOrder() {
+        if (cart.length === 0) return;
+        const btn = document.getElementById('btn-pos-draft');
+        if (btn) {
+            btn.disabled = true;
+        }
+        const customerName = document.getElementById('customer-name-input')?.value.trim() || 'ลูกค้าหน้าร้าน';
+
+        try {
+            const response = await fetch("{{ route('pos.order.store') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    items: buildPosCheckoutItemsPayload(),
+                    payment_method: 'cash',
+                    is_draft: true,
+                    customer_name: customerName,
+                    coupon_code: activeCoupon,
+                    fulfillment_mode: fulfillmentMode,
+                    notes: ''
+                })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                cart = [];
+                renderCart();
+                window.location.href = "{{ route('pos.kitchen') }}";
+            } else {
+                alert('เกิดข้อผิดพลาด: ' + (data.message || 'ไม่สามารถบันทึกร่างได้'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย');
+        } finally {
+            if (btn) btn.disabled = false;
         }
     }
 
