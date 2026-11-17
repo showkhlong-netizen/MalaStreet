@@ -122,7 +122,8 @@ class KitchenDeliveryWorkflowTest extends TestCase
 
         $resStep2 = $this->actingAs($admin)->get('/pos/kitchen');
         $resStep2->assertStatus(200);
-        $resStep2->assertSee('หม่าล่าย่างเผ็ดกลาง');
+        $resStep2->assertSee('หม่าล่าย่าง');
+        $resStep2->assertSee('เผ็ดกลาง');
         $resStep2->assertSee('น้ำซุปหม่าล่า');
         $resStep2->assertSee('x2');
         $resStep2->assertSee('x1');

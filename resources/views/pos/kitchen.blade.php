@@ -343,7 +343,7 @@
                                 </div>
                             @endif
 
-                            <!-- Grouped Items List (1: น้ำซุปต้มยำ/น้ำดำ/หม่าล่า, 2: หม่าล่าย่างเผ็ดน้อย/กลาง/มาก + เรียงแบบบิลภาพที่ 4) -->
+                            <!-- Grouped Items List (น้ำซุปต้มยำ/น้ำดำ/หม่าล่า หรือ หม่าล่าย่าง + แคปซูลระดับความเผ็ด) -->
                             @php
                                 $groupedSections = [];
                                 foreach ($order->items as $item) {
@@ -357,25 +357,36 @@
                                             default => 'น้ำซุป',
                                         };
                                         $isSoupGroup = true;
+                                        $spiceLabel = null;
+                                        $spiceBadgeClass = '';
                                     } else {
                                         $spiceKey = $item->spiciness_level ?: 'medium';
                                         $isDip = ($item->grill_style === 'dip');
                                         $groupKey = 'grill_' . $spiceKey . ($isDip ? '_dip' : '');
-                                        $spiceText = match($spiceKey) {
+                                        $groupTitle = 'หม่าล่าย่าง' . ($isDip ? ' (จุ่มซอส)' : '');
+                                        $isSoupGroup = false;
+                                        $spiceLabel = match($spiceKey) {
                                             'none' => 'ไม่เผ็ด',
                                             'mild' => 'เผ็ดน้อย',
                                             'medium' => 'เผ็ดกลาง',
                                             'hot' => 'เผ็ดมาก',
                                             default => 'เผ็ดกลาง',
                                         };
-                                        $groupTitle = 'หม่าล่าย่าง' . $spiceText . ($isDip ? ' (จุ่มซอส)' : '');
-                                        $isSoupGroup = false;
+                                        $spiceBadgeClass = match($spiceKey) {
+                                            'none' => 'bg-slate-100 text-slate-600 border-slate-200',
+                                            'mild' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                            'medium' => 'bg-amber-50 text-amber-800 border-amber-200',
+                                            'hot' => 'bg-rose-50 text-rose-700 border-rose-200',
+                                            default => 'bg-amber-50 text-amber-800 border-amber-200',
+                                        };
                                     }
 
                                     if (!isset($groupedSections[$groupKey])) {
                                         $groupedSections[$groupKey] = [
                                             'title' => $groupTitle,
                                             'is_soup' => $isSoupGroup,
+                                            'spice_label' => $spiceLabel,
+                                            'spice_badge_class' => $spiceBadgeClass,
                                             'total_sticks' => 0,
                                             'items' => [],
                                         ];
@@ -388,9 +399,9 @@
 
                             <div class="space-y-3 my-3">
                                 @foreach($groupedSections as $section)
-                                    <div class="rounded-2xl border {{ $section['is_soup'] ? 'border-rose-200/90' : 'border-slate-200/90' }} bg-white overflow-hidden shadow-2xs">
-                                        <!-- หัวรายการใหญ่เด่น: น้ำซุป(ต้มยำ/น้ำดำ/หม่าล่า) หรือ หม่าล่าย่าง(เผ็ดน้อย/กลาง/มาก) -->
-                                        <div class="px-3.5 py-2 flex items-center justify-between gap-2 border-b {{ $section['is_soup'] ? 'bg-rose-50/90 border-rose-200/80 text-rose-900' : 'bg-amber-50/90 border-amber-200/80 text-slate-900' }}">
+                                    <div class="rounded-2xl border border-slate-200/90 bg-white overflow-hidden shadow-2xs">
+                                        <!-- หัวข้อประเภท: เก็บแค่ไอคอนสีเดียว + ข้อความ (ไม่ใส่แถบสีพื้นหลัง) + แคปซูลระดับความเผ็ด -->
+                                        <div class="px-3.5 pt-2.5 pb-2 flex items-center justify-between gap-2 border-b border-slate-100 text-slate-900">
                                             <div class="flex items-center gap-2 min-w-0">
                                                 @if($section['is_soup'])
                                                     <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
@@ -404,12 +415,19 @@
                                                 @endif
                                                 <span class="text-[15.5px] sm:text-base font-black tracking-tight truncate">{{ $section['title'] }}</span>
                                             </div>
-                                            <span class="px-2 py-0.5 rounded-full bg-white/90 border border-slate-200/80 text-[11px] font-black text-slate-800 whitespace-nowrap shrink-0">
-                                                {{ $section['total_sticks'] }} ไม้
-                                            </span>
+                                            <div class="flex items-center gap-1.5 shrink-0">
+                                                @if(!empty($section['spice_label']))
+                                                    <span class="px-2.5 py-0.5 rounded-full border text-[11px] font-extrabold whitespace-nowrap shrink-0 {{ $section['spice_badge_class'] }}">
+                                                        {{ $section['spice_label'] }}
+                                                    </span>
+                                                @endif
+                                                <span class="px-2 py-0.5 rounded-full bg-slate-50 border border-slate-200/80 text-[11px] font-black text-slate-700 whitespace-nowrap shrink-0">
+                                                    {{ $section['total_sticks'] }} ไม้
+                                                </span>
+                                            </div>
                                         </div>
 
-                                        <!-- รายการอาหารเรียงแนวตั้งแบบตัวอย่างภาพที่ 4 (ตัวอักษรใหญ่กว่าภาพที่ 4 เล็กน้อย) -->
+                                        <!-- รายการอาหารเรียงแนวตั้งแบบตัวอย่างภาพที่ 4 -->
                                         <div class="px-3.5 py-1.5 divide-y divide-slate-100">
                                             @foreach($section['items'] as $item)
                                                 <div class="py-1.5">
@@ -433,7 +451,7 @@
                                     </div>
                                 @endforeach
 
-                                <!-- เส้นประสรุปจำนวนรวมด้านล่างรายการ (สไตล์เดียวกับด้านล่างของภาพที่ 4) -->
+                                <!-- เส้นประสรุปจำนวนรวมด้านล่างรายการ -->
                                 <div class="pt-2 border-t border-dashed border-slate-300 flex items-center justify-between text-[13px] px-1">
                                     <span class="font-bold text-slate-600">จำนวนรวม <strong class="text-slate-900 font-black ml-1">{{ $totalOrderSticks }} ไม้</strong></span>
                                     <span class="font-bold text-slate-600">รวมทั้งสิ้น <strong class="text-slate-950 font-black text-[14.5px] ml-1">฿{{ number_format((float) $order->total_amount, 0) }}</strong></span>
