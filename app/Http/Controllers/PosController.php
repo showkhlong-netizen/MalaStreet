@@ -20,6 +20,27 @@ use Illuminate\View\View;
 class PosController extends Controller
 {
     /**
+     * Save global POS cart panel size level (1..5) for all users.
+     */
+    public function saveCartPanelSize(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'level' => 'required|integer|min:1|max:5',
+        ]);
+        $level = (int) $validated['level'];
+        $version = (string) time();
+        Setting::set('pos_cart_panel_level', (string) $level, 'pos');
+        Setting::set('pos_cart_panel_version', $version, 'pos');
+
+        return response()->json([
+            'success' => true,
+            'level' => $level,
+            'version' => $version,
+            'message' => "บันทึกขนาดหน้าต่างระดับ {$level}/5 สำหรับทุกคนแล้ว",
+        ]);
+    }
+
+    /**
      * Display POS Cashier interface.
      */
     public function index(Request $request): View|JsonResponse
@@ -78,11 +99,15 @@ class PosController extends Controller
 
         $promptPaySettings = self::getStorePromptPaySettings();
         $webhookConfig = PaymentWebhookController::getWebhookConfig();
+        $globalCartLevel = max(1, min(5, (int) Setting::get('pos_cart_panel_level', 3)));
+        $globalCartVersion = (string) Setting::get('pos_cart_panel_version', '0');
 
         return view('pos.index', compact(
             'categories',
             'todayOrders',
             'totalSalesToday',
+            'globalCartLevel',
+            'globalCartVersion',
             'totalOrdersToday',
             'nextQueueNumber',
             'priceHistoriesCount',

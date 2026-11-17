@@ -479,9 +479,9 @@
         <!-- ========================================================================= -->
         <!-- RIGHT COLUMN (4 Cols): Order Cart Panel ("บิลออเดอร์ปัจจุบัน")             -->
         <!-- ========================================================================= -->
-        <aside class="lg:col-span-4 xl:col-span-4 lg:sticky w-full"
+        <aside id="pos-cart-aside" class="lg:col-span-4 xl:col-span-4 lg:sticky w-full"
                style="top: calc(var(--app-header-h, 80px) + 16px);">
-            <div class="bg-white rounded-[22px] shadow-lg border border-slate-200/90 overflow-hidden flex flex-col">
+            <div id="pos-cart-panel" class="bg-white rounded-[22px] shadow-lg border border-slate-200/90 overflow-hidden flex flex-col transition-all origin-top-right">
 
                 <!-- 1. Red Gradient Cart Header -->
                 <div class="bg-gradient-to-r from-[#9E0812] via-[#C8102E] to-[#B00C1B] px-4 py-3.5 text-white flex items-center justify-between">
@@ -499,13 +499,23 @@
                         </div>
                     </div>
 
-                    <button type="button" onclick="clearCart()"
-                            class="bg-black/20 hover:bg-black/30 text-white/95 text-[11.5px] mala-font-mid-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 shrink-0 transition-colors cursor-pointer">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                        <span>ล้างตะกร้า</span>
-                    </button>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button type="button" onclick="clearCart()"
+                                class="bg-black/20 hover:bg-black/30 text-white/95 text-[11.5px] mala-font-mid-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 shrink-0 transition-colors cursor-pointer">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            <span>ล้างตะกร้า</span>
+                        </button>
+                        <button type="button" onclick="openPosCartSizeModal()"
+                                title="ปรับขนาดหน้าต่างบิลออเดอร์ปัจจุบัน"
+                                aria-label="ปรับขนาดหน้าต่างบิลออเดอร์ปัจจุบัน"
+                                class="bg-black/20 hover:bg-black/35 text-white/95 p-1.5 rounded-lg flex items-center justify-center shrink-0 transition-colors cursor-pointer">
+                            <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- 2. Customer / Phone / Delivery Input -->
@@ -1149,6 +1159,50 @@
                     กลับไปแก้ไขข้อมูล
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================================= -->
+<!-- MODAL 3.35: POS CART PANEL SIZE ADJUSTER (5 LEVELS: -1 / +1 + LOCAL/GLOBAL)   -->
+<!-- ============================================================================= -->
+<div id="pos-cart-size-modal" class="hidden fixed inset-0 z-[65] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+     onclick="if(event.target === this) closePosCartSizeModal(true)">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+                <h3 class="text-sm font-black text-slate-900">ปรับขนาดหน้าต่างบิลออเดอร์</h3>
+                <p class="text-[11px] text-slate-500">ปรับได้ 5 ระดับ (ค่ากลางปัจจุบันคือระดับ 3)</p>
+            </div>
+            <button type="button" onclick="closePosCartSizeModal(true)" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs cursor-pointer">✕</button>
+        </div>
+
+        <!-- Stepper -1 / +1 -->
+        <div class="flex items-center justify-between gap-3 bg-slate-50 border border-slate-200/80 rounded-2xl p-3">
+            <button type="button" id="btn-cart-size-minus" onclick="stepPosCartSize(-1)"
+                    class="w-11 h-11 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-black text-base shadow-2xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                -1
+            </button>
+            <div class="text-center">
+                <div class="text-lg font-black text-[#E50914]" id="pos-cart-size-level-text">ระดับ 3 / 5</div>
+                <div class="text-[11px] font-bold text-slate-500" id="pos-cart-size-desc-text">ขนาดกลาง (ค่าเริ่มต้น)</div>
+            </div>
+            <button type="button" id="btn-cart-size-plus" onclick="stepPosCartSize(1)"
+                    class="w-11 h-11 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-black text-base shadow-2xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                +1
+            </button>
+        </div>
+
+        <!-- 2 Save Modes -->
+        <div class="space-y-2 pt-1">
+            <button type="button" onclick="savePosCartSizeLocal()"
+                    class="w-full py-2.5 px-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-sm cursor-pointer transition">
+                บันทึกเฉพาะเครื่องนี้
+            </button>
+            <button type="button" id="btn-save-cart-size-global" onclick="savePosCartSizeGlobal()"
+                    class="w-full py-2.5 px-4 rounded-2xl bg-[#E50914] hover:bg-[#C8102E] text-white text-xs font-bold shadow-sm cursor-pointer transition">
+                บันทึกสำหรับทุกคน (รีเซ็ทเป็นค่าเดียวกัน)
+            </button>
         </div>
     </div>
 </div>
@@ -2708,6 +2762,116 @@
     function closeReceiptModal() {
         document.getElementById('receipt-modal').classList.add('hidden');
     }
+
+    // === POS CART PANEL SIZE ADJUSTER (5 LEVELS: 1..5, DEFAULT 3) ===
+    const POS_CART_ZOOM_MAP = { 1: 0.85, 2: 0.92, 3: 1.0, 4: 1.08, 5: 1.16 };
+    const POS_CART_DESC_MAP = {
+        1: 'เล็กที่สุด',
+        2: 'เล็ก',
+        3: 'ขนาดกลาง (ค่าเริ่มต้น)',
+        4: 'ใหญ่',
+        5: 'ใหญ่ที่สุด'
+    };
+    const POS_GLOBAL_CART_LEVEL = Number(@json($globalCartLevel ?? 3));
+    const POS_GLOBAL_CART_VERSION = String(@json($globalCartVersion ?? '0'));
+    let posCartCurrentLevel = 3;
+    let posCartSavedLevel = 3;
+
+    function applyPosCartSizeLevel(level) {
+        const lv = Math.max(1, Math.min(5, Number(level) || 3));
+        posCartCurrentLevel = lv;
+        const panel = document.getElementById('pos-cart-panel');
+        if (panel) {
+            panel.style.zoom = String(POS_CART_ZOOM_MAP[lv] || 1);
+        }
+        const levelText = document.getElementById('pos-cart-size-level-text');
+        const descText = document.getElementById('pos-cart-size-desc-text');
+        const minusBtn = document.getElementById('btn-cart-size-minus');
+        const plusBtn = document.getElementById('btn-cart-size-plus');
+        if (levelText) levelText.textContent = `ระดับ ${lv} / 5`;
+        if (descText) descText.textContent = POS_CART_DESC_MAP[lv] || '';
+        if (minusBtn) minusBtn.disabled = lv <= 1;
+        if (plusBtn) plusBtn.disabled = lv >= 5;
+    }
+
+    function initPosCartSize() {
+        const seenGlobalVer = localStorage.getItem('pos_cart_panel_global_seen_v') || '0';
+        const localLevel = localStorage.getItem('pos_cart_panel_level');
+        let startLevel = POS_GLOBAL_CART_LEVEL;
+        if (POS_GLOBAL_CART_VERSION !== '0' && POS_GLOBAL_CART_VERSION !== seenGlobalVer) {
+            localStorage.setItem('pos_cart_panel_global_seen_v', POS_GLOBAL_CART_VERSION);
+            localStorage.removeItem('pos_cart_panel_level');
+            startLevel = POS_GLOBAL_CART_LEVEL;
+        } else if (localLevel) {
+            startLevel = Number(localLevel);
+        }
+        posCartSavedLevel = Math.max(1, Math.min(5, startLevel || 3));
+        applyPosCartSizeLevel(posCartSavedLevel);
+    }
+
+    function openPosCartSizeModal() {
+        applyPosCartSizeLevel(posCartSavedLevel);
+        const modal = document.getElementById('pos-cart-size-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+    }
+
+    function closePosCartSizeModal(revert = false) {
+        if (revert) {
+            applyPosCartSizeLevel(posCartSavedLevel);
+        }
+        const modal = document.getElementById('pos-cart-size-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
+    function stepPosCartSize(delta) {
+        applyPosCartSizeLevel(posCartCurrentLevel + delta);
+    }
+
+    function savePosCartSizeLocal() {
+        posCartSavedLevel = posCartCurrentLevel;
+        localStorage.setItem('pos_cart_panel_level', String(posCartSavedLevel));
+        localStorage.setItem('pos_cart_panel_global_seen_v', POS_GLOBAL_CART_VERSION);
+        closePosCartSizeModal(false);
+        showPosSyncToast(`บันทึกขนาดหน้าต่างระดับ ${posCartSavedLevel}/5 เฉพาะเครื่องนี้แล้ว`);
+    }
+
+    async function savePosCartSizeGlobal() {
+        const btn = document.getElementById('btn-save-cart-size-global');
+        if (btn) btn.disabled = true;
+        try {
+            const res = await fetch("{{ route('pos.cart_panel_size') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                },
+                body: JSON.stringify({ level: posCartCurrentLevel }),
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                posCartSavedLevel = data.level;
+                localStorage.setItem('pos_cart_panel_global_seen_v', String(data.version));
+                localStorage.removeItem('pos_cart_panel_level');
+                closePosCartSizeModal(false);
+                showPosSyncToast(data.message || 'บันทึกขนาดหน้าต่างสำหรับทุกคนแล้ว');
+            } else {
+                alert(data.message || 'ไม่สามารถบันทึกได้');
+            }
+        } catch (err) {
+            alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', initPosCartSize);
 
     function updatePosCardStockBadges(card, stockQty) {
         if (!card) return;
