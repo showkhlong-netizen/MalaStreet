@@ -493,9 +493,9 @@
                         </div>
                         <div class="min-w-0">
                             <h2 class="text-[17px] mala-font-bold text-white leading-tight truncate">บิลออเดอร์ปัจจุบัน</h2>
-                            <button type="button" onclick="toggleFulfillmentMode()" class="text-[11.5px] mala-font-thin text-rose-100 hover:text-white flex items-center gap-1 truncate cursor-pointer" title="คลิกเพื่อสลับโหมด เดลิเวอรี่ / หน้าร้าน">
-                                <span>โต๊ะ <span id="current-queue-tag" class="mala-font-bold text-white">A02</span> • <span id="fulfillment-mode-label">เดลิเวอรี่ (ส่งที่บ้าน)</span></span>
-                            </button>
+                            <div class="text-[11.5px] mala-font-thin text-rose-100 flex items-center gap-1 truncate">
+                                <span>โต๊ะ <span id="current-queue-tag" class="mala-font-bold text-white">A02</span> • <span id="fulfillment-mode-label">บริการหน้าร้าน</span></span>
+                            </div>
                         </div>
                     </div>
 
@@ -566,9 +566,8 @@
                     <div class="flex justify-between items-center text-slate-700">
                         <span class="mala-font-thin inline-flex items-center gap-1">
                             <span>ค่าจัดส่ง</span>
-                            <button type="button" onclick="toggleFulfillmentMode()" class="text-slate-400 hover:text-slate-600 text-xs" title="คลิกสลับโหมดจัดส่ง (เดลิเวอรี่ ฿30 / หน้าร้าน ฿0)">ⓘ</button>
                         </span>
-                        <span class="mala-font-mid-bold text-slate-900" id="summary-shipping">฿30.00</span>
+                        <span class="mala-font-mid-bold text-slate-900" id="summary-shipping">฿0.00</span>
                     </div>
 
                     <div class="flex justify-between items-center text-[#E50914]">
@@ -1763,9 +1762,9 @@
     }
 
     function toggleFulfillmentMode() {
-        fulfillmentMode = (fulfillmentMode === 'delivery') ? 'pos' : 'delivery';
-        document.getElementById('fulfillment-mode-label').innerText =
-            fulfillmentMode === 'delivery' ? 'เดลิเวอรี่ (ส่งที่บ้าน)' : 'บริการหน้าร้าน';
+        fulfillmentMode = 'pos';
+        const labelEl = document.getElementById('fulfillment-mode-label');
+        if (labelEl) labelEl.innerText = 'บริการหน้าร้าน';
         renderCart();
     }
 
