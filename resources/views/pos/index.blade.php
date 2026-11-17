@@ -2845,7 +2845,7 @@
         const btn = document.getElementById('btn-save-cart-size-global');
         if (btn) btn.disabled = true;
         try {
-            const res = await fetch("{{ route('pos.cart_panel_size') }}", {
+            const res = await fetch("{{ url('/pos/cart-panel-size') }}", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
