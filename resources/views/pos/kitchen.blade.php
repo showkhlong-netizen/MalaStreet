@@ -295,7 +295,7 @@
                                 <div class="w-10 h-1 rounded-full bg-slate-200 mx-auto mb-3.5"></div>
 
                                 <!-- Synchronized Red-Themed Live Order Timeline -->
-                                @include('online.partials.order-timeline-stepper', ['variant' => 'sheet', 'order' => $order])
+                                @include('online.partials.order-timeline-stepper', ['variant' => 'sheet', 'order' => $order, 'channel' => $orderChannel])
 
                                 <hr class="border-slate-100 my-4">
 
