@@ -1091,7 +1091,9 @@ class ReceiptController extends Controller
             $mat->today_opening_sticks = $openingSticks;
             $mat->today_added_sticks = $addedSticks;
             $mat->today_sold_sticks = $soldSticks;
-            $mat->today_stock_sticks = max($stockSticks, (int) $mat->current_stock_sticks);
+            $mat->today_stock_sticks = $mat->products->isNotEmpty()
+                ? $stockSticks
+                : (int) $mat->current_stock_sticks;
         }
 
         $categories = Category::orderBy('sort_order')->get();

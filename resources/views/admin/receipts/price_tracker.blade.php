@@ -3900,6 +3900,9 @@
                 card.setAttribute('data-price', String(item.latest_cost_price));
                 card.setAttribute('data-stick', String(item.cost_per_stick));
                 card.setAttribute('data-change', String(Math.abs(item.price_change_amount || 0)));
+                if (item.today_stock_sticks !== undefined) {
+                    card.setAttribute('data-stock', String(item.today_stock_sticks));
+                }
                 if (item.category_slug) {
                     card.setAttribute('data-cats', item.category_slug);
                     const catBadgeEl = card.querySelector('[data-role="mat-category-badge"]');
@@ -3962,6 +3965,8 @@
                         name: item.name,
                         category_slug: item.category_slug || '',
                         image_url: resolvedImg,
+                        stock_sticks: item.today_stock_sticks !== undefined ? item.today_stock_sticks : null,
+                        selling_price: item.selling_price !== undefined ? item.selling_price : null,
                     };
                     const posChannel = new BroadcastChannel('mala_pos_sync_channel');
                     posChannel.postMessage(msgPayload);

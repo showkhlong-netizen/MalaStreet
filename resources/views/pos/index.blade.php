@@ -415,7 +415,7 @@
                                 @else
                                     <div class="absolute top-2.5 left-2.5 z-10 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/70 backdrop-blur-xs text-white text-[10.5px] mala-font-mid-bold">
                                         <span>🔥</span>
-                                        <span>{{ $product->stock_sticks > 0 ? 'เหลือ ' . $product->stock_sticks . ' ไม้' : 'หมดชั่วคราว' }}</span>
+                                        <span data-role="top-stock-text">{{ $product->stock_sticks > 0 ? 'เหลือ ' . $product->stock_sticks . ' ไม้' : 'หมดชั่วคราว' }}</span>
                                     </div>
                                 @endif
                             </div>
@@ -434,7 +434,7 @@
                                 <div class="flex items-center justify-between gap-2 mt-3 pt-1">
                                     <div class="flex items-center flex-wrap gap-x-2 gap-y-1 min-w-0">
                                         <div class="flex items-baseline gap-1 shrink-0">
-                                            <span class="text-[18.5px] mala-font-bold text-[#E50914] leading-none">฿{{ number_format($product->price_per_stick, 0) }}</span>
+                                            <span data-role="product-price" class="text-[18.5px] mala-font-bold text-[#E50914] leading-none">฿{{ number_format($product->price_per_stick, 0) }}</span>
                                             <span class="text-[12px] mala-font-thin text-slate-500">/ไม้</span>
                                         </div>
 
@@ -1125,7 +1125,14 @@
                 posSyncChannel.onmessage = function(ev) {
                     const data = ev.data;
                     if (data && data.action === 'material_updated') {
-                        syncPosItemFromPriceTracker(data.material_id, data.name, data.image_url, data.category_slug);
+                        syncPosItemFromPriceTracker(
+                            data.material_id,
+                            data.name,
+                            data.image_url,
+                            data.category_slug,
+                            data.stock_sticks,
+                            data.selling_price
+                        );
                     } else if (data && data.action === 'qr_updated' && data.settings) {
                         STORE_PROMPTPAY_SETTINGS = data.settings;
                         const sEl = document.getElementById('pos-qr-store-name');
@@ -1971,8 +1978,31 @@
         document.getElementById('receipt-modal').classList.add('hidden');
     }
 
+    function updatePosCardStockBadges(card, stockQty) {
+        if (!card) return;
+        const qty = Math.max(0, Number(stockQty || 0));
+        card.setAttribute('data-stock', String(qty));
+
+        const topStockTextEl = card.querySelector('[data-role="top-stock-text"]');
+        if (topStockTextEl) {
+            topStockTextEl.textContent = qty > 0 ? `เหลือ ${qty} ไม้` : 'หมดชั่วคราว';
+        }
+
+        const stockBadgeEl = card.querySelector('[data-role="stock-badge"]');
+        if (stockBadgeEl) {
+            stockBadgeEl.textContent = qty > 0 ? `เหลือ ${qty} ไม้` : 'หมดชั่วคราว';
+            stockBadgeEl.className = 'inline-flex items-center px-2 py-0.5 rounded-full border text-[10.5px] mala-font-mid-bold leading-tight whitespace-nowrap shrink-0 ' + (
+                qty <= 0
+                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                    : (qty <= 5
+                        ? 'bg-amber-50 text-amber-800 border-amber-200'
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200')
+            );
+        }
+    }
+
     // 🔄 Sync helper functions connecting POS with Price Tracker
-    function syncPosItemFromPriceTracker(rawMaterialId, newName, newImageUrl, newCategorySlug) {
+    function syncPosItemFromPriceTracker(rawMaterialId, newName, newImageUrl, newCategorySlug, newStockSticks, newSellingPrice) {
         if (!rawMaterialId) return;
         const cards = document.querySelectorAll(`.product-card[data-raw-id="${rawMaterialId}"]`);
         cards.forEach(card => {
@@ -1988,6 +2018,15 @@
             }
             if (newCategorySlug) {
                 card.setAttribute('data-category', newCategorySlug);
+            }
+            if (newStockSticks !== undefined && newStockSticks !== null) {
+                updatePosCardStockBadges(card, newStockSticks);
+            }
+            if (newSellingPrice !== undefined && newSellingPrice !== null && Number(newSellingPrice) > 0) {
+                const priceNum = Number(newSellingPrice);
+                card.setAttribute('data-price', String(priceNum));
+                const priceEl = card.querySelector('[data-role="product-price"]');
+                if (priceEl) priceEl.textContent = `฿${priceNum.toFixed(0)}`;
             }
         });
 
@@ -2033,18 +2072,12 @@
                         if (imgEl && p.image_url) imgEl.src = p.image_url;
                         card.setAttribute('data-image', p.image_url);
 
-                        card.setAttribute('data-stock', p.stock_sticks);
-                        const stockBadgeEl = card.querySelector('[data-role="stock-badge"]');
-                        if (stockBadgeEl) {
-                            const qty = Number(p.stock_sticks || 0);
-                            stockBadgeEl.textContent = qty > 0 ? `เหลือ ${qty} ไม้` : 'หมดชั่วคราว';
-                            stockBadgeEl.className = 'inline-flex items-center px-2 py-0.5 rounded-full border text-[10.5px] mala-font-mid-bold leading-tight whitespace-nowrap shrink-0 ' + (
-                                qty <= 0
-                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                    : (qty <= 5
-                                        ? 'bg-amber-50 text-amber-800 border-amber-200'
-                                        : 'bg-emerald-50 text-emerald-700 border-emerald-200')
-                            );
+                        updatePosCardStockBadges(card, p.stock_sticks);
+                        if (p.price_per_stick !== undefined && p.price_per_stick !== null) {
+                            const priceNum = Number(p.price_per_stick);
+                            card.setAttribute('data-price', String(priceNum));
+                            const priceEl = card.querySelector('[data-role="product-price"]');
+                            if (priceEl) priceEl.textContent = `฿${priceNum.toFixed(0)}`;
                         }
                         if (p.category_slug && card.getAttribute('data-category') !== p.category_slug) {
                             card.setAttribute('data-category', p.category_slug);
