@@ -122,11 +122,11 @@ class KitchenDeliveryWorkflowTest extends TestCase
 
         $resStep2 = $this->actingAs($admin)->get('/pos/kitchen');
         $resStep2->assertStatus(200);
-        $resStep2->assertSee('หม่าล่าย่าง');
+        $resStep2->assertSee('ปิ้งย่าง (ทาซอสหม่าล่า)');
         $resStep2->assertSee('เผ็ดกลาง');
-        $resStep2->assertSee('น้ำซุปหม่าล่า');
-        $resStep2->assertSee('x2');
-        $resStep2->assertSee('x1');
+        $resStep2->assertSee('ต้มซุปหม่าล่า');
+        $resStep2->assertSee('Order no.');
+        $resStep2->assertSee('ยอดรวม');
         $resStep2->assertSee('เริ่มทำออร์เดอร์');
         $resStep2->assertSee('พร้อมส่ง');
         $resStep2->assertSee("updateDeliveryStep(" . $order->id . ", 'back_to_step1')", false);

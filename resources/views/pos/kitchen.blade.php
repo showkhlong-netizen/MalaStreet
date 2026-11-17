@@ -210,251 +210,199 @@
                          data-created-ts="{{ $order->created_at ? $order->created_at->timestamp : 0 }}"
                          data-search="{{ $searchText }}">
                         
-                        <div class="p-4 xl:p-5">
-                            <!-- Card Header (ทุกแท็บ/สถานะจัดเรียงอยู่ในบรรทัดเดียวอย่างเป็นระเบียบ) -->
-                            <div class="border-b border-slate-100 pb-3.5 mb-3.5 space-y-2">
-                                <!-- Row 1: Queue Number (เล็กลงกว่าเดิมนิดหน่อย + ตัว G สีแดง) + แท็บ Delivery สีแดงสดข้อความขาว เสมอกันในแถวเดียว + Status Pill -->
-                                @php
-                                    $qRaw = (string) ($order->queue_number ?? '');
-                                    $qFirstChar = mb_substr($qRaw, 0, 1, 'UTF-8');
-                                    $qRestChars = mb_substr($qRaw, 1, null, 'UTF-8');
-                                    $badgeClass = match($orderChannel) {
-                                        'delivery' => 'bg-[#E50914] text-white border-[#E50914] shadow-2xs',
-                                        'online_pickup' => 'bg-emerald-50 text-emerald-800 border-emerald-200',
-                                        default => 'bg-slate-100 text-slate-700 border-slate-200',
-                                    };
-                                @endphp
-                                <div class="flex items-center justify-between gap-2 min-w-0">
-                                    <div class="flex items-center gap-2 min-w-0">
-                                        <span class="text-2xl font-black tracking-tight leading-none whitespace-nowrap shrink-0 inline-flex items-baseline">
-                                            @if(strtoupper($qFirstChar) === 'G')
-                                                <span class="text-[#E50914]">{{ $qFirstChar }}</span><span class="text-slate-900">{{ $qRestChars }}</span>
-                                            @else
-                                                <span class="text-slate-900">{{ $qRaw }}</span>
-                                            @endif
-                                        </span>
+                        <div class="flex-1 flex flex-col">
+                            <!-- 1. Top Red-Themed Sky & Cityscape Mascot Banner (เหมือนหน้าติดตามออเดอร์ภาพที่ 2) -->
+                            <div class="relative h-44 bg-gradient-to-b from-[#FFE4E6] via-[#FFF1F2] to-[#FECDD3] overflow-hidden shrink-0">
+                                <!-- Soft Clouds -->
+                                <div class="absolute top-5 left-12 w-12 h-4 bg-white/80 rounded-full blur-[0.5px]"></div>
+                                <div class="absolute top-9 right-10 w-16 h-5 bg-white/80 rounded-full blur-[0.5px]"></div>
 
-                                        <span class="h-[24px] px-2.5 rounded-lg border text-[11px] font-extrabold leading-none inline-flex items-center gap-1 whitespace-nowrap shrink-0 {{ $badgeClass }}">
-                                            @if($orderChannel === 'delivery')
-                                                <svg class="w-3.5 h-3.5 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-                                                </svg>
-                                                <span>Delivery</span>
-                                            @elseif($orderChannel === 'online_pickup')
-                                                <svg class="w-3 h-3 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                </svg>
-                                                <span>สั่งรับหน้าร้าน</span>
-                                            @else
-                                                <svg class="w-3 h-3 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                                </svg>
-                                                <span>หน้าร้าน (POS)</span>
-                                            @endif
-                                        </span>
-                                    </div>
+                                <!-- Stylized Rose City Skyline -->
+                                <svg class="absolute bottom-2 inset-x-0 w-full h-20 text-[#FDA4AF]/45" preserveAspectRatio="none" viewBox="0 0 400 80" fill="currentColor">
+                                    <rect x="10" y="25" width="32" height="55" rx="2"/>
+                                    <rect x="48" y="38" width="24" height="42" rx="2"/>
+                                    <rect x="78" y="16" width="36" height="64" rx="2"/>
+                                    <rect x="120" y="34" width="26" height="46" rx="2"/>
+                                    <rect x="255" y="28" width="30" height="52" rx="2"/>
+                                    <rect x="292" y="14" width="38" height="66" rx="2"/>
+                                    <rect x="336" y="36" width="24" height="44" rx="2"/>
+                                    <rect x="366" y="24" width="28" height="56" rx="2"/>
+                                </svg>
 
-                                    <div class="flex items-center gap-2 shrink-0">
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black tracking-wide whitespace-nowrap shrink-0 {{ $order->status === 'ready' ? 'bg-emerald-100 text-emerald-800' : ($order->status === 'cooking' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800') }}">
-                                            @if($order->status === 'cooking')
-                                                <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse shrink-0"></span>
-                                            @endif
-                                            <span>
-                                                {{ match($order->status) {
-                                                    'pending' => 'รอยืนยัน',
-                                                    'confirmed' => 'รับออเดอร์',
-                                                    'cooking' => 'กำลังปรุง',
-                                                    'ready' => 'พร้อมรับ',
-                                                    default => $order->status
-                                                } }}
-                                            </span>
-                                        </span>
+                                <!-- Top Bar Controls -->
+                                <div class="relative z-20 flex items-center justify-between px-4 pt-4">
+                                    <button type="button"
+                                            onclick="openOrderInSideChat('{{ $order->order_no }}')"
+                                            aria-label="เปิดแชทกับลูกค้า"
+                                            title="เปิดแชทกับลูกค้ารายนี้ในหน้าต่างแชทขวามือสุด"
+                                            class="w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 hover:text-[#D90012] shadow-md flex items-center justify-center transition-all cursor-pointer active:scale-95">
+                                        <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                        </svg>
+                                    </button>
 
-                                        <!-- ไอคอนแชทเปล่า (ใหญ่ขึ้น ~30%) อยู่ขวามือสุดของบรรทัดเดียวกับแถบสถานะ -->
-                                        <button type="button"
-                                                onclick="openOrderInSideChat('{{ $order->order_no }}')"
-                                                class="text-rose-600 hover:text-rose-700 p-0.5 transition active:scale-90 cursor-pointer shrink-0 flex items-center justify-center"
-                                                title="เปิดแชทกับลูกค้ารายนี้ในหน้าต่างแชทขวามือสุด"
-                                                aria-label="เปิดแชทกับลูกค้า">
-                                            <svg class="w-[19px] h-[19px] stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Row 2: ชื่อลูกค้า (เด่นใหญ่ขึ้น) + เบอร์โทร + แถบชำระแล้ว ต่อท้ายในบรรทัดเดียวกัน -->
-                                <div class="flex items-center gap-1.5 min-w-0 flex-nowrap overflow-x-auto no-scrollbar">
-                                    <span class="text-[15px] font-black text-slate-900 leading-tight truncate min-w-0">{{ $order->customer_name }}</span>
-                                    @if($order->customer_phone)
-                                        <span class="text-[11.5px] text-slate-500 font-medium whitespace-nowrap shrink-0">({{ $order->customer_phone }})</span>
-                                    @endif
-                                    @if($order->payment_status === 'paid')
-                                        <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 whitespace-nowrap shrink-0">
-                                            <span>✓ ชำระแล้ว ฿{{ number_format((float) $order->total_amount, 2) }}</span>
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-300 animate-pulse whitespace-nowrap shrink-0">
-                                            <span>⏳ รอยอดโอน ฿{{ number_format((float) $order->total_amount, 2) }}</span>
-                                        </span>
-                                    @endif
-                                </div>
-
-                                <!-- Row 3: ยืนยันรับเงิน (ถ้ายังไม่จ่าย) + เวลาที่ผ่านมา -->
-                                <div class="flex items-center justify-between gap-2 min-w-0">
-                                    <div class="flex items-center gap-1.5 min-w-0">
-                                        @if($order->payment_status !== 'paid')
-                                            <button type="button"
-                                                    onclick="updateStatus({{ $order->id }}, 'confirmed', true)"
-                                                    class="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-0.5 rounded-lg shadow-2xs transition cursor-pointer whitespace-nowrap shrink-0">
-                                                <span>ยืนยันรับเงินแล้ว</span>
-                                            </button>
-                                        @endif
-                                    </div>
-                                    <span class="text-[10.5px] text-slate-400 font-medium whitespace-nowrap shrink-0">
-                                        {{ $order->created_at->diffForHumans() }}
+                                    <span class="px-3.5 py-1.5 rounded-full bg-white text-[#D90012] font-extrabold text-[11.5px] shadow-md border border-rose-100">
+                                        คิว {{ $order->queue_number }}
                                     </span>
+                                </div>
+
+                                <!-- Centered Mala Street Red Mascot Character SVG -->
+                                <div class="relative z-10 flex justify-center -mt-3">
+                                    <svg class="w-28 h-28 drop-shadow-md" viewBox="0 0 120 120" fill="none">
+                                        <!-- Ground shadow -->
+                                        <ellipse cx="60" cy="110" rx="26" ry="5" fill="#BE123C" fill-opacity="0.18"/>
+                                        <!-- Legs -->
+                                        <rect x="47" y="84" width="9" height="22" rx="4" fill="#1F2937"/>
+                                        <rect x="64" y="84" width="9" height="22" rx="4" fill="#1F2937"/>
+                                        <ellipse cx="50" cy="107" rx="7" ry="4" fill="#111827"/>
+                                        <ellipse cx="70" cy="107" rx="7" ry="4" fill="#111827"/>
+                                        <!-- Jacket Body (Mala Street Red) -->
+                                        <path d="M40 58C40 51 48 48 60 48C72 48 80 51 80 58L82 86C82 89 79 91 75 91H45C41 91 38 89 38 86L40 58Z" fill="#D90012"/>
+                                        <path d="M60 48V91" stroke="#B8000F" stroke-width="2"/>
+                                        <!-- White Apron / Center Stripe -->
+                                        <rect x="52" y="53" width="16" height="33" rx="4" fill="#FFFFFF"/>
+                                        <text x="60" y="73" text-anchor="middle" font-size="11" font-weight="900" fill="#D90012" font-family="sans-serif">M</text>
+                                        <!-- Arms -->
+                                        <path d="M40 56L26 70" stroke="#D90012" stroke-width="9" stroke-linecap="round"/>
+                                        <path d="M80 56L94 68" stroke="#D90012" stroke-width="9" stroke-linecap="round"/>
+                                        <circle cx="24" cy="72" r="5" fill="#FDE68A"/>
+                                        <circle cx="96" cy="69" r="5" fill="#FDE68A"/>
+                                        <!-- Mala Skewer in Hand -->
+                                        <line x1="96" y1="69" x2="106" y2="44" stroke="#92400E" stroke-width="2.5" stroke-linecap="round"/>
+                                        <circle cx="101" cy="57" r="4" fill="#EA580C"/>
+                                        <circle cx="104" cy="50" r="4" fill="#DC2626"/>
+                                        <circle cx="106" cy="43" r="3.5" fill="#F59E0B"/>
+                                        <!-- Head / Face -->
+                                        <circle cx="60" cy="34" r="19" fill="#FFFFFF" stroke="#1E293B" stroke-width="2"/>
+                                        <!-- Red Delivery Helmet -->
+                                        <path d="M39 32C39 17 48 10 60 10C72 10 81 17 81 32H39Z" fill="#D90012"/>
+                                        <rect x="55" y="10" width="10" height="22" fill="#FFFFFF" fill-opacity="0.9"/>
+                                        <rect x="37" y="30" width="46" height="5" rx="2.5" fill="#991B1B"/>
+                                        <!-- Cute Determined Face -->
+                                        <path d="M49 33L55 35" stroke="#1E293B" stroke-width="2" stroke-linecap="round"/>
+                                        <path d="M71 33L65 35" stroke="#1E293B" stroke-width="2" stroke-linecap="round"/>
+                                        <circle cx="53" cy="38" r="2.2" fill="#1E293B"/>
+                                        <circle cx="67" cy="38" r="2.2" fill="#1E293B"/>
+                                        <ellipse cx="47" cy="41" rx="3" ry="1.8" fill="#FDA4AF"/>
+                                        <ellipse cx="73" cy="41" rx="3" ry="1.8" fill="#FDA4AF"/>
+                                        <path d="M56 44C58 46.5 62 46.5 64 44" stroke="#D90012" stroke-width="2.2" stroke-linecap="round"/>
+                                    </svg>
                                 </div>
                             </div>
 
-                            <!-- Pickup Time Notice (If any) -->
-                            @if($order->pickup_time)
-                                <div class="mb-3.5 p-2.5 rounded-2xl bg-amber-50/80 border border-amber-200/70 text-xs text-amber-950 flex items-center justify-between gap-2 min-w-0">
-                                    <div class="flex items-center space-x-1.5 font-medium whitespace-nowrap shrink-0">
-                                        <!-- Monochrome Clock SVG -->
-                                        <svg class="w-4 h-4 text-amber-700 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <!-- 2. White Sheet Container (ตามภาพที่ 2 เป๊ะ) -->
+                            <div class="-mt-4 rounded-t-[24px] bg-white relative z-20 px-5 pt-2.5 pb-4 flex-1 shadow-[0_-6px_24px_rgba(0,0,0,0.06)]">
+                                <div class="w-10 h-1 rounded-full bg-slate-200 mx-auto mb-3.5"></div>
+
+                                <!-- Synchronized Red-Themed Live Order Timeline -->
+                                @include('online.partials.order-timeline-stepper', ['variant' => 'sheet', 'order' => $order])
+
+                                <hr class="border-slate-100 my-4">
+
+                                <!-- Store Name -->
+                                <div class="text-[15px] font-bold text-slate-900 mb-3">หม่าล่าสตรีท (Mala Street)</div>
+
+                                <!-- Payment & Totals Summary -->
+                                <div class="space-y-2.5 text-[13px]">
+                                    <div class="flex items-center justify-between text-slate-600">
+                                        <span>ยอดรวม</span>
+                                        <span class="font-bold text-slate-900 text-[14px]">฿{{ number_format((float) $order->total_amount, 2) }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-slate-600">
+                                        <span>คูปอง</span>
+                                        <span class="{{ ($order->discount ?? 0) > 0 ? 'font-bold text-[#D90012]' : 'text-slate-700' }}">
+                                            @if(($order->discount ?? 0) > 0)
+                                                -฿{{ number_format((float) $order->discount, 2) }}
+                                            @else
+                                                ไม่ได้ใช้คูปอง
+                                            @endif
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-slate-600 gap-2">
+                                        <span>วิธีชำระเงิน</span>
+                                        <span class="flex items-center gap-1.5 font-medium text-slate-800 flex-wrap justify-end">
+                                            @if(($order->payment_method ?? 'promptpay') === 'promptpay')
+                                                <span class="px-1.5 py-0.5 rounded bg-rose-50 text-[#D90012] border border-rose-200 text-[10px] font-extrabold">PromptPay</span>
+                                                <span>โอนจ่าย / QR</span>
+                                            @else
+                                                <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-extrabold">เงินสด</span>
+                                                <span>ชำระหน้าร้าน</span>
+                                            @endif
+                                            @if($order->payment_status !== 'paid')
+                                                <button type="button"
+                                                        onclick="updateStatus({{ $order->id }}, 'confirmed', true)"
+                                                        class="ml-1 inline-flex items-center gap-1 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-2 py-0.5 rounded-lg shadow-2xs transition cursor-pointer whitespace-nowrap shrink-0">
+                                                    <span>ยืนยันรับเงินแล้ว</span>
+                                                </button>
+                                            @endif
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <hr class="border-slate-100 my-4">
+
+                                <!-- Order Items List -->
+                                <div class="space-y-3">
+                                    @foreach($order->items as $idx => $item)
+                                        @php
+                                            $cookLabel = $item->cooking_type === 'grill'
+                                                ? ($item->grill_style === 'brush' ? 'ปิ้งย่าง (ทาซอสหม่าล่า)' : 'ปิ้งย่าง (จุ่มซอสหม่าล่า)')
+                                                : match($item->soup_style) {
+                                                    'black_soup' => 'ต้มซุปน้ำดำ',
+                                                    'tomyum_rich' => 'ต้มซุปต้มยำ-น้ำข้น',
+                                                    default => 'ต้มซุปหม่าล่า',
+                                                };
+                                            $spiceLabel = match($item->spiciness_level) {
+                                                'none' => 'ไม่เผ็ด',
+                                                'mild' => 'เผ็ดน้อย',
+                                                'medium' => 'เผ็ดกลาง',
+                                                'hot' => 'เผ็ดมาก',
+                                                default => $item->spiciness_level ?: 'เผ็ดกลาง',
+                                            };
+                                        @endphp
+                                        <div class="flex items-start gap-3 {{ $idx >= 2 ? 'extra-kitchen-item-' . $order->id : '' }}">
+                                            <div class="w-5 h-5 rounded-[4px] border border-slate-300 text-[11px] font-bold text-slate-800 flex items-center justify-center shrink-0 mt-0.5">
+                                                {{ $item->quantity_sticks }}
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-[13px] font-medium text-slate-900 leading-snug">{{ $item->product_name }}</div>
+                                                <div class="text-[11px] text-slate-400 leading-snug mt-0.5">{{ $cookLabel }} • {{ $spiceLabel }}</div>
+                                                @if(!empty($item->special_instructions))
+                                                    <div class="text-[11px] text-amber-700 font-medium leading-snug mt-0.5">หมายเหตุ: {{ $item->special_instructions }}</div>
+                                                @endif
+                                            </div>
+                                            <div class="text-[12px] font-semibold text-slate-600 shrink-0">
+                                                ฿{{ number_format((float) $item->subtotal, 2) }}
+                                            </div>
+                                        </div>
+                                    @endforeach
+
+                                    <!-- Expandable Order Breakdown (เปิดแสดงครบตามภาพที่ 2 และย่อ/ขยายได้) -->
+                                    <div id="kitchen-order-extra-summary-{{ $order->id }}" class="pt-2.5 mt-2 border-t border-slate-100 space-y-1.5 text-[11.5px] text-slate-500">
+                                        <div class="flex items-center justify-between">
+                                            <span>จำนวนทั้งหมด</span>
+                                            <span class="font-bold text-slate-700">{{ $order->items->sum('quantity_sticks') }} ไม้ ({{ $order->items->count() }} รายการ)</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <span>ค่าซุปหม่าล่าเพิ่มเติม</span>
+                                            <span class="font-bold text-slate-700">฿{{ number_format((float) ($order->soup_extra ?? 0), 2) }}</span>
+                                        </div>
+                                        @if(!empty($order->notes))
+                                            <div class="pt-1 text-slate-600">
+                                                <span class="font-bold text-slate-700">หมายเหตุถึงครัว:</span> {{ $order->notes }}
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <button type="button"
+                                            id="toggle-kitchen-more-btn-{{ $order->id }}"
+                                            onclick="toggleKitchenCardMoreItems({{ $order->id }})"
+                                            class="w-full py-2 text-xs font-bold text-[#D90012] border border-slate-900 hover:bg-rose-50 rounded-xl flex items-center justify-center gap-1 transition-colors cursor-pointer">
+                                        <span id="toggle-kitchen-more-label-{{ $order->id }}">แสดงน้อยลง</span>
+                                        <svg id="toggle-kitchen-more-icon-{{ $order->id }}" class="w-3.5 h-3.5 transition-transform rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                                         </svg>
-                                        <span>เวลานัดรับ:</span>
-                                    </div>
-                                    <strong class="font-bold text-amber-900 truncate min-w-0 text-right">{{ $order->pickup_time }}</strong>
-                                </div>
-                            @endif
-
-                            @if($order->notes)
-                                <div class="mb-3.5 p-2.5 rounded-2xl bg-rose-50/70 border border-rose-100 text-xs text-rose-950 flex items-start space-x-2">
-                                    <svg class="w-4 h-4 text-rose-600 stroke-current shrink-0 mt-0.5" fill="none" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
-                                    </svg>
-                                    <div>
-                                        <span class="font-bold text-rose-700">หมายเหตุ:</span>
-                                        <span class="text-rose-900 ml-1">{{ $order->notes }}</span>
-                                    </div>
-                                </div>
-                            @endif
-
-                            <!-- Grouped Items List (น้ำซุปต้มยำ/น้ำดำ/หม่าล่า หรือ หม่าล่าย่าง + แคปซูลระดับความเผ็ด) -->
-                            @php
-                                $groupedSections = [];
-                                foreach ($order->items as $item) {
-                                    if ($item->cooking_type === 'soup') {
-                                        $soupKey = $item->soup_style ?: 'default';
-                                        $groupKey = 'soup_' . $soupKey;
-                                        $groupTitle = match($soupKey) {
-                                            'black_soup' => 'น้ำซุปน้ำดำ',
-                                            'tomyum_rich' => 'น้ำซุปต้มยำ',
-                                            'mala_rich' => 'น้ำซุปหม่าล่า',
-                                            default => 'น้ำซุป',
-                                        };
-                                        $isSoupGroup = true;
-                                        $spiceLabel = null;
-                                        $spiceBadgeClass = '';
-                                    } else {
-                                        $spiceKey = $item->spiciness_level ?: 'medium';
-                                        $isDip = ($item->grill_style === 'dip');
-                                        $groupKey = 'grill_' . $spiceKey . ($isDip ? '_dip' : '');
-                                        $groupTitle = 'หม่าล่าย่าง' . ($isDip ? ' (จุ่มซอส)' : '');
-                                        $isSoupGroup = false;
-                                        $spiceLabel = match($spiceKey) {
-                                            'none' => 'ไม่เผ็ด',
-                                            'mild' => 'เผ็ดน้อย',
-                                            'medium' => 'เผ็ดกลาง',
-                                            'hot' => 'เผ็ดมาก',
-                                            default => 'เผ็ดกลาง',
-                                        };
-                                        $spiceBadgeClass = match($spiceKey) {
-                                            'none' => 'bg-slate-100 text-slate-600 border-slate-200',
-                                            'mild' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                                            'medium' => 'bg-amber-50 text-amber-800 border-amber-200',
-                                            'hot' => 'bg-rose-50 text-rose-700 border-rose-200',
-                                            default => 'bg-amber-50 text-amber-800 border-amber-200',
-                                        };
-                                    }
-
-                                    if (!isset($groupedSections[$groupKey])) {
-                                        $groupedSections[$groupKey] = [
-                                            'title' => $groupTitle,
-                                            'is_soup' => $isSoupGroup,
-                                            'spice_label' => $spiceLabel,
-                                            'spice_badge_class' => $spiceBadgeClass,
-                                            'total_sticks' => 0,
-                                            'items' => [],
-                                        ];
-                                    }
-                                    $groupedSections[$groupKey]['total_sticks'] += (int) $item->quantity_sticks;
-                                    $groupedSections[$groupKey]['items'][] = $item;
-                                }
-                                $totalOrderSticks = (int) $order->items->sum('quantity_sticks');
-                            @endphp
-
-                            <div class="space-y-3 my-3">
-                                @foreach($groupedSections as $section)
-                                    <div class="rounded-2xl border border-slate-200/90 bg-white overflow-hidden shadow-2xs">
-                                        <!-- หัวข้อประเภท: เก็บแค่ไอคอนสีเดียว + ข้อความ (ไม่ใส่แถบสีพื้นหลัง) + แคปซูลระดับความเผ็ด -->
-                                        <div class="px-3.5 pt-2.5 pb-2 flex items-center justify-between gap-2 border-b border-slate-100 text-slate-900">
-                                            <div class="flex items-center gap-2 min-w-0">
-                                                @if($section['is_soup'])
-                                                    <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 009-9H3a9 9 0 009 9z"/>
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v2m4-3v3m4-2v2"/>
-                                                    </svg>
-                                                @else
-                                                    <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/>
-                                                    </svg>
-                                                @endif
-                                                <span class="text-[15.5px] sm:text-base font-black tracking-tight truncate">{{ $section['title'] }}</span>
-                                            </div>
-                                            <div class="flex items-center gap-1.5 shrink-0">
-                                                @if(!empty($section['spice_label']))
-                                                    <span class="px-2.5 py-0.5 rounded-full border text-[11px] font-extrabold whitespace-nowrap shrink-0 {{ $section['spice_badge_class'] }}">
-                                                        {{ $section['spice_label'] }}
-                                                    </span>
-                                                @endif
-                                                <span class="px-2 py-0.5 rounded-full bg-slate-50 border border-slate-200/80 text-[11px] font-black text-slate-700 whitespace-nowrap shrink-0">
-                                                    {{ $section['total_sticks'] }} ไม้
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <!-- รายการอาหารเรียงแนวตั้งแบบตัวอย่างภาพที่ 4 -->
-                                        <div class="px-3.5 py-1.5 divide-y divide-slate-100">
-                                            @foreach($section['items'] as $item)
-                                                <div class="py-1.5">
-                                                    <div class="flex items-baseline justify-between gap-2 text-[14px] leading-snug">
-                                                        <div class="flex items-baseline gap-2.5 min-w-0 flex-1">
-                                                            <span class="font-black text-[#E50914] min-w-[26px] shrink-0 whitespace-nowrap">x{{ $item->quantity_sticks }}</span>
-                                                            <span class="font-bold text-slate-900 truncate">{{ $item->product_name }}</span>
-                                                        </div>
-                                                        <div class="flex items-baseline gap-2 shrink-0 whitespace-nowrap text-[13px] font-bold text-slate-600">
-                                                            <span>{{ $item->quantity_sticks }} ไม้</span>
-                                                        </div>
-                                                    </div>
-                                                    @if($item->special_instructions)
-                                                        <div class="pl-8 mt-0.5 text-[11.5px] text-amber-800 font-medium leading-tight">
-                                                            หมายเหตุ: {{ $item->special_instructions }}
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                @endforeach
-
-                                <!-- เส้นประสรุปจำนวนรวมด้านล่างรายการ -->
-                                <div class="pt-2 border-t border-dashed border-slate-300 flex items-center justify-between text-[13px] px-1">
-                                    <span class="font-bold text-slate-600">จำนวนรวม <strong class="text-slate-900 font-black ml-1">{{ $totalOrderSticks }} ไม้</strong></span>
-                                    <span class="font-bold text-slate-600">รวมทั้งสิ้น <strong class="text-slate-950 font-black text-[14.5px] ml-1">฿{{ number_format((float) $order->total_amount, 0) }}</strong></span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -930,6 +878,7 @@
                 curOrders.innerHTML = newOrders.innerHTML;
                 applyKitchenOrderFiltersAndLayout();
                 updateDeliveryCountdowns();
+                reapplyKitchenCollapsedCards();
             }
 
             // 2. Update activeOrdersMap JSON in memory
@@ -1109,6 +1058,42 @@
 
         if (countEl) countEl.textContent = String(visibleCount);
         if (emptyEl) emptyEl.classList.toggle('hidden', visibleCount > 0);
+    }
+
+    const collapsedKitchenCards = new Set();
+
+    function applyKitchenCardExpandState(orderId, collapsed) {
+        const extraItems = document.querySelectorAll(`.extra-kitchen-item-${orderId}`);
+        const summary = document.getElementById(`kitchen-order-extra-summary-${orderId}`);
+        const label = document.getElementById(`toggle-kitchen-more-label-${orderId}`);
+        const icon = document.getElementById(`toggle-kitchen-more-icon-${orderId}`);
+        if (!label || !icon) return;
+
+        extraItems.forEach((el) => el.classList.toggle('hidden', collapsed));
+        if (summary) summary.classList.toggle('hidden', collapsed);
+
+        if (collapsed) {
+            label.textContent = 'ดูเพิ่มเติม';
+            icon.classList.remove('rotate-180');
+        } else {
+            label.textContent = 'แสดงน้อยลง';
+            icon.classList.add('rotate-180');
+        }
+    }
+
+    function toggleKitchenCardMoreItems(orderId) {
+        const isCollapsed = collapsedKitchenCards.has(orderId);
+        if (isCollapsed) {
+            collapsedKitchenCards.delete(orderId);
+            applyKitchenCardExpandState(orderId, false);
+        } else {
+            collapsedKitchenCards.add(orderId);
+            applyKitchenCardExpandState(orderId, true);
+        }
+    }
+
+    function reapplyKitchenCollapsedCards() {
+        collapsedKitchenCards.forEach((oid) => applyKitchenCardExpandState(oid, true));
     }
 
     document.addEventListener('DOMContentLoaded', () => {
