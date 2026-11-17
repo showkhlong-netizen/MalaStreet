@@ -158,14 +158,17 @@ class PaymentWebhookController extends Controller
         $matchedOrder = DB::transaction(function () use ($parsedSatang, $parsedAmount, &$mismatchHint) {
             $candidates = Order::where('payment_method', 'promptpay')
                 ->where('payment_status', 'unpaid')
-                ->whereIn('status', ['pending', 'confirmed'])
+                ->whereIn('status', ['pending', 'confirmed', 'cooking'])
                 ->where('created_at', '>=', Carbon::now()->subMinutes(60))
                 ->latest('id')
                 ->lockForUpdate()
                 ->get();
 
             $found = $candidates->first(function (Order $order) use ($parsedSatang) {
-                return (int) round(((float) $order->total_amount) * 100) === $parsedSatang;
+                $expectedTransfer = ((float) ($order->paid_transfer_amount ?? 0)) > 0
+                    ? (float) $order->paid_transfer_amount
+                    : (float) $order->total_amount;
+                return (int) round($expectedTransfer * 100) === $parsedSatang;
             });
 
             if (!$found) {

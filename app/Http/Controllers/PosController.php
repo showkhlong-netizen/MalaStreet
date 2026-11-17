@@ -326,6 +326,8 @@ class PosController extends Controller
                 'total_amount' => $totalAmount,
                 'cash_received' => $cashReceived,
                 'change_amount' => $changeAmount,
+                'paid_cash_amount' => $cashAmountInput !== null ? max(0, $cashAmountInput) : null,
+                'paid_transfer_amount' => $transferAmountInput !== null ? max(0, $transferAmountInput) : null,
                 'notes' => $validated['notes'] ?? null,
                 'paid_at' => $isUnpaid ? null : Carbon::now(),
             ]);
