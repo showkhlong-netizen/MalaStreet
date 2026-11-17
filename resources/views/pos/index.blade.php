@@ -1155,6 +1155,57 @@
 </div>
 
 <!-- ============================================================================= -->
+<!-- MODAL 3.4: POS PROMPTPAY WEBHOOK VERIFICATION MODAL (เหมือนหน้าออนไลน์)       -->
+<!-- ============================================================================= -->
+<div id="pos-payment-verifying-modal" class="hidden fixed inset-0 z-[70] bg-black/75 backdrop-blur-2xs flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-[380px] rounded-[26px] p-6 text-center shadow-2xl border border-slate-100 space-y-4">
+        <!-- State 1: Verifying -->
+        <div id="pos-verify-state-waiting" class="space-y-3">
+            <div class="w-16 h-16 rounded-full bg-amber-50 border-2 border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
+                <svg class="w-8 h-8 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v3a5 5 0 00-5 5H4z"></path>
+                </svg>
+            </div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-mono text-[11px] font-bold">
+                <span>ออเดอร์ <span id="pos-verify-order-no">-</span></span>
+                <span>•</span>
+                <span>คิว <span id="pos-verify-queue-no" class="text-[#D90012]">-</span></span>
+            </div>
+            <h3 class="text-base font-black text-slate-900">โปรดรอตรวจสอบเพื่อการชำระเงินของท่าน</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">
+                ระบบกำลังตรวจสอบยอดเงินเข้าจริงและความครบถ้วนของยอด
+                <strong id="pos-verify-expected-amount" class="text-[#D90012] font-mono">฿0.00</strong>
+            </p>
+            <div class="pt-1">
+                <button type="button" onclick="reopenPosQrFromVerifying()"
+                        class="w-full py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer transition-colors">
+                    กลับไปหน้า QR สแกนจ่าย
+                </button>
+            </div>
+        </div>
+
+        <!-- State 2: Verified Full Amount -->
+        <div id="pos-verify-state-success" class="hidden space-y-3">
+            <div class="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-300 text-emerald-600 flex items-center justify-center mx-auto text-3xl font-black animate-bounce">
+                ✓
+            </div>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono text-[11px] font-bold">
+                <span>รับยอดสำเร็จ</span>
+                <span>•</span>
+                <span id="pos-verified-order-no">-</span>
+            </div>
+            <h3 class="text-base font-black text-emerald-700 leading-snug">
+                เราได้รับยอดครบเต็มจำนวนแล้ว <span id="pos-verified-paid-amount" class="font-mono underline decoration-2">0.00</span> บาท
+            </h3>
+            <p class="text-sm font-bold text-slate-800">
+                กำลังเปิดใบเสร็จรับเงิน...
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================================= -->
 <!-- MODAL 3.5: EDIT / UPLOAD STORE PROMPTPAY QR SETTINGS                          -->
 <!-- ============================================================================= -->
 <div id="pos-qr-settings-modal" class="fixed inset-0 z-[60] bg-black/65 backdrop-blur-xs hidden flex items-center justify-center p-4">
@@ -2366,9 +2417,80 @@
         await executePosConfirmedOrderSubmission();
     }
 
+    let posVerifyPollTimer = null;
+    let posVerifyingOrder = null;
+
+    function openPosVerifyingModal(order, expectedAmount) {
+        posVerifyingOrder = order;
+        document.getElementById('pos-verify-order-no').textContent = order.order_no;
+        document.getElementById('pos-verify-queue-no').textContent = order.queue_number;
+        document.getElementById('pos-verify-expected-amount').textContent = `฿${Number(expectedAmount).toFixed(2)}`;
+        document.getElementById('pos-verify-state-waiting').classList.remove('hidden');
+        document.getElementById('pos-verify-state-success').classList.add('hidden');
+        document.getElementById('pos-payment-verifying-modal')?.classList.remove('hidden');
+
+        if (posVerifyPollTimer) clearInterval(posVerifyPollTimer);
+        posVerifyPollTimer = setInterval(() => pollPosWebhookVerification(expectedAmount), 2000);
+    }
+
+    function reopenPosQrFromVerifying() {
+        if (posVerifyPollTimer) {
+            clearInterval(posVerifyPollTimer);
+            posVerifyPollTimer = null;
+        }
+        document.getElementById('pos-payment-verifying-modal')?.classList.add('hidden');
+        if (posConfirmCurrentMode === 'split' && posPendingSubmission && posPendingSubmission.transfer_amount > 0) {
+            const splitModal = document.getElementById('pos-split-qr-modal');
+            if (splitModal) {
+                splitModal.classList.remove('hidden');
+                splitModal.classList.add('flex');
+            }
+        } else {
+            const confirmModal = document.getElementById('pos-confirm-modal');
+            if (confirmModal) {
+                confirmModal.classList.remove('hidden');
+                confirmModal.classList.add('flex');
+            }
+        }
+    }
+
+    async function pollPosWebhookVerification(expectedAmount) {
+        if (!posVerifyingOrder) return;
+        try {
+            const res = await fetch(`/order/status/${encodeURIComponent(posVerifyingOrder.order_no)}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.payment_status === 'paid') {
+                clearInterval(posVerifyPollTimer);
+                posVerifyPollTimer = null;
+                document.getElementById('pos-verified-order-no').textContent = posVerifyingOrder.order_no;
+                document.getElementById('pos-verified-paid-amount').textContent = Number(expectedAmount).toFixed(2);
+                document.getElementById('pos-verify-state-waiting').classList.add('hidden');
+                document.getElementById('pos-verify-state-success').classList.remove('hidden');
+
+                const completedOrder = posVerifyingOrder;
+                setTimeout(() => {
+                    document.getElementById('pos-payment-verifying-modal')?.classList.add('hidden');
+                    posPendingSubmission = null;
+                    posVerifyingOrder = null;
+                    showThermalReceipt(completedOrder);
+                    cart = [];
+                    renderCart();
+                    document.getElementById('customer-name-input').value = '';
+                    const num = parseInt(completedOrder.queue_number.replace(/\D/g, ''), 10) + 1;
+                    currentQueue = 'A' + String(num).padStart(2, '0');
+                    document.getElementById('current-queue-tag').innerText = currentQueue;
+                }, 1200);
+            }
+        } catch (err) {}
+    }
+
     async function executePosConfirmedOrderSubmission() {
         if (cart.length === 0 || !posPendingSubmission) return;
 
+        const isTransferWebhook = posPendingSubmission.payment_method === 'promptpay' && posPendingSubmission.transfer_amount > 0;
         const btnDefault = document.getElementById('btn-pos-confirm-submit');
         const btnTransfer = document.getElementById('btn-pos-transfer-qr-submit');
         const btnSplitQr = document.getElementById('btn-pos-split-qr-submit');
@@ -2396,6 +2518,7 @@
                     cash_amount: posPendingSubmission.cash_amount,
                     transfer_amount: posPendingSubmission.transfer_amount,
                     is_draft: false,
+                    awaiting_webhook: isTransferWebhook,
                     customer_name: posPendingSubmission.customer_name,
                     coupon_code: activeCoupon,
                     fulfillment_mode: fulfillmentMode,
@@ -2405,16 +2528,20 @@
 
             const data = await response.json();
             if (data.success) {
-                posPendingSubmission = null;
                 closeSplitQrModal();
                 closePosConfirmModal();
-                showThermalReceipt(data.order);
-                cart = [];
-                renderCart();
-                document.getElementById('customer-name-input').value = '';
-                const num = parseInt(data.order.queue_number.replace(/\D/g, ''), 10) + 1;
-                currentQueue = 'A' + String(num).padStart(2, '0');
-                document.getElementById('current-queue-tag').innerText = currentQueue;
+                if (isTransferWebhook) {
+                    openPosVerifyingModal(data.order, posPendingSubmission.transfer_amount);
+                } else {
+                    posPendingSubmission = null;
+                    showThermalReceipt(data.order);
+                    cart = [];
+                    renderCart();
+                    document.getElementById('customer-name-input').value = '';
+                    const num = parseInt(data.order.queue_number.replace(/\D/g, ''), 10) + 1;
+                    currentQueue = 'A' + String(num).padStart(2, '0');
+                    document.getElementById('current-queue-tag').innerText = currentQueue;
+                }
             } else {
                 alert('เกิดข้อผิดพลาด: ' + (data.message || 'ไม่สามารถบันทึกออเดอร์ได้'));
             }

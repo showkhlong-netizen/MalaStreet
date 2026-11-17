@@ -181,6 +181,7 @@ class PosController extends Controller
             'cash_amount' => 'nullable|numeric|min:0',
             'transfer_amount' => 'nullable|numeric|min:0',
             'is_draft' => 'nullable|boolean',
+            'awaiting_webhook' => 'nullable|boolean',
             'customer_name' => 'nullable|string|max:100',
             'customer_phone' => 'nullable|string|max:20',
             'coupon_code' => 'nullable|string|max:30',
@@ -283,6 +284,8 @@ class PosController extends Controller
             $totalExtra = $soupExtraTotal + $deliveryFee;
             $totalAmount = max(0, $subtotal + $totalExtra - $discountAmount);
             $isDraft = (bool) ($validated['is_draft'] ?? false);
+            $awaitingWebhook = (bool) ($validated['awaiting_webhook'] ?? false);
+            $isUnpaid = $isDraft || $awaitingWebhook;
             $paymentMethod = $validated['payment_method'] ?? 'cash';
 
             $cashAmountInput = isset($validated['cash_amount']) ? (float) $validated['cash_amount'] : null;
@@ -316,7 +319,7 @@ class PosController extends Controller
                 'pickup_time' => $fulfillmentMode === 'delivery' ? 'เดลิเวอรี่ (ส่งที่บ้าน)' : ($fulfillmentMode === 'pickup' ? 'รับที่ร้าน' : 'บริการหน้าร้าน'),
                 'status' => 'cooking', // POS orders immediately start cooking
                 'payment_method' => $paymentMethod,
-                'payment_status' => $isDraft ? 'unpaid' : 'paid',
+                'payment_status' => $isUnpaid ? 'unpaid' : 'paid',
                 'subtotal' => $subtotal,
                 'soup_extra' => $totalExtra,
                 'discount' => $discountAmount,
@@ -324,7 +327,7 @@ class PosController extends Controller
                 'cash_received' => $cashReceived,
                 'change_amount' => $changeAmount,
                 'notes' => $validated['notes'] ?? null,
-                'paid_at' => $isDraft ? null : Carbon::now(),
+                'paid_at' => $isUnpaid ? null : Carbon::now(),
             ]);
 
             foreach ($orderItemsData as $itemData) {
