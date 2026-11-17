@@ -1172,7 +1172,7 @@
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
                 <h3 class="text-sm font-black text-slate-900">ปรับขนาดหน้าต่างบิลออเดอร์</h3>
-                <p class="text-[11px] text-slate-500">ปรับได้ 5 ระดับ (ค่ากลางปัจจุบันคือระดับ 3)</p>
+                <p class="text-[11px] text-slate-500">ปรับได้ 10 ระดับ (ค่ากลางมาตรฐานคือระดับ 5)</p>
             </div>
             <button type="button" onclick="closePosCartSizeModal(true)" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs cursor-pointer">✕</button>
         </div>
@@ -1184,8 +1184,8 @@
                 -1
             </button>
             <div class="text-center">
-                <div class="text-lg font-black text-[#E50914]" id="pos-cart-size-level-text">ระดับ 3 / 5</div>
-                <div class="text-[11px] font-bold text-slate-500" id="pos-cart-size-desc-text">ขนาดกลาง (ค่าเริ่มต้น)</div>
+                <div class="text-lg font-black text-[#E50914]" id="pos-cart-size-level-text">ระดับ 5 / 10</div>
+                <div class="text-[11px] font-bold text-slate-500" id="pos-cart-size-desc-text">ขนาดกลาง (เริ่มต้น)</div>
             </div>
             <button type="button" id="btn-cart-size-plus" onclick="stepPosCartSize(1)"
                     class="w-11 h-11 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-black text-base shadow-2xs cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
@@ -2763,35 +2763,44 @@
         document.getElementById('receipt-modal').classList.add('hidden');
     }
 
-    // === POS CART PANEL SIZE ADJUSTER (5 LEVELS: 1..5, DEFAULT 3) ===
-    const POS_CART_ZOOM_MAP = { 1: 0.85, 2: 0.92, 3: 1.0, 4: 1.08, 5: 1.16 };
+    // === POS CART PANEL SIZE ADJUSTER (10 LEVELS: 1..10, STANDARD DEFAULT 5) ===
+    const POS_CART_ZOOM_MAP = {
+        1: 0.76, 2: 0.82, 3: 0.88, 4: 0.94, 5: 1.0,
+        6: 1.05, 7: 1.10, 8: 1.15, 9: 1.20, 10: 1.25
+    };
     const POS_CART_DESC_MAP = {
         1: 'เล็กที่สุด',
-        2: 'เล็ก',
-        3: 'ขนาดกลาง (ค่าเริ่มต้น)',
-        4: 'ใหญ่',
-        5: 'ใหญ่ที่สุด'
+        2: 'เล็กมาก',
+        3: 'เล็ก',
+        4: 'ค่อนข้างเล็ก',
+        5: 'ขนาดกลาง (เริ่มต้น)',
+        6: 'ค่อนข้างใหญ่',
+        7: 'ใหญ่',
+        8: 'ใหญ่มาก',
+        9: 'ใหญ่พิเศษ',
+        10: 'ใหญ่ที่สุด'
     };
-    const POS_GLOBAL_CART_LEVEL = Number(@json($globalCartLevel ?? 3));
+    const POS_GLOBAL_CART_LEVEL = Number(@json($globalCartLevel ?? 5));
     const POS_GLOBAL_CART_VERSION = String(@json($globalCartVersion ?? '0'));
-    let posCartCurrentLevel = 3;
-    let posCartSavedLevel = 3;
+    let posCartCurrentLevel = 5;
+    let posCartSavedLevel = 5;
 
     function applyPosCartSizeLevel(level) {
-        const lv = Math.max(1, Math.min(5, Number(level) || 3));
+        const lv = Math.max(1, Math.min(10, Number(level) || 5));
         posCartCurrentLevel = lv;
         const panel = document.getElementById('pos-cart-panel');
         if (panel) {
             panel.style.zoom = String(POS_CART_ZOOM_MAP[lv] || 1);
+            panel.style.maxWidth = '100%';
         }
         const levelText = document.getElementById('pos-cart-size-level-text');
         const descText = document.getElementById('pos-cart-size-desc-text');
         const minusBtn = document.getElementById('btn-cart-size-minus');
         const plusBtn = document.getElementById('btn-cart-size-plus');
-        if (levelText) levelText.textContent = `ระดับ ${lv} / 5`;
+        if (levelText) levelText.textContent = `ระดับ ${lv} / 10`;
         if (descText) descText.textContent = POS_CART_DESC_MAP[lv] || '';
         if (minusBtn) minusBtn.disabled = lv <= 1;
-        if (plusBtn) plusBtn.disabled = lv >= 5;
+        if (plusBtn) plusBtn.disabled = lv >= 10;
     }
 
     function initPosCartSize() {
@@ -2805,7 +2814,7 @@
         } else if (localLevel) {
             startLevel = Number(localLevel);
         }
-        posCartSavedLevel = Math.max(1, Math.min(5, startLevel || 3));
+        posCartSavedLevel = Math.max(1, Math.min(10, startLevel || 5));
         applyPosCartSizeLevel(posCartSavedLevel);
     }
 
