@@ -962,44 +962,72 @@
             </button>
         </div>
 
-        <!-- Cash & Transfer Inputs (พร้อมไอคอนสีเดียวเด่น) -->
-        <div class="grid grid-cols-2 gap-3">
-            <div>
-                <label class="text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-slate-700 stroke-current shrink-0" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <span>เงินสด (บาท)</span>
-                </label>
-                <input type="number" step="0.01" min="0" id="pos-confirm-cash" oninput="onPosConfirmInput('cash')"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-slate-900">
+        <!-- Mode 1 & 3: Transfer / Split Inputs & Summary -->
+        <div id="pos-confirm-split-section" class="space-y-4">
+            <!-- Cash & Transfer Inputs (พร้อมไอคอนสีเดียวเด่น) -->
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-slate-700 stroke-current shrink-0" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <span>เงินสด (บาท)</span>
+                    </label>
+                    <input type="number" step="0.01" min="0" id="pos-confirm-cash" oninput="onPosConfirmInput('cash')"
+                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-slate-900">
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-slate-700 stroke-current shrink-0" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        <span>เงินโอน (บาท)</span>
+                    </label>
+                    <input type="number" step="0.01" min="0" id="pos-confirm-transfer" oninput="recalcPosConfirmSummary()"
+                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-slate-900">
+                </div>
             </div>
+
+            <div class="px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-600">ยอดรับรวม: <strong id="pos-confirm-received-sum" class="font-mono text-slate-900">฿0.00</strong></span>
+                <span id="pos-confirm-match-status" class="text-[11px] font-bold text-emerald-700">ยอดตรงตามบิลครบถ้วน ✓</span>
+            </div>
+
+            <!-- Order Note Textbox -->
             <div>
-                <label class="text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-slate-700 stroke-current shrink-0" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                    </svg>
-                    <span>เงินโอน (บาท)</span>
-                </label>
-                <input type="number" step="0.01" min="0" id="pos-confirm-transfer" oninput="recalcPosConfirmSummary()"
-                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-slate-900">
+                <label class="text-[11px] font-bold text-slate-700 block mb-1">หมายเหตุ</label>
+                <textarea id="pos-confirm-note" rows="2" placeholder="ระบุหมายเหตุเพิ่มเติม (ถ้ามี)..."
+                    class="w-full px-3 py-2 rounded-2xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-900"></textarea>
             </div>
         </div>
 
-        <div class="px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-600">ยอดรับรวม: <strong id="pos-confirm-received-sum" class="font-mono text-slate-900">฿0.00</strong></span>
-            <span id="pos-confirm-match-status" class="text-[11px] font-bold text-emerald-700">ยอดตรงตามบิลครบถ้วน ✓</span>
-        </div>
+        <!-- Mode 2: Cash Tender Section (ตรงตามภาพที่ 2 เป๊ะๆ) -->
+        <div id="pos-confirm-cash-tender-section" class="hidden space-y-3">
+            <div>
+                <label class="text-xs font-bold text-slate-700 block mb-1.5">รับเงินสดมา (บาท):</label>
+                <input type="number" step="0.01" min="0" id="pos-confirm-cash-received" oninput="recalcPosConfirmCashChange()"
+                    class="w-full px-4 py-3 rounded-2xl border border-slate-300 text-lg font-bold text-slate-900 focus:outline-none focus:border-slate-900">
+            </div>
 
-        <!-- Order Note Textbox -->
-        <div>
-            <label class="text-[11px] font-bold text-slate-700 block mb-1">หมายเหตุ</label>
-            <textarea id="pos-confirm-note" rows="2" placeholder="ระบุหมายเหตุเพิ่มเติม (ถ้ามี)..."
-                class="w-full px-3 py-2 rounded-2xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-slate-900"></textarea>
+            <div class="grid grid-cols-4 gap-2">
+                <button type="button" onclick="setPosConfirmCashTender('exact')"
+                    class="py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold cursor-pointer transition">พอดี</button>
+                <button type="button" onclick="setPosConfirmCashTender(100)"
+                    class="py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold cursor-pointer transition">฿100</button>
+                <button type="button" onclick="setPosConfirmCashTender(500)"
+                    class="py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold cursor-pointer transition">฿500</button>
+                <button type="button" onclick="setPosConfirmCashTender(1000)"
+                    class="py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold cursor-pointer transition">฿1000</button>
+            </div>
+
+            <div class="px-4 py-3 rounded-2xl bg-slate-100/90 flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-700">เงินทอน:</span>
+                <strong id="pos-confirm-change-display" class="text-lg font-black text-emerald-600 font-mono">฿0.00</strong>
+            </div>
         </div>
 
         <div class="grid grid-cols-2 gap-2.5 pt-1">
-            <button type="button" onclick="closePosConfirmModal()"
+            <button type="button" id="btn-pos-confirm-cancel" onclick="closePosConfirmModal()"
                 class="py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold cursor-pointer">
                 กลับไปหน้าทำรายการ
             </button>
@@ -1957,6 +1985,7 @@
 
     // === POS CONFIRM CHECKOUT MODAL & DRAFT ORDER LOGIC ===
     let posConfirmExpectedTotal = 0;
+    let posConfirmCurrentMode = 'transfer';
 
     function openPosConfirmModal() {
         if (cart.length === 0) return;
@@ -1990,21 +2019,40 @@
     }
 
     function setPosConfirmMode(mode) {
+        posConfirmCurrentMode = mode;
         const cashInput = document.getElementById('pos-confirm-cash');
         const transferInput = document.getElementById('pos-confirm-transfer');
-        if (!cashInput || !transferInput) return;
+        const splitSection = document.getElementById('pos-confirm-split-section');
+        const cashTenderSection = document.getElementById('pos-confirm-cash-tender-section');
+        const cashReceivedInput = document.getElementById('pos-confirm-cash-received');
+        const cancelBtn = document.getElementById('btn-pos-confirm-cancel');
+        const submitBtn = document.getElementById('btn-pos-confirm-submit');
 
         const total = posConfirmExpectedTotal;
+
         if (mode === 'cash') {
-            cashInput.value = total.toFixed(2);
-            transferInput.value = '0.00';
-        } else if (mode === 'transfer') {
-            cashInput.value = '0.00';
-            transferInput.value = total.toFixed(2);
+            if (splitSection) splitSection.classList.add('hidden');
+            if (cashTenderSection) cashTenderSection.classList.remove('hidden');
+            if (cashReceivedInput) cashReceivedInput.value = Number(total.toFixed(2)).toString();
+            if (cancelBtn) cancelBtn.textContent = 'ยกเลิก';
+            if (submitBtn) submitBtn.textContent = '✅ ยืนยันชำระเงิน & พิมพ์ใบเสร็จ';
+            recalcPosConfirmCashChange();
         } else {
-            const halfCash = Math.floor(total / 2);
-            cashInput.value = halfCash.toFixed(2);
-            transferInput.value = Math.max(0, total - halfCash).toFixed(2);
+            if (splitSection) splitSection.classList.remove('hidden');
+            if (cashTenderSection) cashTenderSection.classList.add('hidden');
+            if (cancelBtn) cancelBtn.textContent = 'กลับไปหน้าทำรายการ';
+            if (submitBtn) submitBtn.textContent = 'ยืนยันถูกต้องแล้ว';
+            if (cashInput && transferInput) {
+                if (mode === 'transfer') {
+                    cashInput.value = '0.00';
+                    transferInput.value = total.toFixed(2);
+                } else {
+                    const halfCash = Math.floor(total / 2);
+                    cashInput.value = halfCash.toFixed(2);
+                    transferInput.value = Math.max(0, total - halfCash).toFixed(2);
+                }
+            }
+            recalcPosConfirmSummary();
         }
 
         document.querySelectorAll('.pos-confirm-mode-btn').forEach((btn) => {
@@ -2013,8 +2061,22 @@
                 ? 'pos-confirm-mode-btn py-2 px-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold border border-slate-900 transition cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5'
                 : 'pos-confirm-mode-btn py-2 px-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold border border-slate-200 transition cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5';
         });
+    }
 
-        recalcPosConfirmSummary();
+    function setPosConfirmCashTender(amount) {
+        const input = document.getElementById('pos-confirm-cash-received');
+        if (!input) return;
+        input.value = amount === 'exact' ? Number(posConfirmExpectedTotal.toFixed(2)).toString() : String(amount);
+        recalcPosConfirmCashChange();
+    }
+
+    function recalcPosConfirmCashChange() {
+        const received = parseFloat(document.getElementById('pos-confirm-cash-received')?.value || '0') || 0;
+        const change = Math.max(0, received - posConfirmExpectedTotal);
+        const displayEl = document.getElementById('pos-confirm-change-display');
+        if (displayEl) {
+            displayEl.textContent = `฿${change.toFixed(2)}`;
+        }
     }
 
     function onPosConfirmInput(changedField) {
@@ -2069,11 +2131,26 @@
 
     async function submitPosConfirmedOrder() {
         if (cart.length === 0) return;
-        const cashVal = Math.max(0, parseFloat(document.getElementById('pos-confirm-cash')?.value || '0'));
-        const transferVal = Math.max(0, parseFloat(document.getElementById('pos-confirm-transfer')?.value || '0'));
-        if ((cashVal + transferVal) + 0.001 < posConfirmExpectedTotal) {
-            alert('ยอดรับรวมยังไม่ครบตามยอดบิล');
-            return;
+
+        let cashVal = 0;
+        let transferVal = 0;
+        let payMethod = 'cash';
+
+        if (posConfirmCurrentMode === 'cash') {
+            cashVal = Math.max(0, parseFloat(document.getElementById('pos-confirm-cash-received')?.value || '0'));
+            if (cashVal + 0.001 < posConfirmExpectedTotal) {
+                alert('จำนวนเงินสดที่รับมาไม่เพียงพอกับยอดชำระ');
+                return;
+            }
+            payMethod = 'cash';
+        } else {
+            cashVal = Math.max(0, parseFloat(document.getElementById('pos-confirm-cash')?.value || '0'));
+            transferVal = Math.max(0, parseFloat(document.getElementById('pos-confirm-transfer')?.value || '0'));
+            if ((cashVal + transferVal) + 0.001 < posConfirmExpectedTotal) {
+                alert('ยอดรับรวมยังไม่ครบตามยอดบิล');
+                return;
+            }
+            payMethod = transferVal > 0 ? 'promptpay' : 'cash';
         }
 
         const btn = document.getElementById('btn-pos-confirm-submit');
@@ -2083,8 +2160,9 @@
         }
 
         const customerName = document.getElementById('customer-name-input')?.value.trim() || 'ลูกค้าหน้าร้าน';
-        const note = document.getElementById('pos-confirm-note')?.value.trim() || '';
-        const payMethod = transferVal > 0 ? 'promptpay' : 'cash';
+        const note = posConfirmCurrentMode === 'cash'
+            ? ''
+            : (document.getElementById('pos-confirm-note')?.value.trim() || '');
 
         try {
             const response = await fetch("{{ route('pos.order.store') }}", {
@@ -2126,7 +2204,9 @@
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.textContent = 'ยืนยันถูกต้องแล้ว';
+                btn.textContent = posConfirmCurrentMode === 'cash'
+                    ? '✅ ยืนยันชำระเงิน & พิมพ์ใบเสร็จ'
+                    : 'ยืนยันถูกต้องแล้ว';
             }
         }
     }
