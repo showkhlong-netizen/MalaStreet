@@ -1430,7 +1430,50 @@
                         id="edit-mat-stick"
                         name="cost_per_stick"
                         required
+                        oninput="recalculateModalProfit()"
                         class="w-full px-3 py-2 rounded-xl bg-white border border-rose-200 text-sm font-bold text-[#E60023] focus:outline-none focus:border-[#E50914]"
+                    >
+                </div>
+            </div>
+
+            <!-- Purchase Packs, Daily Sellable Stock & Expected Profit Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-[#F4F6F9] border border-slate-200/80">
+                <div>
+                    <label class="text-[11.5px] font-bold text-slate-700 block mb-1">จำนวนแพ็กที่สั่งซื้อ / วัน</label>
+                    <input
+                        type="number"
+                        step="0.5"
+                        min="0"
+                        id="edit-mat-packs"
+                        name="purchase_packs"
+                        placeholder="เช่น 1, 2"
+                        oninput="onModalPacksChanged()"
+                        class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:border-[#E50914]"
+                    >
+                </div>
+
+                <div>
+                    <label class="text-[11.5px] font-bold text-slate-700 block mb-1">สต๊อกไม้ที่ขายได้ / รายวัน</label>
+                    <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        id="edit-mat-sellable-sticks"
+                        name="sellable_sticks"
+                        placeholder="คำนวณอัตโนมัติ"
+                        oninput="recalculateModalProfit()"
+                        class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:border-[#E50914]"
+                    >
+                </div>
+
+                <div>
+                    <label class="text-[11.5px] font-bold text-emerald-700 block mb-1">กำไรรวมที่คาดการณ์ (฿)</label>
+                    <input
+                        type="text"
+                        id="edit-mat-expected-profit"
+                        readonly
+                        value="0.00"
+                        class="w-full px-3 py-2 rounded-xl bg-emerald-50/70 border border-emerald-200 text-sm font-bold text-emerald-700 focus:outline-none cursor-default"
                     >
                 </div>
             </div>
@@ -1445,6 +1488,7 @@
                     id="edit-mat-selling-price"
                     name="selling_price"
                     placeholder="เช่น 15, 20"
+                    oninput="recalculateModalProfit()"
                     class="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-sm font-bold text-[#101114] focus:outline-none focus:border-[#E50914]"
                 >
             </div>
@@ -3444,8 +3488,13 @@
         document.getElementById('edit-mat-price').value = '';
         document.getElementById('edit-mat-yield').value = '10.00';
         document.getElementById('edit-mat-stick').value = '';
+        const packsInput = document.getElementById('edit-mat-packs');
+        if (packsInput) packsInput.value = '1';
+        const sellableInput = document.getElementById('edit-mat-sellable-sticks');
+        if (sellableInput) sellableInput.value = '10';
         const sellingPriceInput = document.getElementById('edit-mat-selling-price');
         if (sellingPriceInput) sellingPriceInput.value = '';
+        recalculateModalProfit();
 
         const catSelect = document.getElementById('edit-mat-category');
         if (catSelect && catSelect.options.length > 0) {
@@ -3515,6 +3564,17 @@
         if (sellingPriceInput) {
             sellingPriceInput.value = data.selling_price ? Number(data.selling_price).toFixed(0) : '';
         }
+        const yieldNum = Number(data.yield_sticks_per_unit || 10);
+        const stockNum = Number(data.today_stock_sticks ?? 0);
+        const packsInput = document.getElementById('edit-mat-packs');
+        const sellableInput = document.getElementById('edit-mat-sellable-sticks');
+        if (sellableInput) sellableInput.value = String(stockNum);
+        if (packsInput) {
+            packsInput.value = (yieldNum > 0 && stockNum > 0)
+                ? String(Number((stockNum / yieldNum).toFixed(2)))
+                : '0';
+        }
+        recalculateModalProfit();
 
         const catSelect = document.getElementById('edit-mat-category');
         if (catSelect) {
@@ -3706,6 +3766,40 @@
             const stickCost = price / yieldSticks;
             document.getElementById('edit-mat-stick').value = stickCost.toFixed(2);
         }
+        onModalPacksChanged();
+    }
+
+    function onModalPacksChanged() {
+        const packsEl = document.getElementById('edit-mat-packs');
+        const yieldEl = document.getElementById('edit-mat-yield');
+        const sellableEl = document.getElementById('edit-mat-sellable-sticks');
+        if (packsEl && yieldEl && sellableEl) {
+            const packs = parseFloat(packsEl.value || '0');
+            const yieldSticks = parseFloat(yieldEl.value || '0');
+            if (!Number.isNaN(packs) && !Number.isNaN(yieldSticks) && packs >= 0 && yieldSticks >= 0) {
+                sellableEl.value = String(Math.round(packs * yieldSticks));
+            }
+        }
+        recalculateModalProfit();
+    }
+
+    function recalculateModalProfit() {
+        const sellingPrice = parseFloat(document.getElementById('edit-mat-selling-price')?.value || '0');
+        const stickCost = parseFloat(document.getElementById('edit-mat-stick')?.value || '0');
+        const sellableSticks = parseFloat(document.getElementById('edit-mat-sellable-sticks')?.value || '0');
+        const profitEl = document.getElementById('edit-mat-expected-profit');
+        if (!profitEl) return;
+
+        if (sellingPrice > 0 && sellableSticks > 0) {
+            const totalProfit = (sellingPrice - stickCost) * sellableSticks;
+            profitEl.value = totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            profitEl.className = totalProfit >= 0
+                ? 'w-full px-3 py-2 rounded-xl bg-emerald-50/70 border border-emerald-200 text-sm font-bold text-emerald-700 focus:outline-none cursor-default'
+                : 'w-full px-3 py-2 rounded-xl bg-rose-50/70 border border-rose-200 text-sm font-bold text-[#E60023] focus:outline-none cursor-default';
+        } else {
+            profitEl.value = '0.00';
+            profitEl.className = 'w-full px-3 py-2 rounded-xl bg-emerald-50/70 border border-emerald-200 text-sm font-bold text-emerald-700 focus:outline-none cursor-default';
+        }
     }
 
     async function submitMaterialEditForm(event) {
@@ -3791,6 +3885,8 @@
                     image_url: resolvedImg,
                     price_change_amount: item.price_change_amount,
                     price_change_percent: item.price_change_percent,
+                    today_stock_sticks: item.today_stock_sticks !== undefined ? item.today_stock_sticks : currentModal.today_stock_sticks,
+                    selling_price: item.selling_price !== undefined ? item.selling_price : currentModal.selling_price,
                 };
 
                 const scanNamesSearchStr = scanNamesList.map(sn => {

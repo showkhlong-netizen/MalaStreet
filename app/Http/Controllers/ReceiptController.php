@@ -1187,6 +1187,7 @@ class ReceiptController extends Controller
             'yield_sticks_per_unit' => 'required|numeric|min:0.01',
             'cost_per_stick' => 'nullable|numeric|min:0',
             'selling_price' => 'nullable|numeric|min:0',
+            'sellable_sticks' => 'nullable|numeric|min:0',
             'default_vendor' => 'nullable|string|max:255',
             'category_slug' => 'nullable|string|max:100',
             'image_url' => 'nullable|string|max:500',
@@ -1238,6 +1239,10 @@ class ReceiptController extends Controller
             ? $validated['category_slug']
             : (Category::orderBy('sort_order')->value('slug') ?: self::inferCategorySlugFromName($validated['name']));
 
+        $initialStockSticks = $request->filled('sellable_sticks')
+            ? max(0, (int) round((float) $request->input('sellable_sticks')))
+            : (int) round($yieldSticks);
+
         $rawMaterial = RawMaterial::create([
             'name' => $validated['name'],
             'image_url' => $imageUrl,
@@ -1247,7 +1252,7 @@ class ReceiptController extends Controller
             'yield_sticks_per_unit' => $yieldSticks,
             'latest_cost_price' => $newPrice,
             'cost_per_stick' => $costPerStick,
-            'current_stock_sticks' => (int) round($yieldSticks),
+            'current_stock_sticks' => $initialStockSticks,
             'scan_names' => $scanNames,
         ]);
 
@@ -1275,7 +1280,7 @@ class ReceiptController extends Controller
                 'raw_material_id' => $rawMaterial->id,
                 'price_per_stick' => $sellingPrice,
                 'image_url' => $imageUrl,
-                'stock_sticks' => (int) round($yieldSticks),
+                'stock_sticks' => $initialStockSticks,
                 'is_available' => true,
             ]);
         }
@@ -1350,8 +1355,8 @@ class ReceiptController extends Controller
                     'price_change_percent' => 0.0,
                     'is_available_today' => true,
                     'is_bought_today' => true,
-                    'today_opening_sticks' => (int) round($yieldSticks),
-                    'today_stock_sticks' => (int) round($yieldSticks),
+                    'today_opening_sticks' => $initialStockSticks,
+                    'today_stock_sticks' => $initialStockSticks,
                 ],
             ]);
         }
@@ -1371,6 +1376,7 @@ class ReceiptController extends Controller
             'yield_sticks_per_unit' => 'required|numeric|min:0.01',
             'cost_per_stick' => 'nullable|numeric|min:0',
             'selling_price' => 'nullable|numeric|min:0',
+            'sellable_sticks' => 'nullable|numeric|min:0',
             'default_vendor' => 'nullable|string|max:255',
             'category_slug' => 'nullable|string|max:100',
             'image_url' => 'nullable|string|max:500',
@@ -1444,7 +1450,7 @@ class ReceiptController extends Controller
             ? $rawMaterial->category_slug
             : self::resolveEffectiveCategorySlug($rawMaterial, Category::orderBy('sort_order')->pluck('slug')->all()));
 
-        $rawMaterial->update([
+        $materialUpdateData = [
             'name' => $validated['name'],
             'scan_names' => $scanNames,
             'purchase_unit' => $validated['purchase_unit'],
@@ -1454,7 +1460,11 @@ class ReceiptController extends Controller
             'default_vendor' => ($validated['default_vendor'] ?? null) ?: $rawMaterial->default_vendor,
             'category_slug' => $effectiveCategorySlug,
             'image_url' => $imageUrl,
-        ]);
+        ];
+        if ($request->filled('sellable_sticks')) {
+            $materialUpdateData['current_stock_sticks'] = max(0, (int) round((float) $request->input('sellable_sticks')));
+        }
+        $rawMaterial->update($materialUpdateData);
 
         // TWO-WAY SYNCHRONIZATION WITH POS CASHIER & ONLINE ORDER MENU ITEMS:
         // Automatically sync all linked products in the Cashier and Online Order storefront with the updated name, category, image, and price!
@@ -1480,6 +1490,9 @@ class ReceiptController extends Controller
             $productUpdates['price_per_stick'] = (float) $request->input('selling_price');
         } elseif ($request->filled('price_per_stick')) {
             $productUpdates['price_per_stick'] = (float) $request->input('price_per_stick');
+        }
+        if ($request->filled('sellable_sticks')) {
+            $productUpdates['stock_sticks'] = max(0, (int) round((float) $request->input('sellable_sticks')));
         }
 
         if ($rawMaterial->products()->exists()) {
@@ -1566,6 +1579,8 @@ class ReceiptController extends Controller
                     'image_url' => $rawMaterial->image_url,
                     'price_change_amount' => $latestHist ? (float) $latestHist->price_change_amount : 0.0,
                     'price_change_percent' => $latestHist ? (float) $latestHist->price_change_percent : 0.0,
+                    'today_stock_sticks' => (int) $rawMaterial->current_stock_sticks,
+                    'selling_price' => $rawMaterial->products()->value('price_per_stick') !== null ? (float) $rawMaterial->products()->value('price_per_stick') : null,
                 ],
             ]);
         }
