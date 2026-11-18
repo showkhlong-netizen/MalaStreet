@@ -1739,44 +1739,107 @@
         if (btnConfirm) btnConfirm.disabled = false;
         if (btnDraft) btnDraft.disabled = false;
 
-        let html = '';
+        const groupsMap = new Map();
         cart.forEach((item, index) => {
-            const lineSubtotal = item.unit_price * item.quantity;
-            const imgUrl = item.image || "{{ asset('assets/menu/beef-raw.png') }}";
+            const isSoup = item.cooking_type === 'soup';
+            const soupLabels = {
+                black_soup: 'ซุปน้ำดำ',
+                tomyum_rich: 'ซุปต้มยำ-น้ำข้น',
+                mala_rich: 'ซุปหม่าล่า-น้ำข้น',
+            };
+            const spiceLabels = {
+                none: 'ไม่เผ็ด',
+                mild: 'เผ็ดน้อย',
+                medium: 'เผ็ดกลาง',
+                hot: 'เผ็ดมาก',
+            };
+            const optionKey = isSoup
+                ? (item.soup_style || 'tomyum_rich')
+                : (item.spiciness_level || 'medium');
+            const groupKey = `${isSoup ? 'soup' : 'grill'}_${optionKey}`;
+            const typeLabel = isSoup ? 'น้ำซุป' : 'หม่าล่าย่าง';
+            const detailLabel = isSoup
+                ? (soupLabels[optionKey] || 'ซุปหม่าล่า-น้ำข้น')
+                : (spiceLabels[optionKey] || 'เผ็ดกลาง');
+
+            if (!groupsMap.has(groupKey)) {
+                groupsMap.set(groupKey, {
+                    typeLabel,
+                    detailLabel,
+                    totalSticks: 0,
+                    groupSubtotal: 0,
+                    entries: [],
+                });
+            }
+
+            const group = groupsMap.get(groupKey);
+            group.totalSticks += item.quantity;
+            group.groupSubtotal += item.unit_price * item.quantity;
+            group.entries.push({ item, index });
+        });
+
+        let html = '';
+        let groupNumber = 0;
+        groupsMap.forEach((group) => {
+            groupNumber += 1;
+            const setNo = String(groupNumber).padStart(2, '0');
+            const priceText = Number.isInteger(group.groupSubtotal)
+                ? `${group.groupSubtotal}฿`
+                : `${group.groupSubtotal.toFixed(2)}฿`;
 
             html += `
-                <div class="py-3 flex items-center justify-between gap-2.5 group">
-                    <!-- Left: 1:1 Food Thumbnail + Name & Unit Price -->
-                    <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                        <img src="${imgUrl}" alt="${item.name}"
-                             class="w-[52px] h-[52px] rounded-[12px] object-cover border border-slate-200 shrink-0 bg-slate-900">
-                        <div class="min-w-0 flex-1">
-                            <h4 class="text-[13.5px] mala-font-bold text-slate-900 leading-snug truncate">${item.name}</h4>
-                            <div class="text-[11.5px] mala-font-thin text-slate-500 mt-0.5">
-                                ฿${item.unit_price.toFixed(0)} /ไม้
-                            </div>
-                        </div>
+                <div class="mt-2.5 first:mt-0 mb-1 px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-between gap-2 text-[12px] mala-font-bold text-slate-700">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-md bg-[#E50914] text-white text-[10.5px] leading-none shrink-0">${setNo}</span>
+                        <span class="text-slate-900 truncate">${group.typeLabel}</span>
                     </div>
-
-                    <!-- Right: Remove (x) on top-right + Stepper (- qty +) + Line Total -->
-                    <div class="flex flex-col items-end gap-1 shrink-0">
-                        <button type="button" onclick="removeFromCart(${index})"
-                                class="text-slate-400 hover:text-[#E50914] text-xs leading-none px-1 cursor-pointer" title="ลบรายการ">&times;</button>
-                        <div class="flex items-center gap-2">
-                            <div class="flex items-center gap-1.5">
-                                <button type="button" onclick="changeCartQty(${index}, -1)"
-                                        class="w-6 h-6 rounded-full bg-[#FFE4E6] hover:bg-[#FECDD3] text-[#E50914] text-sm mala-font-bold flex items-center justify-center transition-colors cursor-pointer">−</button>
-                                <span class="text-[13.5px] mala-font-bold text-slate-900 w-4 text-center">${item.quantity}</span>
-                                <button type="button" onclick="changeCartQty(${index}, 1)"
-                                        class="w-6 h-6 rounded-full bg-[#E50914] hover:bg-[#C8102E] text-white text-sm mala-font-bold flex items-center justify-center transition-colors cursor-pointer">+</button>
-                            </div>
-                            <div class="text-[14px] mala-font-bold text-slate-900 min-w-[54px] text-right">
-                                ฿${lineSubtotal.toFixed(2)}
-                            </div>
-                        </div>
-                    </div>
+                    <span class="w-px h-3.5 bg-slate-300 shrink-0"></span>
+                    <span class="text-slate-600 truncate">${group.detailLabel}</span>
+                    <span class="w-px h-3.5 bg-slate-300 shrink-0"></span>
+                    <span class="text-slate-800 whitespace-nowrap shrink-0">${group.totalSticks}ไม้</span>
+                    <span class="w-px h-3.5 bg-slate-300 shrink-0"></span>
+                    <span class="text-[#E50914] whitespace-nowrap shrink-0">${priceText}</span>
                 </div>
             `;
+
+            group.entries.forEach(({ item, index }) => {
+                const lineSubtotal = item.unit_price * item.quantity;
+                const imgUrl = item.image || "{{ asset('assets/menu/beef-raw.png') }}";
+
+                html += `
+                    <div class="py-3 flex items-center justify-between gap-2.5 group">
+                        <!-- Left: 1:1 Food Thumbnail + Name & Unit Price -->
+                        <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                            <img src="${imgUrl}" alt="${item.name}"
+                                 class="w-[52px] h-[52px] rounded-[12px] object-cover border border-slate-200 shrink-0 bg-slate-900">
+                            <div class="min-w-0 flex-1">
+                                <h4 class="text-[13.5px] mala-font-bold text-slate-900 leading-snug truncate">${item.name}</h4>
+                                <div class="text-[11.5px] mala-font-thin text-slate-500 mt-0.5">
+                                    ฿${item.unit_price.toFixed(0)} /ไม้
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Remove (x) on top-right + Stepper (- qty +) + Line Total -->
+                        <div class="flex flex-col items-end gap-1 shrink-0">
+                            <button type="button" onclick="removeFromCart(${index})"
+                                    class="text-slate-400 hover:text-[#E50914] text-xs leading-none px-1 cursor-pointer" title="ลบรายการ">&times;</button>
+                            <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button" onclick="changeCartQty(${index}, -1)"
+                                            class="w-6 h-6 rounded-full bg-[#FFE4E6] hover:bg-[#FECDD3] text-[#E50914] text-sm mala-font-bold flex items-center justify-center transition-colors cursor-pointer">−</button>
+                                    <span class="text-[13.5px] mala-font-bold text-slate-900 w-4 text-center">${item.quantity}</span>
+                                    <button type="button" onclick="changeCartQty(${index}, 1)"
+                                            class="w-6 h-6 rounded-full bg-[#E50914] hover:bg-[#C8102E] text-white text-sm mala-font-bold flex items-center justify-center transition-colors cursor-pointer">+</button>
+                                </div>
+                                <div class="text-[14px] mala-font-bold text-slate-900 min-w-[54px] text-right">
+                                    ฿${lineSubtotal.toFixed(2)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
         });
 
         container.innerHTML = html;
