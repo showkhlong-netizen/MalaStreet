@@ -442,7 +442,7 @@
                             $badge = $badgeMetaMap[$displayName] ?? ($badgeMetaMap[$product->name] ?? null);
                             $displayImg = $product->display_image ?: asset($product->image_url ?: 'assets/menu/beef-premium.png');
                         @endphp
-                        <div class="product-card bg-white rounded-[18px] overflow-hidden border border-slate-200/85 shadow-xs hover:shadow-md hover:border-[#E50914]/50 transition-all duration-200 flex flex-col justify-between cursor-pointer group"
+                        <div class="product-card bg-white rounded-[18px] overflow-hidden border border-slate-200/85 shadow-xs hover:shadow-md hover:border-[#E50914]/50 active:scale-[0.98] transition-all duration-150 flex flex-col justify-between cursor-pointer select-none touch-manipulation group"
                              data-category="{{ $catSlug }}"
                              data-id="{{ $product->id }}"
                              data-raw-id="{{ $product->raw_material_id }}"
@@ -454,7 +454,7 @@
                              data-popular="{{ $badge['rank'] ?? ($index + 10) }}"
                              data-grill="{{ $product->supports_grill ? '1' : '0' }}"
                              data-soup="{{ $product->supports_soup ? '1' : '0' }}"
-                             onclick="openCustomizeModal(this)">
+                             onclick="quickAddFromCard(this)">
 
                             <!-- Top 16:9 Food Photo on Black Plate -->
                             <div class="relative aspect-[16/9] w-full bg-[#140D0B] overflow-hidden">
@@ -676,189 +676,11 @@
     </div>
 </div>
 
-<!-- ============================================================================= -->
-<!-- MODAL 1: PRODUCT CUSTOMIZATION (ย่าง ทา/จุ่ม, ซุป 3 สไตล์, ระดับความเผ็ด)      -->
-<!-- ============================================================================= -->
-<div id="customize-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
-        <div class="bg-gradient-to-r from-[#450408] via-[#8F0B16] to-[#450408] p-4 text-white flex justify-between items-center">
-            <div>
-                <h3 class="mala-font-bold text-base" id="modal-item-name">ชื่อไม้หม่าล่า</h3>
-                <span class="text-xs text-rose-200 mala-font-thin">ราคา <span id="modal-item-price" class="mala-font-bold text-white">฿15</span> /ไม้</span>
-            </div>
-            <button type="button" onclick="closeCustomizeModal()" class="text-white/75 hover:text-white text-xl mala-font-bold p-1">&times;</button>
-        </div>
-
-        <div class="p-5 overflow-y-auto space-y-4">
-            <!-- 1. รูปแบบการปรุงอาหาร (ตรงตามภาพที่ 1 และ 2 เป๊ะๆ) -->
-            <div>
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-bold text-slate-800">
-                        รูปแบบการปรุงอาหาร <span class="text-[#D90012]">*</span>
-                    </span>
-                    <span class="text-[10px] text-slate-400 font-normal">เลือกอย่างใดอย่างหนึ่ง</span>
-                </div>
-                <div class="grid grid-cols-2 gap-2.5" id="cooking-type-selector">
-                    <!-- Option 1: หม่าล่าย่าง -->
-                    <button type="button" onclick="setCookingType('grill')" id="type-btn-grill"
-                            class="p-3 rounded-2xl border-2 text-left transition-all border-[#D90012] bg-[#FFF0F1] shadow-xs flex items-center gap-2.5 group">
-                        <div id="radio-indicator-grill" class="w-4 h-4 rounded-full border-2 border-blue-600 flex items-center justify-center shrink-0 p-0.5">
-                            <div class="w-2 h-2 rounded-full bg-blue-600"></div>
-                        </div>
-                        <div class="w-8 h-8 rounded-xl bg-white border border-rose-100 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-                            <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M5 19L19 5" stroke-width="2.6" />
-                                <path d="M8 14l2 4" />
-                                <path d="M11 11l2 4" />
-                                <path d="M14 8l2 4" />
-                            </svg>
-                        </div>
-                        <div class="min-w-0">
-                            <div class="font-extrabold text-[#D90012] text-[12.5px] leading-tight">หม่าล่าย่าง</div>
-                            <div class="text-[10px] text-[#596272] truncate mt-0.5">ทาซอสหม่าล่าต้นตำรับ</div>
-                        </div>
-                    </button>
-
-                    <!-- Option 2: น้ำซุป -->
-                    <button type="button" onclick="setCookingType('soup')" id="type-btn-soup"
-                            class="p-3 rounded-2xl border-2 text-left transition-all border-slate-200 bg-white flex items-center gap-2.5 hover:border-slate-300 group">
-                        <div id="radio-indicator-soup" class="w-4 h-4 rounded-full border-2 border-slate-400 flex items-center justify-center shrink-0">
-                        </div>
-                        <div class="w-8 h-8 rounded-xl bg-white border border-rose-100 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-                            <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M4 11h16a1 1 0 0 1 1 1c0 5-3.5 8-9 8s-9-3-9-8a1 1 0 0 1 1-1z" />
-                                <path d="M2 13h2M20 13h2" />
-                                <path d="M4 11h16" />
-                                <path d="M9 7c.5-1 1.5-1.5 2-1.5s1.5.5 2 1.5" />
-                            </svg>
-                        </div>
-                        <div class="min-w-0">
-                            <div class="font-extrabold text-[#101114] text-[12.5px] leading-tight">น้ำซุป</div>
-                            <div class="text-[10px] text-[#596272] truncate mt-0.5">เลือกประเภทน้ำซุป</div>
-                        </div>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Hidden default grill style for backwards compatibility -->
-            <input type="hidden" name="grill_style" value="brush">
-
-            <!-- 2.1 เลือกประเภทน้ำซุป (เมื่อเลือก น้ำซุป - ตรงตามภาพที่ 2 เป๊ะๆ ไม่มีกรอบสีชมพู) -->
-            <div id="soup-options" class="hidden">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-bold text-slate-800">เลือกประเภทน้ำซุป <span class="text-[#D90012]">*</span></span>
-                    <span class="text-[10px] text-slate-400 font-normal">รสชาติน้ำซุป</span>
-                </div>
-                <div class="grid grid-cols-3 gap-2">
-                    <!-- ซุปน้ำดำ -->
-                    <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
-                        <input type="radio" name="soup_style" value="black_soup" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1.5 focus:ring-0">
-                        <div class="h-6 flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
-                            <svg class="w-5.5 h-5.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M21 11H3a1 1 0 0 0-1 1c0 5 3.5 9 8.5 9.8V23h3v-1.2c5-.8 8.5-4.8 8.5-9.8a1 1 0 0 0-1-1zm-9 8.8C7.5 19.8 4.5 16.5 4.1 13h15.8c-.4 3.5-3.4 6.8-7.9 6.8zM6.5 8a1 1 0 0 1 1-1c1 0 1-1 1-1s0-1 1-1a1 1 0 0 1 2 0c0 1 1 2 2 2s1-1 1-1 0-1 1-1a1 1 0 0 1 2 0c0 1 1 2 2 2a1 1 0 1 1 0 2c-1.5 0-2.5-1-2.9-1.6-.4.6-1.4 1.6-2.9 1.6s-2.5-1-2.9-1.6c-.4.6-1.4 1.6-2.9 1.6a1 1 0 0 1-1-1z" />
-                            </svg>
-                        </div>
-                        <span class="font-extrabold text-[#101114] text-[11px] leading-tight">ซุปน้ำดำ</span>
-                    </label>
-
-                    <!-- ซุปต้มยำ-น้ำข้น -->
-                    <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
-                        <input type="radio" name="soup_style" value="tomyum_rich" checked class="w-4 h-4 text-blue-600 accent-blue-600 mb-1.5 focus:ring-0">
-                        <div class="h-6 flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
-                            <svg class="w-5.5 h-5.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2c-1.5 2.5-4 4.5-4 7a4 4 0 0 0 8 0c0-2.5-2.5-4.5-4-7zm0 9c-1.1 0-2-.9-2-2 0-1 .9-2 2-3.3 1.1 1.3 2 2.3 2 3.3 0 1.1-.9 2-2 2zM2 13h20c0 5-4.5 9-10 9S2 18 2 13z"/>
-                            </svg>
-                        </div>
-                        <span class="font-extrabold text-[#101114] text-[11px] leading-tight">ซุปต้มยำ-น้ำข้น</span>
-                    </label>
-
-                    <!-- ซุปหม่าล่า-น้ำข้น -->
-                    <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
-                        <input type="radio" name="soup_style" value="mala_rich" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1.5 focus:ring-0">
-                        <div class="h-6 flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
-                            <svg class="w-5.5 h-5.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 1a3 3 0 0 0-3 3c0 2 2 3 3 5 1-2 3-3 3-5a3 3 0 0 0-3-3zm-6 4a2 2 0 0 0-2 2c0 1.5 1.5 2.5 2 4 .5-1.5 2-2.5 2-4a2 2 0 0 0-2-2zm12 0a2 2 0 0 0-2 2c0 1.5 1.5 2.5 2 4 .5-1.5 2-2.5 2-4a2 2 0 0 0-2-2zM2 13h20c0 5-4.5 9-10 9S2 18 2 13z"/>
-                            </svg>
-                        </div>
-                        <span class="font-extrabold text-[#101114] text-[11px] leading-tight">ซุปหม่าล่า-น้ำข้น</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- 2.2 ระดับความเผ็ด (เมื่อเลือก หม่าล่าย่าง - ตรงตามภาพที่ 1 เป๊ะๆ) -->
-            <div id="section-spiciness">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-bold text-slate-800">
-                        ระดับความเผ็ด <span class="text-[#D90012]">*</span>
-                    </span>
-                    <span class="text-[10px] text-slate-400 font-normal">รสชาติหม่าล่า</span>
-                </div>
-                <div class="grid grid-cols-3 gap-2">
-                    <!-- เผ็ดน้อย -->
-                    <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
-                        <input type="radio" name="spiciness" value="mild" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1.5 focus:ring-0">
-                        <div class="h-6 flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
-                            <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-5.5 w-auto object-contain shrink-0" alt="เผ็ดน้อย">
-                        </div>
-                        <span class="font-extrabold text-[#101114] text-[11.5px]">เผ็ดน้อย</span>
-                    </label>
-
-                    <!-- เผ็ดกลาง -->
-                    <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
-                        <input type="radio" name="spiciness" value="medium" checked class="w-4 h-4 text-blue-600 accent-blue-600 mb-1.5 focus:ring-0">
-                        <div class="h-6 flex items-center justify-center gap-1.5 mb-1 group-hover:scale-110 transition-transform">
-                            <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-5 w-auto object-contain shrink-0" alt="เผ็ดกลาง">
-                            <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-5 w-auto object-contain shrink-0" alt="เผ็ดกลาง">
-                        </div>
-                        <span class="font-extrabold text-[#101114] text-[11.5px]">เผ็ดกลาง</span>
-                    </label>
-
-                    <!-- เผ็ดมาก -->
-                    <label class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
-                        <input type="radio" name="spiciness" value="hot" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1.5 focus:ring-0">
-                        <div class="h-6 flex items-center justify-center gap-1 mb-1 group-hover:scale-110 transition-transform">
-                            <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4.5 w-auto object-contain shrink-0" alt="เผ็ดมาก">
-                            <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4.5 w-auto object-contain shrink-0" alt="เผ็ดมาก">
-                            <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4.5 w-auto object-contain shrink-0" alt="เผ็ดมาก">
-                        </div>
-                        <span class="font-extrabold text-[#101114] text-[11.5px]">เผ็ดมาก</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- 3. จำนวนไม้ & คำขอพิเศษ -->
-            <div class="flex items-center justify-between pt-1">
-                <span class="text-xs font-bold text-slate-800">จำนวนไม้:</span>
-                <div class="flex items-center space-x-3 bg-slate-100 rounded-xl p-1 border border-slate-200">
-                    <button type="button" onclick="adjustModalQty(-1)" class="w-8 h-8 rounded-lg bg-white shadow-2xs font-bold text-slate-700 hover:bg-slate-200 flex items-center justify-center active:scale-95 transition">-</button>
-                    <span id="modal-qty" class="w-8 text-center font-black text-base text-slate-900 font-mono">1</span>
-                    <button type="button" onclick="adjustModalQty(1)" class="w-8 h-8 rounded-lg bg-white shadow-2xs font-bold text-slate-700 hover:bg-slate-200 flex items-center justify-center active:scale-95 transition">+</button>
-                </div>
-            </div>
-
-            <!-- คำขอพิเศษเพิ่มเติม (มีไอคอนสีแดงตามภาพตัวอย่างที่ 1 และ 2) -->
-            <div>
-                <label class="font-bold text-slate-800 text-xs block mb-1.5">คำขอพิเศษเพิ่มเติม</label>
-                <div class="relative">
-                    <input type="text" id="modal-instruction" placeholder="เช่น แยกพริก, ไม่โรยงา..."
-                           class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-[#D90012] focus:bg-white text-xs transition-all text-slate-800">
-                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-[#D90012] pointer-events-none">
-                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="p-4 bg-slate-50 border-t border-slate-100 flex gap-2 shrink-0">
-            <button type="button" onclick="closeCustomizeModal()" class="w-1/3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 active:scale-95 transition">ยกเลิก</button>
-            <button type="button" onclick="confirmAddToCart()" class="w-2/3 py-2.5 rounded-xl bg-gradient-to-r from-[#D90012] to-[#B8000F] hover:from-[#B8000F] hover:to-[#900000] text-white text-xs font-bold shadow-md shadow-rose-950/20 flex items-center justify-center space-x-1.5 active:scale-95 transition">
-                <span>➕ เพิ่มลงบิล (<span id="modal-subtotal-btn">฿15</span>)</span>
-            </button>
-        </div>
-    </div>
+<!-- Non-blocking Rapid-Tap Quantity Popup (x2 เพิ่ม 2 ไม้, x3 เพิ่ม 3 ไม้ ...) -->
+<div id="pos-rapid-add-popup"
+     class="pointer-events-none hidden fixed top-20 left-1/2 -translate-x-1/2 z-[80] px-5 py-2.5 rounded-full bg-slate-900/95 text-white shadow-2xl border border-white/15 flex items-center gap-2.5 transition-transform duration-100">
+    <span id="pos-rapid-add-count" class="px-2.5 py-0.5 rounded-full bg-[#E50914] text-white font-black text-sm font-mono">x2</span>
+    <span id="pos-rapid-add-text" class="text-sm font-extrabold whitespace-nowrap">เพิ่ม 2 ไม้</span>
 </div>
 
 <!-- ============================================================================= -->
@@ -1748,9 +1570,32 @@
         }
     }
 
-    // Fast 1-Click Add from Card (+) Button
+    let posRapidAddTimer = null;
+
+    function showRapidAddPopup(productName, qty) {
+        const popup = document.getElementById('pos-rapid-add-popup');
+        const countEl = document.getElementById('pos-rapid-add-count');
+        const textEl = document.getElementById('pos-rapid-add-text');
+        if (!popup || !countEl || !textEl) return;
+
+        countEl.textContent = `x${qty}`;
+        textEl.textContent = `${productName} • เพิ่ม ${qty} ไม้`;
+
+        popup.classList.remove('hidden', 'scale-105');
+        void popup.offsetWidth;
+        popup.classList.add('scale-105');
+        setTimeout(() => popup.classList.remove('scale-105'), 90);
+
+        if (posRapidAddTimer) clearTimeout(posRapidAddTimer);
+        posRapidAddTimer = setTimeout(() => {
+            popup.classList.add('hidden');
+        }, 1400);
+    }
+
+    // Fast 1-Click / Rapid-Tap Add from Card Image or (+) Button
     function quickAddFromCard(card) {
-        const id = parseInt(card.dataset.id);
+        if (!card) return;
+        const id = parseInt(card.dataset.id, 10);
         const name = card.dataset.name;
         const price = parseFloat(card.dataset.price);
         const image = card.dataset.image;
@@ -1764,15 +1609,17 @@
         const chosenSpice = chosenType === 'grill' ? posTopSpiciness : 'medium';
 
         const existingIndex = cart.findIndex(i =>
-            parseInt(i.product_id) === id &&
+            parseInt(i.product_id, 10) === id &&
             i.cooking_type === chosenType &&
             (i.soup_style || null) === chosenSoup &&
             i.spiciness_level === chosenSpice &&
             !i.special_instructions
         );
 
+        let newQty = 1;
         if (existingIndex > -1) {
             cart[existingIndex].quantity += 1;
+            newQty = cart[existingIndex].quantity;
         } else {
             cart.push({
                 product_id: id,
@@ -1787,136 +1634,11 @@
                 special_instructions: ''
             });
         }
+
         renderCart();
-    }
-
-    // Open Customize Modal when clicking Card Photo/Title
-    function openCustomizeModal(card) {
-        const id = parseInt(card.dataset.id);
-        const name = card.dataset.name;
-        const price = parseFloat(card.dataset.price);
-        const stock = parseInt(card.dataset.stock);
-        const image = card.dataset.image;
-        const supportsGrill = card.dataset.grill === '1';
-        const supportsSoup = card.dataset.soup === '1';
-
-        const defaultType = (posTopCookingType === 'soup' && supportsSoup)
-            ? 'soup'
-            : ((posTopCookingType === 'grill' && supportsGrill) ? 'grill' : (supportsGrill ? 'grill' : 'soup'));
-
-        currentItem = {
-            product_id: id,
-            name: name,
-            price: price,
-            stock: stock,
-            image: image,
-            supportsGrill: supportsGrill,
-            supportsSoup: supportsSoup,
-            cooking_type: defaultType,
-            grill_style: 'brush',
-            soup_style: posTopSoupStyle,
-            spiciness: posTopSpiciness,
-            quantity: 1,
-            instruction: ''
-        };
-
-        document.getElementById('modal-item-name').innerText = name;
-        document.getElementById('modal-item-price').innerText = `฿${price.toFixed(0)}`;
-        document.getElementById('modal-qty').innerText = '1';
-        document.getElementById('modal-instruction').value = '';
-        document.getElementById('modal-subtotal-btn').innerText = `฿${price.toFixed(0)}`;
-
-        const spiceRadio = document.querySelector(`input[name="spiciness"][value="${posTopSpiciness}"]`);
-        if (spiceRadio) spiceRadio.checked = true;
-        const soupRadio = document.querySelector(`input[name="soup_style"][value="${posTopSoupStyle}"]`);
-        if (soupRadio) soupRadio.checked = true;
-
-        const btnGrill = document.getElementById('type-btn-grill');
-        const btnSoup = document.getElementById('type-btn-soup');
-        btnGrill.style.display = supportsGrill ? 'flex' : 'none';
-        btnSoup.style.display = supportsSoup ? 'flex' : 'none';
-
-        setCookingType(defaultType);
-        document.getElementById('customize-modal').classList.remove('hidden');
-    }
-
-    function closeCustomizeModal() {
-        document.getElementById('customize-modal').classList.add('hidden');
-        currentItem = null;
-    }
-
-    function setCookingType(type) {
-        if (!currentItem) return;
-        currentItem.cooking_type = type;
-
-        const btnGrill = document.getElementById('type-btn-grill');
-        const btnSoup = document.getElementById('type-btn-soup');
-        const radioGrill = document.getElementById('radio-indicator-grill');
-        const radioSoup = document.getElementById('radio-indicator-soup');
-        const soupOpts = document.getElementById('soup-options');
-        const spicinessSection = document.getElementById('section-spiciness');
-
-        if (type === 'grill') {
-            btnGrill.className = 'p-3 rounded-2xl border-2 text-left transition-all border-[#D90012] bg-[#FFF0F1] shadow-xs flex items-center gap-2.5 group';
-            btnSoup.className = 'p-3 rounded-2xl border-2 text-left transition-all border-slate-200 bg-white flex items-center gap-2.5 hover:border-slate-300 group';
-            if (radioGrill) {
-                radioGrill.className = 'w-4 h-4 rounded-full border-2 border-blue-600 flex items-center justify-center shrink-0 p-0.5';
-                radioGrill.innerHTML = '<div class="w-2 h-2 rounded-full bg-blue-600"></div>';
-            }
-            if (radioSoup) {
-                radioSoup.className = 'w-4 h-4 rounded-full border-2 border-slate-400 flex items-center justify-center shrink-0';
-                radioSoup.innerHTML = '';
-            }
-            if (soupOpts) soupOpts.classList.add('hidden');
-            if (spicinessSection) spicinessSection.classList.remove('hidden');
-        } else {
-            btnSoup.className = 'p-3 rounded-2xl border-2 text-left transition-all border-[#D90012] bg-[#FFF0F1] shadow-xs flex items-center gap-2.5 group';
-            btnGrill.className = 'p-3 rounded-2xl border-2 text-left transition-all border-slate-200 bg-white flex items-center gap-2.5 hover:border-slate-300 group';
-            if (radioSoup) {
-                radioSoup.className = 'w-4 h-4 rounded-full border-2 border-blue-600 flex items-center justify-center shrink-0 p-0.5';
-                radioSoup.innerHTML = '<div class="w-2 h-2 rounded-full bg-blue-600"></div>';
-            }
-            if (radioGrill) {
-                radioGrill.className = 'w-4 h-4 rounded-full border-2 border-slate-400 flex items-center justify-center shrink-0';
-                radioGrill.innerHTML = '';
-            }
-            if (soupOpts) soupOpts.classList.remove('hidden');
-            if (spicinessSection) spicinessSection.classList.add('hidden');
+        if (newQty >= 2) {
+            showRapidAddPopup(name, newQty);
         }
-    }
-
-    function adjustModalQty(delta) {
-        if (!currentItem) return;
-        const newQty = Math.max(1, currentItem.quantity + delta);
-        currentItem.quantity = newQty;
-        document.getElementById('modal-qty').innerText = newQty;
-        const sub = currentItem.price * newQty;
-        document.getElementById('modal-subtotal-btn').innerText = `฿${sub.toFixed(0)}`;
-    }
-
-    function confirmAddToCart() {
-        if (!currentItem) return;
-
-        const grillStyle = document.querySelector('input[name="grill_style"]:checked')?.value || document.querySelector('input[name="grill_style"]')?.value || 'brush';
-        const soupStyle = document.querySelector('input[name="soup_style"]:checked')?.value || 'mala_rich';
-        const spiciness = document.querySelector('input[name="spiciness"]:checked')?.value || 'medium';
-        const instruction = document.getElementById('modal-instruction').value.trim();
-
-        cart.push({
-            product_id: currentItem.product_id,
-            name: currentItem.name,
-            unit_price: currentItem.price,
-            quantity: currentItem.quantity,
-            image: currentItem.image,
-            cooking_type: currentItem.cooking_type,
-            grill_style: currentItem.cooking_type === 'grill' ? grillStyle : null,
-            soup_style: currentItem.cooking_type === 'soup' ? soupStyle : null,
-            spiciness_level: spiciness,
-            special_instructions: instruction
-        });
-
-        closeCustomizeModal();
-        renderCart();
     }
 
     // Coupon Logic
