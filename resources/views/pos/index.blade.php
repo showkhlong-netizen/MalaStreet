@@ -678,9 +678,9 @@
 
 <!-- Non-blocking Rapid-Tap Quantity Popup (x2 เพิ่ม 2 ไม้, x3 เพิ่ม 3 ไม้ ...) -->
 <div id="pos-rapid-add-popup"
-     class="pointer-events-none hidden fixed top-20 left-1/2 -translate-x-1/2 z-[80] px-5 py-2.5 rounded-full bg-slate-900/95 text-white shadow-2xl border border-white/15 flex items-center gap-2.5 transition-transform duration-100">
-    <span id="pos-rapid-add-count" class="px-2.5 py-0.5 rounded-full bg-[#E50914] text-white font-black text-sm font-mono">x2</span>
-    <span id="pos-rapid-add-text" class="text-sm font-extrabold whitespace-nowrap">เพิ่ม 2 ไม้</span>
+     class="pointer-events-none hidden fixed top-20 left-1/2 -translate-x-1/2 z-[80] px-9 py-4.5 rounded-full bg-slate-900/95 text-white shadow-2xl border-2 border-white/20 flex items-center gap-4 transition-transform duration-100">
+    <span id="pos-rapid-add-count" class="px-4.5 py-1 rounded-full bg-[#E50914] text-white font-black text-2xl sm:text-[28px] font-mono leading-tight">x2</span>
+    <span id="pos-rapid-add-text" class="text-2xl sm:text-[28px] font-extrabold whitespace-nowrap leading-tight">เพิ่ม 2 ไม้</span>
 </div>
 
 <!-- ============================================================================= -->
