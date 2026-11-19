@@ -19,12 +19,22 @@
     $isPosOrKitchen = request()->routeIs('pos.index') || request()->routeIs('pos.kitchen');
 @endphp
 <body class="min-h-full flex flex-col text-slate-800 antialiased selection:bg-rose-500 selection:text-white bg-slate-50">
+    <script>
+        if (window.self !== window.top) {
+            document.documentElement.classList.add('is-embedded-pane');
+        }
+    </script>
+    <style>
+        .is-embedded-pane #app-main-header,
+        .is-embedded-pane #app-main-footer { display: none !important; }
+        .is-embedded-pane { --app-header-h: 0px !important; }
+    </style>
     @if($isEmbedMode)
         <style>:root { --app-header-h: 0px !important; }</style>
     @endif
     @if(!$isEmbedMode)
     <!-- Main Top Navigation (Sleek, Prominent Monochrome Icons, Text Underneath) -->
-    <header class="bg-slate-950 text-white shadow-lg sticky top-0 z-40 border-b border-slate-800">
+    <header id="app-main-header" class="bg-slate-950 text-white shadow-lg sticky top-0 z-40 border-b border-slate-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
                 <!-- Brand / Logo -->
