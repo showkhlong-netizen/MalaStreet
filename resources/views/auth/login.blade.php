@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>เข้าสู่ระบบการทำงาน - หม่าล่าสตรีท (Mala Street POS)</title>
 
+    <!-- PWA App Manifest & Mobile App Meta -->
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <meta name="theme-color" content="#0b0f19">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="หม่าล่าสตรีท">
+    <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
+
     <!-- Non-blocking async Google Font (Instant first paint using system Thai UI fonts even on slow internet) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -960,6 +968,36 @@
                     } catch (e) {}
                 });
             }
+        })();
+    </script>
+    <button type="button" id="login-pwa-install-btn" onclick="triggerLoginPwaInstall()"
+            style="display:none; position:fixed; bottom:16px; right:16px; z-index:99; padding:10px 16px; border-radius:9999px; background:#e50914; color:#fff; font-weight:700; font-size:12px; border:none; box-shadow:0 10px 25px rgba(229,9,20,0.35); cursor:pointer;">
+        📲 ติดตั้งเป็น App
+    </button>
+    <script>
+        (function () {
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js').catch(() => {});
+                });
+            }
+            let deferredPrompt = null;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                const btn = document.getElementById('login-pwa-install-btn');
+                if (btn && !window.matchMedia('(display-mode: standalone)').matches) {
+                    btn.style.display = 'inline-flex';
+                }
+            });
+            window.triggerLoginPwaInstall = async function () {
+                if (!deferredPrompt) return;
+                deferredPrompt.prompt();
+                await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                const btn = document.getElementById('login-pwa-install-btn');
+                if (btn) btn.style.display = 'none';
+            };
         })();
     </script>
 </body>

@@ -913,11 +913,9 @@
                         </svg>
                         <span>เงินสด (บาท)</span>
                     </label>
-                    <input type="number" step="0.01" min="0" inputmode="decimal" id="pos-confirm-cash"
-                        onfocus="openPosNumpad('pos-confirm-cash', 'split_cash')"
+                    <input type="text" readonly inputmode="none" id="pos-confirm-cash"
                         onclick="openPosNumpad('pos-confirm-cash', 'split_cash')"
-                        oninput="onPosConfirmInput('cash')"
-                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-[#E50914] focus:ring-2 focus:ring-rose-500/20">
+                        class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm font-mono font-bold text-slate-900 cursor-pointer focus:outline-none">
                 </div>
                 <div>
                     <label class="text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1.5">
@@ -926,11 +924,9 @@
                         </svg>
                         <span>เงินโอน (บาท)</span>
                     </label>
-                    <input type="number" step="0.01" min="0" inputmode="decimal" id="pos-confirm-transfer"
-                        onfocus="openPosNumpad('pos-confirm-transfer', 'split_transfer')"
+                    <input type="text" readonly inputmode="none" id="pos-confirm-transfer"
                         onclick="openPosNumpad('pos-confirm-transfer', 'split_transfer')"
-                        oninput="recalcPosConfirmSummary()"
-                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-[#E50914] focus:ring-2 focus:ring-rose-500/20">
+                        class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm font-mono font-bold text-slate-900 cursor-pointer focus:outline-none">
                 </div>
             </div>
 
@@ -951,11 +947,9 @@
         <div id="pos-confirm-cash-tender-section" class="hidden space-y-3">
             <div>
                 <label class="text-xs font-bold text-slate-700 block mb-1.5">รับเงินสดมา (บาท):</label>
-                <input type="number" step="0.01" min="0" inputmode="decimal" id="pos-confirm-cash-received"
-                    onfocus="openPosNumpad('pos-confirm-cash-received', 'cash_received')"
+                <input type="text" readonly inputmode="none" id="pos-confirm-cash-received"
                     onclick="openPosNumpad('pos-confirm-cash-received', 'cash_received')"
-                    oninput="recalcPosConfirmCashChange()"
-                    class="w-full px-4 py-3 rounded-2xl border border-slate-300 text-lg font-bold text-slate-900 focus:outline-none focus:border-[#E50914] focus:ring-2 focus:ring-rose-500/20">
+                    class="w-full px-4 py-3 rounded-2xl border border-slate-300 bg-white text-lg font-bold text-slate-900 cursor-pointer focus:outline-none">
             </div>
 
             <div class="grid grid-cols-4 gap-2">
@@ -2666,10 +2660,25 @@
     let posNumpadFieldType = null;
     let posNumpadReplaceOnNextDigit = false;
 
+    function highlightPosNumpadInput(activeId) {
+        ['pos-confirm-cash-received', 'pos-confirm-cash', 'pos-confirm-transfer'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (id === activeId) {
+                el.classList.add('border-[#E50914]', 'ring-2', 'ring-rose-500/20');
+                el.classList.remove('border-slate-200', 'border-slate-300');
+            } else {
+                el.classList.remove('border-[#E50914]', 'ring-2', 'ring-rose-500/20');
+                el.classList.add(id === 'pos-confirm-cash-received' ? 'border-slate-300' : 'border-slate-200');
+            }
+        });
+    }
+
     function openPosNumpad(inputId, fieldType) {
         posNumpadTargetId = inputId;
         posNumpadFieldType = fieldType;
         posNumpadReplaceOnNextDigit = true;
+        highlightPosNumpadInput(inputId);
 
         const labelMap = {
             cash_received: 'พิมพ์ยอดรับเงินสด (บาท)',
@@ -2687,6 +2696,7 @@
         const pad = document.getElementById('pos-confirm-numpad');
         if (pad) pad.classList.add('hidden');
         posNumpadReplaceOnNextDigit = false;
+        highlightPosNumpadInput(null);
     }
 
     function pressPosNumpadKey(key) {

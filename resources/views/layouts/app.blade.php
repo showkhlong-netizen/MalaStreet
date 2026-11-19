@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'ระบบ POS ร้านหม่าล่าสตรีท - Mala Street' }}</title>
+
+    <!-- PWA App Manifest & Mobile App Meta -->
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <meta name="theme-color" content="#020617">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="หม่าล่าสตรีท">
+    <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
     
     <!-- Google Fonts: Prompt 400, 500, 600, 700 (Mala Street 4-Weights System) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1141,6 +1149,37 @@
                     scheduleNextPoll();
                 }, 500);
             });
+        })();
+    </script>
+
+    <!-- PWA Service Worker & One-Click Install Pill -->
+    <button type="button" id="pwa-install-btn" onclick="triggerPwaInstall()"
+            class="hidden fixed bottom-4 left-4 z-50 px-4 py-2.5 rounded-full bg-slate-950 hover:bg-slate-900 text-white text-xs font-extrabold shadow-2xl border border-rose-500/50 flex items-center gap-2 cursor-pointer transition-all">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>📲 ติดตั้งเป็น App</span>
+    </button>
+    <script>
+        (function () {
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js').catch(() => {});
+                });
+            }
+            let deferredPrompt = null;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                if (window.self === window.top && !window.matchMedia('(display-mode: standalone)').matches) {
+                    document.getElementById('pwa-install-btn')?.classList.remove('hidden');
+                }
+            });
+            window.triggerPwaInstall = async function () {
+                if (!deferredPrompt) return;
+                deferredPrompt.prompt();
+                await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                document.getElementById('pwa-install-btn')?.classList.add('hidden');
+            };
         })();
     </script>
 
