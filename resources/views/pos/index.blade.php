@@ -2728,6 +2728,7 @@
 
             const data = await response.json();
             if (data.success) {
+                broadcastPosOrderCreated(data.order);
                 closeSplitQrModal();
                 closePosConfirmModal();
                 if (isTransferWebhook) {
@@ -2736,6 +2737,8 @@
                     posPendingSubmission = null;
                     showThermalReceipt(data.order);
                     cart = [];
+                    posCurrentSetId = 1;
+                    posHasAddedInCurrentSet = false;
                     renderCart();
                     document.getElementById('customer-name-input').value = '';
                     const num = parseInt(data.order.queue_number.replace(/\D/g, ''), 10) + 1;
@@ -2756,11 +2759,23 @@
         }
     }
 
+    function broadcastPosOrderCreated(order) {
+        try {
+            if ('BroadcastChannel' in window) {
+                const ch = new BroadcastChannel('mala_pos_sync_channel');
+                ch.postMessage({ action: 'order_created', order_id: order?.id || null, ts: Date.now() });
+                ch.close();
+            }
+        } catch (e) {}
+    }
+
     async function submitPosDraftOrder() {
         if (cart.length === 0) return;
         const btn = document.getElementById('btn-pos-draft');
+        const originalHtml = btn ? btn.innerHTML : '';
         if (btn) {
             btn.disabled = true;
+            btn.innerHTML = '<span class="text-[13.5px] mala-font-bold">กำลังบันทึกร่าง...</span>';
         }
         const customerName = document.getElementById('customer-name-input')?.value.trim() || 'ลูกค้าหน้าร้าน';
 
@@ -2786,8 +2801,25 @@
             const data = await response.json();
             if (data.success) {
                 cart = [];
+                posCurrentSetId = 1;
+                posHasAddedInCurrentSet = false;
                 renderCart();
-                window.location.href = "{{ route('pos.kitchen') }}";
+                const custInput = document.getElementById('customer-name-input');
+                if (custInput) custInput.value = '';
+                if (data.order?.queue_number) {
+                    const num = parseInt(String(data.order.queue_number).replace(/\D/g, ''), 10) + 1;
+                    if (!isNaN(num)) {
+                        currentQueue = 'A' + String(num).padStart(2, '0');
+                        const qTag = document.getElementById('current-queue-tag');
+                        if (qTag) qTag.innerText = currentQueue;
+                    }
+                }
+                broadcastPosOrderCreated(data.order);
+                if (window.top && typeof window.top.switchPosKitchenPane === 'function') {
+                    window.top.switchPosKitchenPane(null, 'kitchen');
+                } else {
+                    window.location.href = "{{ route('pos.kitchen') }}";
+                }
             } else {
                 alert('เกิดข้อผิดพลาด: ' + (data.message || 'ไม่สามารถบันทึกร่างได้'));
             }
@@ -2795,7 +2827,10 @@
             console.error(err);
             alert('เกิดข้อผิดพลาดในการเชื่อมต่อเครือข่าย');
         } finally {
-            if (btn) btn.disabled = false;
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
         }
     }
 
