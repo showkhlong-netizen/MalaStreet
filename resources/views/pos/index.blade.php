@@ -542,26 +542,26 @@
                style="top: calc(var(--app-header-h, 80px) + 16px);">
             <div id="pos-cart-panel" class="bg-white rounded-[22px] shadow-lg border border-slate-200/90 overflow-hidden flex flex-col transition-all origin-top-right">
 
-                <!-- 1. Red Gradient Cart Header -->
-                <div class="bg-gradient-to-r from-[#9E0812] via-[#C8102E] to-[#B00C1B] px-4 py-3.5 text-white flex items-center justify-between">
+                <!-- 1. White Cart Header -->
+                <div class="bg-white border-b border-slate-200/90 px-4 py-3.5 text-black flex items-center justify-between">
                     <div class="flex items-center gap-2.5 min-w-0">
-                        <div class="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <div class="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200/80 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                             </svg>
                         </div>
                         <div class="min-w-0">
-                            <h2 class="text-[17px] mala-font-bold text-white leading-tight truncate">บิลออเดอร์ปัจจุบัน</h2>
-                            <div class="text-[11.5px] mala-font-thin text-rose-100 flex items-center gap-1 truncate">
-                                <span>โต๊ะ <span id="current-queue-tag" class="mala-font-bold text-white">A02</span> • <span id="fulfillment-mode-label">บริการหน้าร้าน</span></span>
+                            <h2 class="text-[17px] mala-font-bold text-black leading-tight truncate">บิลออเดอร์ปัจจุบัน</h2>
+                            <div class="text-[11.5px] mala-font-thin text-black flex items-center gap-1 truncate">
+                                <span>โต๊ะ <span id="current-queue-tag" class="mala-font-bold text-black">A02</span> • <span id="fulfillment-mode-label">บริการหน้าร้าน</span></span>
                             </div>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-1.5 shrink-0">
                         <button type="button" onclick="clearCart()"
-                                class="bg-black/20 hover:bg-black/30 text-white/95 text-[11.5px] mala-font-mid-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 shrink-0 transition-colors cursor-pointer">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                class="bg-slate-100 hover:bg-slate-200 border border-slate-200/90 text-black text-[11.5px] mala-font-mid-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 shrink-0 transition-colors cursor-pointer">
+                            <svg class="w-3.5 h-3.5 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                             </svg>
                             <span>ล้างตะกร้า</span>
@@ -569,8 +569,8 @@
                         <button type="button" onclick="openPosCartSizeModal()"
                                 title="ปรับขนาดหน้าต่างบิลออเดอร์ปัจจุบัน"
                                 aria-label="ปรับขนาดหน้าต่างบิลออเดอร์ปัจจุบัน"
-                                class="bg-black/20 hover:bg-black/35 text-white/95 p-1.5 rounded-lg flex items-center justify-center shrink-0 transition-colors cursor-pointer">
-                            <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
+                                class="bg-slate-100 hover:bg-slate-200 border border-slate-200/90 text-black p-1.5 rounded-lg flex items-center justify-center shrink-0 transition-colors cursor-pointer">
+                            <svg class="w-4 h-4 text-black stroke-current" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
                         </button>
