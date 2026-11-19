@@ -2094,25 +2094,45 @@
 
     const POS_CART_STICKY_KEY = 'pos_cart_sticky_lock_v1';
     let posCartStickyEnabled = true;
+    let posLastScrollY = window.scrollY || 0;
+    let posCurrentStickyTop = null;
 
-    function updatePosCartStickyTop() {
+    function updatePosCartStickyTop(fromScroll = false) {
         const aside = document.getElementById('pos-cart-aside');
         if (!aside) return;
+        const curScrollY = window.scrollY || 0;
+        const delta = curScrollY - posLastScrollY;
+        posLastScrollY = curScrollY;
+
         if (!posCartStickyEnabled || window.innerWidth < 1024) {
             aside.style.top = '';
+            posCurrentStickyTop = null;
             return;
         }
         const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-header-h')) || 80;
-        const minTop = headerH + 16;
+        const minTop = headerH + 16; // พอดีกับแท็บแบนเนอร์ด้านบน
         const bottomGap = 16;
         const panelH = aside.offsetHeight;
         const viewH = window.innerHeight;
-        if (panelH + minTop + bottomGap > viewH) {
-            aside.style.top = `${viewH - panelH - bottomGap}px`;
-        } else {
+
+        if (panelH + minTop + bottomGap <= viewH) {
+            posCurrentStickyTop = minTop;
             aside.style.top = `${minTop}px`;
+            return;
         }
+
+        const minBottomTop = viewH - panelH - bottomGap; // ล็อกสุดที่ปุ่มสุดท้ายด้านล่าง
+        if (posCurrentStickyTop === null || curScrollY <= 0) {
+            posCurrentStickyTop = minTop;
+        } else if (fromScroll) {
+            posCurrentStickyTop = Math.min(minTop, Math.max(minBottomTop, posCurrentStickyTop - delta));
+        } else {
+            posCurrentStickyTop = Math.min(minTop, Math.max(minBottomTop, posCurrentStickyTop));
+        }
+        aside.style.top = `${posCurrentStickyTop}px`;
     }
+
+    window.addEventListener('scroll', () => updatePosCartStickyTop(true), { passive: true });
 
     function applyPosCartStickyLock(isLocked) {
         posCartStickyEnabled = !!isLocked;
