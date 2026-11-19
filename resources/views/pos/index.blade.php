@@ -1788,17 +1788,17 @@
                 : `${group.groupSubtotal.toFixed(2)}฿`;
 
             html += `
-                <div class="mt-2.5 first:mt-0 mb-1 px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-between gap-2 text-[12px] mala-font-bold text-slate-700">
+                <div class="mt-2.5 first:mt-0 mb-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#B80B18] via-[#E50914] to-[#C8102E] border border-[#B00C1B]/40 shadow-xs flex items-center justify-between gap-2 text-[12px] mala-font-bold text-white">
                     <div class="flex items-center gap-1.5 min-w-0">
-                        <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-md bg-[#E50914] text-white text-[10.5px] leading-none shrink-0">${setNo}</span>
-                        <span class="text-slate-900 truncate">${group.typeLabel}</span>
+                        <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-md bg-white text-black text-[10.5px] leading-none shrink-0">${setNo}</span>
+                        <span class="text-white truncate">${group.typeLabel}</span>
                     </div>
-                    <span class="w-px h-3.5 bg-slate-300 shrink-0"></span>
-                    <span class="text-slate-600 truncate">${group.detailLabel}</span>
-                    <span class="w-px h-3.5 bg-slate-300 shrink-0"></span>
-                    <span class="text-slate-800 whitespace-nowrap shrink-0">${group.totalSticks}ไม้</span>
-                    <span class="w-px h-3.5 bg-slate-300 shrink-0"></span>
-                    <span class="text-[#E50914] whitespace-nowrap shrink-0">${priceText}</span>
+                    <span class="w-px h-3.5 bg-white/35 shrink-0"></span>
+                    <span class="text-white truncate">${group.detailLabel}</span>
+                    <span class="w-px h-3.5 bg-white/35 shrink-0"></span>
+                    <span class="text-white whitespace-nowrap shrink-0">${group.totalSticks}ไม้</span>
+                    <span class="w-px h-3.5 bg-white/35 shrink-0"></span>
+                    <span class="text-white whitespace-nowrap shrink-0">${priceText}</span>
                 </div>
             `;
 
