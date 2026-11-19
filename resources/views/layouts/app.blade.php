@@ -14,7 +14,15 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
+@php
+    $isEmbedMode = request()->boolean('embed');
+    $isPosOrKitchen = request()->routeIs('pos.index') || request()->routeIs('pos.kitchen');
+@endphp
 <body class="min-h-full flex flex-col text-slate-800 antialiased selection:bg-rose-500 selection:text-white bg-slate-50">
+    @if($isEmbedMode)
+        <style>:root { --app-header-h: 0px !important; }</style>
+    @endif
+    @if(!$isEmbedMode)
     <!-- Main Top Navigation (Sleek, Prominent Monochrome Icons, Text Underneath) -->
     <header class="bg-slate-950 text-white shadow-lg sticky top-0 z-40 border-b border-slate-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -55,7 +63,8 @@
                 <nav class="hidden lg:flex items-center space-x-1.5 xl:space-x-2.5">
                     @if($canNavPos)
                     <!-- 1. แคชเชียร์หน้าร้าน -->
-                    <a href="{{ route('pos.index') }}" 
+                    <a id="nav-tab-pos" href="{{ route('pos.index') }}"
+                       onclick="return window.switchPosKitchenPane ? window.switchPosKitchenPane(event, 'pos') : true"
                        class="group flex flex-col items-center justify-center px-3.5 py-1.5 rounded-2xl transition-all duration-150 {{ request()->routeIs('pos.index') ? 'bg-rose-600 text-white shadow-md shadow-rose-900/40 ring-1 ring-rose-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-900/90' }}">
                         <svg class="w-6 h-6 transition-transform group-hover:scale-110 {{ request()->routeIs('pos.index') ? 'text-white' : 'text-slate-300 group-hover:text-white' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -66,7 +75,8 @@
 
                     @if($canNavKitchen)
                     <!-- 2. จอครัว (KDS) -->
-                    <a href="{{ route('pos.kitchen') }}" 
+                    <a id="nav-tab-kitchen" href="{{ route('pos.kitchen') }}"
+                       onclick="return window.switchPosKitchenPane ? window.switchPosKitchenPane(event, 'kitchen') : true"
                        class="group flex flex-col items-center justify-center px-3.5 py-1.5 rounded-2xl transition-all duration-150 {{ request()->routeIs('pos.kitchen') ? 'bg-rose-600 text-white shadow-md shadow-rose-900/40 ring-1 ring-rose-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-900/90' }}">
                         <svg class="w-6 h-6 transition-transform group-hover:scale-110 {{ request()->routeIs('pos.kitchen') ? 'text-white' : 'text-slate-300 group-hover:text-white' }}" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
@@ -290,6 +300,7 @@
             @endif
         </div>
     </header>
+    @endif
 
     @if(session('access_denied_popup'))
         @php $denied = session('access_denied_popup'); @endphp
@@ -341,11 +352,97 @@
     @endif
 
     <!-- Content slot -->
-    <main class="flex-1 flex flex-col">
+    <main id="pos-primary-pane" class="flex-1 flex flex-col">
         @yield('content')
     </main>
 
-    <footer class="bg-slate-950 border-t border-slate-900 text-slate-400 text-xs py-4 text-center">
+    @if(!$isEmbedMode && $isPosOrKitchen && ($canNavPos ?? false) && ($canNavKitchen ?? false))
+        @php
+            $primaryPaneKey = request()->routeIs('pos.kitchen') ? 'kitchen' : 'pos';
+            $secondaryPaneKey = $primaryPaneKey === 'pos' ? 'kitchen' : 'pos';
+            $secondaryEmbedUrl = $secondaryPaneKey === 'kitchen'
+                ? route('pos.kitchen', ['embed' => 1])
+                : route('pos.index', ['embed' => 1]);
+        @endphp
+        <div id="pos-secondary-pane" class="hidden flex-1 w-full bg-slate-50" style="height: calc(100vh - var(--app-header-h, 80px));">
+            <iframe id="pos-secondary-iframe" data-preload-src="{{ $secondaryEmbedUrl }}" class="w-full h-full border-0 block bg-slate-50" title="Preloaded {{ $secondaryPaneKey }}"></iframe>
+        </div>
+        <script>
+            (function () {
+                const PRIMARY_KEY = @json($primaryPaneKey);
+                const SECONDARY_KEY = @json($secondaryPaneKey);
+                const URLS = {
+                    pos: @json(route('pos.index')),
+                    kitchen: @json(route('pos.kitchen')),
+                };
+                const ACTIVE_CLS = 'group flex flex-col items-center justify-center px-3.5 py-1.5 rounded-2xl transition-all duration-150 bg-rose-600 text-white shadow-md shadow-rose-900/40 ring-1 ring-rose-400/30';
+                const INACTIVE_CLS = 'group flex flex-col items-center justify-center px-3.5 py-1.5 rounded-2xl transition-all duration-150 text-slate-400 hover:text-white hover:bg-slate-900/90';
+
+                let secondaryLoaded = false;
+
+                function ensureSecondaryPreloaded() {
+                    if (secondaryLoaded) return;
+                    const iframe = document.getElementById('pos-secondary-iframe');
+                    if (iframe && iframe.dataset.preloadSrc && !iframe.getAttribute('src')) {
+                        iframe.setAttribute('src', iframe.dataset.preloadSrc);
+                        secondaryLoaded = true;
+                    }
+                }
+
+                // Background-preload the counterpart screen after current page finishes loading
+                window.addEventListener('load', () => {
+                    setTimeout(ensureSecondaryPreloaded, 450);
+                });
+
+                function updateNavActive(activeKey) {
+                    const tabPos = document.getElementById('nav-tab-pos');
+                    const tabKitchen = document.getElementById('nav-tab-kitchen');
+                    if (tabPos) tabPos.className = activeKey === 'pos' ? ACTIVE_CLS : INACTIVE_CLS;
+                    if (tabKitchen) tabKitchen.className = activeKey === 'kitchen' ? ACTIVE_CLS : INACTIVE_CLS;
+                }
+
+                window.switchPosKitchenPane = function (event, targetKey) {
+                    if (event && (event.metaKey || event.ctrlKey || event.shiftKey || event.button === 1)) {
+                        return true;
+                    }
+                    if (event) event.preventDefault();
+
+                    const primaryPane = document.getElementById('pos-primary-pane');
+                    const secondaryPane = document.getElementById('pos-secondary-pane');
+                    const footerEl = document.getElementById('app-main-footer');
+                    if (!primaryPane || !secondaryPane) return true;
+
+                    if (targetKey === PRIMARY_KEY) {
+                        secondaryPane.classList.add('hidden');
+                        primaryPane.classList.remove('hidden');
+                        if (footerEl) footerEl.classList.remove('hidden');
+                    } else if (targetKey === SECONDARY_KEY) {
+                        ensureSecondaryPreloaded();
+                        primaryPane.classList.add('hidden');
+                        secondaryPane.classList.remove('hidden');
+                        if (footerEl) footerEl.classList.add('hidden');
+                        // Wake up preloaded Kitchen/POS via BroadcastChannel for instant delta refresh
+                        try {
+                            if ('BroadcastChannel' in window) {
+                                const ch = new BroadcastChannel('mala_pos_sync_channel');
+                                ch.postMessage({ action: 'pane_activated', target: targetKey, ts: Date.now() });
+                                ch.close();
+                            }
+                        } catch (e) {}
+                    }
+
+                    updateNavActive(targetKey);
+                    if (URLS[targetKey] && window.location.pathname !== new URL(URLS[targetKey], window.location.origin).pathname) {
+                        history.replaceState({ pane: targetKey }, '', URLS[targetKey]);
+                    }
+                    return false;
+                };
+            })();
+        </script>
+    @endif
+
+    @if(!$isEmbedMode)
+    <footer id="app-main-footer" class="bg-slate-950 border-t border-slate-900 text-slate-400 text-xs py-4 text-center">
         <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
             <div>
                 © พ.ศ. {{ (int)date('Y') + 543 }} ร้านหม่าล่าสตรีท (Mala Street POS). ระบบย่าง ทา/จุ่ม ต้มน้ำซุป 3 สไตล์ สแกนบิลคำนวณต้นทุนต่อไม้
@@ -359,6 +456,7 @@
             </div>
         </div>
     </footer>
+    @endif
 
     <!-- Real-Time Cross-Device Sync Toast Notification Container -->
     <div id="mala-realtime-toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-3 sm:px-0"></div>

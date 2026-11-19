@@ -420,7 +420,22 @@ class PosController extends Controller
      */
     public function liveOrders(Request $request): JsonResponse
     {
+        $latestOrderTs = (string) (Order::max('updated_at') ?? '');
+        $orderCount = (int) Order::count();
+        $unreadChatCount = (int) ChatMessage::where('sender', 'customer')->where('is_read', false)->count();
+        $version = md5($latestOrderTs . '|' . $orderCount . '|' . $unreadChatCount);
+
+        if ($request->filled('version') && $request->query('version') === $version) {
+            return response()->json([
+                'unchanged' => true,
+                'version' => $version,
+                'server_time' => Carbon::now('Asia/Bangkok')->format('H:i:s'),
+            ]);
+        }
+
         return response()->json([
+            'unchanged' => false,
+            'version' => $version,
             'orders' => $this->buildLivePosOrders(),
             'server_time' => Carbon::now('Asia/Bangkok')->format('H:i:s'),
         ]);

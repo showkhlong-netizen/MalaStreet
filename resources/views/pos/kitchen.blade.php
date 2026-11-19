@@ -884,6 +884,21 @@
         }
 
         try {
+            // Fast Delta Version Check (Approach 3): skip full HTML fetch & DOM parse if nothing changed
+            if (!isManual) {
+                const vUrl = `/pos/orders/live${window.__kitchenSyncVersion ? ('?version=' + encodeURIComponent(window.__kitchenSyncVersion)) : ''}`;
+                const vRes = await fetch(vUrl, { cache: 'no-store', headers: { 'Accept': 'application/json' } });
+                if (vRes.ok) {
+                    const vData = await vRes.json();
+                    if (vData.unchanged === true) {
+                        return;
+                    }
+                    if (vData.version) {
+                        window.__kitchenSyncVersion = vData.version;
+                    }
+                }
+            }
+
             const res = await fetch(window.location.href, {
                 cache: 'no-store',
                 headers: {
@@ -1639,8 +1654,21 @@
         }
     }
 
-    // Background silent sync every 4 seconds - ZERO screen flickering, ZERO iframe reload!
+    // Background silent sync every 4 seconds (uses fast Delta Version check)
     setInterval(() => syncKitchenOrdersSilently(false), 4000);
+
+    // Instant wake-up when switching from POS pane or when POS creates a new order
+    try {
+        if ('BroadcastChannel' in window) {
+            const kdsSyncCh = new BroadcastChannel('mala_pos_sync_channel');
+            kdsSyncCh.onmessage = (e) => {
+                if (e.data && (e.data.action === 'pane_activated' || e.data.action === 'order_created')) {
+                    window.__kitchenSyncVersion = '';
+                    syncKitchenOrdersSilently(false);
+                }
+            };
+        }
+    } catch (e) {}
 </script>
 
 <!-- MODAL A: Delivery Step 1 - Edit Order Items Modal -->
