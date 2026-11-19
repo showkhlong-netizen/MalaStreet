@@ -7,12 +7,12 @@
     <title>{{ $title ?? 'ระบบ POS ร้านหม่าล่าสตรีท - Mala Street' }}</title>
 
     <!-- PWA App Manifest & Mobile App Meta -->
-    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <link rel="manifest" href="/manifest.webmanifest">
     <meta name="theme-color" content="#020617">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="หม่าล่าสตรีท">
-    <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
     <script>
         window.__pwaDeferredPrompt = null;
         window.addEventListener('beforeinstallprompt', function (e) {

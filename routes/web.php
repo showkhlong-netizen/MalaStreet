@@ -22,6 +22,21 @@ use Illuminate\Support\Facades\Route;
 Route::get('/system/sync-state', [SystemSyncController::class, 'syncState'])->name('system.sync_state');
 Route::get('/system/audit-logs', [SystemSyncController::class, 'auditLogs'])->name('system.audit_logs')->middleware('auth');
 
+// PWA App Entry (HTTP 200 OK for installability, redirects immediately to login or landing page)
+Route::get('/app', function () {
+    $target = route('login', [], false);
+    if (Auth::check() && !session('is_logged_out', false)) {
+        $user = Auth::user();
+        $profile = LoginLandingResolver::resolveProfile($user, session('auth_user_profile'));
+        $target = LoginLandingResolver::resolveLandingUrl($user, $profile);
+    }
+    return response(
+        '<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>หม่าล่าสตรีท POS</title><script>window.location.replace(' . json_encode($target) . ');</script></head><body style="background:#020617;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">กำลังเปิดแอป...</body></html>',
+        200,
+        ['Content-Type' => 'text/html; charset=UTF-8']
+    );
+})->name('pwa.entry');
+
 // Landing redirect: Admin -> Store Overview (admin.dashboard), Employee (1st login of day) -> Employees Face Scan, Employee (later) -> POS
 Route::get('/', function () {
     if (Auth::check() && !session('is_logged_out', false)) {

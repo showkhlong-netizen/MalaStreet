@@ -1,9 +1,9 @@
 {
-  "id": "/",
+  "id": "/app",
   "name": "หม่าล่าสตรีท POS — แอปรับออเดอร์ & จอครัว",
   "short_name": "หม่าล่าสตรีท",
   "description": "ระบบรับออเดอร์หน้าร้าน (POS), จอครัว (KDS) และจัดการร้านหม่าล่าสตรีท",
-  "start_url": "/",
+  "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",

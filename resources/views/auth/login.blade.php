@@ -6,12 +6,12 @@
     <title>เข้าสู่ระบบการทำงาน - หม่าล่าสตรีท (Mala Street POS)</title>
 
     <!-- PWA App Manifest & Mobile App Meta -->
-    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <link rel="manifest" href="/manifest.webmanifest">
     <meta name="theme-color" content="#0b0f19">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="หม่าล่าสตรีท">
-    <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 
     <!-- Non-blocking async Google Font (Instant first paint using system Thai UI fonts even on slow internet) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
