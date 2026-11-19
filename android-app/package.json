@@ -1,0 +1,16 @@
+{
+  "name": "malastreet-pos-android",
+  "version": "1.0.0",
+  "description": "Mala Street POS & Kitchen Android App (Capacitor)",
+  "private": true,
+  "scripts": {
+    "cap:sync": "npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}

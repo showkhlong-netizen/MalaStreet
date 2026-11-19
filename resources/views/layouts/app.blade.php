@@ -273,17 +273,17 @@
                                     <span class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 text-[9px] font-bold">Live</span>
                                 </a>
 
-                                <!-- ติดตั้ง Web App (PWA) -->
-                                <button type="button" id="profile-pwa-install-btn" onclick="triggerPwaInstall()"
-                                        class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-emerald-700 transition-colors group cursor-pointer text-left">
+                                <!-- ดาวน์โหลดแอป Android (.apk) สำหรับมือถือ / เครื่อง POS Sunmi -->
+                                <a href="https://github.com/showkhlong-netizen/MalaStreet/releases/download/android-latest/MalaStreet-POS.apk" target="_blank"
+                                   class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-emerald-700 transition-colors group cursor-pointer text-left">
                                     <div class="flex items-center gap-2.5">
                                         <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                         </svg>
-                                        <span>ติดตั้ง Web App (รับออเดอร์)</span>
+                                        <span>ดาวน์โหลดแอป Android (.apk)</span>
                                     </div>
-                                    <span id="profile-pwa-badge" class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9px] font-bold">App</span>
-                                </button>
+                                    <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9px] font-bold">.APK</span>
+                                </a>
                             </div>
 
                             <!-- Logout Action -->

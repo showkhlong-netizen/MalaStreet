@@ -1,0 +1,19 @@
+{
+  "appId": "com.malastreet.pos",
+  "appName": "หม่าล่าสตรีท POS",
+  "webDir": "www",
+  "server": {
+    "url": "https://malastreet.onrender.com/app",
+    "cleartext": false,
+    "androidScheme": "https",
+    "allowNavigation": [
+      "malastreet.onrender.com",
+      "*.onrender.com"
+    ]
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}
