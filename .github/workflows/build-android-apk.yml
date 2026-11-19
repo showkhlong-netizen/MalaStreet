@@ -1,4 +1,4 @@
-name: Build Android POS APK
+name: Malastreet Android POS APK
 
 on:
   push:
