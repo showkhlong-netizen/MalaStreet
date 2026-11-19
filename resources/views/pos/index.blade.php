@@ -909,8 +909,11 @@
                         </svg>
                         <span>เงินสด (บาท)</span>
                     </label>
-                    <input type="number" step="0.01" min="0" id="pos-confirm-cash" oninput="onPosConfirmInput('cash')"
-                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-slate-900">
+                    <input type="number" step="0.01" min="0" inputmode="decimal" id="pos-confirm-cash"
+                        onfocus="openPosNumpad('pos-confirm-cash', 'split_cash')"
+                        onclick="openPosNumpad('pos-confirm-cash', 'split_cash')"
+                        oninput="onPosConfirmInput('cash')"
+                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-[#E50914] focus:ring-2 focus:ring-rose-500/20">
                 </div>
                 <div>
                     <label class="text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1.5">
@@ -919,8 +922,11 @@
                         </svg>
                         <span>เงินโอน (บาท)</span>
                     </label>
-                    <input type="number" step="0.01" min="0" id="pos-confirm-transfer" oninput="recalcPosConfirmSummary()"
-                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-slate-900">
+                    <input type="number" step="0.01" min="0" inputmode="decimal" id="pos-confirm-transfer"
+                        onfocus="openPosNumpad('pos-confirm-transfer', 'split_transfer')"
+                        onclick="openPosNumpad('pos-confirm-transfer', 'split_transfer')"
+                        oninput="recalcPosConfirmSummary()"
+                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-[#E50914] focus:ring-2 focus:ring-rose-500/20">
                 </div>
             </div>
 
@@ -941,8 +947,11 @@
         <div id="pos-confirm-cash-tender-section" class="hidden space-y-3">
             <div>
                 <label class="text-xs font-bold text-slate-700 block mb-1.5">รับเงินสดมา (บาท):</label>
-                <input type="number" step="0.01" min="0" id="pos-confirm-cash-received" oninput="recalcPosConfirmCashChange()"
-                    class="w-full px-4 py-3 rounded-2xl border border-slate-300 text-lg font-bold text-slate-900 focus:outline-none focus:border-slate-900">
+                <input type="number" step="0.01" min="0" inputmode="decimal" id="pos-confirm-cash-received"
+                    onfocus="openPosNumpad('pos-confirm-cash-received', 'cash_received')"
+                    onclick="openPosNumpad('pos-confirm-cash-received', 'cash_received')"
+                    oninput="recalcPosConfirmCashChange()"
+                    class="w-full px-4 py-3 rounded-2xl border border-slate-300 text-lg font-bold text-slate-900 focus:outline-none focus:border-[#E50914] focus:ring-2 focus:ring-rose-500/20">
             </div>
 
             <div class="grid grid-cols-4 gap-2">
@@ -959,6 +968,37 @@
             <div class="px-4 py-3 rounded-2xl bg-slate-100/90 flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-700">เงินทอน:</span>
                 <strong id="pos-confirm-change-display" class="text-lg font-black text-emerald-600 font-mono">฿0.00</strong>
+            </div>
+        </div>
+
+        <!-- Dedicated Numeric Keypad (0-9 + Backspace + Clear) for Cash & Split Inputs -->
+        <div id="pos-confirm-numpad" class="hidden bg-slate-100/95 border border-slate-200 rounded-2xl p-2.5 space-y-2 select-none">
+            <div class="flex items-center justify-between px-1">
+                <span id="pos-numpad-target-label" class="text-[11px] font-extrabold text-slate-600">แป้นพิมพ์ตัวเลข</span>
+                <button type="button" onclick="closePosNumpad()" class="text-[11px] font-bold text-slate-500 hover:text-slate-800 px-2 py-0.5 rounded-lg bg-white border border-slate-200 cursor-pointer">
+                    ซ่อนแป้นพิมพ์
+                </button>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5">
+                <button type="button" onclick="pressPosNumpadKey('1')" class="py-2.5 rounded-xl bg-white hover:bg-slate-50 active:scale-95 border border-slate-200/90 text-base font-black text-slate-900 shadow-2xs cursor-pointer transition">1</button>
+                <button type="button" onclick="pressPosNumpadKey('2')" class="py-2.5 rounded-xl bg-white hover:bg-slate-50 active:scale-95 border border-slate-200/90 text-base font-black text-slate-900 shadow-2xs cursor-pointer transition">2</button>
+                <button type="button" onclick="pressPosNumpadKey('3')" class="py-2.5 rounded-xl bg-white hover:bg-slate-50 active:scale-95 border border-slate-200/90 text-base font-black text-slate-900 shadow-2xs cursor-pointer transition">3</button>
+                <button type="button" onclick="pressPosNumpadKey('4')" class="py-2.5 rounded-xl bg-white hover:bg-slate-50 active:scale-95 border border-slate-200/90 text-base font-black text-slate-900 shadow-2xs cursor-pointer transition">4</button>
+                <button type="button" onclick="pressPosNumpadKey('5')" class="py-2.5 rounded-xl bg-white hover:bg-slate-50 active:scale-95 border border-slate-200/90 text-base font-black text-slate-900 shadow-2xs cursor-pointer transition">5</button>
+                <button type="button" onclick="pressPosNumpadKey('6')" class="py-2.5 rounded-xl bg-white hover:bg-slate-50 active:scale-95 border border-slate-200/90 text-base font-black text-slate-900 shadow-2xs cursor-pointer transition">6</button>
+                <button type="button" onclick="pressPosNumpadKey('7')" class="py-2.5 rounded-xl bg-white hover:bg-slate-50 active:scale-95 border border-slate-200/90 text-base font-black text-slate-900 shadow-2xs cursor-pointer transition">7</button>
+                <button type="button" onclick="pressPosNumpadKey('8')" class="py-2.5 rounded-xl bg-white hover:bg-slate-50 active:scale-95 border border-slate-200/90 text-base font-black text-slate-900 shadow-2xs cursor-pointer transition">8</button>
+                <button type="button" onclick="pressPosNumpadKey('9')" class="py-2.5 rounded-xl bg-white hover:bg-slate-50 active:scale-95 border border-slate-200/90 text-base font-black text-slate-900 shadow-2xs cursor-pointer transition">9</button>
+                <button type="button" onclick="pressPosNumpadKey('.')" class="py-2.5 rounded-xl bg-white hover:bg-slate-50 active:scale-95 border border-slate-200/90 text-base font-black text-slate-900 shadow-2xs cursor-pointer transition">.</button>
+                <button type="button" onclick="pressPosNumpadKey('0')" class="py-2.5 rounded-xl bg-white hover:bg-slate-50 active:scale-95 border border-slate-200/90 text-base font-black text-slate-900 shadow-2xs cursor-pointer transition">0</button>
+                <button type="button" onclick="pressPosNumpadKey('backspace')" class="py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 active:scale-95 border border-rose-200 text-sm font-black text-[#E50914] shadow-2xs cursor-pointer transition flex items-center justify-center gap-1">
+                    <span>⌫</span>
+                    <span>ลบ</span>
+                </button>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5">
+                <button type="button" onclick="pressPosNumpadKey('clear')" class="py-2 rounded-xl bg-white hover:bg-slate-50 active:scale-95 border border-slate-200 text-xs font-extrabold text-slate-700 cursor-pointer transition">ล้างค่า (C)</button>
+                <button type="button" onclick="closePosNumpad()" class="py-2 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-xs font-extrabold text-white cursor-pointer transition">✓ เสร็จสิ้น</button>
             </div>
         </div>
 
@@ -2561,6 +2601,72 @@
                 ? 'pos-confirm-mode-btn py-2 px-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold border border-slate-900 transition cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5'
                 : 'pos-confirm-mode-btn py-2 px-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold border border-slate-200 transition cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5';
         });
+        closePosNumpad();
+    }
+
+    let posNumpadTargetId = null;
+    let posNumpadFieldType = null;
+    let posNumpadReplaceOnNextDigit = false;
+
+    function openPosNumpad(inputId, fieldType) {
+        posNumpadTargetId = inputId;
+        posNumpadFieldType = fieldType;
+        posNumpadReplaceOnNextDigit = true;
+
+        const labelMap = {
+            cash_received: 'พิมพ์ยอดรับเงินสด (บาท)',
+            split_cash: 'พิมพ์ยอดเงินสด - แบ่งจ่าย (บาท)',
+            split_transfer: 'พิมพ์ยอดเงินโอน - แบ่งจ่าย (บาท)',
+        };
+        const labelEl = document.getElementById('pos-numpad-target-label');
+        if (labelEl) labelEl.textContent = labelMap[fieldType] || 'แป้นพิมพ์ตัวเลข';
+
+        const pad = document.getElementById('pos-confirm-numpad');
+        if (pad) pad.classList.remove('hidden');
+    }
+
+    function closePosNumpad() {
+        const pad = document.getElementById('pos-confirm-numpad');
+        if (pad) pad.classList.add('hidden');
+        posNumpadReplaceOnNextDigit = false;
+    }
+
+    function pressPosNumpadKey(key) {
+        if (!posNumpadTargetId) return;
+        const input = document.getElementById(posNumpadTargetId);
+        if (!input) return;
+
+        let val = String(input.value || '');
+        if (key === 'clear') {
+            val = '';
+            posNumpadReplaceOnNextDigit = false;
+        } else if (key === 'backspace') {
+            posNumpadReplaceOnNextDigit = false;
+            val = val.length > 0 ? val.slice(0, -1) : '';
+        } else if (key === '.') {
+            if (posNumpadReplaceOnNextDigit) {
+                val = '0.';
+                posNumpadReplaceOnNextDigit = false;
+            } else if (!val.includes('.')) {
+                val = (val === '' ? '0' : val) + '.';
+            }
+        } else {
+            if (posNumpadReplaceOnNextDigit) {
+                val = key;
+                posNumpadReplaceOnNextDigit = false;
+            } else {
+                val = (val === '0' ? key : val + key);
+            }
+        }
+
+        input.value = val;
+        if (posNumpadFieldType === 'cash_received') {
+            recalcPosConfirmCashChange();
+        } else if (posNumpadFieldType === 'split_cash') {
+            onPosConfirmInput('cash');
+        } else if (posNumpadFieldType === 'split_transfer') {
+            recalcPosConfirmSummary();
+        }
     }
 
     function setPosConfirmCashTender(amount) {
