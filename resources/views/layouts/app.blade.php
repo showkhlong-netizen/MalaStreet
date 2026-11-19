@@ -13,6 +13,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="หม่าล่าสตรีท">
     <link rel="apple-touch-icon" href="{{ asset('icons/apple-touch-icon.png') }}">
+    <script>
+        window.__pwaDeferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', function (e) {
+            e.preventDefault();
+            window.__pwaDeferredPrompt = e;
+            var badge = document.getElementById('profile-pwa-badge');
+            if (badge) badge.textContent = 'พร้อมติดตั้ง';
+        });
+    </script>
     
     <!-- Google Fonts: Prompt 400, 500, 600, 700 (Mala Street 4-Weights System) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1172,26 +1181,22 @@
                     navigator.serviceWorker.register('/sw.js').catch(() => {});
                 });
             }
-            let deferredPrompt = null;
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
             const badge = document.getElementById('profile-pwa-badge');
             if (isStandalone && badge) {
                 badge.textContent = 'ติดตั้งแล้ว ✓';
+            } else if (window.__pwaDeferredPrompt && badge) {
+                badge.textContent = 'พร้อมติดตั้ง';
             }
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredPrompt = e;
-                if (badge) badge.textContent = 'พร้อมติดตั้ง';
-            });
             window.triggerPwaInstall = async function () {
                 if (isStandalone) {
                     alert('กำลังใช้งานในโหมด Web App แล้วครับ ✓');
                     return;
                 }
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const res = await deferredPrompt.userChoice;
-                    deferredPrompt = null;
+                if (window.__pwaDeferredPrompt) {
+                    window.__pwaDeferredPrompt.prompt();
+                    const res = await window.__pwaDeferredPrompt.userChoice;
+                    window.__pwaDeferredPrompt = null;
                     if (res && res.outcome === 'accepted' && badge) {
                         badge.textContent = 'ติดตั้งแล้ว ✓';
                     }
@@ -1201,7 +1206,7 @@
                 if (isIos) {
                     alert('สำหรับ iPad / iPhone:\n1. กดปุ่มแชร์ (ไอคอนสี่เหลี่ยมมีลูกศรชี้ขึ้น) บนแถบ Safari\n2. เลือก "เพิ่มไปยังหน้าจอโฮม (Add to Home Screen)"\n3. กด "เพิ่ม" เพื่อติดตั้งเป็น App ได้เลยครับ');
                 } else {
-                    alert('วิธีติดตั้งเป็น App:\nกดปุ่มเมนู (⋮) มุมขวาบนของ Chrome/Edge แล้วเลือก "ติดตั้งแอป / Install Mala Street" ได้เลยครับ');
+                    alert('หากปุ่มติดตั้งไม่เด้งอัตโนมัติ (เช่น เคยกดปิดไปก่อนหน้า หรือเปิดโหมดไม่ระบุตัวตน):\n• บนคอมพิวเตอร์ (Chrome/Edge): กดไอคอนรูปหน้าจอมีลูกศรชี้ลง (⊕) ที่ช่องใส่ URL ด้านขวาบน หรือกดเมนู ⋮ → บันทึกและแชร์ → ติดตั้งแอป\n• บน Android (Chrome): กดเมนู ⋮ มุมขวาบน → เพิ่มลงในหน้าจอหลัก / ติดตั้งแอป');
                 }
             };
         })();
