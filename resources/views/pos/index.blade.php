@@ -257,14 +257,14 @@
                                 </div>
                                 <div class="grid grid-cols-3 gap-2">
                                     <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
-                                        <input type="radio" name="pos_top_spiciness" value="mild" onchange="posTopSpiciness = this.value" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
+                                        <input type="radio" name="pos_top_spiciness" value="mild" onclick="onPosTopSpicinessSelect(this.value)" onchange="onPosTopSpicinessSelect(this.value)" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
                                         <div class="h-5 flex items-center justify-center mb-0.5 group-hover:scale-110 transition-transform">
                                             <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-5 w-auto object-contain shrink-0" alt="เผ็ดน้อย">
                                         </div>
                                         <span class="font-extrabold text-[#101114] text-[11px]">เผ็ดน้อย</span>
                                     </label>
                                     <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
-                                        <input type="radio" name="pos_top_spiciness" value="medium" checked onchange="posTopSpiciness = this.value" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
+                                        <input type="radio" name="pos_top_spiciness" value="medium" checked onclick="onPosTopSpicinessSelect(this.value)" onchange="onPosTopSpicinessSelect(this.value)" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
                                         <div class="h-5 flex items-center justify-center gap-1 mb-0.5 group-hover:scale-110 transition-transform">
                                             <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4.5 w-auto object-contain shrink-0" alt="เผ็ดกลาง">
                                             <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4.5 w-auto object-contain shrink-0" alt="เผ็ดกลาง">
@@ -272,7 +272,7 @@
                                         <span class="font-extrabold text-[#101114] text-[11px]">เผ็ดกลาง</span>
                                     </label>
                                     <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
-                                        <input type="radio" name="pos_top_spiciness" value="hot" onchange="posTopSpiciness = this.value" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
+                                        <input type="radio" name="pos_top_spiciness" value="hot" onclick="onPosTopSpicinessSelect(this.value)" onchange="onPosTopSpicinessSelect(this.value)" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
                                         <div class="h-5 flex items-center justify-center gap-0.5 mb-0.5 group-hover:scale-110 transition-transform">
                                             <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4 w-auto object-contain shrink-0" alt="เผ็ดมาก">
                                             <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4 w-auto object-contain shrink-0" alt="เผ็ดมาก">
@@ -291,7 +291,7 @@
                                 </div>
                                 <div class="grid grid-cols-3 gap-2">
                                     <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
-                                        <input type="radio" name="pos_top_soup_style" value="black_soup" onchange="posTopSoupStyle = this.value" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
+                                        <input type="radio" name="pos_top_soup_style" value="black_soup" onclick="onPosTopSoupStyleSelect(this.value)" onchange="onPosTopSoupStyleSelect(this.value)" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
                                         <div class="h-5 flex items-center justify-center mb-0.5 group-hover:scale-110 transition-transform">
                                             <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
                                                 <path d="M21 11H3a1 1 0 0 0-1 1c0 5 3.5 9 8.5 9.8V23h3v-1.2c5-.8 8.5-4.8 8.5-9.8a1 1 0 0 0-1-1zm-9 8.8C7.5 19.8 4.5 16.5 4.1 13h15.8c-.4 3.5-3.4 6.8-7.9 6.8zM6.5 8a1 1 0 0 1 1-1c1 0 1-1 1-1s0-1 1-1a1 1 0 0 1 2 0c0 1 1 2 2 2s1-1 1-1 0-1 1-1a1 1 0 0 1 2 0c0 1 1 2 2 2a1 1 0 1 1 0 2c-1.5 0-2.5-1-2.9-1.6-.4.6-1.4 1.6-2.9 1.6s-2.5-1-2.9-1.6c-.4.6-1.4 1.6-2.9 1.6a1 1 0 0 1-1-1z" />
@@ -300,7 +300,7 @@
                                         <span class="font-extrabold text-[#101114] text-[10.5px] leading-tight">ซุปน้ำดำ</span>
                                     </label>
                                     <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
-                                        <input type="radio" name="pos_top_soup_style" value="tomyum_rich" checked onchange="posTopSoupStyle = this.value" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
+                                        <input type="radio" name="pos_top_soup_style" value="tomyum_rich" checked onclick="onPosTopSoupStyleSelect(this.value)" onchange="onPosTopSoupStyleSelect(this.value)" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
                                         <div class="h-5 flex items-center justify-center mb-0.5 group-hover:scale-110 transition-transform">
                                             <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
                                                 <path d="M12 2c-1.5 2.5-4 4.5-4 7a4 4 0 0 0 8 0c0-2.5-2.5-4.5-4-7zm0 9c-1.1 0-2-.9-2-2 0-1 .9-2 2-3.3 1.1 1.3 2 2.3 2 3.3 0 1.1-.9 2-2 2zM2 13h20c0 5-4.5 9-10 9S2 18 2 13z"/>
@@ -309,7 +309,7 @@
                                         <span class="font-extrabold text-[#101114] text-[10.5px] leading-tight">ซุปต้มยำ-น้ำข้น</span>
                                     </label>
                                     <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
-                                        <input type="radio" name="pos_top_soup_style" value="mala_rich" onchange="posTopSoupStyle = this.value" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
+                                        <input type="radio" name="pos_top_soup_style" value="mala_rich" onclick="onPosTopSoupStyleSelect(this.value)" onchange="onPosTopSoupStyleSelect(this.value)" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
                                         <div class="h-5 flex items-center justify-center mb-0.5 group-hover:scale-110 transition-transform">
                                             <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
                                                 <path d="M12 1a3 3 0 0 0-3 3c0 2 2 3 3 5 1-2 3-3 3-5a3 3 0 0 0-3-3zm-6 4a2 2 0 0 0-2 2c0 1.5 1.5 2.5 2 4 .5-1.5 2-2.5 2-4a2 2 0 0 0-2-2zm12 0a2 2 0 0 0-2 2c0 1.5 1.5 2.5 2 4 .5-1.5 2-2.5 2-4a2 2 0 0 0-2-2zM2 13h20c0 5-4.5 9-10 9S2 18 2 13z"/>
@@ -602,7 +602,7 @@
                 </div>
 
                 <!-- 4. Selected Cart Items List -->
-                <div class="px-4 divide-y divide-slate-100 max-h-[300px] overflow-y-auto" id="cart-items-container">
+                <div class="px-4 divide-y divide-slate-100" id="cart-items-container">
                     <!-- Populated dynamically by renderCart() -->
                 </div>
 
@@ -630,13 +630,6 @@
                     <div class="flex justify-between items-center text-slate-700">
                         <span class="mala-font-thin">ยอดรวมค่าสินค้า (<span id="summary-sticks">0</span> ไม้)</span>
                         <span class="mala-font-mid-bold text-slate-900" id="summary-subtotal">฿0.00</span>
-                    </div>
-
-                    <div class="flex justify-between items-center text-slate-700">
-                        <span class="mala-font-thin inline-flex items-center gap-1">
-                            <span>ค่าจัดส่ง</span>
-                        </span>
-                        <span class="mala-font-mid-bold text-slate-900" id="summary-shipping">฿0.00</span>
                     </div>
 
                     <div class="flex justify-between items-center text-[#E50914]">
@@ -1074,6 +1067,18 @@
             </button>
         </div>
 
+        <!-- Sticky Scroll Lock Toggle Switch -->
+        <div class="flex items-center justify-between gap-3 bg-slate-50 border border-slate-200/80 rounded-2xl px-3.5 py-2.5">
+            <div class="min-w-0">
+                <div class="text-xs font-extrabold text-slate-900">ล็อกแท็บบิลขณะเลื่อนลง</div>
+                <div class="text-[10.5px] font-medium text-slate-500">เปิดไว้เพื่อตรึงบิลออเดอร์ให้อยู่กับที่เวลาเลื่อนดูเมนู</div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                <input type="checkbox" id="pos-cart-sticky-toggle" checked onchange="togglePosCartStickyLock(this.checked)" class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:bg-[#E50914] transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 shadow-inner"></div>
+            </label>
+        </div>
+
         <!-- 2 Save Modes -->
         <div class="space-y-2 pt-1">
             <button type="button" onclick="savePosCartSizeLocal()"
@@ -1083,6 +1088,33 @@
             <button type="button" id="btn-save-cart-size-global" onclick="savePosCartSizeGlobal()"
                     class="w-full py-2.5 px-4 rounded-2xl bg-[#E50914] hover:bg-[#C8102E] text-white text-xs font-bold shadow-sm cursor-pointer transition">
                 บันทึกสำหรับทุกคน (รีเซ็ทเป็นค่าเดียวกัน)
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================================= -->
+<!-- MODAL 3.35: CONFIRM DELETE ENTIRE CART GROUP / SET                            -->
+<!-- ============================================================================= -->
+<div id="pos-delete-group-modal" class="hidden fixed inset-0 z-[75] bg-black/60 backdrop-blur-2xs flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-[360px] rounded-[24px] p-5 shadow-2xl border border-slate-100 space-y-4 text-center">
+        <div class="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-[#E50914] flex items-center justify-center mx-auto">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+        </div>
+        <div class="space-y-1">
+            <h3 class="text-base font-black text-slate-900">ยืนยันลบทั้งชุดรายการ?</h3>
+            <p id="pos-delete-group-desc" class="text-xs font-semibold text-slate-500">รายการทั้งหมดในชุดนี้จะถูกลบออกจากบิล</p>
+        </div>
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+            <button type="button" onclick="closeDeleteGroupModal()"
+                    class="py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-extrabold cursor-pointer transition-colors">
+                กดกลับ
+            </button>
+            <button type="button" onclick="confirmDeleteCartGroup()"
+                    class="py-2.5 px-4 rounded-xl bg-[#E50914] hover:bg-[#C8102E] text-white text-xs font-extrabold shadow-sm cursor-pointer transition-colors">
+                ยืนยันลบทั้งชุดรายการ
             </button>
         </div>
     </div>
@@ -1515,8 +1547,30 @@
     let posTopCookingType = 'grill';
     let posTopSpiciness = 'medium';
     let posTopSoupStyle = 'tomyum_rich';
+    let posCurrentSetId = 1;
+    let posHasAddedInCurrentSet = false;
+    const posCollapsedCartGroups = new Set();
+    let posPendingDeleteGroupKey = null;
+
+    function advancePosSetIfNeeded() {
+        if (posHasAddedInCurrentSet) {
+            posCurrentSetId += 1;
+            posHasAddedInCurrentSet = false;
+        }
+    }
+
+    function onPosTopSpicinessSelect(val) {
+        advancePosSetIfNeeded();
+        posTopSpiciness = val;
+    }
+
+    function onPosTopSoupStyleSelect(val) {
+        advancePosSetIfNeeded();
+        posTopSoupStyle = val;
+    }
 
     function setPosTopCookingType(type) {
+        advancePosSetIfNeeded();
         posTopCookingType = type === 'soup' ? 'soup' : 'grill';
         const btnGrill = document.getElementById('pos-top-btn-grill');
         const btnSoup = document.getElementById('pos-top-btn-soup');
@@ -1610,6 +1664,7 @@
 
         const existingIndex = cart.findIndex(i =>
             parseInt(i.product_id, 10) === id &&
+            (i.set_id || 1) === posCurrentSetId &&
             i.cooking_type === chosenType &&
             (i.soup_style || null) === chosenSoup &&
             i.spiciness_level === chosenSpice &&
@@ -1622,6 +1677,7 @@
             newQty = cart[existingIndex].quantity;
         } else {
             cart.push({
+                set_id: posCurrentSetId,
                 product_id: id,
                 name: name,
                 unit_price: price,
@@ -1634,6 +1690,8 @@
                 special_instructions: ''
             });
         }
+
+        posHasAddedInCurrentSet = true;
 
         renderCart();
         if (newQty >= 2) {
@@ -1687,7 +1745,7 @@
             subtotal += item.unit_price * item.quantity;
         });
 
-        const shipping = (cart.length > 0 && fulfillmentMode === 'delivery') ? 30.00 : 0.00;
+        const shipping = 0.00;
         let discount = 0.00;
 
         if (cart.length > 0 && activeCoupon) {
@@ -1700,7 +1758,7 @@
             }
         }
 
-        const total = Math.max(0, subtotal + shipping - discount);
+        const total = Math.max(0, subtotal - discount);
         return { totalSticks, subtotal, shipping, discount, total };
     }
 
@@ -1716,7 +1774,8 @@
         document.getElementById('cart-sticks-count').innerText = totalSticks;
         document.getElementById('summary-sticks').innerText = totalSticks;
         document.getElementById('summary-subtotal').innerText = `฿${subtotal.toFixed(2)}`;
-        document.getElementById('summary-shipping').innerText = `฿${shipping.toFixed(2)}`;
+        const shippingEl = document.getElementById('summary-shipping');
+        if (shippingEl) shippingEl.innerText = `฿${shipping.toFixed(2)}`;
         document.getElementById('summary-discount').innerText = `-฿${discount.toFixed(2)}`;
         document.getElementById('summary-total').innerText = `฿${total.toFixed(2)}`;
 
@@ -1756,7 +1815,8 @@
             const optionKey = isSoup
                 ? (item.soup_style || 'tomyum_rich')
                 : (item.spiciness_level || 'medium');
-            const groupKey = `${isSoup ? 'soup' : 'grill'}_${optionKey}`;
+            const setId = item.set_id || 1;
+            const groupKey = `set_${setId}_${isSoup ? 'soup' : 'grill'}_${optionKey}`;
             const typeLabel = isSoup ? 'น้ำซุป' : 'หม่าล่าย่าง';
             const detailLabel = isSoup
                 ? (soupLabels[optionKey] || 'ซุปหม่าล่า-น้ำข้น')
@@ -1764,6 +1824,7 @@
 
             if (!groupsMap.has(groupKey)) {
                 groupsMap.set(groupKey, {
+                    key: groupKey,
                     typeLabel,
                     detailLabel,
                     totalSticks: 0,
@@ -1786,10 +1847,19 @@
             const priceText = Number.isInteger(group.groupSubtotal)
                 ? `${group.groupSubtotal}฿`
                 : `${group.groupSubtotal.toFixed(2)}฿`;
+            const isCollapsed = posCollapsedCartGroups.has(group.key);
+            const deleteLabel = `${setNo} ${group.typeLabel} • ${group.detailLabel} (${group.totalSticks} ไม้ • ${priceText})`.replace(/'/g, "\\'");
 
             html += `
-                <div class="mt-2.5 first:mt-0 mb-1 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-[#B80B18] via-[#E50914] to-[#C8102E] border border-[#B00C1B]/40 shadow-xs flex items-center justify-between gap-2 text-[12px] mala-font-bold text-white">
+                <div class="mt-2.5 first:mt-0 mb-1 px-2 py-1.5 rounded-xl bg-gradient-to-r from-[#B80B18] via-[#E50914] to-[#C8102E] border border-[#B00C1B]/40 shadow-xs flex items-center justify-between gap-1.5 text-[12px] mala-font-bold text-white">
                     <div class="flex items-center gap-1.5 min-w-0">
+                        <button type="button" onclick="openDeleteGroupModal('${group.key}', '${deleteLabel}')"
+                                title="ลบทั้งชุดรายการ" aria-label="ลบทั้งชุดรายการ"
+                                class="w-5 h-5 rounded-md bg-white/15 hover:bg-white/30 text-white flex items-center justify-center shrink-0 transition-colors cursor-pointer">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
                         <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-md bg-white text-black text-[10.5px] leading-none shrink-0">${setNo}</span>
                         <span class="text-white truncate">${group.typeLabel}</span>
                     </div>
@@ -1798,48 +1868,59 @@
                     <span class="w-px h-3.5 bg-white/35 shrink-0"></span>
                     <span class="text-white whitespace-nowrap shrink-0">${group.totalSticks}ไม้</span>
                     <span class="w-px h-3.5 bg-white/35 shrink-0"></span>
-                    <span class="text-white whitespace-nowrap shrink-0">${priceText}</span>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <span class="text-white whitespace-nowrap">${priceText}</span>
+                        <button type="button" onclick="toggleCartGroupCollapse('${group.key}')"
+                                title="${isCollapsed ? 'ขยายรายการ' : 'พับรายการ'}" aria-label="${isCollapsed ? 'ขยายรายการ' : 'พับรายการ'}"
+                                class="w-5 h-5 rounded-md bg-white/15 hover:bg-white/30 text-white flex items-center justify-center shrink-0 transition-colors cursor-pointer">
+                            <svg class="w-3.5 h-3.5 transition-transform duration-150 ${isCollapsed ? '-rotate-90' : ''}" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             `;
 
-            group.entries.forEach(({ item, index }) => {
-                const lineSubtotal = item.unit_price * item.quantity;
-                const imgUrl = item.image || "{{ asset('assets/menu/beef-raw.png') }}";
+            if (!isCollapsed) {
+                group.entries.forEach(({ item, index }) => {
+                    const lineSubtotal = item.unit_price * item.quantity;
+                    const imgUrl = item.image || "{{ asset('assets/menu/beef-raw.png') }}";
 
-                html += `
-                    <div class="py-3 flex items-center justify-between gap-2.5 group">
-                        <!-- Left: 1:1 Food Thumbnail + Name & Unit Price -->
-                        <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                            <img src="${imgUrl}" alt="${item.name}"
-                                 class="w-[52px] h-[52px] rounded-[12px] object-cover border border-slate-200 shrink-0 bg-slate-900">
-                            <div class="min-w-0 flex-1">
-                                <h4 class="text-[13.5px] mala-font-bold text-slate-900 leading-snug truncate">${item.name}</h4>
-                                <div class="text-[11.5px] mala-font-thin text-slate-500 mt-0.5">
-                                    ฿${item.unit_price.toFixed(0)} /ไม้
+                    html += `
+                        <div class="py-3 flex items-center justify-between gap-2.5 group">
+                            <!-- Left: 1:1 Food Thumbnail + Name & Unit Price -->
+                            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                                <img src="${imgUrl}" alt="${item.name}"
+                                     class="w-[52px] h-[52px] rounded-[12px] object-cover border border-slate-200 shrink-0 bg-slate-900">
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="text-[13.5px] mala-font-bold text-slate-900 leading-snug truncate">${item.name}</h4>
+                                    <div class="text-[11.5px] mala-font-thin text-slate-500 mt-0.5">
+                                        ฿${item.unit_price.toFixed(0)} /ไม้
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right: Remove (x) on top-right + Stepper (- qty +) + Line Total -->
+                            <div class="flex flex-col items-end gap-1 shrink-0">
+                                <button type="button" onclick="removeFromCart(${index})"
+                                        class="text-slate-400 hover:text-[#E50914] text-xs leading-none px-1 cursor-pointer" title="ลบรายการ">&times;</button>
+                                <div class="flex items-center gap-2">
+                                    <div class="flex items-center gap-1.5">
+                                        <button type="button" onclick="changeCartQty(${index}, -1)"
+                                                class="w-6 h-6 rounded-full bg-[#FFE4E6] hover:bg-[#FECDD3] text-[#E50914] text-sm mala-font-bold flex items-center justify-center transition-colors cursor-pointer">−</button>
+                                        <span class="text-[13.5px] mala-font-bold text-slate-900 w-4 text-center">${item.quantity}</span>
+                                        <button type="button" onclick="changeCartQty(${index}, 1)"
+                                                class="w-6 h-6 rounded-full bg-[#E50914] hover:bg-[#C8102E] text-white text-sm mala-font-bold flex items-center justify-center transition-colors cursor-pointer">+</button>
+                                    </div>
+                                    <div class="text-[14px] mala-font-bold text-slate-900 min-w-[54px] text-right">
+                                        ฿${lineSubtotal.toFixed(2)}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Right: Remove (x) on top-right + Stepper (- qty +) + Line Total -->
-                        <div class="flex flex-col items-end gap-1 shrink-0">
-                            <button type="button" onclick="removeFromCart(${index})"
-                                    class="text-slate-400 hover:text-[#E50914] text-xs leading-none px-1 cursor-pointer" title="ลบรายการ">&times;</button>
-                            <div class="flex items-center gap-2">
-                                <div class="flex items-center gap-1.5">
-                                    <button type="button" onclick="changeCartQty(${index}, -1)"
-                                            class="w-6 h-6 rounded-full bg-[#FFE4E6] hover:bg-[#FECDD3] text-[#E50914] text-sm mala-font-bold flex items-center justify-center transition-colors cursor-pointer">−</button>
-                                    <span class="text-[13.5px] mala-font-bold text-slate-900 w-4 text-center">${item.quantity}</span>
-                                    <button type="button" onclick="changeCartQty(${index}, 1)"
-                                            class="w-6 h-6 rounded-full bg-[#E50914] hover:bg-[#C8102E] text-white text-sm mala-font-bold flex items-center justify-center transition-colors cursor-pointer">+</button>
-                                </div>
-                                <div class="text-[14px] mala-font-bold text-slate-900 min-w-[54px] text-right">
-                                    ฿${lineSubtotal.toFixed(2)}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
+                    `;
+                });
+            }
         });
 
         container.innerHTML = html;
@@ -1861,8 +1942,95 @@
 
     function clearCart() {
         cart = [];
+        posCurrentSetId = 1;
+        posHasAddedInCurrentSet = false;
+        posCollapsedCartGroups.clear();
         renderCart();
     }
+
+    function toggleCartGroupCollapse(groupKey) {
+        if (posCollapsedCartGroups.has(groupKey)) {
+            posCollapsedCartGroups.delete(groupKey);
+        } else {
+            posCollapsedCartGroups.add(groupKey);
+        }
+        renderCart();
+    }
+
+    function openDeleteGroupModal(groupKey, labelText) {
+        posPendingDeleteGroupKey = groupKey;
+        const descEl = document.getElementById('pos-delete-group-desc');
+        if (descEl) {
+            descEl.textContent = labelText || 'รายการทั้งหมดในชุดนี้จะถูกลบออกจากบิล';
+        }
+        const modal = document.getElementById('pos-delete-group-modal');
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeDeleteGroupModal() {
+        posPendingDeleteGroupKey = null;
+        const modal = document.getElementById('pos-delete-group-modal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function confirmDeleteCartGroup() {
+        if (!posPendingDeleteGroupKey) {
+            closeDeleteGroupModal();
+            return;
+        }
+        const targetKey = posPendingDeleteGroupKey;
+        cart = cart.filter(item => {
+            const isSoup = item.cooking_type === 'soup';
+            const optionKey = isSoup
+                ? (item.soup_style || 'tomyum_rich')
+                : (item.spiciness_level || 'medium');
+            const setId = item.set_id || 1;
+            const itemGroupKey = `set_${setId}_${isSoup ? 'soup' : 'grill'}_${optionKey}`;
+            return itemGroupKey !== targetKey;
+        });
+        posCollapsedCartGroups.delete(targetKey);
+        if (cart.length === 0) {
+            posCurrentSetId = 1;
+            posHasAddedInCurrentSet = false;
+        }
+        closeDeleteGroupModal();
+        renderCart();
+    }
+
+    const POS_CART_STICKY_KEY = 'pos_cart_sticky_lock_v1';
+
+    function applyPosCartStickyLock(isLocked) {
+        const aside = document.getElementById('pos-cart-aside');
+        const toggle = document.getElementById('pos-cart-sticky-toggle');
+        if (aside) {
+            if (isLocked) {
+                aside.classList.add('lg:sticky');
+                aside.style.top = 'calc(var(--app-header-h, 80px) + 16px)';
+            } else {
+                aside.classList.remove('lg:sticky');
+                aside.style.top = '';
+            }
+        }
+        if (toggle) {
+            toggle.checked = !!isLocked;
+        }
+    }
+
+    function togglePosCartStickyLock(isLocked) {
+        try {
+            localStorage.setItem(POS_CART_STICKY_KEY, isLocked ? '1' : '0');
+        } catch (e) {}
+        applyPosCartStickyLock(isLocked);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        let savedSticky = true;
+        try {
+            const raw = localStorage.getItem(POS_CART_STICKY_KEY);
+            if (raw === '0') savedSticky = false;
+        } catch (e) {}
+        applyPosCartStickyLock(savedSticky);
+    });
 
     function getCartTotal() {
         return getCartPricing().total;
