@@ -888,8 +888,12 @@
             <!-- Actions -->
             <div class="space-y-1.5 pt-0.5">
                 <button type="button" id="btn-pos-transfer-qr-submit" onclick="submitPosConfirmedOrder()"
-                        class="w-full py-2.5 rounded-full bg-gradient-to-r from-[#D90012] to-[#B8000F] text-white font-bold text-[13px] shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] transition-transform">
+                        class="w-full py-2.5 rounded-full bg-gradient-to-r from-[#D90012] to-[#B8000F] text-white font-bold text-[13px] shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] transition-all">
                     <span>โอนเงินเรียบร้อย • ยืนยันสั่งอาหาร</span>
+                </button>
+                <button type="button" id="btn-pos-transfer-temp-approve" onclick="submitPosTempTransferApprove()"
+                        class="hidden w-full py-2.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[13px] shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] transition-all">
+                    <span>ยืนยันเงินโอน - ระบบชั่วคราว</span>
                 </button>
                 <button type="button" onclick="closePosConfirmModal()"
                         class="w-full py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] cursor-pointer transition-colors">
@@ -1069,9 +1073,13 @@
 
             <!-- Actions -->
             <div class="space-y-1.5 pt-0.5">
-                <button type="button" id="btn-pos-split-qr-submit" onclick="executePosConfirmedOrderSubmission()"
-                        class="w-full py-2.5 rounded-full bg-gradient-to-r from-[#D90012] to-[#B8000F] text-white font-bold text-[13px] shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] transition-transform">
+                <button type="button" id="btn-pos-split-qr-submit" onclick="executePosConfirmedOrderSubmission(false)"
+                        class="w-full py-2.5 rounded-full bg-gradient-to-r from-[#D90012] to-[#B8000F] text-white font-bold text-[13px] shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] transition-all">
                     <span>โอนเงินเรียบร้อย • ยืนยันสั่งอาหาร</span>
+                </button>
+                <button type="button" id="btn-pos-split-temp-approve" onclick="executePosConfirmedOrderSubmission(true)"
+                        class="hidden w-full py-2.5 rounded-full bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-[13px] shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] transition-all">
+                    <span>ยืนยันเงินโอน - ระบบชั่วคราว</span>
                 </button>
                 <button type="button" onclick="backFromSplitQrToConfirmModal()"
                         class="w-full py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] cursor-pointer transition-colors">
@@ -1133,6 +1141,18 @@
             <label class="relative inline-flex items-center cursor-pointer shrink-0">
                 <input type="checkbox" id="pos-cart-coupon-toggle" checked onchange="togglePosCartCouponEnabled(this.checked)" class="sr-only peer">
                 <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:bg-[#E50914] transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 shadow-inner"></div>
+            </label>
+        </div>
+
+        <!-- Temporary Manual Transfer Approval Toggle Switch (POS Cashier Only) -->
+        <div class="flex items-center justify-between gap-3 bg-amber-50/70 border border-amber-200/90 rounded-2xl px-3.5 py-2.5">
+            <div class="min-w-0">
+                <div class="text-xs font-extrabold text-slate-900">ยืนยันเงินโอน - ระบบชั่วคราว</div>
+                <div class="text-[10.5px] font-medium text-slate-500">เปิดเมื่อสแกนล็อคยอดมีปัญหา (ปุ่มโอนเดิมจะเป็นสีเทากดไม่ได้)</div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                <input type="checkbox" id="pos-cart-temp-transfer-toggle" onchange="togglePosTempTransferEnabled(this.checked)" class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:bg-amber-500 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 shadow-inner"></div>
             </label>
         </div>
 
@@ -2220,17 +2240,55 @@
         applyPosCartCouponEnabled(isEnabled);
     }
 
+    const POS_TEMP_TRANSFER_KEY = 'pos_temp_transfer_approval_v1';
+    let posTempTransferEnabled = false;
+
+    function applyPosTempTransferEnabled(isEnabled) {
+        posTempTransferEnabled = !!isEnabled;
+        const toggle = document.getElementById('pos-cart-temp-transfer-toggle');
+        if (toggle) toggle.checked = posTempTransferEnabled;
+
+        const pairs = [
+            { orig: 'btn-pos-transfer-qr-submit', temp: 'btn-pos-transfer-temp-approve' },
+            { orig: 'btn-pos-split-qr-submit', temp: 'btn-pos-split-temp-approve' },
+        ];
+        pairs.forEach(({ orig, temp }) => {
+            const origBtn = document.getElementById(orig);
+            const tempBtn = document.getElementById(temp);
+            if (origBtn) {
+                origBtn.disabled = posTempTransferEnabled;
+                origBtn.className = posTempTransferEnabled
+                    ? 'w-full py-2.5 rounded-full bg-slate-300 text-slate-500 font-bold text-[13px] flex items-center justify-center gap-2 cursor-not-allowed transition-all'
+                    : 'w-full py-2.5 rounded-full bg-gradient-to-r from-[#D90012] to-[#B8000F] text-white font-bold text-[13px] shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] transition-all';
+            }
+            if (tempBtn) {
+                tempBtn.classList.toggle('hidden', !posTempTransferEnabled);
+            }
+        });
+    }
+
+    function togglePosTempTransferEnabled(isEnabled) {
+        try {
+            localStorage.setItem(POS_TEMP_TRANSFER_KEY, isEnabled ? '1' : '0');
+        } catch (e) {}
+        applyPosTempTransferEnabled(isEnabled);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         let savedSticky = true;
         let savedCouponEnabled = true;
+        let savedTempTransfer = false;
         try {
             const raw = localStorage.getItem(POS_CART_STICKY_KEY);
             if (raw === '0') savedSticky = false;
             const rawCoupon = localStorage.getItem(POS_COUPON_ENABLED_KEY);
             if (rawCoupon === '0') savedCouponEnabled = false;
+            const rawTemp = localStorage.getItem(POS_TEMP_TRANSFER_KEY);
+            if (rawTemp === '1') savedTempTransfer = true;
         } catch (e) {}
         applyPosCartStickyLock(savedSticky);
         applyPosCartCouponEnabled(savedCouponEnabled);
+        applyPosTempTransferEnabled(savedTempTransfer);
     });
 
     function getCartTotal() {
@@ -2822,7 +2880,21 @@
             return;
         }
 
-        await executePosConfirmedOrderSubmission();
+        await executePosConfirmedOrderSubmission(false);
+    }
+
+    async function submitPosTempTransferApprove() {
+        if (!posTempTransferEnabled) return;
+        if (cart.length === 0) return;
+        const customerName = document.getElementById('customer-name-input')?.value.trim() || 'ลูกค้าหน้าร้าน';
+        posPendingSubmission = {
+            payment_method: 'promptpay',
+            cash_amount: 0,
+            transfer_amount: posConfirmExpectedTotal,
+            customer_name: customerName,
+            notes: 'อนุมัติเงินโอน (ระบบชั่วคราว)',
+        };
+        await executePosConfirmedOrderSubmission(true);
     }
 
     let posVerifyPollTimer = null;
@@ -2895,13 +2967,13 @@
         } catch (err) {}
     }
 
-    async function executePosConfirmedOrderSubmission() {
+    async function executePosConfirmedOrderSubmission(bypassWebhook = false) {
         if (cart.length === 0 || !posPendingSubmission) return;
 
-        const isTransferWebhook = posPendingSubmission.payment_method === 'promptpay' && posPendingSubmission.transfer_amount > 0;
+        const isTransferWebhook = !bypassWebhook && posPendingSubmission.payment_method === 'promptpay' && posPendingSubmission.transfer_amount > 0;
         const btnDefault = document.getElementById('btn-pos-confirm-submit');
-        const btnTransfer = document.getElementById('btn-pos-transfer-qr-submit');
-        const btnSplitQr = document.getElementById('btn-pos-split-qr-submit');
+        const btnTransfer = bypassWebhook ? document.getElementById('btn-pos-transfer-temp-approve') : document.getElementById('btn-pos-transfer-qr-submit');
+        const btnSplitQr = bypassWebhook ? document.getElementById('btn-pos-split-temp-approve') : document.getElementById('btn-pos-split-qr-submit');
         const activeBtn = posConfirmCurrentMode === 'transfer'
             ? btnTransfer
             : (posConfirmCurrentMode === 'split' && posPendingSubmission.transfer_amount > 0 ? btnSplitQr : btnDefault);
