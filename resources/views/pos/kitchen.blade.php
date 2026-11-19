@@ -63,8 +63,8 @@
             </div>
         </div>
 
-        <!-- 1.5 Kitchen Search, 3/4 Column Toggle & Sort/Filter Bar (Floating Sticky Card) -->
-        <section id="kitchen-floating-toolbar" class="sticky top-[88px] z-30 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-sm px-4 py-3 flex flex-wrap items-center justify-between gap-3 transition-shadow">
+        <!-- 1.5 Kitchen Search, 3/4 Column Toggle & Sort/Filter Bar (Floating Sticky Card Flush to Black Top Navbar) -->
+        <section id="kitchen-floating-toolbar" style="top: var(--app-header-h, 80px);" class="sticky z-30 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/90 shadow-sm px-4 py-3 flex flex-wrap items-center justify-between gap-3 transition-shadow">
             <div class="flex items-center gap-2.5 whitespace-nowrap shrink-0">
                 <span class="w-1.5 h-5 rounded-full bg-[#E50914] block shrink-0"></span>
                 <h2 class="text-[17px] font-black text-slate-900 tracking-tight whitespace-nowrap">รายการออเดอร์ในครัว</h2>
@@ -223,24 +223,30 @@
                          data-created-ts="{{ $order->created_at ? $order->created_at->timestamp : 0 }}"
                          data-search="{{ $searchText }}">
                         
+                        @php
+                            $isPaidOrder = ($order->payment_status === 'paid');
+                            $queueTimeText = $order->created_at ? $order->created_at->timezone('Asia/Bangkok')->format('H:i') : '';
+                        @endphp
                         <div class="flex-1 flex flex-col">
-                            <!-- 1. Top Red-Themed Sky & Cityscape Mascot Banner (เหมือนหน้าติดตามออเดอร์ภาพที่ 2) -->
-                            <div class="relative h-44 bg-gradient-to-b from-[#FFE4E6] via-[#FFF1F2] to-[#FECDD3] overflow-hidden shrink-0">
-                                <!-- Soft Clouds -->
-                                <div class="absolute top-5 left-12 w-12 h-4 bg-white/80 rounded-full blur-[0.5px]"></div>
-                                <div class="absolute top-9 right-10 w-16 h-5 bg-white/80 rounded-full blur-[0.5px]"></div>
+                            <!-- 1. Top Mascot Banner (รายการที่ชำระแล้วพื้นหลังไม่มีสี / ยังไม่ชำระพื้นหลังชมพู) -->
+                            <div class="relative h-44 {{ $isPaidOrder ? 'bg-white' : 'bg-gradient-to-b from-[#FFE4E6] via-[#FFF1F2] to-[#FECDD3]' }} overflow-hidden shrink-0">
+                                @if(!$isPaidOrder)
+                                    <!-- Soft Clouds -->
+                                    <div class="absolute top-5 left-12 w-12 h-4 bg-white/80 rounded-full blur-[0.5px]"></div>
+                                    <div class="absolute top-9 right-10 w-16 h-5 bg-white/80 rounded-full blur-[0.5px]"></div>
 
-                                <!-- Stylized Rose City Skyline -->
-                                <svg class="absolute bottom-2 inset-x-0 w-full h-20 text-[#FDA4AF]/45" preserveAspectRatio="none" viewBox="0 0 400 80" fill="currentColor">
-                                    <rect x="10" y="25" width="32" height="55" rx="2"/>
-                                    <rect x="48" y="38" width="24" height="42" rx="2"/>
-                                    <rect x="78" y="16" width="36" height="64" rx="2"/>
-                                    <rect x="120" y="34" width="26" height="46" rx="2"/>
-                                    <rect x="255" y="28" width="30" height="52" rx="2"/>
-                                    <rect x="292" y="14" width="38" height="66" rx="2"/>
-                                    <rect x="336" y="36" width="24" height="44" rx="2"/>
-                                    <rect x="366" y="24" width="28" height="56" rx="2"/>
-                                </svg>
+                                    <!-- Stylized Rose City Skyline -->
+                                    <svg class="absolute bottom-2 inset-x-0 w-full h-20 text-[#FDA4AF]/45" preserveAspectRatio="none" viewBox="0 0 400 80" fill="currentColor">
+                                        <rect x="10" y="25" width="32" height="55" rx="2"/>
+                                        <rect x="48" y="38" width="24" height="42" rx="2"/>
+                                        <rect x="78" y="16" width="36" height="64" rx="2"/>
+                                        <rect x="120" y="34" width="26" height="46" rx="2"/>
+                                        <rect x="255" y="28" width="30" height="52" rx="2"/>
+                                        <rect x="292" y="14" width="38" height="66" rx="2"/>
+                                        <rect x="336" y="36" width="24" height="44" rx="2"/>
+                                        <rect x="366" y="24" width="28" height="56" rx="2"/>
+                                    </svg>
+                                @endif
 
                                 <!-- Top Bar Controls -->
                                 <div class="relative z-20 flex items-center justify-between px-4 pt-4">
@@ -248,15 +254,23 @@
                                             onclick="openOrderInSideChat('{{ $order->order_no }}')"
                                             aria-label="เปิดแชทกับลูกค้า"
                                             title="เปิดแชทกับลูกค้ารายนี้ในหน้าต่างแชทขวามือสุด"
-                                            class="w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 hover:text-[#D90012] shadow-md flex items-center justify-center transition-all cursor-pointer active:scale-95">
+                                            class="w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-700 hover:text-[#D90012] shadow-md border border-slate-200/80 flex items-center justify-center transition-all cursor-pointer active:scale-95">
                                         <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2.1" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                         </svg>
                                     </button>
 
-                                    <span class="px-3.5 py-1.5 rounded-full bg-white text-[#D90012] font-extrabold text-[11.5px] shadow-md border border-rose-100">
-                                        คิว {{ $order->queue_number }}
-                                    </span>
+                                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white shadow-md border border-rose-200">
+                                        @if($queueTimeText)
+                                            <span class="text-[15.5px] sm:text-[16.5px] font-black text-slate-900 tracking-tight leading-none tabular-nums">
+                                                {{ $queueTimeText }} น.
+                                            </span>
+                                            <span class="w-px h-4 bg-slate-300 shrink-0"></span>
+                                        @endif
+                                        <span class="text-[#D90012] font-black text-[14px] sm:text-[15px] leading-none">
+                                            คิว {{ $order->queue_number }}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <!-- Centered Mala Street Red Mascot Character SVG -->
@@ -336,7 +350,7 @@
                                         <span class="flex items-center gap-1.5 font-medium text-slate-800 flex-wrap justify-end">
                                             @if($order->payment_status !== 'paid')
                                                 <button type="button"
-                                                        onclick="if(confirm('ยืนยันได้รับยอดชำระเงินสำหรับคิว {{ $order->queue_number }} แล้วใช่หรือไม่?')) updateStatus({{ $order->id }}, 'confirmed', true)"
+                                                        onclick="if(confirm('ยืนยันได้รับยอดชำระเงินสำหรับคิว {{ $order->queue_number }} แล้วใช่หรือไม่?')) updateStatus({{ $order->id }}, '{{ $orderChannel === 'pos' ? ($order->status === 'ready' ? 'ready' : 'cooking') : 'confirmed' }}', true)"
                                                         title="คลิกเพื่อยืนยันรับเงินแล้ว"
                                                         class="px-5 py-1.5 rounded-xl bg-[#C8102E] hover:bg-[#A80B24] active:scale-[0.98] text-white text-[16px] font-black tracking-wide shadow-md shadow-rose-700/25 whitespace-nowrap cursor-pointer transition-all">
                                                     ยังไม่ได้ชำระ
@@ -523,6 +537,53 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         <span>ส่งออร์เดอร์สำเร็จ</span>
+                                    </button>
+                                @endif
+                            </div>
+                        @elseif($orderChannel === 'pos')
+                            @php
+                                $posStartedTs = ($order->cooking_started_at ?? $order->created_at)?->timestamp ?? time();
+                                $posIsStopped = ($order->status === 'ready' || $order->status === 'completed');
+                                $posStoppedTs = ($order->updated_at ?? $order->created_at)?->timestamp ?? time();
+                            @endphp
+                            <div class="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center gap-2">
+                                <!-- ปุ่ม 1: ดูรายละเอียด -->
+                                <button type="button" onclick="openOrderModal({{ $order->id }})"
+                                    class="p-3 rounded-2xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold shadow-xs transition-colors flex items-center justify-center shrink-0 cursor-pointer" title="ดูรายละเอียดแบบขยาย">
+                                    <svg class="w-4 h-4 stroke-current" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                </button>
+
+                                <!-- ปุ่ม 2 (ข้างซ้ายปุ่มพร้อมรับแล้ว): ปุ่มจับเวลา 10 นาที (เริ่มทันที และหยุดเมื่อกดพร้อมรับแล้ว / เลยเวลาขึ้นติดลบแถบสีแดง) -->
+                                <div class="pos-countdown-pill py-3 px-3.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-black flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0"
+                                     data-started-ts="{{ $posStartedTs }}"
+                                     data-duration="600"
+                                     data-stopped="{{ $posIsStopped ? '1' : '0' }}"
+                                     data-stopped-ts="{{ $posStoppedTs }}">
+                                    <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2.2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span class="countdown-text font-mono text-[13px]">10:00</span>
+                                </div>
+
+                                <!-- ปุ่ม 3: พร้อมรับแล้ว / ส่งมอบอาหารแล้ว -->
+                                @if($order->status !== 'ready')
+                                    <button type="button" onclick="updateStatus({{ $order->id }}, 'ready')"
+                                        class="flex-1 py-3 px-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap cursor-pointer">
+                                        <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                        </svg>
+                                        <span>พร้อมรับแล้ว</span>
+                                    </button>
+                                @else
+                                    <button type="button" onclick="updateStatus({{ $order->id }}, 'completed')"
+                                        class="flex-1 py-3 px-3 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap cursor-pointer">
+                                        <svg class="w-4 h-4 stroke-current shrink-0" fill="none" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span>ส่งมอบอาหารแล้ว</span>
                                     </button>
                                 @endif
                             </div>
@@ -947,7 +1008,7 @@
 
     // === Kitchen Grid Columns (3 / 4), Channel Tabs, Live Search & Sort/Filter ===
     let kitchenGridColumns = Number(localStorage.getItem('kitchen_grid_columns')) === 4 ? 4 : 3;
-    let kitchenSortMode = localStorage.getItem('kitchen_sort_mode') || 'newest';
+    let kitchenSortMode = localStorage.getItem('kitchen_sort_mode_v2') || 'newest';
     let kitchenChannelTab = localStorage.getItem('kitchen_channel_tab') || 'all';
 
     function setKitchenChannelTab(channel) {
@@ -996,7 +1057,7 @@
 
     function onKitchenSortChange(mode) {
         kitchenSortMode = mode || 'newest';
-        localStorage.setItem('kitchen_sort_mode', kitchenSortMode);
+        localStorage.setItem('kitchen_sort_mode_v2', kitchenSortMode);
         applyKitchenOrderFiltersAndLayout();
     }
 
@@ -1007,7 +1068,7 @@
         if (sortEl) sortEl.value = 'newest';
         kitchenSortMode = 'newest';
         kitchenChannelTab = 'all';
-        localStorage.setItem('kitchen_sort_mode', 'newest');
+        localStorage.setItem('kitchen_sort_mode_v2', 'newest');
         localStorage.setItem('kitchen_channel_tab', 'all');
         renderKitchenChannelTabsUI();
         applyKitchenOrderFiltersAndLayout();
@@ -1056,6 +1117,8 @@
         cards.sort((a, b) => {
             const tsA = Number(a.dataset.createdTs || 0);
             const tsB = Number(b.dataset.createdTs || 0);
+            const idA = Number(a.dataset.orderId || 0);
+            const idB = Number(b.dataset.orderId || 0);
             const typeA = a.dataset.orderType || 'pos';
             const typeB = b.dataset.orderType || 'pos';
             const stA = a.dataset.status || '';
@@ -1063,26 +1126,26 @@
 
             switch (kitchenSortMode) {
                 case 'oldest':
-                    return tsA - tsB;
+                    return (tsA - tsB) || (idA - idB);
                 case 'online_first':
                     if (typeA !== typeB) return typeA === 'online' ? -1 : 1;
-                    return tsB - tsA;
+                    return (tsB - tsA) || (idB - idA);
                 case 'pos_first':
                     if (typeA !== typeB) return typeA === 'pos' ? -1 : 1;
-                    return tsB - tsA;
+                    return (tsB - tsA) || (idB - idA);
                 case 'cooking_first':
                     if ((statusPriorityCooking[stA] ?? 9) !== (statusPriorityCooking[stB] ?? 9)) {
                         return (statusPriorityCooking[stA] ?? 9) - (statusPriorityCooking[stB] ?? 9);
                     }
-                    return tsB - tsA;
+                    return (tsB - tsA) || (idB - idA);
                 case 'ready_first':
                     if ((statusPriorityReady[stA] ?? 9) !== (statusPriorityReady[stB] ?? 9)) {
                         return (statusPriorityReady[stA] ?? 9) - (statusPriorityReady[stB] ?? 9);
                     }
-                    return tsB - tsA;
+                    return (tsB - tsA) || (idB - idA);
                 case 'newest':
                 default:
-                    return tsB - tsA;
+                    return (tsB - tsA) || (idB - idA);
             }
         });
 
@@ -1185,6 +1248,33 @@
                 const secs = over % 60;
                 textEl.textContent = `+${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
                 pill.className = 'delivery-countdown-pill flex-1 py-2.5 px-2.5 rounded-2xl bg-rose-50 border border-rose-300 text-rose-700 text-xs font-black flex items-center justify-center gap-1.5 whitespace-nowrap';
+            }
+        });
+
+        document.querySelectorAll('.pos-countdown-pill').forEach((pill) => {
+            const startedTs = Number(pill.dataset.startedTs || 0);
+            const duration = Number(pill.dataset.duration || 600);
+            const isStopped = pill.dataset.stopped === '1';
+            const refSec = isStopped ? Number(pill.dataset.stoppedTs || nowSec) : nowSec;
+            const textEl = pill.querySelector('.countdown-text');
+            if (!startedTs || !textEl) return;
+
+            const remaining = (startedTs + duration) - refSec;
+            if (remaining >= 0) {
+                const mins = Math.floor(remaining / 60);
+                const secs = remaining % 60;
+                textEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                pill.className = isStopped
+                    ? 'pos-countdown-pill py-3 px-3.5 rounded-2xl bg-slate-100 border border-slate-300 text-slate-700 text-xs font-black flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0'
+                    : (remaining <= 120
+                        ? 'pos-countdown-pill py-3 px-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-800 text-xs font-black flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0'
+                        : 'pos-countdown-pill py-3 px-3.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-black flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0');
+            } else {
+                const over = Math.abs(remaining);
+                const mins = Math.floor(over / 60);
+                const secs = over % 60;
+                textEl.textContent = `-${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                pill.className = 'pos-countdown-pill py-3 px-3.5 rounded-2xl bg-[#E50914] border border-[#C8102E] text-white text-xs font-black shadow-sm flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0';
             }
         });
     }

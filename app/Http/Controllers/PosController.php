@@ -396,7 +396,8 @@ class PosController extends Controller
         $today = Carbon::today();
         $activeOrders = Order::with('items')
             ->whereIn('status', ['pending', 'confirmed', 'cooking', 'ready'])
-            ->orderBy('created_at')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->get();
 
         $completedOrders = Order::with('items')
