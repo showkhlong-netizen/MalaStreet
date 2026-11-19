@@ -86,7 +86,7 @@
                 <!-- 3 / 4 Items per Row Toggle (Matches POS Grid Toggle UI) -->
                 <div class="flex items-center bg-white border border-slate-200/90 rounded-full p-0.5 shadow-2xs shrink-0" title="เลือกการแสดงผลจำนวนรายการต่อแถว">
                     <button type="button" onclick="setKitchenGridColumns(3)" id="btn-kitchen-grid-3"
-                            class="kitchen-grid-toggle-btn px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all bg-[#E50914] text-white shadow-2xs cursor-pointer"
+                            class="kitchen-grid-toggle-btn px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-100 cursor-pointer"
                             title="แสดง 3 รายการต่อแถว">
                         <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
                             <rect x="2" y="7" width="4" height="6" rx="1"/>
@@ -97,7 +97,7 @@
                     </button>
 
                     <button type="button" onclick="setKitchenGridColumns(4)" id="btn-kitchen-grid-4"
-                            class="kitchen-grid-toggle-btn px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all text-slate-500 hover:text-slate-800 hover:bg-slate-100 cursor-pointer"
+                            class="kitchen-grid-toggle-btn px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all bg-[#E50914] text-white shadow-2xs cursor-pointer"
                             title="แสดง 4 รายการต่อแถว">
                         <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
                             <rect x="1.5" y="7" width="3.2" height="6" rx="0.8"/>
@@ -182,7 +182,7 @@
                 <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">ย่างเตาถ่านและต้มซุปเสร็จครบทุกรายการแล้ว ระบบจะตรวจจับและดึงออเดอร์ใหม่เข้ามาอัตโนมัติ</p>
             </div>
         @else
-            <div id="kitchen-orders-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            <div id="kitchen-orders-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                 @foreach($allKitchenOrders as $order)
                     @php
                         $isOnline = $order->order_type === 'online';
@@ -1006,8 +1006,8 @@
         }
     }
 
-    // === Kitchen Grid Columns (3 / 4), Channel Tabs, Live Search & Sort/Filter ===
-    let kitchenGridColumns = Number(localStorage.getItem('kitchen_grid_columns')) === 4 ? 4 : 3;
+    // === Kitchen Grid Columns (Default 4 per row on every open), Channel Tabs, Live Search & Sort/Filter ===
+    let kitchenGridColumns = 4;
     let kitchenSortMode = localStorage.getItem('kitchen_sort_mode_v2') || 'newest';
     let kitchenChannelTab = localStorage.getItem('kitchen_channel_tab') || 'all';
 
