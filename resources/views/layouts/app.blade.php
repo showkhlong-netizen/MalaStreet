@@ -263,6 +263,18 @@
                                     </div>
                                     <span class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 text-[9px] font-bold">Live</span>
                                 </a>
+
+                                <!-- ติดตั้ง Web App (PWA) -->
+                                <button type="button" id="profile-pwa-install-btn" onclick="triggerPwaInstall()"
+                                        class="w-full flex items-center justify-between px-3 py-2 rounded-xl hover:bg-emerald-50 text-emerald-700 transition-colors group cursor-pointer text-left">
+                                    <div class="flex items-center gap-2.5">
+                                        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                        <span>ติดตั้ง Web App (รับออเดอร์)</span>
+                                    </div>
+                                    <span id="profile-pwa-badge" class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9px] font-bold">App</span>
+                                </button>
                             </div>
 
                             <!-- Logout Action -->
@@ -1152,12 +1164,7 @@
         })();
     </script>
 
-    <!-- PWA Service Worker & One-Click Install Pill -->
-    <button type="button" id="pwa-install-btn" onclick="triggerPwaInstall()"
-            class="hidden fixed bottom-4 left-4 z-50 px-4 py-2.5 rounded-full bg-slate-950 hover:bg-slate-900 text-white text-xs font-extrabold shadow-2xl border border-rose-500/50 flex items-center gap-2 cursor-pointer transition-all">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>📲 ติดตั้งเป็น App</span>
-    </button>
+    <!-- PWA Service Worker & Profile Install Handler -->
     <script>
         (function () {
             if ('serviceWorker' in navigator) {
@@ -1166,19 +1173,36 @@
                 });
             }
             let deferredPrompt = null;
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+            const badge = document.getElementById('profile-pwa-badge');
+            if (isStandalone && badge) {
+                badge.textContent = 'ติดตั้งแล้ว ✓';
+            }
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
-                if (window.self === window.top && !window.matchMedia('(display-mode: standalone)').matches) {
-                    document.getElementById('pwa-install-btn')?.classList.remove('hidden');
-                }
+                if (badge) badge.textContent = 'พร้อมติดตั้ง';
             });
             window.triggerPwaInstall = async function () {
-                if (!deferredPrompt) return;
-                deferredPrompt.prompt();
-                await deferredPrompt.userChoice;
-                deferredPrompt = null;
-                document.getElementById('pwa-install-btn')?.classList.add('hidden');
+                if (isStandalone) {
+                    alert('กำลังใช้งานในโหมด Web App แล้วครับ ✓');
+                    return;
+                }
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const res = await deferredPrompt.userChoice;
+                    deferredPrompt = null;
+                    if (res && res.outcome === 'accepted' && badge) {
+                        badge.textContent = 'ติดตั้งแล้ว ✓';
+                    }
+                    return;
+                }
+                const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+                if (isIos) {
+                    alert('สำหรับ iPad / iPhone:\n1. กดปุ่มแชร์ (ไอคอนสี่เหลี่ยมมีลูกศรชี้ขึ้น) บนแถบ Safari\n2. เลือก "เพิ่มไปยังหน้าจอโฮม (Add to Home Screen)"\n3. กด "เพิ่ม" เพื่อติดตั้งเป็น App ได้เลยครับ');
+                } else {
+                    alert('วิธีติดตั้งเป็น App:\nกดปุ่มเมนู (⋮) มุมขวาบนของ Chrome/Edge แล้วเลือก "ติดตั้งแอป / Install Mala Street" ได้เลยครับ');
+                }
             };
         })();
     </script>
