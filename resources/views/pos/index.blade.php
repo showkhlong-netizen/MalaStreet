@@ -614,14 +614,14 @@
                 </div>
 
                 <!-- 5. Promo / Coupon Code Bar -->
-                <div class="px-4 pt-2.5 pb-2">
-                    <button type="button" onclick="openCouponModal()"
-                            class="w-full bg-[#FFF2F3] hover:bg-[#FFE6E8] border border-[#FCD5D8] rounded-[12px] px-3.5 py-2.5 flex items-center justify-between transition-colors cursor-pointer">
+                <div id="pos-coupon-bar-wrap" class="px-4 pt-2.5 pb-2">
+                    <button type="button" id="pos-coupon-bar-btn" onclick="openCouponModal()"
+                            class="w-full bg-[#FFF2F3] hover:bg-[#FFE6E8] border border-[#FCD5D8] disabled:bg-slate-100 disabled:border-slate-200 disabled:opacity-55 disabled:cursor-not-allowed rounded-[12px] px-3.5 py-2.5 flex items-center justify-between transition-colors cursor-pointer">
                         <div class="flex items-center gap-2.5 min-w-0">
-                            <span class="w-6 h-5 rounded bg-[#E50914] text-white flex items-center justify-center text-[10px] mala-font-bold shrink-0">🎟️</span>
+                            <span id="pos-coupon-bar-icon" class="w-6 h-5 rounded bg-[#E50914] text-white flex items-center justify-center text-[10px] mala-font-bold shrink-0">🎟️</span>
                             <span id="cart-coupon-label" class="text-[13px] mala-font-mid-bold text-[#C8102E] truncate">ใช้โค้ดส่วนลด</span>
                         </div>
-                        <span class="text-[#C8102E] text-sm mala-font-bold">&gt;</span>
+                        <span id="pos-coupon-bar-arrow" class="text-[#C8102E] text-sm mala-font-bold">&gt;</span>
                     </button>
                 </div>
 
@@ -1075,6 +1075,18 @@
             </div>
             <label class="relative inline-flex items-center cursor-pointer shrink-0">
                 <input type="checkbox" id="pos-cart-sticky-toggle" checked onchange="togglePosCartStickyLock(this.checked)" class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:bg-[#E50914] transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 shadow-inner"></div>
+            </label>
+        </div>
+
+        <!-- Promo / Coupon Discount Toggle Switch (POS Cashier Only) -->
+        <div class="flex items-center justify-between gap-3 bg-slate-50 border border-slate-200/80 rounded-2xl px-3.5 py-2.5">
+            <div class="min-w-0">
+                <div class="text-xs font-extrabold text-slate-900">เปิด-ปิดใช้งาน ส่วนลด โปรโมชั่น</div>
+                <div class="text-[10.5px] font-medium text-slate-500">เปิดเพื่อใช้แถบส่วนลดหน้าแคชเชียร์ (ปิด = ใช้งานไม่ได้)</div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                <input type="checkbox" id="pos-cart-coupon-toggle" checked onchange="togglePosCartCouponEnabled(this.checked)" class="sr-only peer">
                 <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:bg-[#E50914] transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5 shadow-inner"></div>
             </label>
         </div>
@@ -1732,8 +1744,12 @@
         }
     }
 
-    // Coupon Logic
+    // Coupon Logic (with POS-only On/Off Switch)
+    const POS_COUPON_ENABLED_KEY = 'pos_cart_coupon_enabled_v1';
+    let posCouponEnabled = true;
+
     function claimAndApplyCoupon(code) {
+        if (!posCouponEnabled) return;
         claimedCoupons[code] = true;
         activeCoupon = code;
         updateCouponButtonsUI();
@@ -1756,6 +1772,7 @@
     }
 
     function openCouponModal() {
+        if (!posCouponEnabled) return;
         document.getElementById('coupon-modal').classList.remove('hidden');
     }
 
@@ -1781,7 +1798,7 @@
         const shipping = 0.00;
         let discount = 0.00;
 
-        if (cart.length > 0 && activeCoupon) {
+        if (posCouponEnabled && cart.length > 0 && activeCoupon) {
             if (activeCoupon === 'DISC10') {
                 discount = 10.00;
             } else if (activeCoupon === 'DISC20') {
@@ -1812,11 +1829,30 @@
         document.getElementById('summary-discount').innerText = `-฿${discount.toFixed(2)}`;
         document.getElementById('summary-total').innerText = `฿${total.toFixed(2)}`;
 
+        const couponBtn = document.getElementById('pos-coupon-bar-btn');
+        const couponIcon = document.getElementById('pos-coupon-bar-icon');
+        const couponArrow = document.getElementById('pos-coupon-bar-arrow');
         const couponLabel = document.getElementById('cart-coupon-label');
-        if (activeCoupon && discount > 0) {
-            couponLabel.innerText = `ใช้โค้ดส่วนลด (${activeCoupon} ลด ฿${discount.toFixed(0)})`;
-        } else {
-            couponLabel.innerText = 'ใช้โค้ดส่วนลด';
+        if (couponBtn) couponBtn.disabled = !posCouponEnabled;
+        if (couponIcon) {
+            couponIcon.className = posCouponEnabled
+                ? 'w-6 h-5 rounded bg-[#E50914] text-white flex items-center justify-center text-[10px] mala-font-bold shrink-0'
+                : 'w-6 h-5 rounded bg-slate-400 text-white flex items-center justify-center text-[10px] mala-font-bold shrink-0';
+        }
+        if (couponArrow) {
+            couponArrow.className = posCouponEnabled ? 'text-[#C8102E] text-sm mala-font-bold' : 'text-slate-400 text-sm mala-font-bold';
+        }
+        if (couponLabel) {
+            if (!posCouponEnabled) {
+                couponLabel.className = 'text-[13px] mala-font-mid-bold text-slate-500 truncate';
+                couponLabel.innerText = 'ใช้โค้ดส่วนลด (ปิดใช้งาน)';
+            } else if (activeCoupon && discount > 0) {
+                couponLabel.className = 'text-[13px] mala-font-mid-bold text-[#C8102E] truncate';
+                couponLabel.innerText = `ใช้โค้ดส่วนลด (${activeCoupon} ลด ฿${discount.toFixed(0)})`;
+            } else {
+                couponLabel.className = 'text-[13px] mala-font-mid-bold text-[#C8102E] truncate';
+                couponLabel.innerText = 'ใช้โค้ดส่วนลด';
+            }
         }
 
         if (cart.length === 0) {
@@ -2082,13 +2118,36 @@
         applyPosCartStickyLock(isLocked);
     }
 
+    function applyPosCartCouponEnabled(isEnabled) {
+        posCouponEnabled = !!isEnabled;
+        const toggle = document.getElementById('pos-cart-coupon-toggle');
+        if (toggle) toggle.checked = posCouponEnabled;
+        if (!posCouponEnabled) {
+            activeCoupon = null;
+            updateCouponButtonsUI();
+            closeCouponModal();
+        }
+        renderCart();
+    }
+
+    function togglePosCartCouponEnabled(isEnabled) {
+        try {
+            localStorage.setItem(POS_COUPON_ENABLED_KEY, isEnabled ? '1' : '0');
+        } catch (e) {}
+        applyPosCartCouponEnabled(isEnabled);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         let savedSticky = true;
+        let savedCouponEnabled = true;
         try {
             const raw = localStorage.getItem(POS_CART_STICKY_KEY);
             if (raw === '0') savedSticky = false;
+            const rawCoupon = localStorage.getItem(POS_COUPON_ENABLED_KEY);
+            if (rawCoupon === '0') savedCouponEnabled = false;
         } catch (e) {}
         applyPosCartStickyLock(savedSticky);
+        applyPosCartCouponEnabled(savedCouponEnabled);
     });
 
     function getCartTotal() {
