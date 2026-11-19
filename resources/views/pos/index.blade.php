@@ -632,6 +632,11 @@
                         <span class="mala-font-mid-bold text-slate-900" id="summary-subtotal">฿0.00</span>
                     </div>
 
+                    <div class="flex justify-between items-center text-slate-700">
+                        <span class="mala-font-thin">ค่าน้ำซุปหม่าล่า <span id="summary-soup-hint" class="text-[11px] text-slate-400">(ขั้นต่ำ ฿45 ฟรี)</span></span>
+                        <span class="mala-font-mid-bold text-slate-900" id="summary-soup-fee">฿0.00</span>
+                    </div>
+
                     <div class="flex justify-between items-center text-[#E50914]">
                         <span class="mala-font-mid-bold">ส่วนลด</span>
                         <span class="mala-font-bold" id="summary-discount">-฿0.00</span>
@@ -1365,7 +1370,7 @@
     let currentItem = null;
     let currentPaymentMethod = 'cash';
     let currentQueue = 'A02';
-    let fulfillmentMode = 'delivery'; // 'delivery' (฿30) or 'pos' (฿0)
+    let fulfillmentMode = 'pos'; // In-store POS only
     let activeCoupon = 'DISC10';      // Matches Image 1's -฿10.00 discount
     let claimedCoupons = { DISC10: true, DISC20: false, FREESHIP: false };
     let isFavoriteStore = true;
@@ -1790,12 +1795,21 @@
     function getCartPricing() {
         let totalSticks = 0;
         let subtotal = 0;
+        let soupSubtotal = 0;
+        let hasSoup = false;
         cart.forEach(item => {
             totalSticks += item.quantity;
-            subtotal += item.unit_price * item.quantity;
+            const line = item.unit_price * item.quantity;
+            subtotal += line;
+            if (item.cooking_type === 'soup') {
+                hasSoup = true;
+                soupSubtotal += line;
+            }
         });
 
         const shipping = 0.00;
+        // กติกาซุปหม่าล่า: ขั้นต่ำ 45 บาท หากไม่ถึง 45 บาท บวกค่าน้ำซุป 5 บาท
+        const soupFee = (hasSoup && soupSubtotal > 0 && soupSubtotal < 45) ? 5.00 : 0.00;
         let discount = 0.00;
 
         if (posCouponEnabled && cart.length > 0 && activeCoupon) {
@@ -1808,8 +1822,8 @@
             }
         }
 
-        const total = Math.max(0, subtotal - discount);
-        return { totalSticks, subtotal, shipping, discount, total };
+        const total = Math.max(0, subtotal + soupFee - discount);
+        return { totalSticks, subtotal, soupSubtotal, hasSoup, soupFee, shipping, discount, total };
     }
 
     function renderCart() {
@@ -1818,12 +1832,21 @@
         const btnConfirm = document.getElementById('btn-pos-confirm');
         const btnDraft = document.getElementById('btn-pos-draft');
 
-        const { totalSticks, subtotal, shipping, discount, total } = getCartPricing();
+        const { totalSticks, subtotal, hasSoup, soupFee, shipping, discount, total } = getCartPricing();
 
         document.getElementById('cart-items-count').innerText = cart.length;
         document.getElementById('cart-sticks-count').innerText = totalSticks;
         document.getElementById('summary-sticks').innerText = totalSticks;
         document.getElementById('summary-subtotal').innerText = `฿${subtotal.toFixed(2)}`;
+        const soupFeeEl = document.getElementById('summary-soup-fee');
+        const soupHintEl = document.getElementById('summary-soup-hint');
+        if (soupFeeEl) {
+            soupFeeEl.innerText = `฿${soupFee.toFixed(2)}`;
+            soupFeeEl.className = soupFee > 0 ? 'mala-font-bold text-[#E50914]' : 'mala-font-mid-bold text-slate-900';
+        }
+        if (soupHintEl) {
+            soupHintEl.innerText = soupFee > 0 ? '(ไม่ถึง ฿45 +฿5)' : (hasSoup ? '(ครบ ฿45 ฟรี)' : '(ขั้นต่ำ ฿45 ฟรี)');
+        }
         const shippingEl = document.getElementById('summary-shipping');
         if (shippingEl) shippingEl.innerText = `฿${shipping.toFixed(2)}`;
         document.getElementById('summary-discount').innerText = `-฿${discount.toFixed(2)}`;

@@ -240,6 +240,7 @@ class PosController extends Controller
             $orderNo = $datePrefix . str_pad($nextSeq, 3, '0', STR_PAD_LEFT) . '-' . $uniqueSuffix;
 
             $subtotal = 0;
+            $soupSubtotal = 0;
             $soupExtraTotal = 0;
             $orderItemsData = [];
 
@@ -249,13 +250,9 @@ class PosController extends Controller
                 $lineSubtotal = $product->price_per_stick * $qty;
                 $subtotal += $lineSubtotal;
 
-                // Extra soup charge if soup style selected (optional: e.g. 15 baht if flat, or 0 included)
-                $soupExtra = 0;
                 if ($item['cooking_type'] === 'soup') {
-                    // In Mala street food, soup is typically 10-15 THB per bowl or included. We can add 15 THB per bowl if specified.
-                    $soupExtra = 0.00;
+                    $soupSubtotal += $lineSubtotal;
                 }
-                $soupExtraTotal += $soupExtra;
 
                 // Deduct inventory sticks from Product
                 $product->decrement('stock_sticks', $qty);
@@ -293,8 +290,10 @@ class PosController extends Controller
                 ];
             }
 
+            // กติกาค่าน้ำซุปหม่าล่า: ขั้นต่ำ 45 บาท ฟรี (หากสั่งแบบน้ำซุปไม่ถึง 45 บาท บวกค่าน้ำซุป 5 บาท)
+            $soupExtraTotal = ($soupSubtotal > 0 && $soupSubtotal < 45) ? 5.00 : 0.00;
             $fulfillmentMode = $validated['fulfillment_mode'] ?? 'pos';
-            $deliveryFee = ($fulfillmentMode === 'delivery') ? 30.00 : 0.00;
+            $deliveryFee = 0.00;
             $discountAmount = 0.00;
             $couponCode = strtoupper(trim($validated['coupon_code'] ?? ''));
 
@@ -302,11 +301,9 @@ class PosController extends Controller
                 $discountAmount = 10.00;
             } elseif ($couponCode === 'DISC20' && $subtotal >= 300) {
                 $discountAmount = 20.00;
-            } elseif ($couponCode === 'FREESHIP' && $subtotal >= 400 && $fulfillmentMode === 'delivery') {
-                $discountAmount = $deliveryFee;
             }
 
-            $totalExtra = $soupExtraTotal + $deliveryFee;
+            $totalExtra = $soupExtraTotal;
             $totalAmount = max(0, $subtotal + $totalExtra - $discountAmount);
             $isDraft = (bool) ($validated['is_draft'] ?? false);
             $awaitingWebhook = (bool) ($validated['awaiting_webhook'] ?? false);

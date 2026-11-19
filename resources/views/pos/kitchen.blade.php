@@ -411,8 +411,8 @@
                                             <span class="font-bold text-slate-700">{{ $order->items->sum('quantity_sticks') }} ไม้ ({{ $order->items->count() }} รายการ)</span>
                                         </div>
                                         <div class="flex items-center justify-between">
-                                            <span>ค่าซุปหม่าล่าเพิ่มเติม</span>
-                                            <span class="font-bold text-slate-700">฿{{ number_format((float) ($order->soup_extra ?? 0), 2) }}</span>
+                                            <span>ค่าน้ำซุปหม่าล่า <span class="text-[10.5px] text-slate-400">(ขั้นต่ำ ฿45 ฟรี)</span></span>
+                                            <span class="font-bold {{ ($order->soup_extra ?? 0) > 0 ? 'text-[#E50914]' : 'text-slate-700' }}">฿{{ number_format((float) ($order->soup_extra ?? 0), 2) }}</span>
                                         </div>
                                         @if(!empty($order->notes))
                                             <div class="pt-1 text-slate-600">
