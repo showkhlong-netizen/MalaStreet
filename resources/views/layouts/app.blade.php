@@ -364,8 +364,8 @@
                 ? route('pos.kitchen', ['embed' => 1])
                 : route('pos.index', ['embed' => 1]);
         @endphp
-        <div id="pos-secondary-pane" class="hidden flex-1 w-full bg-slate-50" style="height: calc(100vh - var(--app-header-h, 80px));">
-            <iframe id="pos-secondary-iframe" data-preload-src="{{ $secondaryEmbedUrl }}" class="w-full h-full border-0 block bg-slate-50" title="Preloaded {{ $secondaryPaneKey }}"></iframe>
+        <div id="pos-secondary-pane" class="hidden w-full bg-slate-50 shrink-0" style="height: calc(100vh - var(--app-header-h, 80px));">
+            <iframe id="pos-secondary-iframe" data-preload-src="{{ $secondaryEmbedUrl }}" class="w-full border-0 block bg-slate-50" style="height: calc(100vh - var(--app-header-h, 80px));" title="Preloaded {{ $secondaryPaneKey }}"></iframe>
         </div>
         <script>
             (function () {
