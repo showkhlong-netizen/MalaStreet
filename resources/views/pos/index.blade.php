@@ -209,7 +209,7 @@
                                 <div class="grid grid-cols-2 gap-2">
                                     <!-- Option 1: หม่าล่าย่าง -->
                                     <button type="button" onclick="setPosTopCookingType('grill')" id="pos-top-btn-grill"
-                                            class="p-2.5 rounded-2xl border-2 text-left transition-all border-[#D90012] bg-[#FFF0F1] shadow-xs flex items-center gap-2 group cursor-pointer">
+                                            class="p-2.5 rounded-2xl border-2 text-left transition-all duration-100 border-[#D90012] bg-[#FFF0F1] shadow-[0_3px_0_0_rgba(217,0,18,0.22)] active:translate-y-[2px] active:scale-[0.97] active:shadow-[0_1px_0_0_rgba(217,0,18,0.22)] flex items-center gap-2 group cursor-pointer select-none">
                                         <div id="pos-top-radio-grill" class="w-4 h-4 rounded-full border-2 border-blue-600 flex items-center justify-center shrink-0 p-0.5">
                                             <div class="w-2 h-2 rounded-full bg-blue-600"></div>
                                         </div>
@@ -229,7 +229,7 @@
 
                                     <!-- Option 2: น้ำซุป -->
                                     <button type="button" onclick="setPosTopCookingType('soup')" id="pos-top-btn-soup"
-                                            class="p-2.5 rounded-2xl border-2 text-left transition-all border-slate-200 bg-white flex items-center gap-2 hover:border-slate-300 group cursor-pointer">
+                                            class="p-2.5 rounded-2xl border-2 text-left transition-all duration-100 border-slate-200 bg-white shadow-[0_3px_0_0_rgba(15,23,42,0.10)] active:translate-y-[2px] active:scale-[0.97] active:shadow-[0_1px_0_0_rgba(15,23,42,0.10)] flex items-center gap-2 hover:border-slate-300 group cursor-pointer select-none">
                                         <div id="pos-top-radio-soup" class="w-4 h-4 rounded-full border-2 border-slate-400 flex items-center justify-center shrink-0"></div>
                                         <div class="w-7 h-7 rounded-xl bg-white border border-rose-100 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
                                             <svg class="w-4.5 h-4.5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -256,14 +256,14 @@
                                     <span class="text-[10px] text-slate-400 font-normal">รสชาติหม่าล่า</span>
                                 </div>
                                 <div class="grid grid-cols-3 gap-2">
-                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer select-none transition-all duration-100 shadow-[0_3px_0_0_rgba(15,23,42,0.10)] active:translate-y-[2px] active:scale-[0.96] active:shadow-[0_1px_0_0_rgba(15,23,42,0.10)] has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-[0_3px_0_0_rgba(217,0,18,0.22)] group">
                                         <input type="radio" name="pos_top_spiciness" value="mild" onclick="onPosTopSpicinessSelect(this.value)" onchange="onPosTopSpicinessSelect(this.value)" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
                                         <div class="h-5 flex items-center justify-center mb-0.5 group-hover:scale-110 transition-transform">
                                             <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-5 w-auto object-contain shrink-0" alt="เผ็ดน้อย">
                                         </div>
                                         <span class="font-extrabold text-[#101114] text-[11px]">เผ็ดน้อย</span>
                                     </label>
-                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer select-none transition-all duration-100 shadow-[0_3px_0_0_rgba(15,23,42,0.10)] active:translate-y-[2px] active:scale-[0.96] active:shadow-[0_1px_0_0_rgba(15,23,42,0.10)] has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-[0_3px_0_0_rgba(217,0,18,0.22)] group">
                                         <input type="radio" name="pos_top_spiciness" value="medium" checked onclick="onPosTopSpicinessSelect(this.value)" onchange="onPosTopSpicinessSelect(this.value)" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
                                         <div class="h-5 flex items-center justify-center gap-1 mb-0.5 group-hover:scale-110 transition-transform">
                                             <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4.5 w-auto object-contain shrink-0" alt="เผ็ดกลาง">
@@ -271,7 +271,7 @@
                                         </div>
                                         <span class="font-extrabold text-[#101114] text-[11px]">เผ็ดกลาง</span>
                                     </label>
-                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer select-none transition-all duration-100 shadow-[0_3px_0_0_rgba(15,23,42,0.10)] active:translate-y-[2px] active:scale-[0.96] active:shadow-[0_1px_0_0_rgba(15,23,42,0.10)] has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-[0_3px_0_0_rgba(217,0,18,0.22)] group">
                                         <input type="radio" name="pos_top_spiciness" value="hot" onclick="onPosTopSpicinessSelect(this.value)" onchange="onPosTopSpicinessSelect(this.value)" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
                                         <div class="h-5 flex items-center justify-center gap-0.5 mb-0.5 group-hover:scale-110 transition-transform">
                                             <img src="{{ asset('assets/online/spicy-chili-flame.png') }}" class="h-4 w-auto object-contain shrink-0" alt="เผ็ดมาก">
@@ -290,7 +290,7 @@
                                     <span class="text-[10px] text-slate-400 font-normal">รสชาติน้ำซุป</span>
                                 </div>
                                 <div class="grid grid-cols-3 gap-2">
-                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer select-none transition-all duration-100 shadow-[0_3px_0_0_rgba(15,23,42,0.10)] active:translate-y-[2px] active:scale-[0.96] active:shadow-[0_1px_0_0_rgba(15,23,42,0.10)] has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-[0_3px_0_0_rgba(217,0,18,0.22)] group">
                                         <input type="radio" name="pos_top_soup_style" value="black_soup" onclick="onPosTopSoupStyleSelect(this.value)" onchange="onPosTopSoupStyleSelect(this.value)" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
                                         <div class="h-5 flex items-center justify-center mb-0.5 group-hover:scale-110 transition-transform">
                                             <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
@@ -299,7 +299,7 @@
                                         </div>
                                         <span class="font-extrabold text-[#101114] text-[10.5px] leading-tight">ซุปน้ำดำ</span>
                                     </label>
-                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer select-none transition-all duration-100 shadow-[0_3px_0_0_rgba(15,23,42,0.10)] active:translate-y-[2px] active:scale-[0.96] active:shadow-[0_1px_0_0_rgba(15,23,42,0.10)] has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-[0_3px_0_0_rgba(217,0,18,0.22)] group">
                                         <input type="radio" name="pos_top_soup_style" value="tomyum_rich" checked onclick="onPosTopSoupStyleSelect(this.value)" onchange="onPosTopSoupStyleSelect(this.value)" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
                                         <div class="h-5 flex items-center justify-center mb-0.5 group-hover:scale-110 transition-transform">
                                             <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
@@ -308,7 +308,7 @@
                                         </div>
                                         <span class="font-extrabold text-[#101114] text-[10.5px] leading-tight">ซุปต้มยำ-น้ำข้น</span>
                                     </label>
-                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer transition-all has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-xs group">
+                                    <label class="flex flex-col items-center justify-center p-2 rounded-2xl border-2 border-slate-200 bg-white text-center cursor-pointer select-none transition-all duration-100 shadow-[0_3px_0_0_rgba(15,23,42,0.10)] active:translate-y-[2px] active:scale-[0.96] active:shadow-[0_1px_0_0_rgba(15,23,42,0.10)] has-checked:border-[#D90012] has-checked:bg-[#FFF0F1] has-checked:shadow-[0_3px_0_0_rgba(217,0,18,0.22)] group">
                                         <input type="radio" name="pos_top_soup_style" value="mala_rich" onclick="onPosTopSoupStyleSelect(this.value)" onchange="onPosTopSoupStyleSelect(this.value)" class="w-4 h-4 text-blue-600 accent-blue-600 mb-1 focus:ring-0">
                                         <div class="h-5 flex items-center justify-center mb-0.5 group-hover:scale-110 transition-transform">
                                             <svg class="w-5 h-5 text-[#D90012] shrink-0" viewBox="0 0 24 24" fill="currentColor">
@@ -1559,18 +1559,50 @@
         }
     }
 
+    function resetPosTopCookingVisualSelection() {
+        const btnGrill = document.getElementById('pos-top-btn-grill');
+        const btnSoup = document.getElementById('pos-top-btn-soup');
+        const radioGrill = document.getElementById('pos-top-radio-grill');
+        const radioSoup = document.getElementById('pos-top-radio-soup');
+        const inactiveBtnCls = 'p-2.5 rounded-2xl border-2 text-left transition-all duration-100 border-slate-200 bg-white shadow-[0_3px_0_0_rgba(15,23,42,0.10)] active:translate-y-[2px] active:scale-[0.97] active:shadow-[0_1px_0_0_rgba(15,23,42,0.10)] flex items-center gap-2 hover:border-slate-300 group cursor-pointer select-none';
+
+        if (btnGrill) {
+            btnGrill.className = inactiveBtnCls;
+            btnGrill.querySelector('.font-extrabold')?.classList.replace('text-[#D90012]', 'text-[#101114]');
+        }
+        if (btnSoup) {
+            btnSoup.className = inactiveBtnCls;
+            btnSoup.querySelector('.font-extrabold')?.classList.replace('text-[#D90012]', 'text-[#101114]');
+        }
+        if (radioGrill) {
+            radioGrill.className = 'w-4 h-4 rounded-full border-2 border-slate-400 flex items-center justify-center shrink-0';
+            radioGrill.innerHTML = '';
+        }
+        if (radioSoup) {
+            radioSoup.className = 'w-4 h-4 rounded-full border-2 border-slate-400 flex items-center justify-center shrink-0';
+            radioSoup.innerHTML = '';
+        }
+        document.querySelectorAll('input[name="pos_top_spiciness"], input[name="pos_top_soup_style"]').forEach(r => {
+            r.checked = false;
+        });
+    }
+
     function onPosTopSpicinessSelect(val) {
         advancePosSetIfNeeded();
         posTopSpiciness = val;
+        setPosTopCookingType('grill', true);
     }
 
     function onPosTopSoupStyleSelect(val) {
         advancePosSetIfNeeded();
         posTopSoupStyle = val;
+        setPosTopCookingType('soup', true);
     }
 
-    function setPosTopCookingType(type) {
-        advancePosSetIfNeeded();
+    function setPosTopCookingType(type, skipAdvance = false) {
+        if (!skipAdvance) {
+            advancePosSetIfNeeded();
+        }
         posTopCookingType = type === 'soup' ? 'soup' : 'grill';
         const btnGrill = document.getElementById('pos-top-btn-grill');
         const btnSoup = document.getElementById('pos-top-btn-soup');
@@ -1579,8 +1611,8 @@
         const spiceSec = document.getElementById('pos-top-spiciness-section');
         const soupSec = document.getElementById('pos-top-soup-section');
 
-        const activeBtnCls = 'p-2.5 rounded-2xl border-2 text-left transition-all border-[#D90012] bg-[#FFF0F1] shadow-xs flex items-center gap-2 group cursor-pointer';
-        const inactiveBtnCls = 'p-2.5 rounded-2xl border-2 text-left transition-all border-slate-200 bg-white flex items-center gap-2 hover:border-slate-300 group cursor-pointer';
+        const activeBtnCls = 'p-2.5 rounded-2xl border-2 text-left transition-all duration-100 border-[#D90012] bg-[#FFF0F1] shadow-[0_3px_0_0_rgba(217,0,18,0.22)] active:translate-y-[2px] active:scale-[0.97] active:shadow-[0_1px_0_0_rgba(217,0,18,0.22)] flex items-center gap-2 group cursor-pointer select-none';
+        const inactiveBtnCls = 'p-2.5 rounded-2xl border-2 text-left transition-all duration-100 border-slate-200 bg-white shadow-[0_3px_0_0_rgba(15,23,42,0.10)] active:translate-y-[2px] active:scale-[0.97] active:shadow-[0_1px_0_0_rgba(15,23,42,0.10)] flex items-center gap-2 hover:border-slate-300 group cursor-pointer select-none';
         const activeRadioHtml = '<div class="w-2 h-2 rounded-full bg-blue-600"></div>';
 
         if (posTopCookingType === 'grill') {
@@ -1692,6 +1724,7 @@
         }
 
         posHasAddedInCurrentSet = true;
+        resetPosTopCookingVisualSelection();
 
         renderCart();
         if (newQty >= 2) {
@@ -1924,6 +1957,9 @@
         });
 
         container.innerHTML = html;
+        if (typeof updatePosCartStickyTop === 'function') {
+            requestAnimationFrame(updatePosCartStickyTop);
+        }
     }
 
     function changeCartQty(index, delta) {
@@ -1998,23 +2034,46 @@
     }
 
     const POS_CART_STICKY_KEY = 'pos_cart_sticky_lock_v1';
+    let posCartStickyEnabled = true;
+
+    function updatePosCartStickyTop() {
+        const aside = document.getElementById('pos-cart-aside');
+        if (!aside) return;
+        if (!posCartStickyEnabled || window.innerWidth < 1024) {
+            aside.style.top = '';
+            return;
+        }
+        const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--app-header-h')) || 80;
+        const minTop = headerH + 16;
+        const bottomGap = 16;
+        const panelH = aside.offsetHeight;
+        const viewH = window.innerHeight;
+        if (panelH + minTop + bottomGap > viewH) {
+            aside.style.top = `${viewH - panelH - bottomGap}px`;
+        } else {
+            aside.style.top = `${minTop}px`;
+        }
+    }
 
     function applyPosCartStickyLock(isLocked) {
+        posCartStickyEnabled = !!isLocked;
         const aside = document.getElementById('pos-cart-aside');
         const toggle = document.getElementById('pos-cart-sticky-toggle');
         if (aside) {
-            if (isLocked) {
+            if (posCartStickyEnabled) {
                 aside.classList.add('lg:sticky');
-                aside.style.top = 'calc(var(--app-header-h, 80px) + 16px)';
+                updatePosCartStickyTop();
             } else {
                 aside.classList.remove('lg:sticky');
                 aside.style.top = '';
             }
         }
         if (toggle) {
-            toggle.checked = !!isLocked;
+            toggle.checked = posCartStickyEnabled;
         }
     }
+
+    window.addEventListener('resize', updatePosCartStickyTop);
 
     function togglePosCartStickyLock(isLocked) {
         try {
