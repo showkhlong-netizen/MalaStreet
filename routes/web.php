@@ -117,6 +117,7 @@ Route::prefix('order')->name('online.')->group(function () {
 // 3. ระบบหลังบ้าน (Backend Admin & Financial / Inventory Systems) - ต้องเข้าสู่ระบบ (Requires Auth + RBAC Enforcement)
 Route::prefix('admin')->name('admin.')->middleware(['auth', EnforceDailyEmployeeLanding::class, 'access.enforce'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/dashboard/clear-mock', [DashboardController::class, 'clearMockTestData'])->name('dashboard.clear_mock');
     Route::post('/settings/toggle-online-mode', [DashboardController::class, 'toggleOnlineMode'])->name('settings.toggle_online');
 
     // 3.1 ระบบสแกนใบเสร็จ & ตรวจจับราคาขึ้นลง แปลงเป็นชิ้นหรือไม้

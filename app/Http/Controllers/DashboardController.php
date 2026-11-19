@@ -23,12 +23,16 @@ class DashboardController extends Controller
      */
     public function index(): View
     {
-        $today = Carbon::today();
-        $yesterday = Carbon::yesterday();
+        $today = Carbon::today('Asia/Bangkok');
+        $yesterday = Carbon::yesterday('Asia/Bangkok');
 
-        // Orders summary today
-        $todayOrders = Order::whereDate('created_at', $today)->get();
+        // Orders summary today (exclude cancelled orders)
+        $todayOrders = Order::whereDate('created_at', $today)
+            ->where('status', '!=', 'cancelled')
+            ->get();
         $todayPaidOrders = $todayOrders->where('payment_status', 'paid');
+        $todayPaidOrdersCount = $todayPaidOrders->count();
+        $todayUnpaidOrdersCount = $todayOrders->where('payment_status', '!=', 'paid')->count();
         $posOrders = $todayOrders->where('order_type', 'pos');
         $onlineOrders = $todayOrders->where('order_type', 'online');
 
@@ -66,11 +70,12 @@ class DashboardController extends Controller
         $netProfitToday = $totalSalesToday - $todayReceiptsCost - $todayExpenses;
 
         // Row 2: Skewers, Stock, Waste, Yesterday Carryover, Sauce & Staff Withdrawals
-        $totalSticksSold = OrderItem::whereHas('order', function ($query) use ($today) {
-            $query->whereDate('created_at', $today)->where('payment_status', 'paid');
-        })->sum('quantity_sticks');
+        $paidOrderIds = $todayPaidOrders->pluck('id');
+        $totalSticksSold = $paidOrderIds->isNotEmpty()
+            ? (int) OrderItem::whereIn('order_id', $paidOrderIds)->sum('quantity_sticks')
+            : 0;
 
-        $totalSticksInStock = Product::sum('stock_sticks');
+        $totalSticksInStock = (int) Product::sum('stock_sticks');
 
         $todayInventoryRows = InventoryDaily::whereDate('record_date', $today)->get();
         $wasteSticksToday = (int) $todayInventoryRows->sum('waste_sticks');
@@ -110,8 +115,13 @@ class DashboardController extends Controller
         // Recent Price Alerts / Fluctuations (ไส้กรอกเมื่อวาน 60 วันนี้ 65)
         $recentPriceAlerts = PriceHistory::with('rawMaterial')->orderByDesc('recorded_at')->orderByDesc('id')->take(4)->get();
 
-        // Recent Orders
-        $recentOrders = Order::with('items')->orderByDesc('created_at')->take(6)->get();
+        // Recent Orders (exclude cancelled)
+        $recentOrders = Order::with('items')
+            ->where('status', '!=', 'cancelled')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->take(10)
+            ->get();
 
         // Low stock products warning (< 10 sticks)
         $lowStockProducts = Product::where('stock_sticks', '<=', 10)->get();
@@ -134,6 +144,8 @@ class DashboardController extends Controller
             'todayReceiptsCost',
             'todayExpenses',
             'todayOrders',
+            'todayPaidOrdersCount',
+            'todayUnpaidOrdersCount',
             'totalSticksSold',
             'totalSticksInStock',
             'wasteSticksToday',
@@ -148,6 +160,39 @@ class DashboardController extends Controller
             'lowStockProducts',
             'onlineOrderStatus'
         ));
+    }
+
+    /**
+     * Remove seeded/mock/test orders & mock expenses so only real transactions remain.
+     */
+    public function clearMockTestData(): RedirectResponse
+    {
+        $mockCustomerNames = ['ลูกค้าหน้าร้าน โต๊ะ 2', 'คุณกานต์ (สั่งผ่านแอป)'];
+        $mockOrderIds = Order::whereIn('customer_name', $mockCustomerNames)
+            ->orWhere('order_no', 'like', '%TEST%')
+            ->orWhere('order_no', 'like', '%MOCK%')
+            ->orWhere('customer_name', 'like', '%Mock%')
+            ->orWhere('customer_name', 'like', '%Test%')
+            ->pluck('id');
+
+        $deletedOrders = 0;
+        if ($mockOrderIds->isNotEmpty()) {
+            OrderItem::whereIn('order_id', $mockOrderIds)->delete();
+            $deletedOrders = Order::whereIn('id', $mockOrderIds)->delete();
+        }
+
+        $deletedExpenses = Expense::whereIn('title', [
+            'ค่าเช่าล็อคตลาดหม่าล่าสตรีท (รายวัน)',
+            'ค่าจ้างพนักงานย่าง & ผู้ช่วยร้าน (2 คน)',
+            'ค่าแก๊สและถ่านย่างไร้ควัน',
+            'ค่าถ้วยฟอยล์ใส่น้ำซุป + ถุงหิ้ว + ไม้เสียบ 1000 ก้าน',
+        ])->delete();
+
+        $msg = "ล้างข้อมูล Mock/Test เรียบร้อยแล้ว (ลบ {$deletedOrders} ออเดอร์ทดสอบ, {$deletedExpenses} รายจ่ายตัวอย่าง)";
+
+        AuditLog::record('dashboard', 'delete', $msg, 'Cleared mock/test records', 'dashboard', 'clear_mock');
+
+        return redirect()->back()->with('success', $msg);
     }
 
     /**

@@ -18,6 +18,15 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5">
+            <!-- ล้างข้อมูล Mock Test ออก เหลือเฉพาะรายการจริง -->
+            <form action="{{ route('admin.dashboard.clear_mock') }}" method="POST" onsubmit="return confirm('ยืนยันลบข้อมูล Mock/Test ตัวอย่างทั้งหมด เพื่อให้เหลือเฉพาะรายการขายจริง?')">
+                @csrf
+                <button type="submit"
+                        class="py-2.5 px-4 rounded-xl bg-rose-600/80 hover:bg-rose-600 text-white font-bold text-xs shadow-md border border-rose-400/40 flex items-center space-x-1.5 transition-all cursor-pointer">
+                    <span>🧹 ล้างข้อมูล Mock Test</span>
+                </button>
+            </form>
+
             <!-- แถบฟิกคอสและกำไร -->
             <a href="{{ route('admin.expenses.index') }}" 
                class="py-2.5 px-4 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-white font-bold text-xs shadow-md border border-slate-700/80 flex items-center space-x-1.5 transition-all cursor-pointer">
@@ -31,7 +40,8 @@
 
 
 
-    <!-- KPI Metric Cards (2 Rows x 6 Cards) -->
+    <!-- KPI Metric Cards (2 Rows x 6 Cards) - Real-Time Synced Container -->
+    <div id="dashboard-sync-container" class="space-y-6">
     <div class="space-y-4">
         <!-- Row 1: การเงิน -->
         <div>
@@ -115,7 +125,12 @@
                         <span class="text-2xl font-black text-rose-600">{{ number_format($totalSticksSold) }}</span>
                         <span class="text-xs text-slate-400 font-bold">ไม้</span>
                     </div>
-                    <span class="text-[11px] text-slate-400">จาก {{ number_format($todayOrders->count()) }} ออเดอร์</span>
+                    <span class="text-[11px] text-slate-400">
+                        จาก {{ number_format($todayPaidOrdersCount) }} บิลที่ชำระแล้ว
+                        @if(($todayUnpaidOrdersCount ?? 0) > 0)
+                            • รอชำระ {{ number_format($todayUnpaidOrdersCount) }}
+                        @endif
+                    </span>
                 </div>
 
                 <!-- 2. สต๊อกไม้คงเหลือ -->
@@ -331,7 +346,7 @@
                                 </span>
                             </td>
                             <td class="py-3 px-3 text-right text-slate-400 text-[11px]">
-                                {{ $order->created_at->format('H:i') }}
+                                {{ $order->created_at ? $order->created_at->timezone('Asia/Bangkok')->format('H:i') : '-' }}
                             </td>
                         </tr>
                     @endforeach
@@ -339,6 +354,41 @@
             </table>
         </div>
     </div>
+    </div> <!-- End #dashboard-sync-container -->
 </div>
+
+<script>
+    (function () {
+        let isDashboardSyncing = false;
+        async function syncDashboardSilently() {
+            if (isDashboardSyncing) return;
+            isDashboardSyncing = true;
+            try {
+                const res = await fetch(window.location.href, {
+                    cache: 'no-store',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (!res.ok) return;
+                const html = await res.text();
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const fresh = doc.getElementById('dashboard-sync-container');
+                const current = document.getElementById('dashboard-sync-container');
+                if (fresh && current && fresh.innerHTML !== current.innerHTML) {
+                    current.innerHTML = fresh.innerHTML;
+                }
+            } catch (e) {} finally {
+                isDashboardSyncing = false;
+            }
+        }
+
+        setInterval(syncDashboardSilently, 5000);
+        try {
+            if ('BroadcastChannel' in window) {
+                const ch = new BroadcastChannel('mala_pos_sync_channel');
+                ch.onmessage = () => syncDashboardSilently();
+            }
+        } catch (e) {}
+    })();
+</script>
 @endsection
 
